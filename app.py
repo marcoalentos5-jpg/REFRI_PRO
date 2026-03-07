@@ -86,19 +86,19 @@ st.write("---")
 with st.container():
     st.subheader("👤 Identificação")
     c1, c2, c3 = st.columns(3)
-    cliente = c1.text_input("Cliente", placeholder="Nome/Empresa")
-    tecnico = c2.text_input("Técnico Responsável", placeholder="Seu Nome")
-    fabricante = c3.text_input("Fabricante", placeholder="Ex: Daikin")
+    cliente = c1.text_input("Cliente", placeholder="Nome/Empresa", value="")
+    tecnico = c2.text_input("Técnico Responsável", placeholder="Seu Nome", value="")
+    fabricante = c3.text_input("Fabricante", placeholder="Ex: Daikin", value="")
 
     c4, c5, c6 = st.columns(3)
-    linha = c4.text_input("Linha", placeholder="Ex: Inverter")
-    modelo_eq = c5.text_input("Modelo", placeholder="Código Etiqueta")
-    serie_eq = c6.text_input("Série", placeholder="S/N")
+    linha = c4.text_input("Linha", placeholder="Ex: Inverter", value="")
+    modelo_eq = c5.text_input("Modelo", placeholder="Código Etiqueta", value="")
+    serie_eq = c6.text_input("Série", placeholder="S/N", value="")
 
 # 2. SETUP TÉCNICO (SIDEBAR)
 st.sidebar.header("⚙️ Configuração")
 tipo_eq = st.sidebar.selectbox("Equipamento", ["", "Split Hi-Wall", "K-7", "Piso-Teto", "ACJ", "Geladeira"])
-tec_eq = st.sidebar.radio("Tecnologia", ["ON-OFF", "Inverter"])
+tecnologia = st.sidebar.radio("Tecnologia", ["ON-OFF", "Inverter"])
 gas_eq = st.sidebar.selectbox("Fluido Gás", ["", "R-410A", "R-22", "R-134a", "R-32"])
 tensao_eq = st.sidebar.selectbox("Tensão", ["", "110V", "220V", "380V"])
 
@@ -108,26 +108,29 @@ m1, m2, m3 = st.columns(3)
 
 with m1:
     st.info("🌬️ Troca Térmica")
-    t_ret = st.number_input("Temp. Retorno (Entrada) [°C]", value=None, placeholder="--")
-    t_ins = st.number_input("Temp. Insuflação (Saída) [°C]", value=None, placeholder="--")
-    dt = t_ret - t_ins if (t_ret and t_ins) else None
-    st.metric("DELTA T", f"{dt:.1f} °C" if dt else "--")
+    t_ret = st.number_input("Temp. Retorno (Entrada) [°C]", value=None)
+    t_ins = st.number_input("Temp. Insuflação (Saída) [°C]", value=None)
+    dt = t_ret - t_ins if (t_ret is not None and t_ins is not None) else None
+    st.metric("DELTA T", f"{dt:.1f} °C" if dt is not None else "--")
 
 with m2:
     st.info("🧪 Ciclo do Fluido")
-    p_suc = st.number_input("Pressão de Sucção (PSI)", value=None, placeholder="--")
-    t_fin = st.number_input("Temperatura Final [°C]", value=None, placeholder="--")
+    p_suc = st.number_input("Pressão de Sucção (PSI)", value=None)
+    t_fin = st.number_input("Temperatura Final [°C]", value=None)
+    
     tsat = calcular_t_sat(p_suc, gas_eq)
-    sh = t_final - tsat if (t_fin and tsat) else None
-    if tsat: st.caption(f"Saturação: {tsat:.1f} °C")
-    st.metric("SUPER AQUECIMENTO", f"{sh:.1f} K" if sh else "--")
+    # CORREÇÃO DO ERRO ANTERIOR: Variáveis agora batem (t_fin e tsat)
+    sh = t_fin - tsat if (t_fin is not None and tsat is not None) else None
+    
+    if tsat is not None: st.caption(f"Saturação: {tsat:.1f} °C")
+    st.metric("SUPER AQUECIMENTO", f"{sh:.1f} K" if sh is not None else "--")
 
 with m3:
     st.info("⚡ Elétrica")
-    v_rla = st.number_input("Corrente RLA [A]", value=None, placeholder="--")
-    v_lra = st.number_input("Corrente LRA [A]", value=None, placeholder="--")
-    v_med = st.number_input("Corrente Medida [A]", value=None, placeholder="--")
-    st.metric("AMPERAGEM", f"{v_med:.1f} A" if v_med else "--")
+    v_rla = st.number_input("Corrente RLA [A]", value=None)
+    v_lra = st.number_input("Corrente LRA [A]", value=None)
+    v_med = st.number_input("Corrente Medida [A]", value=None)
+    st.metric("AMPERAGEM", f"{v_med:.1f} A" if v_med is not None else "--")
 
 # --- PROCESSAMENTO E PDF ---
 if st.button("🚀 EXECUTAR DIAGNÓSTICO MASTER"):
@@ -149,12 +152,12 @@ if st.button("🚀 EXECUTAR DIAGNÓSTICO MASTER"):
         for d in diag_final: st.write(f"- {d}")
 
         # Preparar dados PDF
-        dados_pdf = {
+        dados_resumo = {
             "Cliente": cliente, "Tecnico": tecnico, "Fabricante": fabricante, "Linha": linha,
             "Modelo": modelo_eq, "Serie": serie_eq, "Tensao": tensao_eq, "Gas": gas_eq,
             "DeltaT": f"{dt:.1f}", "Pressao": f"{p_suc}", "TempSat": f"{tsat:.1f}",
             "TempFinal": f"{t_fin}", "SH": f"{sh:.1f}", "RLA": v_rla, "LRA": v_lra, "I_Medida": v_med
         }
         
-        pdf_bytes = gerar_pdf_mpn(dados_pdf, diag_final)
+        pdf_bytes = gerar_pdf_mpn(dados_resumo, diag_final)
         st.download_button("📥 Baixar Relatório PDF MPN", data=pdf_bytes, file_name=f"MPN_{cliente}.pdf", mime="application/pdf")
