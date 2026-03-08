@@ -298,3 +298,25 @@ Tensao medida: {v_medida} V
 link_wa = f"https://wa.me/?text={urllib.parse.quote(texto_wa)}"
 
 col_w.link_button("📲 Enviar WhatsApp",link_wa)
+
+def diagnostico_hvac(sh, sc, dt_ar):
+
+    if 6 <= sh <= 12 and 5 <= sc <= 12 and 8 <= dt_ar <= 14:
+        return "Sistema operando dentro dos parâmetros ideais."
+
+    if sh > 15 and sc < 3:
+        return "Baixa carga de fluido refrigerante."
+
+    if sh < 4 and sc > 12:
+        return "Excesso de fluido refrigerante."
+
+    if sh > 15 and sc > 10:
+        return "Restrição na linha líquida ou filtro secador."
+
+    if dt_ar > 14:
+        return "Baixa vazão de ar na evaporadora."
+
+    if dt_ar < 8:
+        return "Baixa eficiência de troca térmica."
+
+    return "Sistema fora do padrão. Requer análise detalhada."
