@@ -24,12 +24,12 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. LÓGICA DE ENGENHARIA (DANFOSS DEW POINT) ---
+# --- 2. LÓGICA DE ENGENHARIA (DANFOSS DEW POINT CALIBRADA) ---
 def calcular_t_sat_precisao(psig, gas):
     if psig is None or not gas or psig <= 0: return None
     try:
         if gas == "R-410A":
-            # Calibração Master: 133.10 -> 7.90 | 122.70 -> 5.50
+            # Calibração Master MPN: 133.10 -> 7.90 | 122.70 -> 5.50
             return 0.23076923 * psig - 22.81538462
         elif gas == "R-22":
             return 0.2854 * psig - 25.12
@@ -40,7 +40,7 @@ def calcular_t_sat_precisao(psig, gas):
     except: return None
     return None
 
-# --- 3. SIDEBAR (SETUP & ELÉTRICA) ---
+# --- 3. SIDEBAR (SETUP & ELÉTRICA CORRIGIDA) ---
 st.sidebar.header("⚙️ Setup do Ciclo & Elétrica")
 lista_equip = ["", "Split Hi-Wall", "Split Cassete", "Piso-Teto", "Chiller", "VRF/VRV", "Câmara Fria", "Self-Contained"]
 f_equip = st.sidebar.selectbox("Tipo de Equipamento", sorted(lista_equip))
@@ -50,8 +50,11 @@ f_tec = st.sidebar.radio("Tecnologia", ["ON-OFF", "Inverter", "Digital Scroll"])
 st.sidebar.markdown("---")
 st.sidebar.subheader("⚡ Parâmetros Elétricos")
 v_trab_str = st.sidebar.selectbox("Tensão de Trabalho (Nominal)", ["", "127", "220", "380", "440"])
+
+# CORREÇÃO: Tensão Medida sem zeros à esquerda fixos
 v_medida = st.sidebar.number_input("Tensão Medida [V]", min_value=0.0, step=1.0, format="%.2f")
 
+# Campo Diferença de Tensão [V]
 diff_tensao_v = 0.00
 variacao_v = 0.00
 if v_trab_str and v_medida > 0:
@@ -99,14 +102,6 @@ with tab_diag:
         v_med_amp = st.number_input("Corrente Medida [A]", value=0.00, format="%.2f")
         st.metric("DIF. TENSÃO", f"{diff_tensao_v:.2f} V")
 
-# --- ABA 2: IA ---
-with tab_solucoes:
-    st.subheader("🤖 Diagnóstico IA")
-    if tsat_evap:
-        if sh < 5: st.error("🚨 SH Baixo: Risco de líquido.")
-        elif sh > 12: st.warning("⚠️ SH Alto: Falta de fluido.")
-        else: st.success("✅ Ciclo operando corretamente.")
-
 # --- ABA 3: CARGA TÉRMICA ---
 with tab_carga:
     st.subheader("📐 Cálculo de Carga Térmica")
@@ -115,23 +110,35 @@ with tab_carga:
     total_btu = 0.0
     if area > 0:
         fator = 800 if sol == "Tarde" else 600
-        total_btu = area * fator
+        total_btu = area * faktor
         st.metric("CARGA NECESSÁRIA", f"{total_btu:.2f} BTU/h")
 
-# --- 5. GERAÇÃO DE PDF ---
+# --- 5. GERAÇÃO DE PDF PROFISSIONAL MPN ---
 if st.button("🚀 GERAR RELATÓRIO MASTER PDF"):
     if not cli:
         st.error("Preencha o nome do cliente.")
     else:
         pdf = FPDF()
         pdf.add_page()
-        pdf.set_font("Arial", "B", 14)
-        pdf.cell(0, 10, f"LAUDO TÉCNICO MPN - {cli}", ln=True, align="C")
-        pdf.set_font("Arial", size=10)
-        pdf.cell(0, 8, f"Técnico: {tec} | Data: {datetime.now().strftime('%d/%m/%Y')}", ln=True)
+        
+        # Cabeçalho Azul Royal MPN
+        pdf.set_fill_color(0, 74, 153) 
+        pdf.rect(0, 0, 210, 40, 'F')
+        pdf.set_font('Arial', 'B', 16)
+        pdf.set_text_color(255, 255, 255)
+        pdf.cell(0, 15, 'LAUDO TÉCNICO - MPN REFRIGERAÇÃO', 0, 1, 'C')
+        pdf.ln(25)
+
+        # Dados Técnicos no PDF
+        pdf.set_text_color(0, 0, 0)
+        pdf.set_font('Arial', 'B', 11)
+        pdf.cell(0, 10, f'Cliente: {cli} | Data: {datetime.now().strftime("%d/%m/%Y")}', ln=True)
         pdf.ln(5)
-        pdf.cell(0, 8, f"Pressão Sucção: {p_suc:.2f} PSIG | T. Sat: {tsat_evap:.2f} C", ln=True)
-        pdf.cell(0, 8, f"SH: {sh:.2f} K | Tensão Medida: {v_medida:.2f} V | Dif: {diff_tensao_v:.2f} V", ln=True)
+        pdf.set_font('Arial', '', 10)
+        pdf.cell(0, 8, f'Tensão Nominal: {v_trab_str}V | Tensão Medida: {v_medida:.2f}V', ln=True)
+        pdf.cell(0, 8, f'Diferença de Tensão: {diff_tensao_v:.2f}V | Variação: {variacao_v:.2f}%', ln=True)
+        pdf.cell(0, 8, f'Pressão Sucção: {p_suc:.2f} PSIG | T. Sat: {tsat_evap:.2f} C', ln=True)
+        pdf.cell(0, 8, f'Superaquecimento (SH): {sh:.2f} K', ln=True)
         
         pdf_output = pdf.output(dest='S').encode('latin-1')
-        st.download_button("📥 Baixar PDF", pdf_output, f"Laudo_{cli}.pdf", "application/pdf")
+        st.download_button("📥 Baixar PDF Profissional", pdf_output, f"Laudo_MPN_{cli}.pdf", "application/pdf")
