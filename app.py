@@ -1,10 +1,16 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 from fpdf import FPDF
 from datetime import datetime
 import urllib.parse
+
+# tentativa de importar matplotlib
+try:
+    import matplotlib.pyplot as plt
+    grafico = True
+except:
+    grafico = False
 
 # -----------------------------
 # CONFIGURAÇÃO DA PÁGINA
@@ -118,7 +124,7 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 ])
 
 # -----------------------------
-# ABA 1 – IDENTIFICAÇÃO
+# ABA IDENTIFICAÇÃO
 # -----------------------------
 with tab1:
 
@@ -137,7 +143,7 @@ with tab1:
     capacidade = c6.text_input("Capacidade (BTU)")
 
 # -----------------------------
-# ABA 2 – ELÉTRICA
+# ABA ELÉTRICA
 # -----------------------------
 with tab2:
 
@@ -154,7 +160,7 @@ with tab2:
     st.metric("Diferença de corrente",f"{diff_corrente:.2f} A")
 
 # -----------------------------
-# ABA 3 – TERMODINÂMICA
+# ABA TERMODINÂMICA
 # -----------------------------
 with tab3:
 
@@ -202,23 +208,27 @@ with tab3:
 
         st.metric("Subresfriamento",f"{sr:.2f} K")
 
-    # gráfico
+    # gráfico opcional
+    if grafico:
 
-    x = np.arange(1,10)
-    y = sh * x
+        x = np.arange(1,10)
+        y = sh * x
 
-    fig, ax = plt.subplots()
+        fig, ax = plt.subplots()
 
-    ax.plot(x,y,marker="o")
+        ax.plot(x,y,marker="o")
 
-    ax.set_title("Tendência de Superaquecimento")
-    ax.set_xlabel("Tempo")
-    ax.set_ylabel("Valor relativo")
+        ax.set_title("Tendência de Superaquecimento")
+        ax.set_xlabel("Tempo")
+        ax.set_ylabel("Valor relativo")
 
-    st.pyplot(fig)
+        st.pyplot(fig)
+
+    else:
+        st.warning("Biblioteca gráfica não instalada.")
 
 # -----------------------------
-# ABA 4 – DIAGNÓSTICO
+# ABA DIAGNÓSTICO
 # -----------------------------
 with tab4:
 
@@ -251,7 +261,7 @@ with tab4:
         st.warning(d)
 
 # -----------------------------
-# ABA 5 – RELATÓRIO
+# ABA RELATÓRIO
 # -----------------------------
 with tab5:
 
@@ -299,6 +309,6 @@ Superaquecimento: {sh:.1f}K
 Subresfriamento: {sr:.1f}K
 """
 
-    link = f"https://wa.me/?text={urllib.parse.quote(msg)}"
+    link = f"https://wa.me/?text={urllib.parse.quote(msg)}
 
     st.link_button("Enviar via WhatsApp",link)
