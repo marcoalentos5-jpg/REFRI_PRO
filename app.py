@@ -4,6 +4,11 @@ from fpdf import FPDF
 import urllib.parse
 import os
 
+# --- CONFIGURAÇÃO DE CAMINHOS ---
+# Detecta a pasta onde o script está rodando para não errar o caminho da logo
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+LOGO_PATH = os.path.join(BASE_DIR, "logo.png")
+
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="MPN | Engenharia", layout="wide", page_icon="❄️")
 
@@ -46,10 +51,10 @@ tab_cad, tab_ele, tab_termo, tab_diag = st.tabs([
 with tab_cad:
     st.subheader("👤 Dados do Cliente & Contato")
     c1, c2, c3 = st.columns(3)
-    cliente = c1.text_input("Nome do Cliente / Empresa")
+    cliente = c1.text_input("Nome do Cliente / Empresa", value="Consumidor Final")
     endereco = c1.text_input("Endereço Completo")
     telefone = c2.text_input("📞 Telefone Fixo")
-    whatsapp = c2.text_input("🟢 WhatsApp (com DDD)")
+    whatsapp = c2.text_input("🟢 WhatsApp (com DDD)", value="55")
     email_cli = c3.text_input("✉️ E-mail")
     data_visita = c3.date_input("Data da Visita", value=date.today())
 
@@ -135,54 +140,59 @@ with tab_diag:
     col_wa, col_pdf = st.columns(2)
 
     with col_wa:
-        if st.button("📲 Preparar WhatsApp"):
-            wa_num = "".join(filter(str.isdigit, whatsapp))
-            texto_wa = f"❄️ *LAUDO MPN*\n*Cliente:* {cliente}\n*Veredito:* {veredito}\n\n*Assinado por:* {tecnico_nome}"
-            st.markdown(f'<a href="https://wa.me{wa_num}?text={urllib.parse.quote(texto_wa)}" target="_blank"><button style="width:100%; background-color:#25D366; color:white; border:none; padding:12px; border-radius:5px; cursor:pointer;">ENVIAR WHATSAPP</button></a>', unsafe_allow_html=True)
+        wa_num = "".join(filter(str.isdigit, whatsapp))
+        texto_wa = f"❄️ *LAUDO MPN*\n*Cliente:* {cliente}\n*Veredito:* {veredito}\n\n*Assinado por:* {tecnico_nome}"
+        st.markdown(f'<a href="https://wa.me{wa_num}?text={urllib.parse.quote(texto_wa)}" target="_blank"><button style="width:100%; background-color:#25D366; color:white; border:none; padding:12px; border-radius:5px; cursor:pointer; font-weight:bold;">ENVIAR WHATSAPP</button></a>', unsafe_allow_html=True)
 
     with col_pdf:
-        if st.button("📄 Gerar Laudo PDF"):
-            pdf = FPDF()
-            pdf.add_page()
-            
-            # PROTEÇÃO DE LOGO
-            try:
-                if os.path.exists("logo.png"):
-                    pdf.image("logo.png", 10, 8, 40)
-                    pdf.ln(25)
-                else: raise Exception()
-            except:
-                pdf.set_fill_color(0, 74, 153); pdf.rect(0, 0, 210, 30, 'F')
-                pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 18)
-                pdf.cell(190, 15, "MPN ENGENHARIA", ln=True, align="C"); pdf.ln(15)
-            
-            pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 14)
-            pdf.cell(190, 10, "LAUDO TECNICO DE CICLO FRIGORIFICO", ln=True, align="C")
-            
-            pdf.set_font("Arial", "", 10); pdf.ln(5); pdf.set_fill_color(240, 240, 240)
-            pdf.cell(190, 8, f" CLIENTE: {cliente} | DATA: {data_visita}", ln=True, fill=True)
-            pdf.cell(190, 8, f" FABRICANTE: {fabricante} | CAPACIDADE: {cap_btu} | GAS: {fluido}", ln=True)
-            pdf.cell(190, 8, f" EVAP: {mod_evap} (S/N: {serie_evap})", ln=True, fill=True)
-            pdf.cell(190, 8, f" COND: {mod_cond} (S/N: {serie_cond}) | TAG: {tag_loc}", ln=True)
-            
-            pdf.ln(5); pdf.set_font("Arial", "B", 11); pdf.cell(190, 8, "RESULTADOS DA ANALISE", ln=True)
-            pdf.set_font("Arial", "", 10)
-            pdf.cell(63, 8, f" SH: {sh:.1f} K", border=1); pdf.cell(63, 8, f" SR: {sr:.1f} K", border=1); pdf.cell(64, 8, f" Delta T: {dt:.1f} C", border=1, ln=True)
-            
-            pdf.ln(5); pdf.multi_cell(0, 8, f"VEREDITO: {veredito}", border=1)
-            pdf.multi_cell(0, 8, f"OBSERVACOES: {obs_final}", border=1)
-            
-            # --- ASSINATURA MARCOS ALEXANDRE (FONTE CURSIVA NATIVA) ---
-            pdf.ln(20)
-            # A fonte 'Times' com estilo 'I' (Italic) simula uma caligrafia clássica
-            pdf.set_font("Times", "I", 15)
-            pdf.set_text_color(0, 74, 153) # Azul Caneta
-            pdf.cell(190, 10, "Marcos Alexandre Almeida do Nascimento", ln=True, align="C")
-            
-            pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 9)
-            pdf.cell(190, 5, "________________________________________", ln=True, align="C")
-            pdf.cell(190, 5, "MARCOS ALEXANDRE ALMEIDA DO NASCIMENTO", ln=True, align="C")
-            pdf.set_font("Arial", "I", 7); pdf.cell(190, 5, "RESPONSAVEL TECNICO - MPN ENGENHARIA", ln=True, align="C")
-            
-            pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
-            st.download_button(label="📥 Baixar Laudo Assinado", data=pdf_bytes, file_name=f"Laudo_MPN_{cliente}.pdf", mime="application/pdf")
+        # GERAR PDF EM MEMÓRIA
+        pdf = FPDF()
+        pdf.add_page()
+        
+        # LÓGICA DA LOGO COM CAMINHO CORRIGIDO
+        if os.path.exists(LOGO_PATH):
+            pdf.image(LOGO_PATH, 10, 8, 40)
+            pdf.ln(25)
+        else:
+            # Fallback visual caso a logo não seja encontrada no servidor
+            pdf.set_fill_color(0, 74, 153)
+            pdf.rect(0, 0, 210, 30, 'F')
+            pdf.set_text_color(255, 255, 255)
+            pdf.set_font("Arial", "B", 18)
+            pdf.cell(190, 15, "MPN ENGENHARIA", ln=True, align="C")
+            pdf.ln(15)
+        
+        pdf.set_text_color(0, 0, 0)
+        pdf.set_font("Arial", "B", 14)
+        pdf.cell(190, 10, "LAUDO TECNICO DE CICLO FRIGORIFICO", ln=True, align="C")
+        
+        pdf.set_font("Arial", "", 10); pdf.ln(5); pdf.set_fill_color(240, 240, 240)
+        pdf.cell(190, 8, f" CLIENTE: {cliente} | DATA: {data_visita}", ln=True, fill=True)
+        pdf.cell(190, 8, f" FABRICANTE: {fabricante} | CAPACIDADE: {cap_btu} | GAS: {fluido}", ln=True)
+        pdf.cell(190, 8, f" EVAP: {mod_evap} (S/N: {serie_evap})", ln=True, fill=True)
+        pdf.cell(190, 8, f" COND: {mod_cond} (S/N: {serie_cond}) | TAG: {tag_loc}", ln=True)
+        
+        pdf.ln(5); pdf.set_font("Arial", "B", 11); pdf.cell(190, 8, "RESULTADOS DA ANALISE", ln=True)
+        pdf.set_font("Arial", "", 10)
+        pdf.cell(63, 8, f" SH: {sh:.1f} K", border=1); pdf.cell(63, 8, f" SR: {sr:.1f} K", border=1); pdf.cell(64, 8, f" Delta T: {dt:.1f} C", border=1, ln=True)
+        
+        pdf.ln(5); pdf.multi_cell(0, 8, f"VEREDITO: {veredito}", border=1)
+        pdf.multi_cell(0, 8, f"OBSERVACOES: {obs_final}", border=1)
+        
+        pdf.ln(20)
+        pdf.set_font("Times", "I", 15)
+        pdf.set_text_color(0, 74, 153)
+        pdf.cell(190, 10, tecnico_nome, ln=True, align="C")
+        
+        # Converte PDF para bytes para o botão de download
+        pdf_bytes = pdf.output(dest='S').encode('latin-1')
+        
+        st.download_button(
+            label="📄 BAIXAR LAUDO PDF",
+            data=pdf_bytes,
+            file_name=f"Laudo_MPN_{cliente}.pdf",
+            mime="application/pdf"
+        )
+
+if not os.path.exists(LOGO_PATH):
+    st.warning("⚠️ Aviso técnico: O arquivo 'logo.png' não foi detectado no repositório. O PDF será gerado com cabeçalho padrão.")
