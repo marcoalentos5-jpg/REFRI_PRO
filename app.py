@@ -29,7 +29,7 @@ components.html(
     height=0,
 )
 
-# --- 3. ESTILIZAÇÃO ORIGINAL MPN (LAYOUT ANTERIOR) ---
+# --- 3. ESTILIZAÇÃO ORIGINAL MPN ---
 st.markdown("""
     <style>
     .main { background-color: #f8f9fa; }
@@ -85,7 +85,6 @@ with tab_cad:
     cap_digitada = d3.text_input("Capacidade (Mil BTU´s)")
     cap_btu = f"{cap_digitada} (Mil BTUs/h)" if cap_digitada else ""
 
-    # ORGANIZAÇÃO LADO A LADO DAS UNIDADES
     col_u1, col_u2 = st.columns(2)
     with col_u1:
         mod_evap = st.text_input("Modelo da Unidade (Evap)")
@@ -133,6 +132,14 @@ with tab_diag:
     st.markdown("---")
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15); pdf.add_page()
+    
+    # RECOLOCAÇÃO DA LOGOMARCA (TESTADO)
+    if os.path.exists("logo.png"):
+        try:
+            pdf.image("logo.png", 10, 8, 33)
+            pdf.ln(20)
+        except: pass
+    
     pdf.set_font("helvetica", "B", 12); pdf.set_fill_color(230, 230, 230)
     pdf.cell(190, 10, "LAUDO TECNICO DE DIAGNOSTICO - MPN", border=1, ln=True, align="C", fill=True)
     
