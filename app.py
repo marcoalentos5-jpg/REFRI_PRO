@@ -122,7 +122,7 @@ with tab_termo:
 
 # --- ABA 4: DIAGNÓSTICO & EXPORTAÇÃO ---
 with tab_diag:
-    st.subheader("🤖 Diagnóstico & Laudo Assinado")
+    st.subheader("🤖 Diagnóstico & Relatório")
     veredito = "Sistema operando em equilíbrio."
     if sh < 5: veredito = "🚨 ALERTA: Superaquecimento Crítico (Baixo)."
     elif sh > 12: veredito = "🚨 ALERTA: Superaquecimento Alto (Falta de Gás/Rendimento)."
@@ -135,17 +135,17 @@ with tab_diag:
     col_wa, col_pdf = st.columns(2)
 
     with col_wa:
-        if st.button("📲 Enviar via WhatsApp"):
+        if st.button("📲 Preparar WhatsApp"):
             wa_num = "".join(filter(str.isdigit, whatsapp))
-            texto_wa = f"❄️ *LAUDO MPN*\n*Cliente:* {cliente}\n*Eq:* {fabricante}\n*Veredito:* {veredito}\n\n*Assinado por:* {tecnico_nome}"
-            st.markdown(f'<a href="https://wa.me{wa_num}?text={urllib.parse.quote(texto_wa)}" target="_blank"><button style="width:100%; background-color:#25D366; color:white; border:none; padding:12px; border-radius:5px; cursor:pointer;">ABRIR WHATSAPP</button></a>', unsafe_allow_html=True)
+            texto_wa = f"❄️ *LAUDO MPN*\n*Cliente:* {cliente}\n*Veredito:* {veredito}\n\n*Assinado por:* {tecnico_nome}"
+            st.markdown(f'<a href="https://wa.me{wa_num}?text={urllib.parse.quote(texto_wa)}" target="_blank"><button style="width:100%; background-color:#25D366; color:white; border:none; padding:12px; border-radius:5px; cursor:pointer;">ENVIAR WHATSAPP</button></a>', unsafe_allow_html=True)
 
     with col_pdf:
-        if st.button("📄 Gerar PDF Profissional"):
+        if st.button("📄 Gerar Laudo PDF"):
             pdf = FPDF()
             pdf.add_page()
             
-            # --- PROTEÇÃO DE IMAGEM ---
+            # PROTEÇÃO DE LOGO
             try:
                 if os.path.exists("logo.png"):
                     pdf.image("logo.png", 10, 8, 40)
@@ -172,22 +172,17 @@ with tab_diag:
             pdf.ln(5); pdf.multi_cell(0, 8, f"VEREDITO: {veredito}", border=1)
             pdf.multi_cell(0, 8, f"OBSERVACOES: {obs_final}", border=1)
             
-            # --- ASSINATURA AUTOMÁTICA NATURAL ---
-            pdf.ln(15)
-            # Tenta carregar a imagem da assinatura se ela for um PNG válido
-            try:
-                if os.path.exists("assinatura.png"):
-                    pdf.image("assinatura.png", x=75, y=pdf.get_y()-10, w=60)
-                    pdf.ln(10)
-                else: raise Exception()
-            except:
-                pdf.set_font("Times", "I", 14); pdf.set_text_color(0, 74, 153)
-                pdf.cell(190, 10, f"{tecnico_nome}", ln=True, align="C")
+            # --- ASSINATURA MARCOS ALEXANDRE (FONTE CURSIVA NATIVA) ---
+            pdf.ln(20)
+            # A fonte 'Times' com estilo 'I' (Italic) simula uma caligrafia clássica
+            pdf.set_font("Times", "I", 15)
+            pdf.set_text_color(0, 74, 153) # Azul Caneta
+            pdf.cell(190, 10, "Marcos Alexandre Almeida do Nascimento", ln=True, align="C")
             
             pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 9)
             pdf.cell(190, 5, "________________________________________", ln=True, align="C")
             pdf.cell(190, 5, "MARCOS ALEXANDRE ALMEIDA DO NASCIMENTO", ln=True, align="C")
-            pdf.set_font("Arial", "I", 7); pdf.cell(190, 5, "MPN ENGENHARIA - RESPONSAVEL TECNICO", ln=True, align="C")
+            pdf.set_font("Arial", "I", 7); pdf.cell(190, 5, "RESPONSAVEL TECNICO - MPN ENGENHARIA", ln=True, align="C")
             
             pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
             st.download_button(label="📥 Baixar Laudo Assinado", data=pdf_bytes, file_name=f"Laudo_MPN_{cliente}.pdf", mime="application/pdf")
