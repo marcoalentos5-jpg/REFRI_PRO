@@ -9,7 +9,7 @@ import streamlit.components.v1 as components
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="MPN | Engenharia", layout="wide", page_icon="❄️")
 
-# --- 2. SCRIPT PARA FAZER O 'ENTER' PULAR DE CAMPO (ORDEM: ENTER) ---
+# --- 2. SCRIPT PARA FAZER O 'ENTER' PULAR DE CAMPO ---
 components.html(
     """
     <script>
@@ -66,7 +66,6 @@ with tab_cad:
     doc_cliente = c1.text_input("CPF / CNPJ")
     endereco = c2.text_input("Endereço Completo")
     whatsapp_input = c3.text_input("🟢 WhatsApp (com DDD)", value="21980264217")
-    # ORDEM: Data Formato Brasileiro
     data_visita = c3.date_input("Data da Visita", value=date.today(), format="DD/MM/YYYY")
     email_cli = c2.text_input("✉️ E-mail")
 
@@ -83,9 +82,9 @@ with tab_cad:
     ])
     fluido = d3.selectbox("Gás Refrigerante", ["R-410A", "R-22", "R-32", "R-134a", "R-600a", "R-290", "R-404A", "R-407C", "R-417A", "R-507A"])
     
-    # ORDEM: Capacidade com sufixo automático
-    cap_val = d3.text_input("Capacidade")
-    cap_btu = f"{cap_val} (Mil BTUs/h)" if cap_val else ""
+    # ALTERAÇÃO: Nome do campo atualizado para "Capacidade (Mil BTU´s)"
+    cap_digitada = d3.text_input("Capacidade (Mil BTU´s)")
+    cap_btu = f"{cap_digitada} (Mil BTUs/h)" if cap_digitada else ""
 
     mod_evap = st.text_input("Modelo da Unidade (Evap)")
     serie_evap = st.text_input("Nº de Série da Unidade (Evap)")
@@ -114,7 +113,6 @@ with tab_termo:
     sh, sr, dt = t_suc - tsat_evap, tsat_cond - t_liq, t_ret - t_ins
     
     st.markdown("---")
-    # LAYOUT ANTERIOR (MÉTRICAS COLORIDAS)
     res1, res2, res3, res4 = st.columns(4)
     res1.metric("Temp. Saturação", f"{tsat_evap:.1f} °C")
     res2.metric("Superaquecimento", f"{sh:.1f} K")
@@ -127,7 +125,6 @@ with tab_diag:
     else: veredito = "Sistema operando em equilíbrio técnico conforme fabricante."
     
     st.warning(f"Diagnóstico Final: {veredito}")
-    # ORDEM: Apenas "Observações"
     obs_final = st.text_area("📝 Observações", height=150)
 
     st.markdown("---")
@@ -136,41 +133,34 @@ with tab_diag:
     pdf.set_font("helvetica", "B", 12); pdf.set_fill_color(230, 230, 230)
     pdf.cell(190, 10, "LAUDO TECNICO DE DIAGNOSTICO - MPN", border=1, ln=True, align="C", fill=True)
     
-    # DADOS CLIENTE (DATA BR)
     pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " INFORMAÇÕES DO CLIENTE", border="LR", ln=True, fill=True)
     pdf.set_font("helvetica", "", 8)
     data_formatada = data_visita.strftime('%d/%m/%Y')
     pdf.cell(130, 7, f" Cliente: {cliente} / Doc: {doc_cliente}", border=1); pdf.cell(60, 7, f" Data: {data_formatada}", border=1, ln=True)
     pdf.cell(190, 7, f" Endereco: {endereco}", border=1, ln=True)
 
-    # DADOS EQUIPAMENTO (CAPACIDADE COMPLETA)
     pdf.ln(2); pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " DADOS DO EQUIPAMENTO", border="LR", ln=True, fill=True)
     pdf.set_font("helvetica", "", 8)
     pdf.cell(63, 7, f" Marca: {fabricante} ({linha})", border=1); pdf.cell(63, 7, f" Tipo: {tipo_eq}", border=1); pdf.cell(64, 7, f" Cap: {cap_btu}", border=1, ln=True)
     pdf.cell(95, 7, f" Mod. Evap: {mod_evap} (S/N: {serie_evap})", border=1)
     pdf.cell(95, 7, f" Mod. Cond: {mod_cond} (S/N: {serie_cond})", border=1, ln=True)
 
-    # PARÂMETROS
     pdf.ln(2); pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " PARAMETROS MEDIDOS", border="LR", ln=True, fill=True)
     pdf.set_font("helvetica", "", 8)
     pdf.cell(47, 7, f" Tensao: {v_med}V", border=1); pdf.cell(47, 7, f" Corrente: {a_med}A", border=1); pdf.cell(48, 7, f" P. Suc: {p_suc} PSI", border=1); pdf.cell(48, 7, f" Fluido: {fluido}", border=1, ln=True)
     pdf.cell(47, 7, f" Superaq: {sh:.1f} K", border=1); pdf.cell(47, 7, f" Subresf: {sr:.1f} K", border=1); pdf.cell(48, 7, f" Delta T: {dt:.1f} C", border=1); pdf.cell(48, 7, f" Tsat: {tsat_evap:.1f} C", border=1, ln=True)
 
-    # DIAGNÓSTICO
     pdf.ln(2); pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " DIAGNOSTICO", border="LR", ln=True, fill=True)
     pdf.set_font("helvetica", "B", 8)
     pdf.multi_cell(190, 7, f" Veredito: {veredito}", border=1, align="L")
 
-    # ORDEM: OBSERVAÇÕES É O ÚLTIMO CAMPO ENQUADRADO A4
     pdf.ln(2); pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " OBSERVACOES", border="LR", ln=True, fill=True)
     pdf.set_font("helvetica", "", 8)
     pdf.multi_cell(190, 7, f" {obs_final}", border=1, align="L")
 
-    # ASSINATURA
     pdf.ln(10); pdf.set_font("helvetica", "B", 8)
     pdf.cell(190, 5, tecnico_nome, ln=True, align="C")
     pdf.cell(190, 5, doc_tecnico, ln=True, align="C")
 
-    # DOWNLOAD (FIX PARA REDACTED ERROR)
     pdf_bytes = pdf.output()
     st.download_button(label="📥 BAIXAR RELATÓRIO PDF", data=bytes(pdf_bytes), file_name=f"Laudo_{cliente}.pdf", mime="application/pdf")
