@@ -62,7 +62,6 @@ with tab_cad:
         "Bebedouro", "Ar-Condicionado Janela", "Self-Contained", "Fan-Coil"
     ])
     
-    # OPÇÕES DE FLUIDOS ADICIONADAS
     fluido = d3.selectbox("Gás Refrigerante", [
         "R-410A", "R-22", "R-32", "R-134a", "R-600a", 
         "R-290", "R-404A", "R-407C", "R-417A", "R-507A"
