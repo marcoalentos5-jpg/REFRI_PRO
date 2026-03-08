@@ -45,7 +45,7 @@ tab_cad, tab_ele, tab_termo, tab_diag = st.tabs([
     "📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico & Relatório"
 ])
 
-# --- ABA 1: IDENTIFICAÇÃO (ORDEM SOLICITADA) ---
+# --- ABA 1: IDENTIFICAÇÃO (ORDEM E OPÇÕES ATUALIZADAS) ---
 with tab_cad:
     st.subheader("👤 Dados do Cliente & Contato")
     c1, c2, c3 = st.columns(3)
@@ -61,7 +61,6 @@ with tab_cad:
 
     st.markdown("---")
     st.subheader("⚙️ Dados Técnicos de Placa (Gerais)")
-    # CAMPOS NO TOPO LOGO APÓS CLIENTE
     d1, d2, d3 = st.columns(3)
     fabricante = d1.text_input("Fabricante (Marca)")
     cap_btu = d2.text_input("Capacidade (BTUs/h)")
@@ -79,7 +78,19 @@ with tab_cad:
         st.markdown("**🔸 UNIDADE EXTERNA (CONDENSADORA)**")
         mod_cond = st.text_input("Modelo da Condensadora")
         serie_cond = st.text_input("Nº de Série da Condensadora")
-        tipo_eq = st.selectbox("Tipo de Sistema", ["Split Hi-Wall", "Piso-Teto", "Cassete", "Chiller", "VRF/VRV", "Multi-Split"])
+        # OPÇÕES EM ORDEM ALFABÉTICA ATUALIZADAS
+        tipo_eq = st.selectbox("Tipo de Sistema", [
+            "ACJ", 
+            "Cassete", 
+            "Câmara Fria", 
+            "Chiller", 
+            "Fancoil",
+            "Multi-Split", 
+            "Piso-Teto", 
+            "Self-Contained",
+            "Split Hi-Wall", 
+            "VRF/VRV"
+        ])
 
     st.markdown("---")
     tecnico = st.text_input("👷 Técnico Responsável", value="MPN Engenharia")
