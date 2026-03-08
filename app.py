@@ -98,8 +98,14 @@ with tab_cad:
 
 with tab_ele:
     st.subheader("⚡ Parâmetros Elétricos")
-    v_med = st.number_input("Tensão Medida (V)", value=220.0)
-    a_med = st.number_input("Corrente Medida Real (A)", value=0.0)
+    col_v, col_a = st.columns(2)
+    with col_v:
+        v_nom = st.selectbox("Tensão Nominal (V)", ["127", "220", "360", "480"])
+        v_med = st.number_input("Tensão Medida (V)", value=0.0)
+    with col_a:
+        a_lra = st.number_input("Corrente LRA (A)", value=0.0)
+        a_rla = st.number_input("Corrente RLA (A)", value=0.0)
+        a_med = st.number_input("Corrente Medida (A)", value=0.0)
 
 with tab_termo:
     t1, t2 = st.columns(2)
@@ -161,14 +167,14 @@ with tab_diag:
     pdf.ln(4)
     pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " PARAMETROS MEDIDOS", border=1, ln=True, fill=True)
     pdf.set_font("helvetica", "", 8)
-    pdf.cell(47, 7, f" Tensão: {v_med}V", border=1); pdf.cell(47, 7, f" Corrente: {a_med}A", border=1); pdf.cell(48, 7, f" P. Suc: {p_suc} PSI", border=1); pdf.cell(48, 7, f" Gás: {fluido}", border=1, ln=True)
+    # LINHA ELÉTRICA COMPLETA NO RELATÓRIO
+    pdf.cell(47, 7, f" Tensão: {v_nom}V / {v_med}V", border=1); pdf.cell(47, 7, f" Corrente: {a_med}A", border=1); pdf.cell(48, 7, f" LRA: {a_lra}A / RLA: {a_rla}A", border=1); pdf.cell(48, 7, f" Gás: {fluido}", border=1, ln=True)
     pdf.cell(47, 7, f" Superaq: {sh:.1f} K", border=1); pdf.cell(47, 7, f" Subresf: {sr:.1f} K", border=1); pdf.cell(48, 7, f" Delta T: {dt:.1f} C", border=1); pdf.cell(48, 7, f" Tsat: {tsat_evap:.1f} C", border=1, ln=True)
 
     pdf.ln(4)
     pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " DIAGNÓSTICO", border=1, ln=True, fill=True)
     pdf.set_font("helvetica", "B", 8); pdf.multi_cell(190, 7, f" Veredito: {veredito}", border=1, align="L")
     
-    # AJUSTE DE ESPAÇAMENTO PARA 1,0 (H=4) NAS MEDIDAS CORRETIVAS E OBSERVAÇÕES
     pdf.ln(4)
     pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " MEDIDAS CORRETIVAS", border=1, ln=True, fill=True)
     pdf.set_font("helvetica", "", 8); pdf.multi_cell(190, 4, f" {med_corretivas}", border=1, align="L")
@@ -177,12 +183,8 @@ with tab_diag:
     pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " OBSERVAÇÕES", border=1, ln=True, fill=True)
     pdf.set_font("helvetica", "", 8); pdf.multi_cell(190, 4, f" {obs_final}", border=1, align="L")
 
-    # ASSINATURA COM LINHA SOBRE O NOME
-    pdf.ln(15)
-    pdf.set_font("helvetica", "B", 8)
-    pdf.set_x(65) 
-    pdf.cell(80, 0, "", border="T", ln=True, align="C") 
-    pdf.ln(2)
+    pdf.ln(15); pdf.set_font("helvetica", "B", 8)
+    pdf.set_x(65); pdf.cell(80, 0, "", border="T", ln=True, align="C"); pdf.ln(2)
     pdf.cell(190, 5, tecnico_nome, ln=True, align="C")
     pdf.cell(190, 5, doc_tecnico, ln=True, align="C")
 
