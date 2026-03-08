@@ -22,11 +22,6 @@ st.markdown("""
     }
     .stTabs [aria-selected="true"] { background-color: #004A99 !important; color: white !important; }
     .stButton>button { width: 100%; font-weight: bold; height: 3em; }
-    /* Estilo para o Selo de Assinatura na Tela */
-    .selo-assinatura {
-        border: 2px solid #004A99; padding: 10px; border-radius: 10px;
-        background-color: #e3f2fd; text-align: center; font-family: 'Courier New', Courier, monospace;
-    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -80,7 +75,6 @@ with tab_cad:
         tipo_eq = st.selectbox("Tipo de Sistema", ["ACJ", "Cassete", "Câmara Fria", "Chiller", "Fancoil", "Multi-Split", "Piso-Teto", "Self-Contained", "Split Hi-Wall", "VRF/VRV"])
 
     st.markdown("---")
-    # SEU NOME FIXO COMO PADRÃO
     tecnico_nome = "MARCOS ALEXANDRE ALMEIDA DO NASCIMENTO"
     st.info(f"👷 **Técnico Responsável:** {tecnico_nome}")
 
@@ -114,8 +108,10 @@ with tab_termo:
         t_liq = st.number_input("Temp. Tubo Líquido (°C)", value=30.0)
         t_ins = st.number_input("Ar Insuflação (°C)", value=12.0)
 
-    sh = t_suc - calcular_tsat(p_suc, fluido)
-    sr = calcular_tsat(p_liq, fluido) - t_liq
+    tsat_evap = calcular_tsat(p_suc, fluido)
+    tsat_cond = calcular_tsat(p_liq, fluido)
+    sh = t_suc - tsat_evap
+    sr = tsat_cond - t_liq
     dt = t_ret - t_ins
 
     st.markdown("---")
@@ -126,45 +122,36 @@ with tab_termo:
 
 # --- ABA 4: DIAGNÓSTICO & EXPORTAÇÃO ---
 with tab_diag:
-    st.subheader("🤖 Diagnóstico Final")
+    st.subheader("🤖 Diagnóstico & Laudo Assinado")
     veredito = "Sistema operando em equilíbrio."
-    if sh < 5: veredito = "🚨 ALERTA: SH Baixo (Risco de Líquido)."
-    elif sh > 12: veredito = "🚨 ALERTA: SH Alto (Baixa Carga/Rendimento)."
-    elif dt < 8: veredito = "⚠️ AVISO: Baixa troca térmica (Filtros/Sujeira)."
+    if sh < 5: veredito = "🚨 ALERTA: Superaquecimento Crítico (Baixo)."
+    elif sh > 12: veredito = "🚨 ALERTA: Superaquecimento Alto (Falta de Gás/Rendimento)."
+    elif dt < 8: veredito = "⚠️ AVISO: Baixa troca térmica (Limpeza/Filtros)."
     
     st.info(f"Veredito Técnico: {veredito}")
     obs_final = st.text_area("📝 Recomendações Técnicas")
 
-    st.markdown("---")
-    
-    # EXIBIÇÃO DA ASSINATURA ELEGANTE NA TELA
-    st.markdown(f"""
-        <div class="selo-assinatura">
-            <small>VALIDADO DIGITALMENTE POR:</small><br>
-            <b style="font-size: 1.2rem; color: #004A99;">{tecnico_nome}</b><br>
-            <small>MPN ENGENHARIA - DATA: {data_visita.strftime('%d/%m/%Y')}</small>
-        </div>
-    """, unsafe_allow_html=True)
-    
     st.markdown("---")
     col_wa, col_pdf = st.columns(2)
 
     with col_wa:
         if st.button("📲 Enviar via WhatsApp"):
             wa_num = "".join(filter(str.isdigit, whatsapp))
-            texto_wa = f"❄️ *LAUDO MPN*\n*Cliente:* {cliente}\n*Veredito:* {veredito}\n\n*Assinado por:* {tecnico_nome}"
+            texto_wa = f"❄️ *LAUDO MPN*\n*Cliente:* {cliente}\n*Eq:* {fabricante}\n*Veredito:* {veredito}\n\n*Assinado por:* {tecnico_nome}"
             st.markdown(f'<a href="https://wa.me{wa_num}?text={urllib.parse.quote(texto_wa)}" target="_blank"><button style="width:100%; background-color:#25D366; color:white; border:none; padding:12px; border-radius:5px; cursor:pointer;">ABRIR WHATSAPP</button></a>', unsafe_allow_html=True)
 
     with col_pdf:
-        if st.button("📄 Gerar PDF para Impressão"):
+        if st.button("📄 Gerar PDF Profissional"):
             pdf = FPDF()
             pdf.add_page()
             
-            # Cabeçalho
-            if os.path.exists("logo.png"):
-                pdf.image("logo.png", 10, 8, 40)
-                pdf.ln(25)
-            else:
+            # --- PROTEÇÃO DE IMAGEM ---
+            try:
+                if os.path.exists("logo.png"):
+                    pdf.image("logo.png", 10, 8, 40)
+                    pdf.ln(25)
+                else: raise Exception()
+            except:
                 pdf.set_fill_color(0, 74, 153); pdf.rect(0, 0, 210, 30, 'F')
                 pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 18)
                 pdf.cell(190, 15, "MPN ENGENHARIA", ln=True, align="C"); pdf.ln(15)
@@ -174,27 +161,33 @@ with tab_diag:
             
             pdf.set_font("Arial", "", 10); pdf.ln(5); pdf.set_fill_color(240, 240, 240)
             pdf.cell(190, 8, f" CLIENTE: {cliente} | DATA: {data_visita}", ln=True, fill=True)
-            pdf.cell(190, 8, f" EQUIPAMENTO: {fabricante} {cap_btu} | TAG: {tag_loc}", ln=True)
+            pdf.cell(190, 8, f" FABRICANTE: {fabricante} | CAPACIDADE: {cap_btu} | GAS: {fluido}", ln=True)
             pdf.cell(190, 8, f" EVAP: {mod_evap} (S/N: {serie_evap})", ln=True, fill=True)
-            pdf.cell(190, 8, f" COND: {mod_cond} (S/N: {serie_cond})", ln=True)
+            pdf.cell(190, 8, f" COND: {mod_cond} (S/N: {serie_cond}) | TAG: {tag_loc}", ln=True)
             
             pdf.ln(5); pdf.set_font("Arial", "B", 11); pdf.cell(190, 8, "RESULTADOS DA ANALISE", ln=True)
             pdf.set_font("Arial", "", 10)
             pdf.cell(63, 8, f" SH: {sh:.1f} K", border=1); pdf.cell(63, 8, f" SR: {sr:.1f} K", border=1); pdf.cell(64, 8, f" Delta T: {dt:.1f} C", border=1, ln=True)
             
             pdf.ln(5); pdf.multi_cell(0, 8, f"VEREDITO: {veredito}", border=1)
-            pdf.multi_cell(0, 8, f"RECOMENDACOES: {obs_final}", border=1)
+            pdf.multi_cell(0, 8, f"OBSERVACOES: {obs_final}", border=1)
             
-            # --- ASSINATURA AUTOMÁTICA ELEGANTE NO PDF ---
-            pdf.ln(20)
-            pdf.set_font("Times", "I", 12) # Fonte Itálica (Parece escrita à mão)
-            pdf.set_text_color(0, 74, 153) # Azul MPN
-            pdf.cell(190, 10, f"{tecnico_nome}", ln=True, align="C")
-            pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 8)
+            # --- ASSINATURA AUTOMÁTICA NATURAL ---
+            pdf.ln(15)
+            # Tenta carregar a imagem da assinatura se ela for um PNG válido
+            try:
+                if os.path.exists("assinatura.png"):
+                    pdf.image("assinatura.png", x=75, y=pdf.get_y()-10, w=60)
+                    pdf.ln(10)
+                else: raise Exception()
+            except:
+                pdf.set_font("Times", "I", 14); pdf.set_text_color(0, 74, 153)
+                pdf.cell(190, 10, f"{tecnico_nome}", ln=True, align="C")
+            
+            pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 9)
             pdf.cell(190, 5, "________________________________________", ln=True, align="C")
             pdf.cell(190, 5, "MARCOS ALEXANDRE ALMEIDA DO NASCIMENTO", ln=True, align="C")
-            pdf.set_font("Arial", "", 7)
-            pdf.cell(190, 5, "MPN ENGENHARIA - DIAGNOSTICO VALIDADO DIGITALMENTE", ln=True, align="C")
+            pdf.set_font("Arial", "I", 7); pdf.cell(190, 5, "MPN ENGENHARIA - RESPONSAVEL TECNICO", ln=True, align="C")
             
             pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
             st.download_button(label="📥 Baixar Laudo Assinado", data=pdf_bytes, file_name=f"Laudo_MPN_{cliente}.pdf", mime="application/pdf")
