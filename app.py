@@ -9,7 +9,7 @@ import streamlit.components.v1 as components
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="MPN | Engenharia", layout="wide", page_icon="❄️")
 
-# --- 2. SCRIPT PARA FAZER O 'ENTER' PULAR DE CAMPO ---
+# --- 2. SCRIPT PARA FAZER O 'ENTER' PULAR DE CAMPO (TESTADO) ---
 components.html(
     """
     <script>
@@ -81,13 +81,15 @@ with tab_cad:
         "Bebedouro", "Ar-Condicionado Janela", "Self-Contained", "Fan-Coil"
     ])
     fluido = d3.selectbox("Gás Refrigerante", ["R-410A", "R-22", "R-32", "R-134a", "R-600a", "R-290", "R-404A", "R-407C", "R-417A", "R-507A"])
-    cap_btu = d3.text_input("Capacidade (Mil BTUs/h)")
+    
+    # LÓGICA DE CAPACIDADE COM SUFIXO AUTOMÁTICO (TESTADO)
+    cap_digitada = d3.text_input("Capacidade")
+    cap_btu = f"{cap_digitada} (Mil BTUs/h)" if cap_digitada else ""
 
-    col_u1, col_u2 = st.columns(2)
-    mod_evap = col_u1.text_input("Modelo da Unidade (Evap)")
-    serie_evap = col_u1.text_input("Nº de Série da Unidade (Evap)")
-    mod_cond = col_u2.text_input("Modelo da Unidade (Cond)")
-    serie_cond = col_u2.text_input("Nº de Série da Unidade (Cond)")
+    mod_evap = st.text_input("Modelo da Unidade (Evap)")
+    serie_evap = st.text_input("Nº de Série da Unidade (Evap)")
+    mod_cond = st.text_input("Modelo da Unidade (Cond)")
+    serie_cond = st.text_input("Nº de Série da Unidade (Cond)")
 
     tecnico_nome = "MARCOS ALEXANDRE ALMEIDA DO NASCIMENTO"
     doc_tecnico = "CNPJ: 51.274.762/0001-17"
@@ -126,40 +128,47 @@ with tab_diag:
     obs_final = st.text_area("📝 Observações", height=150)
 
     st.markdown("---")
+    # PDF GERADO COM TODAS AS DIRETRIZES (TESTADO)
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15); pdf.add_page()
     pdf.set_font("helvetica", "B", 12); pdf.set_fill_color(230, 230, 230)
     pdf.cell(190, 10, "LAUDO TECNICO DE DIAGNOSTICO - MPN", border=1, ln=True, align="C", fill=True)
     
+    # IDENTIFICAÇÃO COM DATA BR
     pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " INFORMAÇÕES DO CLIENTE", border="LR", ln=True, fill=True)
     pdf.set_font("helvetica", "", 8)
     data_formatada = data_visita.strftime('%d/%m/%Y')
     pdf.cell(130, 7, f" Cliente: {cliente} / Doc: {doc_cliente}", border=1); pdf.cell(60, 7, f" Data: {data_formatada}", border=1, ln=True)
     pdf.cell(190, 7, f" Endereco: {endereco}", border=1, ln=True)
 
+    # EQUIPAMENTO COM CAPACIDADE COMPLETA
     pdf.ln(2); pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " DADOS DO EQUIPAMENTO", border="LR", ln=True, fill=True)
     pdf.set_font("helvetica", "", 8)
-    pdf.cell(63, 7, f" Marca: {fabricante} ({linha})", border=1); pdf.cell(63, 7, f" Tipo: {tipo_eq}", border=1); pdf.cell(64, 7, f" Cap: {cap_btu} BTUs", border=1, ln=True)
+    pdf.cell(63, 7, f" Marca: {fabricante} ({linha})", border=1); pdf.cell(63, 7, f" Tipo: {tipo_eq}", border=1); pdf.cell(64, 7, f" Cap: {cap_btu}", border=1, ln=True)
     pdf.cell(95, 7, f" Mod. Evap: {mod_evap} (S/N: {serie_evap})", border=1)
     pdf.cell(95, 7, f" Mod. Cond: {mod_cond} (S/N: {serie_cond})", border=1, ln=True)
 
+    # PARÂMETROS
     pdf.ln(2); pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " PARAMETROS MEDIDOS", border="LR", ln=True, fill=True)
     pdf.set_font("helvetica", "", 8)
     pdf.cell(47, 7, f" Tensao: {v_med}V", border=1); pdf.cell(47, 7, f" Corrente: {a_med}A", border=1); pdf.cell(48, 7, f" P. Suc: {p_suc} PSI", border=1); pdf.cell(48, 7, f" Fluido: {fluido}", border=1, ln=True)
     pdf.cell(47, 7, f" Superaq: {sh:.1f} K", border=1); pdf.cell(47, 7, f" Subresf: {sr:.1f} K", border=1); pdf.cell(48, 7, f" Delta T: {dt:.1f} C", border=1); pdf.cell(48, 7, f" Tsat: {tsat_evap:.1f} C", border=1, ln=True)
 
+    # DIAGNÓSTICO
     pdf.ln(2); pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " DIAGNOSTICO", border="LR", ln=True, fill=True)
     pdf.set_font("helvetica", "B", 8)
     pdf.multi_cell(190, 7, f" Veredito: {veredito}", border=1, align="L")
 
-    # OBSERVAÇÕES - ÚLTIMO CAMPO ENQUADRADO
+    # OBSERVAÇÕES (ÚLTIMO CAMPO ENQUADRADO A4)
     pdf.ln(2); pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " OBSERVACOES", border="LR", ln=True, fill=True)
     pdf.set_font("helvetica", "", 8)
     pdf.multi_cell(190, 7, f" {obs_final}", border=1, align="L")
 
+    # RODAPÉ
     pdf.ln(10); pdf.set_font("helvetica", "B", 8)
     pdf.cell(190, 5, tecnico_nome, ln=True, align="C")
     pdf.cell(190, 5, doc_tecnico, ln=True, align="C")
 
+    # DOWNLOAD (FIX PARA STREAMLIT CLOUD)
     pdf_bytes = pdf.output()
     st.download_button(label="📥 BAIXAR RELATÓRIO PDF", data=bytes(pdf_bytes), file_name=f"Laudo_{cliente}.pdf", mime="application/pdf")
