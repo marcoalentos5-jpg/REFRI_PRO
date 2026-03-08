@@ -82,14 +82,17 @@ with tab_cad:
     ])
     fluido = d3.selectbox("Gás Refrigerante", ["R-410A", "R-22", "R-32", "R-134a", "R-600a", "R-290", "R-404A", "R-407C", "R-417A", "R-507A"])
     
-    # ALTERAÇÃO: Nome do campo atualizado para "Capacidade (Mil BTU´s)"
     cap_digitada = d3.text_input("Capacidade (Mil BTU´s)")
     cap_btu = f"{cap_digitada} (Mil BTUs/h)" if cap_digitada else ""
 
-    mod_evap = st.text_input("Modelo da Unidade (Evap)")
-    serie_evap = st.text_input("Nº de Série da Unidade (Evap)")
-    mod_cond = st.text_input("Modelo da Unidade (Cond)")
-    serie_cond = st.text_input("Nº de Série da Unidade (Cond)")
+    # ORGANIZAÇÃO LADO A LADO DAS UNIDADES
+    col_u1, col_u2 = st.columns(2)
+    with col_u1:
+        mod_evap = st.text_input("Modelo da Unidade (Evap)")
+        serie_evap = st.text_input("Nº de Série da Unidade (Evap)")
+    with col_u2:
+        mod_cond = st.text_input("Modelo da Unidade (Cond)")
+        serie_cond = st.text_input("Nº de Série da Unidade (Cond)")
 
     tecnico_nome = "MARCOS ALEXANDRE ALMEIDA DO NASCIMENTO"
     doc_tecnico = "CNPJ: 51.274.762/0001-17"
