@@ -8,21 +8,15 @@ from PIL import Image
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="MPN | Engenharia", layout="wide", page_icon="❄️")
 
-# --- 2. ESTILIZAÇÃO MPN ---
+# --- 2. ESTILIZAÇÃO INTERFACE ---
 st.markdown("""
     <style>
-    .main { background-color: #f8f9fa; }
+    .main { background-color: #f1f3f5; }
     div[data-testid="stMetric"] {
-        background-color: #ffffff; border-left: 5px solid #004A99;
-        padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        background-color: #ffffff; border-top: 4px solid #000000;
+        padding: 15px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-    .stTabs [data-baseweb="tab-list"] { gap: 8px; }
-    .stTabs [data-baseweb="tab"] {
-        height: 50px; background-color: #e9ecef; border-radius: 5px 5px 0 0;
-        padding: 10px 20px; font-weight: bold; color: #495057;
-    }
-    .stTabs [aria-selected="true"] { background-color: #004A99 !important; color: white !important; }
-    .stButton>button { width: 100%; font-weight: bold; height: 3em; }
+    .stButton>button { width: 100%; font-weight: bold; border-radius: 5px; height: 3.5em; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -38,24 +32,23 @@ def calcular_tsat(psig, gas):
 # --- 4. TÍTULO ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
 
-# --- 5. CRIAÇÃO DAS ABAS ---
 tab_cad, tab_ele, tab_termo, tab_diag = st.tabs([
     "📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico & Relatório"
 ])
 
-# --- ABA 1: IDENTIFICAÇÃO (CONFORME SOLICITADO) ---
+# --- ABA 1: IDENTIFICAÇÃO ---
 with tab_cad:
     st.subheader("👤 Dados do Cliente & Contato")
     c1, c2, c3 = st.columns(3)
     cliente = c1.text_input("Nome do Cliente / Empresa")
-    endereco = c1.text_input("Endereço Completo")
-    telefone = c2.text_input("📞 Telefone Fixo")
+    doc_cliente = c1.text_input("CPF / CNPJ do Cliente")
+    endereco = c2.text_input("Endereço Completo")
     whatsapp = c2.text_input("🟢 WhatsApp (com DDD)", value="55")
     email_cli = c3.text_input("✉️ E-mail")
     data_visita = c3.date_input("Data da Visita", value=date.today())
 
     st.markdown("---")
-    st.subheader("⚙️ Dados Técnicos de Placa (Gerais)")
+    st.subheader("⚙️ Dados Técnicos de Placa")
     d1, d2, d3 = st.columns(3)
     fabricante = d1.text_input("Fabricante (Marca)")
     cap_btu = d2.text_input("Capacidade (BTUs/h)")
@@ -65,130 +58,120 @@ with tab_cad:
     st.subheader("📦 Detalhamento das Unidades")
     col_evap, col_cond = st.columns(2)
     with col_evap:
-        st.markdown("**🔹 UNIDADE INTERNA (EVAPORADORA)**")
+        st.markdown("**🔹 UNIDADE INTERNA**")
         mod_evap = st.text_input("Modelo da Evaporadora")
         serie_evap = st.text_input("Nº de Série da Evaporadora")
         tag_loc = st.text_input("Ambiente / TAG")
     with col_cond:
-        st.markdown("**🔸 UNIDADE EXTERNA (CONDENSADORA)**")
+        st.markdown("**🔸 UNIDADE EXTERNA**")
         mod_cond = st.text_input("Modelo da Condensadora")
         serie_cond = st.text_input("Nº de Série da Condensadora")
-        tipo_eq = st.selectbox("Tipo de Sistema", ["ACJ", "Cassete", "Câmara Fria", "Chiller", "Fancoil", "Multi-Split", "Piso-Teto", "Self-Contained", "Split Hi-Wall", "VRF/VRV"])
+        tipo_eq = st.selectbox("Tipo de Sistema", ["Split Hi-Wall", "Cassete", "Piso-Teto", "Multi-Split", "VRF/VRV", "Chiller", "Câmara Fria"])
 
-    st.markdown("---")
     tecnico_nome = "MARCOS ALEXANDRE ALMEIDA DO NASCIMENTO"
-    st.info(f"👷 **Técnico Responsável:** {tecnico_nome}")
+    doc_tecnico = "CNPJ: 51.274.762/0001-14"
 
 # --- ABA 2: ELÉTRICA ---
 with tab_ele:
-    st.subheader("⚡ Parâmetros Elétricos")
     el1, el2 = st.columns(2)
     v_nom = el1.selectbox("Tensão Nominal (V)", ["127", "220", "380", "440"], index=1)
     v_med = el1.number_input("Tensão Medida (V)", value=float(v_nom))
     a_nom = el2.number_input("Corrente Nominal RLA (A)", value=5.0)
     a_med = el2.number_input("Corrente Medida Real (A)", value=0.0)
-    
-    diff_v = ((v_med - float(v_nom)) / float(v_nom)) * 100
-    diff_a = a_med - a_nom
-    
-    st.markdown("---")
-    res1, res2 = st.columns(2)
-    res1.metric("Variação de Tensão", f"{diff_v:.1f}%", delta=f"{v_med - float(v_nom):.1f}V", delta_color="inverse")
-    res2.metric("Desvio de Corrente", f"{a_med:.1f} A", delta=f"{diff_a:.1f}A", delta_color="inverse")
 
 # --- ABA 3: TERMODINÂMICA ---
 with tab_termo:
-    st.subheader("🌡️ Ciclo Frigorífico")
     t1, t2 = st.columns(2)
-    with t1:
-        p_suc = st.number_input("Pressão Sucção (PSIG)", value=120.0)
-        t_suc = st.number_input("Temp. Tubo Sucção (°C)", value=10.0)
-        t_ret = st.number_input("Ar Retorno (°C)", value=24.0)
-    with t2:
-        p_liq = st.number_input("Pressão Descarga (PSIG)", value=350.0)
-        t_liq = st.number_input("Temp. Tubo Líquido (°C)", value=30.0)
-        t_ins = st.number_input("Ar Insuflação (°C)", value=12.0)
+    p_suc = t1.number_input("Pressão Sucção (PSIG)", value=120.0)
+    t_suc = t1.number_input("Temp. Tubo Sucção (°C)", value=10.0)
+    t_ret = t1.number_input("Ar Retorno (°C)", value=24.0)
+    p_liq = t2.number_input("Pressão Descarga (PSIG)", value=350.0)
+    t_liq = t2.number_input("Temp. Tubo Líquido (°C)", value=30.0)
+    t_ins = t2.number_input("Ar Insuflação (°C)", value=12.0)
 
-    tsat_evap = calcular_tsat(p_suc, fluido)
-    tsat_cond = calcular_tsat(p_liq, fluido)
-    sh = t_suc - tsat_evap
-    sr = tsat_cond - t_liq
+    sh = t_suc - calcular_tsat(p_suc, fluido)
+    sr = calcular_tsat(p_liq, fluido) - t_liq
     dt = t_ret - t_ins
-
-    st.markdown("---")
-    m1, m2, m3 = st.columns(3)
-    m1.metric("Superaquecimento (SH)", f"{sh:.1f} K")
-    m2.metric("Sub-resfriamento (SR)", f"{sr:.1f} K")
-    m3.metric("Delta T do Ar (ΔT)", f"{dt:.1f} °C")
 
 # --- ABA 4: DIAGNÓSTICO & EXPORTAÇÃO ---
 with tab_diag:
-    st.subheader("🤖 Diagnóstico & Relatório")
-    veredito = "Sistema operando em equilíbrio."
-    if sh < 5: veredito = "🚨 ALERTA: Superaquecimento Crítico (Baixo)."
-    elif sh > 12: veredito = "🚨 ALERTA: Superaquecimento Alto (Falta de Gás/Rendimento)."
-    elif dt < 8: veredito = "⚠️ AVISO: Baixa troca térmica (Limpeza/Filtros)."
+    veredito = "Sistema operando em equilíbrio conforme parâmetros do fabricante."
+    if sh < 5: veredito = "ALERTA: Superaquecimento Crítico (Risco de retorno de líquido)."
+    elif sh > 12: veredito = "ALERTA: Superaquecimento Alto (Possível falta de carga ou obstrução)."
+    elif dt < 8: veredito = "AVISO: Baixo Delta T (Verificar vazão de ar ou limpeza)."
     
-    st.info(f"Veredito Técnico: {veredito}")
-    obs_final = st.text_area("📝 Recomendações Técnicas")
+    st.warning(f"Diagnóstico Técnico: {veredito}")
+    obs_final = st.text_area("📝 Recomendações e Observações Técnicas")
 
     st.markdown("---")
     col_wa, col_pdf = st.columns(2)
 
     with col_wa:
-        if st.button("📲 Preparar WhatsApp"):
-            wa_num = "".join(filter(str.isdigit, whatsapp))
-            texto_wa = f"❄️ *LAUDO MPN*\n*Cliente:* {cliente}\n*Veredito:* {veredito}\n\n*Assinado por:* {tecnico_nome}"
-            st.markdown(f'<a href="https://wa.me{wa_num}?text={urllib.parse.quote(texto_wa)}" target="_blank"><button style="width:100%; background-color:#25D366; color:white; border:none; padding:12px; border-radius:5px; cursor:pointer; font-weight:bold;">ENVIAR WHATSAPP</button></a>', unsafe_allow_html=True)
+        wa_num = "".join(filter(str.isdigit, whatsapp))
+        texto_wa = f"❄️ *LAUDO TÉCNICO MPN*\n\n*Cliente:* {cliente}\n*Diagnóstico:* {veredito}\n\n*Assinado por:* {tecnico_nome}\n*{doc_tecnico}*"
+        link_wa = f"https://wa.me{wa_num}?text={urllib.parse.quote(texto_wa)}"
+        st.markdown(f'<a href="{link_wa}" target="_blank"><button style="width:100%; background-color:#25D366; color:white; border:none; padding:15px; border-radius:5px; font-weight:bold; cursor:pointer;">📲 ENVIAR VIA WHATSAPP</button></a>', unsafe_allow_html=True)
 
     with col_pdf:
-        # GERAR PDF
         pdf = FPDF()
         pdf.add_page()
         
+        # LOGO COM TRATAMENTO PIL (PARA EVITAR ERRO DE FORMATO)
         logo_inserida = False
-        caminho_logo = os.path.join(os.getcwd(), "logo.png")
-
-        # NOVO: Tratamento de imagem com PIL para evitar RuntimeError
-        if os.path.exists(caminho_logo):
+        if os.path.exists("logo.png"):
             try:
-                img = Image.open(caminho_logo).convert("RGB")
-                img.save("temp_logo.png")
-                pdf.image("temp_logo.png", 10, 8, 40)
-                pdf.ln(25)
+                img = Image.open("logo.png").convert("RGB")
+                img.save("temp_logo_pdf.png")
+                pdf.image("temp_logo_pdf.png", 10, 8, 35)
+                pdf.ln(20)
                 logo_inserida = True
-            except:
-                pass
-
+            except: pass
+        
         if not logo_inserida:
-            pdf.set_fill_color(0, 74, 153); pdf.rect(0, 0, 210, 30, 'F')
-            pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 18)
-            pdf.cell(190, 15, "MPN ENGENHARIA", ln=True, align="C"); pdf.ln(15)
+            pdf.set_font("Arial", "B", 18); pdf.cell(190, 10, "MPN ENGENHARIA", ln=True, align="R"); pdf.ln(10)
+
+        # CABEÇALHO DO LAUDO
+        pdf.set_font("Arial", "B", 13); pdf.set_fill_color(230, 230, 230); pdf.set_text_color(0,0,0)
+        pdf.cell(190, 10, "RELATÓRIO DE DIAGNÓSTICO TÉCNICO", border=1, ln=True, align="C", fill=True)
         
-        pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 14)
-        pdf.cell(190, 10, "LAUDO TECNICO DE CICLO FRIGORIFICO", ln=True, align="C")
+        # INFORMAÇÕES CLIENTE
+        pdf.set_font("Arial", "B", 9); pdf.cell(190, 7, " INFORMAÇÕES DO CLIENTE", border="LR", ln=True, fill=True)
+        pdf.set_font("Arial", "", 9)
+        pdf.cell(130, 7, f" Cliente: {cliente}", border=1); pdf.cell(60, 7, f" Doc: {doc_cliente}", border=1, ln=True)
+        pdf.cell(130, 7, f" Endereço: {endereco}", border=1); pdf.cell(60, 7, f" Data: {data_visita}", border=1, ln=True)
+
+        # DADOS TÉCNICOS
+        pdf.ln(3); pdf.set_font("Arial", "B", 9); pdf.cell(190, 7, " DADOS DO EQUIPAMENTO", border="LR", ln=True, fill=True)
+        pdf.set_font("Arial", "", 9)
+        pdf.cell(63, 7, f" Marca: {fabricante}", border=1); pdf.cell(63, 7, f" Cap: {cap_btu}", border=1); pdf.cell(64, 7, f" Gás: {fluido}", border=1, ln=True)
+        pdf.cell(95, 7, f" Mod. Evap: {mod_evap}", border=1); pdf.cell(95, 7, f" S/N: {serie_evap}", border=1, ln=True)
+        pdf.cell(95, 7, f" Mod. Cond: {mod_cond}", border=1); pdf.cell(95, 7, f" TAG: {tag_loc}", border=1, ln=True)
+
+        # CICLO FRIGORÍFICO
+        pdf.ln(3); pdf.set_font("Arial", "B", 9); pdf.cell(190, 7, " PARÂMETROS TÉCNICOS MEDIDOS", border="LR", ln=True, fill=True)
+        pdf.set_font("Arial", "", 9)
+        pdf.cell(47, 7, f" Superaq (SH): {sh:.1f} K", border=1); pdf.cell(47, 7, f" Sub-resf (SR): {sr:.1f} K", border=1)
+        pdf.cell(48, 7, f" Delta T Ar: {dt:.1f} C", border=1); pdf.cell(48, 7, f" Corrente: {a_med} A", border=1, ln=True)
+
+        # PARECER
+        pdf.ln(3); pdf.set_font("Arial", "B", 9); pdf.cell(190, 7, " PARECER TÉCNICO", border="LR", ln=True, fill=True)
+        pdf.set_font("Arial", "B", 9); pdf.multi_cell(190, 7, f" Veredito: {veredito}", border=1)
+        pdf.set_font("Arial", "", 9); pdf.multi_cell(190, 7, f" Recomendações: {obs_final}", border=1)
+
+        # --- ASSINATURA FINAL ---
+        pdf.ln(15)
+        pdf.cell(60); pdf.cell(70, 0, "", border="T", ln=True) # Linha horizontal
         
-        pdf.set_font("Arial", "", 10); pdf.ln(5); pdf.set_fill_color(240, 240, 240)
-        pdf.cell(190, 8, f" CLIENTE: {cliente} | DATA: {data_visita}", ln=True, fill=True)
-        pdf.cell(190, 8, f" FABRICANTE: {fabricante} | CAPACIDADE: {cap_btu} | GAS: {fluido}", ln=True)
-        pdf.cell(190, 8, f" EVAP: {mod_evap} (S/N: {serie_evap})", ln=True, fill=True)
-        pdf.cell(190, 8, f" COND: {mod_cond} (S/N: {serie_cond}) | TAG: {tag_loc}", ln=True)
+        # Assinatura Século XVI (Itálico clássico)
+        pdf.set_font("Times", "I", 24)
+        pdf.cell(190, 12, "Marcos Alexandre Almeida do Nascimento", ln=True, align="C")
         
-        pdf.ln(5); pdf.set_font("Arial", "B", 11); pdf.cell(190, 8, "RESULTADOS DA ANALISE", ln=True)
-        pdf.set_font("Arial", "", 10)
-        pdf.cell(63, 8, f" SH: {sh:.1f} K", border=1); pdf.cell(63, 8, f" SR: {sr:.1f} K", border=1); pdf.cell(64, 8, f" Delta T: {dt:.1f} C", border=1, ln=True)
-        
-        pdf.ln(5); pdf.multi_cell(0, 8, f"VEREDITO: {veredito}", border=1)
-        pdf.multi_cell(0, 8, f"OBSERVACOES: {obs_final}", border=1)
-        
-        pdf.ln(20); pdf.set_font("Times", "I", 15); pdf.set_text_color(0, 74, 153)
-        pdf.cell(190, 10, tecnico_nome, ln=True, align="C")
-        
-        # Botão de Download Estável
+        # Nome Letra de Imprensa Preta e CNPJ
+        pdf.set_font("Arial", "B", 10)
+        pdf.cell(190, 5, tecnico_nome.upper(), ln=True, align="C")
+        pdf.set_font("Arial", "", 9)
+        pdf.cell(190, 5, doc_tecnico, ln=True, align="C")
+        pdf.set_font("Arial", "I", 7); pdf.cell(190, 5, "TÉCNICO RESPONSÁVEL", ln=True, align="C")
+
         pdf_bytes = pdf.output(dest='S').encode('latin-1')
-        st.download_button(
-            label="📄 BAIXAR LAUDO PDF",
-            data=pdf_bytes,
-            file_name=f"Laudo_MPN_{cliente}.pdf",
-            mime="application/pdf"
-        )
+        st.download_button(label="📄 BAIXAR LAUDO TÉCNICO", data=pdf_bytes, file_name=f"Laudo_MPN_{cliente}.pdf", mime="application/pdf")
