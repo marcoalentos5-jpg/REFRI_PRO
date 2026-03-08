@@ -42,14 +42,14 @@ tab_cad, tab_ele, tab_termo, tab_diag = st.tabs([
     "📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico & Relatório"
 ])
 
-# --- ABA 1: IDENTIFICAÇÃO (RESTAURADA) ---
+# --- ABA 1: IDENTIFICAÇÃO ---
 with tab_cad:
     st.subheader("👤 Dados do Cliente & Contato")
     c1, c2, c3 = st.columns(3)
     cliente = c1.text_input("Nome do Cliente / Empresa")
     doc_cliente = c1.text_input("CPF / CNPJ do Cliente")
     endereco = c2.text_input("Endereço Completo")
-    whatsapp_input = c2.text_input("🟢 WhatsApp (com DDD)", value="5521980264217")
+    whatsapp_input = c2.text_input("🟢 WhatsApp (com DDD)", value="21980264217")
     email_cli = c3.text_input("✉️ E-mail")
     data_visita = c3.date_input("Data da Visita", value=date.today())
 
@@ -76,10 +76,10 @@ with tab_cad:
 
     tecnico_nome = "MARCOS ALEXANDRE ALMEIDA DO NASCIMENTO"
     doc_tecnico = "CNPJ: 51.274.762/0001-17"
-    st.info(f"👷 **Técnico Responsável:** {tecnico_nome}")
 
 # --- ABA 2: ELÉTRICA ---
 with tab_ele:
+    st.subheader("⚡ Parâmetros Elétricos")
     el1, el2 = st.columns(2)
     v_nom = el1.selectbox("Tensão Nominal (V)", ["127", "220", "380", "440"], index=1)
     v_med = el1.number_input("Tensão Medida (V)", value=float(v_nom))
@@ -88,13 +88,16 @@ with tab_ele:
 
 # --- ABA 3: TERMODINÂMICA ---
 with tab_termo:
+    st.subheader("🌡️ Ciclo Frigorífico")
     t1, t2 = st.columns(2)
-    p_suc = t1.number_input("Pressão Sucção (PSIG)", value=120.0)
-    t_suc = t1.number_input("Temp. Tubo Sucção (°C)", value=10.0)
-    p_liq = t2.number_input("Pressão Descarga (PSIG)", value=350.0)
-    t_liq = t2.number_input("Temp. Tubo Líquido (°C)", value=30.0)
-    t_ret = t1.number_input("Ar Retorno (°C)", value=24.0)
-    t_ins = t2.number_input("Ar Insuflação (°C)", value=12.0)
+    with t1:
+        p_suc = st.number_input("Pressão Sucção (PSIG)", value=120.0)
+        t_suc = st.number_input("Temp. Tubo Sucção (°C)", value=10.0)
+        t_ret = st.number_input("Ar Retorno (°C)", value=24.0)
+    with t2:
+        p_liq = st.number_input("Pressão Descarga (PSIG)", value=350.0)
+        t_liq = t2.number_input("Temp. Tubo Líquido (°C)", value=30.0)
+        t_ins = t2.number_input("Ar Insuflação (°C)", value=12.0)
 
     tsat_evap = calcular_tsat(p_suc, fluido)
     tsat_cond = calcular_tsat(p_liq, fluido)
@@ -113,26 +116,20 @@ with tab_diag:
     col_wa, col_pdf = st.columns(2)
 
     with col_wa:
-        # CORREÇÃO DEFINITIVA WHATSAPP (Link completo HTTPS)
         num_clean = "".join(filter(str.isdigit, whatsapp_input))
         if not num_clean.startswith("55"): num_clean = "55" + num_clean
         
-        texto_wa = f"❄️ *LAUDO TÉCNICO MPN*\n\n*Cliente:* {cliente}\n*Diagnóstico:* {veredito}\n\n*Assinado por:* {tecnico_nome}\n*{doc_tecnico}*"
-        url_wa = f"https://wa.me{num_clean}?text={urllib.parse.quote(texto_wa)}"
+        msg = f"❄️ *LAUDO TÉCNICO MPN*\n\n*Cliente:* {cliente}\n*Diagnóstico:* {veredito}\n\n*Assinado por:* {tecnico_nome}\n*{doc_tecnico}*"
+        # Link via api.whatsapp.com é mais compatível com Windows DNS
+        url_wa = f"https://api.whatsapp.com{num_clean}&text={urllib.parse.quote(msg)}"
         
-        st.markdown(f'''
-            <a href="{url_wa}" target="_blank">
-                <button style="width:100%; background-color:#25D366; color:white; border:none; padding:15px; border-radius:8px; font-weight:bold; cursor:pointer;">
-                    📲 ENVIAR VIA WHATSAPP
-                </button>
-            </a>
-        ''', unsafe_allow_html=True)
+        st.markdown(f'<a href="{url_wa}" target="_blank"><button style="width:100%; background-color:#25D366; color:white; border:none; padding:15px; border-radius:8px; font-weight:bold; cursor:pointer;">📲 ENVIAR VIA WHATSAPP</button></a>', unsafe_allow_html=True)
 
     with col_pdf:
         pdf = FPDF()
         pdf.add_page()
         
-        # LOGO COM TRATAMENTO PIL
+        # LOGO
         if os.path.exists("logo.png"):
             try:
                 img = Image.open("logo.png").convert("RGB")
@@ -141,37 +138,45 @@ with tab_diag:
                 pdf.ln(20)
             except: pass
         
-        # CABEÇALHO DO LAUDO (LAYOUT MELHORADO)
         pdf.set_font("Arial", "B", 13); pdf.set_fill_color(230, 230, 230)
         pdf.cell(190, 10, "RELATÓRIO DE DIAGNÓSTICO TÉCNICO", border=1, ln=True, align="C", fill=True)
         
+        # CLIENTE
         pdf.set_font("Arial", "B", 9); pdf.cell(190, 7, " INFORMAÇÕES DO CLIENTE", border="LR", ln=True, fill=True)
         pdf.set_font("Arial", "", 9)
         pdf.cell(130, 7, f" Cliente: {cliente}", border=1); pdf.cell(60, 7, f" Doc: {doc_cliente}", border=1, ln=True)
         pdf.cell(190, 7, f" Endereço: {endereco}", border=1, ln=True)
 
+        # EQUIPAMENTO
         pdf.ln(2); pdf.set_font("Arial", "B", 9); pdf.cell(190, 7, " DADOS DO EQUIPAMENTO", border="LR", ln=True, fill=True)
         pdf.set_font("Arial", "", 9)
         pdf.cell(63, 7, f" Marca: {fabricante}", border=1); pdf.cell(63, 7, f" Cap: {cap_btu}", border=1); pdf.cell(64, 7, f" Gás: {fluido}", border=1, ln=True)
-        pdf.cell(95, 7, f" Mod. Evap: {mod_evap}", border=1); pdf.cell(95, 7, f" S/N: {serie_evap}", border=1, ln=True)
-        pdf.cell(95, 7, f" Mod. Cond: {mod_cond}", border=1); pdf.cell(95, 7, f" TAG: {tag_loc}", border=1, ln=True)
+        pdf.cell(95, 7, f" S/N Evap: {serie_evap}", border=1); pdf.cell(95, 7, f" TAG: {tag_loc}", border=1, ln=True)
 
+        # ELÉTRICA (ADICIONADO)
+        pdf.ln(2); pdf.set_font("Arial", "B", 9); pdf.cell(190, 7, " PARÂMETROS ELÉTRICOS", border="LR", ln=True, fill=True)
+        pdf.set_font("Arial", "", 9)
+        pdf.cell(47, 7, f" Tensao Nom: {v_nom}V", border=1); pdf.cell(47, 7, f" Tensao Med: {v_med}V", border=1)
+        pdf.cell(48, 7, f" Corr. Nom: {a_nom}A", border=1); pdf.cell(48, 7, f" Corr. Med: {a_med}A", border=1, ln=True)
+
+        # TERMODINÂMICA (ADICIONADO)
+        pdf.ln(2); pdf.set_font("Arial", "B", 9); pdf.cell(190, 7, " CICLO FRIGORÍFICO", border="LR", ln=True, fill=True)
+        pdf.set_font("Arial", "", 9)
+        pdf.cell(47, 7, f" P. Suc: {p_suc} PSIG", border=1); pdf.cell(47, 7, f" T. Suc: {t_suc} C", border=1)
+        pdf.cell(48, 7, f" P. Liq: {p_liq} PSIG", border=1); pdf.cell(48, 7, f" T. Liq: {t_liq} C", border=1, ln=True)
+        pdf.cell(63, 7, f" Superaq. (SH): {sh:.1f} K", border=1); pdf.cell(63, 7, f" Sub-resf. (SR): {sr:.1f} K", border=1)
+        pdf.cell(64, 7, f" Delta T Ar: {dt:.1f} C", border=1, ln=True)
+
+        # PARECER
         pdf.ln(2); pdf.set_font("Arial", "B", 9); pdf.cell(190, 7, " PARECER TÉCNICO", border="LR", ln=True, fill=True)
         pdf.set_font("Arial", "B", 9); pdf.multi_cell(190, 7, f" Veredito: {veredito}", border=1)
         pdf.set_font("Arial", "", 9); pdf.multi_cell(190, 7, f" Recomendações: {obs_final}", border=1)
 
-        # --- ASSINATURA ---
-        pdf.ln(15); pdf.cell(60); pdf.cell(70, 0, "", border="T", ln=True)
-        
-        # Estilo Século XVI (Itálico clássico)
-        pdf.set_font("Times", "I", 24)
-        pdf.cell(190, 12, "Marcos Alexandre Almeida do Nascimento", ln=True, align="C")
-        
-        # Letra de Imprensa Preta e CNPJ
-        pdf.set_font("Arial", "B", 10); pdf.set_text_color(0, 0, 0)
-        pdf.cell(190, 5, tecnico_nome.upper(), ln=True, align="C")
-        pdf.set_font("Arial", "", 9)
-        pdf.cell(190, 5, doc_tecnico, ln=True, align="C")
+        # ASSINATURA SÉCULO XVI E IMPRENSA
+        pdf.ln(12); pdf.cell(60); pdf.cell(70, 0, "", border="T", ln=True)
+        pdf.set_font("Times", "I", 24); pdf.cell(190, 12, "Marcos Alexandre Almeida do Nascimento", ln=True, align="C")
+        pdf.set_font("Arial", "B", 10); pdf.cell(190, 5, tecnico_nome.upper(), ln=True, align="C")
+        pdf.set_font("Arial", "", 9); pdf.cell(190, 5, doc_tecnico, ln=True, align="C")
 
         pdf_bytes = pdf.output(dest='S').encode('latin-1')
         st.download_button(label="📄 BAIXAR LAUDO TÉCNICO", data=pdf_bytes, file_name=f"Laudo_MPN_{cliente}.pdf", mime="application/pdf")
