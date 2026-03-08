@@ -20,7 +20,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. LÓGICA TÉCNICA (P x T) ---
+# --- 3. LÓGICA TÉCNICA ---
 def calcular_tsat(psig, gas):
     if psig <= 0: return 0
     tabelas = {
@@ -43,7 +43,7 @@ with tab_cad:
     cliente = c1.text_input("Nome do Cliente / Empresa")
     doc_cliente = c1.text_input("CPF / CNPJ do Cliente")
     endereco = c2.text_input("Endereço Completo")
-    whatsapp = c2.text_input("🟢 WhatsApp (com DDD)", value="55")
+    whatsapp_input = c2.text_input("🟢 WhatsApp (com DDD)", value="5521980264217")
     email_cli = c3.text_input("✉️ E-mail")
     data_visita = c3.date_input("Data da Visita", value=date.today())
 
@@ -69,7 +69,7 @@ with tab_cad:
         tipo_eq = st.selectbox("Tipo de Sistema", ["Split Hi-Wall", "Cassete", "Piso-Teto", "Multi-Split", "VRF/VRV", "Chiller", "Câmara Fria"])
 
     tecnico_nome = "MARCOS ALEXANDRE ALMEIDA DO NASCIMENTO"
-    doc_tecnico = "CNPJ: 51.274.762/0001-14"
+    doc_tecnico = "CNPJ: 51.274.762/0001-17"
 
 # --- ABA 2: ELÉTRICA ---
 with tab_ele:
@@ -107,8 +107,10 @@ with tab_diag:
     col_wa, col_pdf = st.columns(2)
 
     with col_wa:
-        wa_num = "".join(filter(str.isdigit, whatsapp))
+        # --- CORREÇÃO WHATSAPP ---
+        wa_num = "".join(filter(str.isdigit, whatsapp_input))
         texto_wa = f"❄️ *LAUDO TÉCNICO MPN*\n\n*Cliente:* {cliente}\n*Diagnóstico:* {veredito}\n\n*Assinado por:* {tecnico_nome}\n*{doc_tecnico}*"
+        # A barra '/' após o wa.me é obrigatória
         link_wa = f"https://wa.me{wa_num}?text={urllib.parse.quote(texto_wa)}"
         st.markdown(f'<a href="{link_wa}" target="_blank"><button style="width:100%; background-color:#25D366; color:white; border:none; padding:15px; border-radius:5px; font-weight:bold; cursor:pointer;">📲 ENVIAR VIA WHATSAPP</button></a>', unsafe_allow_html=True)
 
@@ -116,7 +118,6 @@ with tab_diag:
         pdf = FPDF()
         pdf.add_page()
         
-        # LOGO COM TRATAMENTO PIL (PARA EVITAR ERRO DE FORMATO)
         logo_inserida = False
         if os.path.exists("logo.png"):
             try:
@@ -130,43 +131,36 @@ with tab_diag:
         if not logo_inserida:
             pdf.set_font("Arial", "B", 18); pdf.cell(190, 10, "MPN ENGENHARIA", ln=True, align="R"); pdf.ln(10)
 
-        # CABEÇALHO DO LAUDO
         pdf.set_font("Arial", "B", 13); pdf.set_fill_color(230, 230, 230); pdf.set_text_color(0,0,0)
         pdf.cell(190, 10, "RELATÓRIO DE DIAGNÓSTICO TÉCNICO", border=1, ln=True, align="C", fill=True)
         
-        # INFORMAÇÕES CLIENTE
         pdf.set_font("Arial", "B", 9); pdf.cell(190, 7, " INFORMAÇÕES DO CLIENTE", border="LR", ln=True, fill=True)
         pdf.set_font("Arial", "", 9)
         pdf.cell(130, 7, f" Cliente: {cliente}", border=1); pdf.cell(60, 7, f" Doc: {doc_cliente}", border=1, ln=True)
         pdf.cell(130, 7, f" Endereço: {endereco}", border=1); pdf.cell(60, 7, f" Data: {data_visita}", border=1, ln=True)
 
-        # DADOS TÉCNICOS
         pdf.ln(3); pdf.set_font("Arial", "B", 9); pdf.cell(190, 7, " DADOS DO EQUIPAMENTO", border="LR", ln=True, fill=True)
         pdf.set_font("Arial", "", 9)
         pdf.cell(63, 7, f" Marca: {fabricante}", border=1); pdf.cell(63, 7, f" Cap: {cap_btu}", border=1); pdf.cell(64, 7, f" Gás: {fluido}", border=1, ln=True)
         pdf.cell(95, 7, f" Mod. Evap: {mod_evap}", border=1); pdf.cell(95, 7, f" S/N: {serie_evap}", border=1, ln=True)
         pdf.cell(95, 7, f" Mod. Cond: {mod_cond}", border=1); pdf.cell(95, 7, f" TAG: {tag_loc}", border=1, ln=True)
 
-        # CICLO FRIGORÍFICO
         pdf.ln(3); pdf.set_font("Arial", "B", 9); pdf.cell(190, 7, " PARÂMETROS TÉCNICOS MEDIDOS", border="LR", ln=True, fill=True)
         pdf.set_font("Arial", "", 9)
         pdf.cell(47, 7, f" Superaq (SH): {sh:.1f} K", border=1); pdf.cell(47, 7, f" Sub-resf (SR): {sr:.1f} K", border=1)
         pdf.cell(48, 7, f" Delta T Ar: {dt:.1f} C", border=1); pdf.cell(48, 7, f" Corrente: {a_med} A", border=1, ln=True)
 
-        # PARECER
         pdf.ln(3); pdf.set_font("Arial", "B", 9); pdf.cell(190, 7, " PARECER TÉCNICO", border="LR", ln=True, fill=True)
         pdf.set_font("Arial", "B", 9); pdf.multi_cell(190, 7, f" Veredito: {veredito}", border=1)
         pdf.set_font("Arial", "", 9); pdf.multi_cell(190, 7, f" Recomendações: {obs_final}", border=1)
 
         # --- ASSINATURA FINAL ---
         pdf.ln(15)
-        pdf.cell(60); pdf.cell(70, 0, "", border="T", ln=True) # Linha horizontal
+        pdf.cell(60); pdf.cell(70, 0, "", border="T", ln=True)
         
-        # Assinatura Século XVI (Itálico clássico)
         pdf.set_font("Times", "I", 24)
         pdf.cell(190, 12, "Marcos Alexandre Almeida do Nascimento", ln=True, align="C")
         
-        # Nome Letra de Imprensa Preta e CNPJ
         pdf.set_font("Arial", "B", 10)
         pdf.cell(190, 5, tecnico_nome.upper(), ln=True, align="C")
         pdf.set_font("Arial", "", 9)
