@@ -66,7 +66,7 @@ with tab_cad:
     tecnologia = d2.selectbox("Tecnologia do Compressor", ["Inverter", "WindFree", "Scroll", "On-Off"])
     tipo_eq = d2.selectbox("Tipo de Sistema", ["Split Hi-Wall", "Cassete", "Piso-Teto", "VRF/VRV", "Chiller", "Câmara Fria", "Multi-Split"])
     fluido = d3.selectbox("Gás Refrigerante", ["R-410A", "R-22", "R-134a", "R-404A", "R-32"])
-    cap_btu = d3.text_input("Capacidade (Mil BTUs/h)") # ALTERADO CONFORME PEDIDO
+    cap_btu = d3.text_input("Capacidade (Mil BTUs/h)")
 
     st.markdown("---")
     st.subheader("📦 Detalhamento das Unidades")
@@ -136,13 +136,12 @@ with tab_diag:
         # --- PDF COMPLETO E ORGANIZADO ---
         pdf = FPDF()
         pdf.set_auto_page_break(auto=True, margin=15); pdf.add_page()
+        
+        # Logo
         if os.path.exists("logo.png"):
             try:
-                with Image.open("logo.png") as img:
-                    img = img.convert("RGB")
-                    buf = io.BytesIO(); img.save(buf, format="PNG"); buf.seek(0)
-                    pdf.image(buf, 10, 8, 30)
-                pdf.ln(18)
+                pdf.image("logo.png", 10, 8, 33)
+                pdf.ln(20)
             except: pass
         
         pdf.set_font("helvetica", "B", 12); pdf.set_fill_color(230, 230, 230)
@@ -151,7 +150,9 @@ with tab_diag:
         # INFORMAÇÕES CLIENTE
         pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " INFORMAÇÕES DO CLIENTE", border="LR", ln=True, fill=True)
         pdf.set_font("helvetica", "", 8)
-        pdf.cell(130, 7, f" Cliente: {cliente} / Doc: {doc_cliente}", border=1); pdf.cell(60, 7, f" Data: {data_visita}", border=1, ln=True)
+        # Formato de data brasileiro DD/MM/AAAA
+        data_formatada = data_visita.strftime('%d/%m/%Y')
+        pdf.cell(130, 7, f" Cliente: {cliente} / Doc: {doc_cliente}", border=1); pdf.cell(60, 7, f" Data: {data_formatada}", border=1, ln=True)
         pdf.cell(190, 7, f" Endereco: {endereco}", border=1, ln=True)
 
         # EQUIPAMENTO
@@ -161,30 +162,24 @@ with tab_diag:
         pdf.cell(95, 7, f" Mod. Evap: {mod_evap} (S/N: {serie_evap})", border=1)
         pdf.cell(95, 7, f" Mod. Cond: {mod_cond} (S/N: {serie_cond})", border=1, ln=True)
 
-        # ANÁLISE TÉCNICA DETALHADA
-        pdf.ln(2); pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " ANALISE DO CICLO FRIGORIFICO E ELETRICA", border="LR", ln=True, fill=True)
-        pdf.set_font("helvetica", "", 7)
-        # Linha 1: Pressões e Tensao
-        pdf.cell(47, 6, f" Pressao Suc: {p_suc} PSI", border=1); pdf.cell(47, 6, f" Pressao Desc: {p_liq} PSI", border=1)
-        pdf.cell(48, 6, f" Tensao Med: {v_med} V", border=1); pdf.cell(48, 6, f" Corrente Med: {a_med} A", border=1, ln=True)
-        # Linha 2: Temperaturas de Tubo e Ar
-        pdf.cell(47, 6, f" Temp. Tubo Suc: {t_suc} C", border=1); pdf.cell(47, 6, f" Temp. Tubo Liq: {t_liq} C", border=1)
-        pdf.cell(48, 6, f" Temp. Ar Ret: {t_ret} C", border=1); pdf.cell(48, 6, f" Temp. Ar Ins: {t_ins} C", border=1, ln=True)
-        # Linha 3: Cálculos Finais
+        # ANÁLISE TÉCNICA
+        pdf.ln(2); pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " PARAMETROS MEDIDOS", border="LR", ln=True, fill=True)
+        pdf.set_font("helvetica", "", 8)
+        pdf.cell(47, 7, f" Tensao: {v_med}V", border=1); pdf.cell(47, 7, f" Corrente: {a_med}A", border=1); pdf.cell(48, 7, f" Pressao Suc: {p_suc} PSIG", border=1); pdf.cell(48, 7, f" Fluido: {fluido}", border=1, ln=True)
+        pdf.cell(47, 7, f" Superaq: {sh:.1f} K", border=1); pdf.cell(47, 7, f" Subresf: {sr:.1f} K", border=1); pdf.cell(48, 7, f" Delta T Ar: {dt:.1f} C", border=1); pdf.cell(48, 7, f" Tsat Evap: {tsat_evap:.1f} C", border=1, ln=True)
+
+        # VEREDITO E OBSERVAÇÕES (CORREÇÃO DE LAYOUT A4)
+        pdf.ln(2); pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " DIAGNOSTICO E RECOMENDACOES", border="LR", ln=True, fill=True)
         pdf.set_font("helvetica", "B", 8)
-        pdf.cell(47, 7, f" Tsat (Evap): {tsat_evap:.1f} C", border=1, align="C"); pdf.cell(47, 7, f" Superaq (SH): {sh:.1f} K", border=1, align="C")
-        pdf.cell(48, 7, f" Subresf (SR): {sr:.1f} K", border=1, align="C"); pdf.cell(48, 7, f" Delta T (DT): {dt:.1f} C", border=1, align="C", ln=True)
+        pdf.multi_cell(190, 7, f" Veredito: {veredito}", border=1)
+        pdf.set_font("helvetica", "", 8)
+        # multi_cell garante que o texto não saia da página A4
+        pdf.multi_cell(190, 7, f" Observacoes: {obs_final}", border=1)
 
-        # PARECER
-        pdf.ln(2); pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " PARECER TÉCNICO FINAL", border="LR", ln=True, fill=True)
-        pdf.set_font("helvetica", "B", 8); pdf.multi_cell(190, 6, f" Veredito: {veredito}", border=1)
-        pdf.set_font("helvetica", "", 8); pdf.multi_cell(190, 5, f" Recomendacoes: \n{obs_final}", border=1)
+        # RODAPÉ TÉCNICO
+        pdf.ln(4); pdf.set_font("helvetica", "B", 8)
+        pdf.cell(190, 5, tecnico_nome, ln=True, align="C")
+        pdf.cell(190, 5, doc_tecnico, ln=True, align="C")
 
-        # RODAPÉ
-        if pdf.get_y() > 250: pdf.add_page()
-        pdf.ln(10); pdf.cell(60); pdf.cell(70, 0, "", border="T", ln=True)
-        pdf.set_font("helvetica", "B", 10); pdf.cell(190, 6, tecnico_nome.upper(), ln=True, align="C")
-        pdf.set_font("helvetica", "", 9); pdf.cell(190, 4, f"DOC: {doc_tecnico}", ln=True, align="C")
-
-        pdf_bytes = pdf.output()
-        st.download_button(label="📄 BAIXAR LAUDO TÉCNICO", data=bytes(pdf_bytes), file_name=f"Laudo_MPN_{cliente}.pdf", mime="application/pdf", use_container_width=True)
+        pdf_output = pdf.output(dest='S').encode('latin1')
+        st.download_button(label="📥 BAIXAR RELATÓRIO PDF", data=pdf_output, file_name=f"Laudo_{cliente}.pdf", mime="application/pdf")
