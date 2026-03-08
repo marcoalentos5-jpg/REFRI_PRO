@@ -1,13 +1,18 @@
 import streamlit as st
-import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-from fpdf import FPDF
 from datetime import datetime
 
-st.set_page_config(page_title="REFRI PRO", layout="wide")
+# tentativa segura de importar matplotlib
+try:
+    import matplotlib.pyplot as plt
+    grafico_disponivel = True
+except ModuleNotFoundError:
+    grafico_disponivel = False
 
-st.title("REFRI PRO - Sistema Profissional de Diagnóstico HVAC")
+
+st.set_page_config(page_title="RefriPro HVAC", layout="wide")
+
+st.title("REFRI PRO - Diagnóstico de Sistemas de Refrigeração")
 
 st.header("Dados do Sistema")
 
@@ -17,7 +22,7 @@ with col1:
 
     fluido = st.selectbox(
         "Fluido Refrigerante",
-        ["R22","R134a","R404A","R410A"]
+        ["R22", "R134a", "R404A", "R410A"]
     )
 
     pressao_succao = st.number_input(
@@ -52,25 +57,22 @@ with col2:
         value=8.0
     )
 
-    temperatura_evaporador = st.number_input(
-        "Temperatura saída evaporador (°C)",
-        value=10.0
-    )
-
     temperatura_condensador = st.number_input(
-        "Temperatura saída condensador (°C)",
+        "Temperatura do condensador (°C)",
         value=40.0
     )
 
-# tabela pressão x temperatura simplificada
 
+# tabela simplificada pressão x temperatura
 tabela_pt = {
 
-    "R410A": {110:4,120:7,130:10},
-    "R22": {70:4,80:7,90:10},
-    "R134a": {30:0,40:5,50:10},
-    "R404A": {50:-5,60:0,70:5}
+    "R410A": {110: 4, 120: 7, 130: 10},
+    "R22": {70: 4, 80: 7, 90: 10},
+    "R134a": {30: 0, 40: 5, 50: 10},
+    "R404A": {50: -5, 60: 0, 70: 5}
+
 }
+
 
 def temperatura_saturacao(fluido, pressao):
 
@@ -82,106 +84,103 @@ def temperatura_saturacao(fluido, pressao):
         list(tabela.values())
     )
 
+
 temp_evaporacao = temperatura_saturacao(fluido, pressao_succao)
 
 superaquecimento = temperatura_succao - temp_evaporacao
 
 subresfriamento = temperatura_condensador - temperatura_liquido
 
-st.header("Resultados Calculados")
+
+st.header("Resultados")
 
 col3, col4, col5 = st.columns(3)
 
-col3.metric("Temperatura de Evaporação",f"{round(temp_evaporacao,2)} °C")
-col4.metric("Superaquecimento",f"{round(superaquecimento,2)} °C")
-col5.metric("Sub-resfriamento",f"{round(subresfriamento,2)} °C")
+col3.metric(
+    "Temperatura de Evaporação",
+    f"{round(temp_evaporacao,2)} °C"
+)
+
+col4.metric(
+    "Superaquecimento",
+    f"{round(superaquecimento,2)} °C"
+)
+
+col5.metric(
+    "Sub-resfriamento",
+    f"{round(subresfriamento,2)} °C"
+)
+
 
 st.header("Diagnóstico Técnico")
 
 diagnostico = []
 
 if superaquecimento < 5:
-    diagnostico.append("Superaquecimento baixo: risco de retorno de líquido ao compressor.")
+    diagnostico.append(
+        "Superaquecimento baixo: possível retorno de líquido ao compressor."
+    )
 
 elif superaquecimento > 20:
-    diagnostico.append("Superaquecimento elevado: possível falta de refrigerante ou restrição na linha.")
+    diagnostico.append(
+        "Superaquecimento alto: possível falta de refrigerante ou restrição."
+    )
 
 else:
-    diagnostico.append("Superaquecimento dentro da faixa recomendada.")
+    diagnostico.append(
+        "Superaquecimento dentro da faixa recomendada."
+    )
 
 if subresfriamento < 3:
-    diagnostico.append("Sub-resfriamento baixo: possível carga insuficiente de refrigerante.")
+    diagnostico.append(
+        "Sub-resfriamento baixo: possível falta de carga."
+    )
 
 elif subresfriamento > 15:
-    diagnostico.append("Sub-resfriamento elevado: possível excesso de refrigerante ou restrição.")
+    diagnostico.append(
+        "Sub-resfriamento alto: possível excesso de refrigerante."
+    )
 
 if pressao_descarga > 350:
-    diagnostico.append("Pressão de descarga elevada: verificar condensador sujo ou ventilação insuficiente.")
+    diagnostico.append(
+        "Pressão de descarga elevada: verificar condensador ou ventilação."
+    )
 
 if corrente_compressor > 15:
-    diagnostico.append("Corrente do compressor acima do normal: possível sobrecarga ou falha mecânica.")
+    diagnostico.append(
+        "Corrente do compressor elevada: verificar sobrecarga."
+    )
+
 
 for d in diagnostico:
     st.warning(d)
 
-st.header("Gráfico de Tendência do Sistema")
 
-x = np.arange(0,10)
+st.header("Gráfico de Tendência")
 
-y = superaquecimento * x
+if grafico_disponivel:
 
-fig, ax = plt.subplots()
+    x = np.arange(0, 10)
+    y = superaquecimento * x
 
-ax.plot(x,y,marker="o")
+    fig, ax = plt.subplots()
 
-ax.set_title("Tendência de Superaquecimento")
+    ax.plot(x, y, marker="o")
 
-ax.set_xlabel("Tempo")
+    ax.set_title("Tendência de Superaquecimento")
+    ax.set_xlabel("Tempo")
+    ax.set_ylabel("Valor Relativo")
 
-ax.set_ylabel("Valor relativo")
+    st.pyplot(fig)
 
-st.pyplot(fig)
+else:
 
-st.header("Gerar Laudo Técnico")
+    st.info(
+        "Gráfico indisponível: biblioteca matplotlib não instalada no ambiente."
+    )
 
-if st.button("Gerar Laudo PDF"):
 
-    pdf = FPDF()
+st.header("Informações do Relatório")
 
-    pdf.add_page()
-
-    pdf.set_font("Arial","B",16)
-
-    pdf.cell(0,10,"LAUDO TECNICO DE SISTEMA DE REFRIGERACAO",0,1)
-
-    pdf.set_font("Arial","",12)
-
-    pdf.cell(0,10,f"Data: {datetime.now().strftime('%d/%m/%Y')}",0,1)
-
-    pdf.cell(0,10,f"Fluido Refrigerante: {fluido}",0,1)
-
-    pdf.cell(0,10,f"Pressao de succao: {pressao_succao} psi",0,1)
-
-    pdf.cell(0,10,f"Temperatura de succao: {temperatura_succao} C",0,1)
-
-    pdf.cell(0,10,f"Pressao de descarga: {pressao_descarga} psi",0,1)
-
-    pdf.cell(0,10,f"Superaquecimento: {round(superaquecimento,2)} C",0,1)
-
-    pdf.cell(0,10,f"Sub-resfriamento: {round(subresfriamento,2)} C",0,1)
-
-    pdf.multi_cell(0,10,"Diagnostico:")
-
-    for d in diagnostico:
-
-        pdf.multi_cell(0,10,f"- {d}")
-
-    pdf.output("laudo_hvac.pdf")
-
-    with open("laudo_hvac.pdf","rb") as f:
-
-        st.download_button(
-            "Baixar Laudo",
-            f,
-            "laudo_hvac.pdf"
-        )
+st.write("Data da análise:", datetime.now().strftime("%d/%m/%Y"))
+st.write("Fluido refrigerante:", fluido)
