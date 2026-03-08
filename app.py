@@ -168,18 +168,18 @@ with tab_diag:
     pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " DIAGNÓSTICO", border=1, ln=True, fill=True)
     pdf.set_font("helvetica", "B", 8); pdf.multi_cell(190, 7, f" Veredito: {veredito}", border=1, align="L")
     
+    # AJUSTE DE ESPAÇAMENTO PARA 1,0 (H=4) NAS MEDIDAS CORRETIVAS E OBSERVAÇÕES
     pdf.ln(4)
     pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " MEDIDAS CORRETIVAS", border=1, ln=True, fill=True)
-    pdf.set_font("helvetica", "", 8); pdf.multi_cell(190, 7, f" {med_corretivas}", border=1, align="L")
+    pdf.set_font("helvetica", "", 8); pdf.multi_cell(190, 4, f" {med_corretivas}", border=1, align="L")
 
     pdf.ln(4)
     pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " OBSERVAÇÕES", border=1, ln=True, fill=True)
-    pdf.set_font("helvetica", "", 8); pdf.multi_cell(190, 7, f" {obs_final}", border=1, align="L")
+    pdf.set_font("helvetica", "", 8); pdf.multi_cell(190, 4, f" {obs_final}", border=1, align="L")
 
     # ASSINATURA COM LINHA SOBRE O NOME
     pdf.ln(15)
     pdf.set_font("helvetica", "B", 8)
-    # Desenha a linha centralizada (80mm de largura)
     pdf.set_x(65) 
     pdf.cell(80, 0, "", border="T", ln=True, align="C") 
     pdf.ln(2)
