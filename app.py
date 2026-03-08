@@ -12,13 +12,13 @@ st.set_page_config(page_title="MPN | Engenharia", layout="wide", page_icon="❄�
 st.markdown("""
     <style>
     .main { background-color: #f8f9fa; }
-    div[data-testid="stMetric"] { background-color: #ffffff; border-radius: 10px; padding: 15px; border: 1px solid #dee2e6; box-shadow: 2px 2px 5px rgba(0,0,0,0.05); }
+    div[data-testid="stMetric"] { background-color: #ffffff; border-radius: 10px; padding: 15px; border: 1px solid #dee2e6; }
     .stTabs [aria-selected="true"] { background-color: #004A99 !important; color: white !important; }
     .stButton>button { width: 100%; font-weight: bold; border-radius: 8px; height: 3.5em; background-color: #004A99; color: white; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. FUNÇÕES TÉCNICAS ---
+# --- 3. LÓGICA TÉCNICA ---
 def calcular_tsat(psig, gas):
     if psig <= 0: return 0
     tabelas = {
@@ -30,16 +30,17 @@ def calcular_tsat(psig, gas):
 def obter_ref_tecnica(fabricante, tecnologia, tipo, linha):
     texto = f"{fabricante} {tecnologia} {tipo} {linha}".upper()
     if "VRF" in texto or "MULTI" in texto:
-        return {"sh_min": 3, "sh_max": 8, "sr_min": 5, "sr_max": 12, "dt_min": 10}
-    return {"sh_min": 5, "sh_max": 12, "sr_min": 3, "sr_max": 10, "dt_min": 8}
+        return {"sh_min": 3, "sh_max": 8, "sr_min": 5, "sr_max": 12}
+    return {"sh_min": 5, "sh_max": 12, "sr_min": 3, "sr_max": 10}
 
-# --- 4. INTERFACE ---
+# --- 4. TÍTULO E ABAS ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
 
 tab_cad, tab_ele, tab_termo, tab_diag = st.tabs([
     "📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico & Relatório"
 ])
 
+# --- ABA 1: IDENTIFICAÇÃO (FORMATO DE DATA BR) ---
 with tab_cad:
     st.subheader("👤 Dados do Cliente & Contato")
     c1, c2, c3 = st.columns(3)
@@ -48,7 +49,7 @@ with tab_cad:
     endereco = c2.text_input("Endereço Completo")
     whatsapp_input = c2.text_input("🟢 WhatsApp (com DDD)", value="21980264217")
     email_cli = c3.text_input("✉️ E-mail")
-    # DATA NO FORMATO BRASILEIRO NA INTERFACE
+    # Diretriz: Formato brasileiro na interface
     data_visita = st.date_input("Data da Visita", value=date.today(), format="DD/MM/YYYY")
 
     st.markdown("---")
@@ -67,12 +68,14 @@ with tab_cad:
     mod_cond = col_u2.text_input("Modelo Condensadora")
     serie_cond = col_u2.text_input("Série Condensadora")
 
+# --- ABA 2: ELÉTRICA ---
 with tab_ele:
     st.subheader("⚡ Parâmetros Elétricos")
     e1, e2 = st.columns(2)
     v_med = e1.number_input("Tensão (V)", value=220.0)
     a_med = e2.number_input("Corrente (A)", value=0.0)
 
+# --- ABA 3: TERMODINÂMICA ---
 with tab_termo:
     st.subheader("🌡️ Pressões e Temperaturas")
     t1, t2 = st.columns(2)
@@ -85,9 +88,7 @@ with tab_termo:
 
     tsat_evap = calcular_tsat(p_suc, fluido)
     tsat_cond = calcular_tsat(p_liq, fluido)
-    sh = t_suc - tsat_evap
-    sr = tsat_cond - t_liq
-    dt = t_ret - t_ins
+    sh, sr, dt = t_suc - tsat_evap, tsat_cond - t_liq, t_ret - t_ins
     
     st.markdown("---")
     r1, r2, r3, r4 = st.columns(4)
@@ -96,74 +97,78 @@ with tab_termo:
     r3.metric("Delta T Ar", f"{dt:.1f} °C")
     r4.metric("T. Sat. Evap", f"{tsat_evap:.1f} °C")
 
+# --- ABA 4: DIAGNÓSTICO E GERAÇÃO DE PDF ---
 with tab_diag:
-    st.subheader("🤖 Diagnóstico Final")
+    st.subheader("🤖 Diagnóstico e Relatório")
     ref = obter_ref_tecnica(fabricante, tecnologia, tipo_eq, linha)
-    if sh < ref["sh_min"]: veredito = "ALERTA: SH Baixo. Risco de golpe de líquido."
+    if sh < ref["sh_min"]: veredito = "ALERTA: SH Baixo. Risco de retorno de líquido."
     elif sh > ref["sh_max"]: veredito = "ALERTA: SH Alto. Possível falta de fluido ou restrição."
     else: veredito = "Sistema operando em equilíbrio técnico conforme fabricante."
     
-    st.info(f"Resultado: {veredito}")
-    obs_final = st.text_area("📝 Observações", height=120)
+    st.info(f"Veredito: {veredito}")
+    # Diretriz: Campo renomeado para apenas Observações
+    obs_final = st.text_area("📝 Observações", height=150)
 
-    # --- GERAÇÃO DO PDF MELHORADO ---
-    if st.download_button(label="📥 GERAR LAUDO TÉCNICO PDF", data=b"", file_name="temp.pdf"): pass 
-
+    st.markdown("---")
+    
+    # --- LÓGICA DO PDF (CORREÇÃO DE BUGS E LAYOUT) ---
     pdf = FPDF()
     pdf.add_page()
-    
-    # Cabeçalho
-    pdf.set_font("Arial", "B", 16)
-    pdf.cell(190, 10, "LAUDO TÉCNICO DE ENGENHARIA", ln=True, align="C")
-    pdf.set_font("Arial", "I", 10)
-    pdf.cell(190, 5, "MPN Engenharia & Diagnóstico", ln=True, align="C")
-    pdf.ln(10)
+    pdf.set_font("Arial", "B", 14)
+    pdf.cell(190, 10, "LAUDO TÉCNICO DE ENGENHARIA - MPN", ln=True, align="C")
+    pdf.ln(5)
 
-    # Tabela de Dados do Cliente e Data (BR)
-    pdf.set_fill_color(240, 240, 240)
+    # 1. Identificação
+    pdf.set_fill_color(230, 230, 230)
     pdf.set_font("Arial", "B", 10)
-    pdf.cell(190, 8, " 1. IDENTIFICAÇÃO", border=1, ln=True, fill=True)
+    pdf.cell(190, 8, " 1. IDENTIFICAÇÃO DO CLIENTE", border=1, ln=True, fill=True)
     pdf.set_font("Arial", "", 10)
+    # Diretriz: Data brasileira no PDF
+    data_br = data_visita.strftime('%d/%m/%Y')
     pdf.cell(130, 8, f" Cliente: {cliente}", border=1)
-    pdf.cell(60, 8, f" Data: {data_visita.strftime('%d/%m/%Y')}", border=1, ln=True)
+    pdf.cell(60, 8, f" Data: {data_br}", border=1, ln=True)
     pdf.cell(190, 8, f" Endereço: {endereco}", border=1, ln=True)
     pdf.cell(95, 8, f" CPF/CNPJ: {doc_cliente}", border=1)
     pdf.cell(95, 8, f" WhatsApp: {whatsapp_input}", border=1, ln=True)
 
-    # Dados Técnicos
-    pdf.ln(3)
+    # 2. Equipamento
+    pdf.ln(2)
     pdf.set_font("Arial", "B", 10)
     pdf.cell(190, 8, " 2. DADOS DO EQUIPAMENTO", border=1, ln=True, fill=True)
     pdf.set_font("Arial", "", 10)
-    pdf.cell(63, 8, f" Marca: {fabricante}", border=1); pdf.cell(63, 8, f" Modelo: {linha}", border=1); pdf.cell(64, 8, f" Cap: {cap_btu} BTU", border=1, ln=True)
+    pdf.cell(63, 8, f" Marca: {fabricante}", border=1); pdf.cell(63, 8, f" Linha: {linha}", border=1); pdf.cell(64, 8, f" Cap: {cap_btu} BTU", border=1, ln=True)
     pdf.cell(95, 8, f" Evap S/N: {serie_evap}", border=1); pdf.cell(95, 8, f" Cond S/N: {serie_cond}", border=1, ln=True)
-    pdf.cell(190, 8, f" Fluido: {fluido} | Tecnologia: {tecnologia}", border=1, ln=True)
+    pdf.cell(190, 8, f" Fluido: {fluido} | Tecnologia: {tecnologia} | Tipo: {tipo_eq}", border=1, ln=True)
 
-    # Parâmetros
-    pdf.ln(3)
+    # 3. Medições
+    pdf.ln(2)
     pdf.set_font("Arial", "B", 10)
-    pdf.cell(190, 8, " 3. ANÁLISE TÉCNICA (MEDIDAS)", border=1, ln=True, fill=True)
+    pdf.cell(190, 8, " 3. PARÂMETROS TÉCNICOS MEDIDOS", border=1, ln=True, fill=True)
     pdf.set_font("Arial", "", 10)
-    pdf.cell(47, 8, f" Tensão: {v_med}V", border=1); pdf.cell(47, 8, f" Corrente: {a_med}A", border=1); pdf.cell(48, 8, f" P. Suc: {p_suc} PSI", border=1); pdf.cell(48, 8, f" P. Liq: {p_liq} PSI", border=1, ln=True)
-    pdf.cell(47, 8, f" SH: {sh:.1f} K", border=1); pdf.cell(47, 8, f" SR: {sr:.1f} K", border=1); pdf.cell(48, 8, f" DT Ar: {dt:.1f} C", border=1); pdf.cell(48, 8, f" Tsat: {tsat_evap:.1f} C", border=1, ln=True)
+    pdf.cell(47, 8, f" Tensão: {v_med}V", border=1); pdf.cell(47, 8, f" Corrente: {a_med}A", border=1); pdf.cell(48, 8, f" P. Sucção: {p_suc} PSI", border=1); pdf.cell(48, 8, f" P. Líquido: {p_liq} PSI", border=1, ln=True)
+    pdf.cell(47, 8, f" SH: {sh:.1f} K", border=1); pdf.cell(47, 8, f" SR: {sr:.1f} K", border=1); pdf.cell(48, 8, f" Delta T Ar: {dt:.1f} C", border=1); pdf.cell(48, 8, f" Tsat: {tsat_evap:.1f} C", border=1, ln=True)
 
-    # Diagnóstico e Observações (CORRIGIDO PARA FICAR NO FINAL E ENQUADRADO)
-    pdf.ln(3)
+    # 4. Veredito e Observações (Diretriz: Último campo, enquadrado à esquerda)
+    pdf.ln(2)
     pdf.set_font("Arial", "B", 10)
-    pdf.cell(190, 8, " 4. DIAGNÓSTICO E PARECER", border=1, ln=True, fill=True)
+    pdf.cell(190, 8, " 4. DIAGNÓSTICO E OBSERVAÇÕES", border=1, ln=True, fill=True)
     pdf.set_font("Arial", "B", 10)
     pdf.multi_cell(190, 8, f" Veredito: {veredito}", border=1, align="L")
-    pdf.ln(2)
-    pdf.set_font("Arial", "B", 10); pdf.cell(190, 8, " OBSERVAÇÕES:", ln=True)
     pdf.set_font("Arial", "", 10)
-    pdf.multi_cell(190, 7, f" {obs_final}", border=1, align="L")
+    # multi_cell com 190mm garante que o texto não saia da página A4
+    pdf.multi_cell(190, 8, f" Observações: {obs_final}", border=1, align="L")
 
-    # Assinatura
+    # Rodapé
     pdf.ln(10)
     pdf.set_font("Arial", "B", 10)
     pdf.cell(190, 5, "MARCOS ALEXANDRE ALMEIDA DO NASCIMENTO", ln=True, align="C")
     pdf.cell(190, 5, "CNPJ: 51.274.762/0001-17", ln=True, align="C")
 
-    # Gerar o arquivo para download
-    pdf_output = pdf.output()
-    st.download_button(label="📥 BAIXAR RELATÓRIO PDF", data=bytes(pdf_output), file_name=f"Laudo_{cliente}.pdf", mime="application/pdf")
+    # Botão de Download (Correção de Bug do fpdf2/Streamlit Cloud)
+    pdf_bytes = pdf.output()
+    st.download_button(
+        label="📥 BAIXAR LAUDO TÉCNICO PDF", 
+        data=bytes(pdf_bytes), 
+        file_name=f"Laudo_{cliente}.pdf", 
+        mime="application/pdf"
+    )
