@@ -44,13 +44,13 @@ with tab_cad:
     doc_cliente = c1.text_input("CPF / CNPJ")
     endereco = c2.text_input("Endereço Completo")
     
-    # WhatsApp e Data da Visita lado a lado na coluna 2 e 3
     whatsapp_input = c3.text_input("🟢 WhatsApp (com DDD)", value="21980264217")
     data_visita = c3.date_input("Data da Visita", value=date.today(), format="DD/MM/YYYY")
     email_cli = c2.text_input("✉️ E-mail")
 
     st.markdown("---")
-    st.subheader("⚙️ Dados Técnicos de Placa")
+    # ALTERAÇÃO SOLICITADA: "Dados Técnicos de Placa" para "Dados Técnicos"
+    st.subheader("⚙️ Dados Técnicos")
     d1, d2, d3 = st.columns(3)
     fabricante = d1.text_input("Fabricante (Marca)")
     linha = d1.text_input("Linha (Ex: Artcool, WindFree)")
@@ -108,7 +108,7 @@ with tab_diag:
     pdf.set_font("helvetica", "B", 12); pdf.set_fill_color(230, 230, 230)
     pdf.cell(190, 10, "LAUDO TECNICO DE DIAGNOSTICO - MPN", border=1, ln=True, align="C", fill=True)
     
-    # DADOS CLIENTE (DATA BR)
+    # DADOS CLIENTE
     pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " INFORMAÇÕES DO CLIENTE", border="LR", ln=True, fill=True)
     pdf.set_font("helvetica", "", 8)
     data_formatada = data_visita.strftime('%d/%m/%Y')
@@ -133,7 +133,7 @@ with tab_diag:
     pdf.set_font("helvetica", "B", 8)
     pdf.multi_cell(190, 7, f" Veredito: {veredito}", border=1, align="L")
 
-    # OBSERVAÇÕES (ÚLTIMO E ENQUADRADO)
+    # OBSERVAÇÕES
     pdf.ln(2); pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " OBSERVACOES", border="LR", ln=True, fill=True)
     pdf.set_font("helvetica", "", 8)
     pdf.multi_cell(190, 7, f" {obs_final}", border=1, align="L")
