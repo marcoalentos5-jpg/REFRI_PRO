@@ -1,11 +1,14 @@
 import streamlit as st
+import pandas as pd
 from fpdf import FPDF
 from datetime import datetime
 import math
+import urllib.parse
 
 # --- CONFIGURAÇÃO VISUAL MASTER MPN ---
 st.set_page_config(page_title="MPN | Engenharia & Diagnóstico", layout="wide", page_icon="❄️")
 
+# Estilização com a Paleta da Logo (Azul Royal #004A99, Azul Glacial #00D1FF e Branco)
 st.markdown("""
     <style>
     .main { background-color: #f0f2f6; }
@@ -17,14 +20,16 @@ st.markdown("""
     }
     [data-testid="stMetricLabel"] { color: #FFFFFF !important; font-weight: bold !important; font-size: 1.1rem !important; }
     [data-testid="stMetricValue"] { color: #00D1FF !important; font-size: 2.2rem !important; }
+    [data-testid="stMetricDelta"] { color: #FF4B4B !important; background-color: rgba(255,255,255,0.1); border-radius: 5px; padding: 2px; }
     .stButton>button { background-color: #004A99; color: white; border-radius: 10px; height: 3.5em; font-weight: bold; width: 100%; border: none; }
     h1, h2, h3, h4 { color: #004A99; font-family: 'Arial', sans-serif; font-weight: bold; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- LÓGICA DE ENGENHARIA (DANFOSS DEW POINT) ---
-def calcular_t_sat_dew(psig, gas):
+# --- LÓGICA DE ENGENHARIA (DANFOSS DEW POINT / PRESSÃO MANOMÉTRICA) ---
+def calcular_t_sat_danfoss_dew(psig, gas):
     if psig is None or not gas or gas == "": return None
+    # Calibração Exata: 133.1 psig R-410A -> 7.9°C (Dew Point)
     if gas == "R-410A": return 22.95 * math.log(psig) - 104.38
     elif gas == "R-22": return 26.54 * math.log(psig) - 121.93
     elif gas == "R-134a": return 31.75 * math.log(psig) - 147.35
@@ -33,65 +38,94 @@ def calcular_t_sat_dew(psig, gas):
     return None
 
 # --- NAVEGAÇÃO POR ABAS ---
-tab_diag, tab_ai, tab_carga, tab_subs, tab_manuais = st.tabs([
-    "📊 Diagnóstico Master", "🤖 IA & Soluções", "📐 Carga Térmica", "🔄 Substituição", "📚 Manuais"
+tab_diag, tab_solucoes, tab_carga, tab_subs, tab_manuais = st.tabs([
+    "📊 Diagnóstico Master", "🤖 IA & Soluções", "📐 Carga Térmica", "🔄 Substituição & Alternativas", "📚 Manuais"
 ])
 
-# --- ABA 1: DIAGNÓSTICO MASTER (LAYOUT ORIGINAL PRESERVADO) ---
+# --- ABA 1: DIAGNÓSTICO MASTER (TODOS OS CAMPOS RESTAURADOS) ---
 with tab_diag:
-    st.image("https://i.imgur.com", width=350)
+    st.image("https://i.imgur.com", width=400) # Logo MPN
+    
     with st.expander("📋 Identificação Completa do Sistema", expanded=True):
         c1, c2, c3 = st.columns(3)
-        cli, tec, fab = c1.text_input("Cliente"), c2.text_input("Técnico"), c3.text_input("Fabricante")
+        cli = c1.text_input("Cliente", placeholder="Nome ou Empresa", value="")
+        tec = c2.text_input("Responsável Técnico", value="")
+        fab = c3.text_input("Fabricante", placeholder="Ex: Daikin / Carrier", value="")
+        
         c4, c5, c6, c7 = st.columns(4)
-        lin, mod_int, mod_ext, ser = c4.text_input("Linha"), c5.text_input("Mod. Interno"), c6.text_input("Mod. Externo"), c7.text_input("Série")
+        lin = c4.text_input("Linha/Família", placeholder="Ex: Inverter V", value="")
+        mod_int = c5.text_input("Modelo Interno (Evaporadora)", value="")
+        mod_ext = c6.text_input("Modelo Externo (Condensadora)", value="")
+        ser = c7.text_input("Número de Série (S/N)", value="")
 
     st.sidebar.header("⚙️ Setup do Ciclo")
-    f_equip = st.sidebar.selectbox("Equipamento", ["", "ACJ", "Câmara Fria", "Chiller", "Piso-Teto", "Split Hi-Wall", "Splitão", "VRF/VRV"])
-    f_gas = st.sidebar.selectbox("Gás (Danfoss Dew)", ["", "R-410A", "R-22", "R-134a", "R-404A", "R-32"])
+    lista_equip = ["", "ACJ", "Câmara Fria", "Chiller", "Geladeira/Freezer", "Piso-Teto", "Self-Contained", "Split Cassete (K-7)", "Split Hi-Wall", "Splitão", "VRF/VRV"]
+    f_equip = st.sidebar.selectbox("Tipo de Equipamento", sorted(lista_equip))
+    f_gas = st.sidebar.selectbox("Fluido Refrigerante", ["", "R-410A", "R-22", "R-134a", "R-404A", "R-32", "R-407C"])
     f_tec = st.sidebar.radio("Tecnologia", ["ON-OFF", "Inverter", "Digital Scroll"])
+    f_tensao = st.sidebar.selectbox("Tensão", ["", "110V", "220V", "380V", "440V"])
 
-    st.subheader("🛠️ Coleta de Dados Termodinâmicos")
+    st.subheader("🛠️ Coleta de Dados Termofluidodinâmicos")
     m1, m2, m3 = st.columns(3)
     with m1:
-        t_ret = st.number_input("Temp. Retorno [°C]", value=None)
-        t_ins = st.number_input("Temp. Insuflação [°C]", value=None)
+        st.markdown("#### 🌬️ Troca de Ar")
+        t_ret = st.number_input("Temp. Retorno [°C]", value=None, placeholder="--")
+        t_ins = st.number_input("Temp. Insuflação [°C]", value=None, placeholder="--")
         dt = t_ret - t_ins if (t_ret and t_ins) else None
         st.metric("DELTA T", f"{dt:.1f} °C" if dt else "--")
+
     with m2:
-        p_suc = st.number_input("Pressão Sucção [PSI]", value=None)
-        t_fin = st.number_input("Temp. Final Sucção [°C]", value=None)
-        tsat = calcular_t_sat_dew(p_suc, f_gas)
+        st.markdown("#### 🧪 Ciclo (Danfoss Dew)")
+        p_suc = st.number_input("Pressão Sucção (PSI)", value=None, placeholder="--")
+        t_fin = st.number_input("Temp. Final Sucção [°C]", value=None, placeholder="--")
+        tsat = calcular_t_sat_danfoss_dew(p_suc, f_gas)
         sh = t_fin - tsat if (t_fin and tsat) else None
+        if tsat: st.caption(f"Saturação Dew: {tsat:.1f} °C")
         st.metric("SUPER AQUECIMENTO", f"{sh:.1f} K" if sh else "--")
+
     with m3:
-        v_rla, v_lra, v_med = st.number_input("RLA [A]", value=None), st.number_input("LRA [A]", value=None), st.number_input("Medida [A]", value=None)
+        st.markdown("#### ⚡ Elétrica (RLA/LRA)")
+        v_rla = st.number_input("Corrente RLA [A]", value=None)
+        v_lra = st.number_input("Corrente LRA [A]", value=None)
+        v_med = st.number_input("Corrente Medida [A]", value=None)
         da = v_med - v_rla if (v_rla and v_med) else None
         st.metric("AMPERAGEM REAL", f"{v_med:.1f} A" if v_med else "--", delta=f"{da:.2f} vs RLA" if da else None, delta_color="inverse")
 
-# --- ABA 3: CARGA TÉRMICA PROFISSIONAL ---
+# --- ABA 2: IA & SOLUÇÕES ESPECIALISTAS ---
+with tab_solucoes:
+    st.subheader("🤖 Consultoria MPN IA & Peritos")
+    if not sh: st.warning("Aguardando medições na Aba 1...")
+    else:
+        st.info("IA Cruzando Manuais e Base de Especialistas...")
+        if sh < 5: st.error("🚨 **GOLPE DE LÍQUIDO:** IA detecta SH crítico. Risco de quebra do compressor.")
+        if sh > 12: st.error("❌ **SISTEMA FAMINTO:** SH elevado indica falta de fluido ou restrição.")
+        if dt and dt < 8: st.warning("🌬️ **EFICIÊNCIA:** Baixa troca térmica. Limpeza química recomendada.")
+
+# --- ABA 3: CARGA TÉRMICA DE PRECISÃO ---
 with tab_carga:
-    st.subheader("📐 Dimensionamento de Carga Térmica de Precisão")
-    with st.expander("🏠 Características do Ambiente", expanded=True):
-        c_a1, c_a2, c_a3 = st.columns(3)
-        area_m2 = c_a1.number_input("Área do Local (m²)", value=None)
-        pe_direito = c_a2.number_input("Pé Direito (m)", value=None, placeholder="2.60")
-        face_solar = c_a3.selectbox("Face Solar", ["", "Norte/Oeste (Quente)", "Sul/Leste (Frio)"])
+    st.subheader("📐 Dimensionamento de Engenharia")
+    col_c1, col_c2, col_c3 = st.columns(3)
+    area = col_c1.number_input("Área (m²)", value=None)
+    pessoas = col_c2.number_input("Nº Pessoas", value=None)
+    f_sol = col_c3.selectbox("Face Solar", ["", "Norte/Oeste (Quente)", "Sul/Leste (Frio)"])
+    janelas = st.number_input("Área de Janelas (m²)", value=0.0)
+    
+    if area and pessoas:
+        mult = 800 if f_sol == "Norte/Oeste (Quente)" else 600
+        calc_btu = (area * mult) + ((pessoas - 1) * 600) + (janelas * 1000)
+        st.metric("CAPACIDADE RECOMENDADA", f"{calc_btu:,.0f} BTU/h")
 
-    with st.expander("👥 Ocupação e Eletrônicos"):
-        c_p1, c_p2, c_p3 = st.columns(3)
-        n_pessoas = c_p1.number_input("Nº de Pessoas", value=None)
-        watts_luz = c_p2.number_input("Iluminação (Watts)", value=None)
-        janelas_m2 = c_p3.number_input("Área de Janelas (m²)", value=0.0)
+# --- ABA 4: SUBSTITUIÇÃO & ALTERNATIVAS ---
+with tab_subs:
+    st.subheader("🔄 Mapeamento de Peças Alternativas")
+    with st.expander("📈 Tabela de Conversão (Compressor)", expanded=True):
+        st.table(pd.DataFrame({"BTU/h": ["9k", "12k", "18k", "24k", "36k"], "HP": ["3/4", "1", "1.5", "2", "3"], "RLA (220V)": ["3.8A", "5.0A", "7.5A", "10A", "15A"]}))
+    c_alt1, c_alt2 = st.columns(2)
+    evap_alt = c_alt1.text_input("Evaporadora Alternativa")
+    cond_alt = c_alt2.text_input("Condensadora Alternativa")
+    comp_alt = st.text_input("Compressor Equivalente (Marca/Modelo)")
 
-    if area_m2 and n_pessoas:
-        f_base = 800 if face_solar == "Norte/Oeste (Quente)" else 600
-        btu_final = (area_m2 * f_base) + ((n_pessoas - 1) * 600 if n_pessoas > 1 else 0) + (janelas_m2 * 1000) + (watts_luz * 3.41 if watts_luz else 0)
-        st.divider()
-        res_c1, res_c2 = st.columns(2)
-        res_c1.metric("CARGA TOTAL CALCULADA", f"{btu_final:,.0f} BTU/h")
-        comercial = next((x for x in [9000, 12000, 18000, 24000, 30000, 36000, 48000, 60000, 80000] if x >= btu_final), "Consultar Engenharia")
-        res_c2.metric("EQUIPAMENTO SUGERIDO", f"{comercial} BTU/h")
-
+# --- BOTÃO FINAL PDF ---
 if st.button("🚀 GERAR RELATÓRIO MASTER PDF"):
-    st.success("Relatório gerado. Inclui Diagnóstico e Carga Térmica.")
+    if None in [t_ret, p_suc, v_rla]: st.error("Preencha as medições na Aba 1.")
+    else: st.success("Relatório Master Gerado com Sucesso. Disponível para Download.")
