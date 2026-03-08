@@ -25,7 +25,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. LÓGICA DE ENGENHARIA DE PRECISÃO (DANFOSS) ---
+# --- 2. LÓGICA DE ENGENHARIA DE PRECISÃO (DANFOSS DEW POINT) ---
 def calcular_t_sat_precisao(psig, gas):
     if psig is None or not gas or psig <= 0: return None
     try:
@@ -38,35 +38,44 @@ def calcular_t_sat_precisao(psig, gas):
     except: return None
     return None
 
-# --- 3. SIDEBAR (SETUP ÚNICO) ---
+# --- 3. SIDEBAR (SETUP & ELÉTRICA EM INTEIROS) ---
 st.sidebar.header("⚙️ Setup do Ciclo & Elétrica")
 f_equip = st.sidebar.selectbox("Equipamento", ["", "Split Hi-Wall", "Split Cassete", "Piso-Teto", "Chiller", "VRF/VRV", "Câmara Fria"])
 f_gas = st.sidebar.selectbox("Fluido Refrigerante", ["", "R-410A", "R-22", "R-134a", "R-404A"])
 f_tec = st.sidebar.radio("Tecnologia", ["ON-OFF", "Inverter", "Digital Scroll"])
 
 st.sidebar.markdown("---")
-st.sidebar.subheader("⚡ Tensão de Rede")
-v_trab_str = st.sidebar.selectbox("Tensão de Trabalho [V]", ["", "127", "220", "380", "440"])
+st.sidebar.subheader("⚡ Parâmetros Elétricos")
+v_trab_str = st.sidebar.selectbox("Tensão de Trabalho (Nominal) [V]", ["", "127", "220", "380", "440"])
+# Tensão medida como inteiro (sem zeros à esquerda e sem decimais)
 v_medida = st.sidebar.number_input("Tensão Medida [V]", min_value=0, step=1, format="%d")
 
 diff_tensao_v = 0
+variacao_v = 0.0
 if v_trab_str and v_medida > 0:
-    diff_tensao_v = v_medida - int(v_trab_str)
-st.sidebar.markdown(f"**Diferença:** `{diff_tensao_v} V`")
+    v_nominal = int(v_trab_str)
+    diff_tensao_v = v_medida - v_nominal
+    variacao_v = (diff_tensao_v / v_nominal) * 100
+st.sidebar.markdown(f"**Diferença de Tensão:** `{diff_tensao_v} V`")
 
-# --- 4. NAVEGAÇÃO POR ABAS (DEFINIÇÃO DAS ABAS) ---
+# --- 4. NAVEGAÇÃO POR ABAS ---
 tab_diag, tab_solucoes, tab_carga = st.tabs(["📊 Diagnóstico Master", "🤖 IA & Soluções", "📐 Carga Térmica VRF"])
 
 # --- ABA 1: DIAGNÓSTICO MASTER ---
 with tab_diag:
-    st.subheader("📋 Identificação e Corrente (RLA/LRA)")
+    st.subheader("📋 Identificação Completa do Sistema")
     with st.expander("Dados Cadastrais", expanded=True):
         c1, c2, c3 = st.columns(3)
-        cli = c1.text_input("Cliente")
-        tec = c2.text_input("Técnico")
-        ser = c3.text_input("S/N")
+        cli = c1.text_input("Cliente", placeholder="Nome/Empresa")
+        tec = c2.text_input("Responsável Técnico")
+        fab = c3.text_input("Fabricante")
+        
+        c4, c5, c6 = st.columns(3)
+        mod_int = c4.text_input("Modelo Evap")
+        mod_ext = c5.text_input("Modelo Cond")
+        ser = c6.text_input("S/N (Série)")
 
-    st.subheader("⚡ Análise Elétrica (Amperagem)")
+    st.subheader("⚡ Análise de Corrente (RLA/LRA)")
     e1, e2, e3, e4 = st.columns(4)
     v_rla = e1.number_input("Corrente RLA [A]", value=0.00, step=0.01, format="%.2f")
     v_lra = e2.number_input("Corrente LRA [A]", value=0.00, step=0.01, format="%.2f")
@@ -90,10 +99,6 @@ with tab_diag:
     t_tubo_liq = d3.number_input("Temp. Linha Líquido [°C]", value=30.00, format="%.2f")
     sr = tsat_cond - t_tubo_liq if tsat_cond else 0.00
     d4.metric("SUB-RESFRIAMENTO", f"{sr:.2f} K")
-    
-    t_ret = st.hidden = 24.0 # Fallback para o cálculo de Delta T no WhatsApp
-    t_ins = st.hidden = 12.0
-    dt = t_ret - t_ins
 
 # --- ABA 2: IA & SOLUÇÕES ---
 with tab_solucoes:
@@ -104,25 +109,28 @@ with tab_solucoes:
         c_ia1, c_ia2 = st.columns(2)
         with c_ia1:
             st.markdown("### ⚡ Elétrica")
-            if v_med_amp > v_rla: st.error(f"🚨 SOBRECARGA: {((v_med_amp-v_rla)/v_rla)*100:.1f}% acima do RLA.")
-            if v_lra > 0 and v_med_amp > (v_lra * 0.9): st.error("🚨 ROTOR BLOQUEADO detectar.")
+            if v_med_amp > v_rla: st.error(f"🚨 SOBRECARGA: Corrente {((v_med_amp-v_rla)/v_rla)*100:.1f}% acima do RLA.")
+            if v_lra > 0 and v_med_amp > (v_lra * 0.9): st.error("🚨 ROTOR BLOQUEADO: Corrente próxima ao LRA.")
         with c_ia2:
             st.markdown("### 🌡️ Ciclo")
-            if sh < 5: st.error("❌ SH BAIXO: Risco de líquido.")
-            if sh > 12: st.warning("❌ SH ALTO: Falta de fluido.")
+            if sh < 5: st.error("❌ SH BAIXO: Risco de golpe de líquido.")
+            if sh > 12: st.warning("❌ SH ALTO: Falta de fluido ou restrição.")
+            if sr > 10: st.error("❌ SR ALTO: Excesso de fluido refrigerante.")
 
 # --- ABA 3: CARGA TÉRMICA VRF ---
 with tab_carga:
-    st.subheader("📐 Carga Térmica VRF")
-    area_vrf = st.number_input("Área (m²)", min_value=0.00, format="%.2f")
-    f_simult = st.slider("Simultaneidade (%)", 50, 130, 100)
+    st.subheader("📐 Dimensionamento VRF / Engenharia")
+    col_v1, col_v2 = st.columns(2)
+    area_vrf = col_v1.number_input("Área Útil (m²)", min_value=0.00, format="%.2f")
+    f_simult = col_v2.slider("Fator de Simultaneidade VRF (%)", 50, 130, 100)
     total_btu = (area_vrf * 800) * (f_simult / 100) if area_vrf > 0 else 0
-    st.metric("TOTAL ESTIMADO", f"{total_btu:.2f} BTU/h")
+    st.metric("TOTAL ESTIMADO (BTU/h)", f"{total_btu:,.2f}")
 
 # --- 5. EXPORTAÇÃO (PDF & WHATSAPP) ---
 st.markdown("---")
-col_pdf, col_wa = st.columns(2)
-if col_pdf.button("🚀 GERAR RELATÓRIO MASTER PDF"):
+col_p, col_w = st.columns(2)
+
+if col_p.button("🚀 GERAR RELATÓRIO MASTER PDF"):
     if not cli: st.error("Informe o cliente.")
     else:
         pdf = FPDF()
@@ -132,8 +140,9 @@ if col_pdf.button("🚀 GERAR RELATÓRIO MASTER PDF"):
         pdf.cell(0, 15, 'LAUDO TÉCNICO MPN REFRIGERAÇÃO', 0, 1, 'C')
         pdf.ln(10); pdf.set_text_color(0, 0, 0); pdf.set_font('Arial', '', 10)
         pdf.cell(0, 8, f"CLIENTE: {cli} | TÉCNICO: {tec}", ln=True)
-        pdf.cell(0, 8, f"ELÉTRICA: Tensão {v_medida}V | RLA {v_rla}A | Dif {diff_amp:.2f}A", ln=True)
-        st.download_button("📥 Baixar PDF", pdf.output(dest='S').encode('latin-1'), f"Laudo_{cli}.pdf")
+        pdf.cell(0, 8, f"ELÉTRICA: Tensão Medida {v_medida}V | Diferença {diff_tensao_v}V | Corrente {v_med_amp}A", ln=True)
+        pdf.cell(0, 8, f"TÉRMICA: SH {sh:.2f}K | SR {sr:.2f}K | P.Suc {p_suc} PSIG", ln=True)
+        st.download_button("📥 Baixar PDF", pdf.output(dest='S').encode('latin-1'), f"Laudo_{cli}.pdf", "application/pdf")
 
-texto_wa = f"*MPN REFRIGERAÇÃO*\n👤 *Cliente:* {cli}\n🌡️ *SH:* {sh:.2f}K | *SR:* {sr:.2f}K\n⚡ *Tensão:* {v_medida}V"
-col_wa.link_button("📲 ENVIAR WHATSAPP", f"https://wa.me{urllib.parse.quote(texto_wa)}")
+texto_wa = f"*MPN REFRIGERAÇÃO - LAUDO*\n👤 *Cliente:* {cli}\n⚡ *Tensão:* {v_medida}V (Dif: {diff_tensao_v}V)\n🌡️ *SH:* {sh:.2f}K | *SR:* {sr:.2f}K\n✅ *Status:* Analisado por {tec}"
+col_w.link_button("📲 ENVIAR WHATSAPP", f"https://wa.me{urllib.parse.quote(texto_wa)}")
