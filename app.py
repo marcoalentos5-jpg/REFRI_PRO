@@ -25,7 +25,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. LÓGICA TÉCNICA (Cálculo Termodinâmico) ---
+# --- 3. LÓGICA TÉCNICA (P x T) ---
 def calcular_tsat(psig, gas):
     if psig <= 0: return 0
     tabelas = {
@@ -41,19 +41,19 @@ tab_cad, tab_ele, tab_termo, tab_diag = st.tabs([
     "📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico & Relatório"
 ])
 
-# --- ABA 1: IDENTIFICAÇÃO (RESTAURADA E COMPLETA) ---
+# --- ABA 1: IDENTIFICAÇÃO ---
 with tab_cad:
     st.subheader("👤 Dados do Cliente & Contato")
     c1, c2, c3 = st.columns(3)
     cliente = c1.text_input("Nome do Cliente / Empresa")
     doc_cliente = c1.text_input("CPF / CNPJ do Cliente")
     endereco = c2.text_input("Endereço Completo")
-    whatsapp_input = c2.text_input("🟢 WhatsApp (Ex: 21980264217)", value="21980264217")
+    whatsapp_input = c2.text_input("🟢 WhatsApp (com DDD)", value="5521980264217")
     email_cli = c3.text_input("✉️ E-mail")
     data_visita = c3.date_input("Data da Visita", value=date.today())
 
     st.markdown("---")
-    st.subheader("⚙️ Dados Técnicos de Placa (Gerais)")
+    st.subheader("⚙️ Dados Técnicos de Placa")
     d1, d2, d3 = st.columns(3)
     fabricante = d1.text_input("Fabricante (Marca)")
     cap_btu = d2.text_input("Capacidade (BTUs/h)")
@@ -63,12 +63,12 @@ with tab_cad:
     st.subheader("📦 Detalhamento das Unidades")
     col_evap, col_cond = st.columns(2)
     with col_evap:
-        st.markdown("**🔹 UNIDADE INTERNA (EVAPORADORA)**")
+        st.markdown("**🔹 UNIDADE INTERNA**")
         mod_evap = st.text_input("Modelo da Evaporadora")
         serie_evap = st.text_input("Nº de Série da Evaporadora")
         tag_loc = st.text_input("Ambiente / TAG")
     with col_cond:
-        st.markdown("**🔸 UNIDADE EXTERNA (CONDENSADORA)**")
+        st.markdown("**🔸 UNIDADE EXTERNA**")
         mod_cond = st.text_input("Modelo da Condensadora")
         serie_cond = st.text_input("Nº de Série da Condensadora")
         tipo_eq = st.selectbox("Tipo de Sistema", ["ACJ", "Cassete", "Câmara Fria", "Chiller", "Fancoil", "Multi-Split", "Piso-Teto", "Self-Contained", "Split Hi-Wall", "VRF/VRV"])
@@ -109,33 +109,30 @@ with tab_diag:
     elif sh > 12: veredito = "ALERTA: Superaquecimento Alto (Falta de Gás)."
     
     st.warning(f"Parecer Técnico: {veredito}")
-    obs_final = st.text_area("📝 Recomendações e Observações Técnicas")
+    obs_final = st.text_area("📝 Recomendações Técnicas")
 
     st.markdown("---")
     col_wa, col_pdf = st.columns(2)
 
     with col_wa:
-        # --- WHATSAPP (Abertura Direta para evitar about:blank) ---
         num_clean = "".join(filter(str.isdigit, whatsapp_input))
         if not num_clean.startswith("55"): num_clean = "55" + num_clean
-        msg_wa = f"❄️ *LAUDO TÉCNICO MPN*\n\n*Cliente:* {cliente}\n*Equipamento:* {fabricante}\n*Veredito:* {veredito}\n\n*Técnico:* {tecnico_nome}\n*{doc_tecnico}*"
-        url_wa = f"https://api.whatsapp.com{num_clean}&text={urllib.parse.quote(msg_wa)}"
+        msg_wa = f"❄️ *LAUDO TÉCNICO MPN*\n\n*Cliente:* {cliente}\n*Veredito:* {veredito}\n\n*Técnico:* {tecnico_nome}\n*{doc_tecnico}*"
+        url_wa = f"https://web.whatsapp.com{num_clean}&text={urllib.parse.quote(msg_wa)}"
         
-        # Uso de Link Direto com HTML para burlar bloqueadores de Popup
         st.markdown(f'''
             <a href="{url_wa}" target="_blank" style="text-decoration:none;">
                 <button style="width:100%; background-color:#25D366; color:white; border:none; padding:15px; border-radius:8px; font-weight:bold; cursor:pointer;">
-                    📲 ENVIAR VIA WHATSAPP
+                    📲 ENVIAR VIA WHATSAPP WEB
                 </button>
             </a>
         ''', unsafe_allow_html=True)
 
     with col_pdf:
-        # --- GERAÇÃO DO PDF (Organizado e Completo) ---
         pdf = FPDF()
         pdf.add_page()
         
-        # Logo com conversão PIL para segurança
+        # LOGO
         if os.path.exists("logo.png"):
             try:
                 img = Image.open("logo.png").convert("RGB")
@@ -144,40 +141,48 @@ with tab_diag:
                 pdf.ln(20)
             except: pass
         
-        # Título do Relatório
         pdf.set_font("Arial", "B", 13); pdf.set_fill_color(235, 235, 235)
         pdf.cell(190, 10, "RELATÓRIO DE DIAGNÓSTICO TÉCNICO", border=1, ln=True, align="C", fill=True)
         
-        # Blocos de Dados (Organizados)
+        # CLIENTE
         pdf.set_font("Arial", "B", 8); pdf.cell(190, 6, " INFORMAÇÕES DO CLIENTE", border="LR", ln=True, fill=True)
         pdf.set_font("Arial", "", 8)
-        pdf.cell(130, 6, f" Cliente: {cliente}", border=1); pdf.cell(60, 6, f" Doc: {doc_cliente}", border=1, ln=True)
-        pdf.cell(190, 6, f" Endereco: {endereco}", border=1, ln=True)
+        pdf.cell(130, 7, f" Cliente: {cliente}", border=1); pdf.cell(60, 7, f" Doc: {doc_cliente}", border=1, ln=True)
+        pdf.cell(190, 7, f" Endereco: {endereco}", border=1, ln=True)
 
+        # EQUIPAMENTO
         pdf.ln(2); pdf.set_font("Arial", "B", 8); pdf.cell(190, 6, " DADOS DO EQUIPAMENTO", border="LR", ln=True, fill=True)
         pdf.set_font("Arial", "", 8)
         pdf.cell(63, 6, f" Marca: {fabricante}", border=1); pdf.cell(63, 6, f" Cap: {cap_btu}", border=1); pdf.cell(64, 6, f" Gas: {fluido}", border=1, ln=True)
-        pdf.cell(95, 6, f" S/N Evap: {serie_evap}", border=1); pdf.cell(95, 6, f" TAG: {tag_loc}", border=1, ln=True)
+        pdf.cell(95, 6, f" Mod. Evap: {mod_evap}", border=1); pdf.cell(95, 6, f" S/N: {serie_evap}", border=1, ln=True)
+        pdf.cell(95, 6, f" Mod. Cond: {mod_cond}", border=1); pdf.cell(95, 6, f" TAG: {tag_loc}", border=1, ln=True)
 
-        # Seção Elétrica e Termo (Incluídas no PDF)
+        # PARÂMETROS TÉCNICOS
         pdf.ln(2); pdf.set_font("Arial", "B", 8); pdf.cell(190, 6, " PARÂMETROS ELÉTRICOS E TERMODINÂMICOS", border="LR", ln=True, fill=True)
         pdf.set_font("Arial", "", 8)
         pdf.cell(47, 6, f" Tensao: {v_med}V", border=1); pdf.cell(47, 6, f" Corrente: {a_med}A", border=1)
         pdf.cell(48, 6, f" P. Suc: {p_suc} PSI", border=1); pdf.cell(48, 6, f" T. Suc: {t_suc} C", border=1, ln=True)
         pdf.cell(63, 6, f" Superaq. (SH): {sh:.1f} K", border=1); pdf.cell(63, 6, f" Sub-resf. (SR): {sr:.1f} K", border=1); pdf.cell(64, 6, f" Delta T Ar: {dt:.1f} C", border=1, ln=True)
 
-        # Diagnóstico Final
+        # PARECER
         pdf.ln(2); pdf.set_font("Arial", "B", 8); pdf.cell(190, 6, " PARECER TÉCNICO", border="LR", ln=True, fill=True)
         pdf.set_font("Arial", "B", 8); pdf.multi_cell(190, 6, f" Veredito: {veredito}", border=1)
-        pdf.set_font("Arial", "", 8); pdf.multi_cell(190, 6, f" Obs/Recomendacoes: {obs_final}", border=1)
+        pdf.set_font("Arial", "", 8); pdf.multi_cell(190, 6, f" Recomendacoes: {obs_final}", border=1)
 
-        # --- RODAPÉ (Letra de Imprensa, Sem Caligrafia) ---
+        # RODAPÉ (Letra de Imprensa, Sem Caligrafia)
         pdf.ln(12); pdf.cell(60); pdf.cell(70, 0, "", border="T", ln=True)
         pdf.set_font("Arial", "B", 10)
         pdf.cell(190, 6, tecnico_nome.upper(), ln=True, align="C")
         pdf.set_font("Arial", "", 9)
         pdf.cell(190, 5, doc_tecnico, ln=True, align="C")
-        pdf.set_font("Arial", "I", 7); pdf.cell(190, 5, "TECNICO RESPONSAVEL", ln=True, align="C")
 
-        pdf_bytes = pdf.output(dest='S').encode('latin-1')
-        st.download_button(label="📄 BAIXAR LAUDO PDF", data=pdf_bytes, file_name=f"Laudo_MPN_{cliente}.pdf", mime="application/pdf", use_container_width=True)
+        # --- GERAÇÃO DO PDF EM MEMÓRIA (Ajustado para fpdf2) ---
+        pdf_output = pdf.output()
+        
+        st.download_button(
+            label="📄 BAIXAR LAUDO TÉCNICO", 
+            data=pdf_output, 
+            file_name=f"Laudo_MPN_{cliente}.pdf", 
+            mime="application/pdf", 
+            use_container_width=True
+        )
