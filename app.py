@@ -32,11 +32,11 @@ def calcular_t_sat_danfoss_dew(psig, gas):
         if gas == "R-410A":
             return 0.23076923 * psig - 22.81538462
         elif gas == "R-22":
-            return 0.2854 * psig - 25.12 # Aproximação para R-22
+            return 0.2854 * psig - 25.12
         elif gas == "R-134a":
-            return 0.521 * psig - 38.54 # Aproximação para R-134a
+            return 0.521 * psig - 38.54
         elif gas == "R-404A":
-            return 0.2105 * psig - 16.52 # Aproximação para R-404A
+            return 0.2105 * psig - 16.52
     except:
         return None
     return None
@@ -50,17 +50,27 @@ tab_diag, tab_solucoes, tab_carga, tab_subs, tab_manuais = st.tabs([
 with tab_diag:
     st.subheader("📋 Identificação Completa do Sistema")
     
-    with st.expander("Dados do Cliente e Equipamento", expanded=True):
+    with st.expander("Dados do Cliente, Equipamento e Elétrica", expanded=True):
+        # Linha 1: Identificação Básica
         c1, c2, c3 = st.columns(3)
         cli = c1.text_input("Cliente", placeholder="Nome ou Empresa")
         tec = c2.text_input("Responsável Técnico")
         fab = c3.text_input("Fabricante", placeholder="Ex: Daikin / Carrier")
         
+        # Linha 2: Modelos e Série
         c4, c5, c6, c7 = st.columns(4)
         lin = c4.text_input("Linha/Família", placeholder="Ex: Inverter V")
         mod_int = c5.text_input("Modelo Interno (Evaporadora)")
         mod_ext = c6.text_input("Modelo Externo (Condensadora)")
         ser = c7.text_input("Número de Série (S/N)")
+
+        # Linha 3: Novos Campos de Tensão (Lado Esquerdo)
+        c8, c9, c10, c11 = st.columns(4)
+        v_trab = c8.selectbox("Tensão de Trabalho (Nominal)", ["", "127V", "220V", "380V", "440V"])
+        v_medida = c9.number_input("Tensão Medida [V]", value=0.00, step=0.01, format="%.2f")
+        # Espaços vazios para manter o alinhamento à esquerda
+        c10.write("") 
+        c11.write("")
 
     st.sidebar.header("⚙️ Setup do Ciclo")
     lista_equip = ["", "ACJ", "Câmara Fria", "Chiller", "Geladeira/Freezer", "Piso-Teto", "Self-Contained", "Split Cassete (K-7)", "Split Hi-Wall", "Splitão", "VRF/VRV"]
@@ -94,7 +104,7 @@ with tab_diag:
         st.metric("SUPER AQUECIMENTO", f"{sh:.2f} K")
 
     with m4:
-        st.markdown("#### ⚡ Elétrica")
+        st.markdown("#### ⚡ Corrente (Amperagem)")
         v_rla = st.number_input("Corrente RLA [A]", value=1.00, step=0.01, format="%.2f")
         v_med = st.number_input("Corrente Medida [A]", value=0.00, step=0.01, format="%.2f")
         st.metric("AMPERAGEM REAL", f"{v_med:.2f} A")
@@ -102,19 +112,23 @@ with tab_diag:
 # --- ABA 2: IA & SOLUÇÕES ---
 with tab_solucoes:
     st.subheader("🤖 Consultoria MPN IA")
+    if v_medida > 0:
+        if v_trab == "220V" and (v_medida < 198 or v_medida > 242):
+            st.error(f"🚨 **ALERTA ELÉTRICO:** Tensão medida ({v_medida}V) fora da tolerância de 10% para 220V.")
+    
     if tsat is None or p_suc == 0:
         st.warning("Aguardando dados de pressão na Aba 1...")
     else:
         if sh < 5.0:
-            st.error("🚨 **ALERTA:** Superaquecimento Baixo. Risco de golpe de líquido no compressor.")
+            st.error("🚨 **ALERTA TÉRMICO:** Superaquecimento Baixo. Risco de golpe de líquido.")
         elif sh > 12.0:
-            st.warning("⚠️ **ALERTA:** Superaquecimento Alto. Possível falta de fluido ou restrição.")
+            st.warning("⚠️ **ALERTA TÉRMICO:** Superaquecimento Alto. Possível falta de fluido.")
         else:
-            st.success("✅ Sistema operando dentro da faixa ideal de eficiência.")
+            st.success("✅ Ciclo e Elétrica operando dentro da normalidade.")
 
 # --- BOTÃO FINAL PDF ---
 if st.button("🚀 GERAR RELATÓRIO MASTER PDF"):
     if not cli:
-        st.error("Por favor, preencha o nome do cliente antes de gerar o PDF.")
+        st.error("Preencha o nome do cliente.")
     else:
-        st.success(f"Relatório gerado com sucesso para {cli}!")
+        st.success(f"Relatório de {cli} gerado com sucesso!")
