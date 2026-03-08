@@ -181,5 +181,11 @@ with tab_diag:
         pdf.cell(190, 5, tecnico_nome, ln=True, align="C")
         pdf.cell(190, 5, doc_tecnico, ln=True, align="C")
 
-        pdf_output = pdf.output(dest='S').encode('latin1')
-        st.download_button(label="📥 BAIXAR RELATÓRIO PDF", data=pdf_output, file_name=f"Laudo_{cliente}.pdf", mime="application/pdf")
+                # Código corrigido para Streamlit Cloud
+        pdf_output = pdf.output()
+        st.download_button(
+            label="📥 BAIXAR RELATÓRIO PDF", 
+            data=bytes(pdf_output), 
+            file_name=f"Laudo_{cliente}.pdf", 
+            mime="application/pdf"
+        )
