@@ -8,13 +8,16 @@ import io
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="MPN | Engenharia", layout="wide", page_icon="❄️")
 
-# --- 2. ESTILIZAÇÃO MPN ---
+# --- 2. ESTILIZAÇÃO ORIGINAL MPN ---
 st.markdown("""
     <style>
     .main { background-color: #f8f9fa; }
-    div[data-testid="stMetric"] { background-color: #ffffff; border-radius: 10px; padding: 15px; border: 1px solid #dee2e6; }
+    div[data-testid="column"]:nth-of-type(1) div[data-testid="stMetric"] { background-color: #E3F2FD; border-radius: 10px; padding: 15px; border: 1px solid #BBDEFB; }
+    div[data-testid="column"]:nth-of-type(2) div[data-testid="stMetric"] { background-color: #E8F5E9; border-radius: 10px; padding: 15px; border: 1px solid #C8E6C9; }
+    div[data-testid="column"]:nth-of-type(3) div[data-testid="stMetric"] { background-color: #FFFDE7; border-radius: 10px; padding: 15px; border: 1px solid #FFF9C4; }
+    div[data-testid="column"]:nth-of-type(4) div[data-testid="stMetric"] { background-color: #E1F5FE; border-radius: 10px; padding: 15px; border: 1px solid #B3E5FC; }
     .stTabs [aria-selected="true"] { background-color: #004A99 !important; color: white !important; }
-    .stButton>button { width: 100%; font-weight: bold; border-radius: 8px; height: 3.5em; background-color: #004A99; color: white; }
+    .stButton>button { width: 100%; font-weight: bold; border-radius: 8px; height: 3.5em; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -27,7 +30,7 @@ def calcular_tsat(psig, gas):
     }
     return tabelas.get(gas, 0)
 
-# --- 4. INTERFACE ---
+# --- 4. TÍTULO E ABAS ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
 
 tab_cad, tab_ele, tab_termo, tab_diag = st.tabs([
@@ -42,103 +45,106 @@ with tab_cad:
     endereco = c2.text_input("Endereço Completo")
     whatsapp_input = c2.text_input("🟢 WhatsApp (com DDD)", value="21980264217")
     email_cli = c3.text_input("✉️ E-mail")
-    # ORDEM 1: Formato de data brasileiro na interface
+    # ORDEM: Data Formato Brasileiro na interface
     data_visita = st.date_input("Data da Visita", value=date.today(), format="DD/MM/YYYY")
 
     st.markdown("---")
-    st.subheader("⚙️ Dados do Equipamento")
+    st.subheader("⚙️ Dados Técnicos de Placa")
     d1, d2, d3 = st.columns(3)
-    fabricante = d1.text_input("Fabricante")
-    linha = d1.text_input("Linha")
-    tecnologia = d2.selectbox("Tecnologia", ["Inverter", "WindFree", "Scroll", "On-Off"])
-    tipo_eq = d2.selectbox("Tipo", ["Split Hi-Wall", "Cassete", "Piso-Teto", "VRF/VRV", "Chiller"])
+    fabricante = d1.text_input("Fabricante (Marca)")
+    linha = d1.text_input("Linha (Ex: Artcool, WindFree)")
+    tecnologia = d2.selectbox("Tecnologia do Compressor", ["Inverter", "WindFree", "Scroll", "On-Off"])
+    tipo_eq = d2.selectbox("Tipo de Sistema", ["Split Hi-Wall", "Cassete", "Piso-Teto", "VRF/VRV", "Chiller", "Câmara Fria", "Multi-Split"])
     fluido = d3.selectbox("Gás Refrigerante", ["R-410A", "R-22", "R-134a", "R-404A", "R-32"])
-    cap_btu = d3.text_input("Capacidade (BTUs)")
+    cap_btu = d3.text_input("Capacidade (Mil BTUs/h)")
 
-    mod_evap = st.text_input("Modelo Evaporadora")
-    serie_evap = st.text_input("Série Evaporadora")
-    mod_cond = st.text_input("Modelo Condensadora")
-    serie_cond = st.text_input("Série Condensadora")
+    col_u1, col_u2 = st.columns(2)
+    mod_evap = col_u1.text_input("Modelo da Unidade (Evap)")
+    serie_evap = col_u1.text_input("Nº de Série da Unidade (Evap)")
+    mod_cond = col_u2.text_input("Modelo da Unidade (Cond)")
+    serie_cond = col_u2.text_input("Nº de Série da Unidade (Cond)")
+
+    tecnico_nome = "MARCOS ALEXANDRE ALMEIDA DO NASCIMENTO"
+    doc_tecnico = "CNPJ: 51.274.762/0001-17"
 
 with tab_ele:
-    v_med = st.number_input("Tensão (V)", value=220.0)
-    a_med = st.number_input("Corrente (A)", value=0.0)
+    st.subheader("⚡ Parâmetros Elétricos")
+    e1, e2 = st.columns(2)
+    v_med = e1.number_input("Tensão Medida (V)", value=220.0)
+    a_med = e2.number_input("Corrente Medida Real (A)", value=0.0)
 
 with tab_termo:
-    p_suc = st.number_input("Pressão Sucção (PSIG)", value=120.0)
-    t_suc = st.number_input("Temp. Tubo Sucção (°C)", value=10.0)
-    t_ret = st.number_input("Ar Retorno (°C)", value=24.0)
-    p_liq = st.number_input("Pressão Líquido (PSIG)", value=350.0)
-    t_liq = st.number_input("Temp. Tubo Líquido (°C)", value=30.0)
-    t_ins = st.number_input("Ar Insuflação (°C)", value=12.0)
-    
+    t1, t2 = st.columns(2)
+    p_suc = t1.number_input("Pressão Sucção (PSIG)", value=120.0)
+    t_suc = t1.number_input("Temp. Tubo Sucção (°C)", value=10.0)
+    t_ret = t1.number_input("Ar Retorno (°C)", value=24.0)
+    p_liq = t2.number_input("Pressão Descarga (PSIG)", value=350.0)
+    t_liq = t2.number_input("Temp. Tubo Líquido (°C)", value=30.0)
+    t_ins = t2.number_input("Ar Insuflação (°C)", value=12.0)
+
     tsat_evap = calcular_tsat(p_suc, fluido)
     tsat_cond = calcular_tsat(p_liq, fluido)
     sh, sr, dt = t_suc - tsat_evap, tsat_cond - t_liq, t_ret - t_ins
+    
+    st.markdown("---")
+    res1, res2, res3, res4 = st.columns(4)
+    res1.metric("Temp. Saturação", f"{tsat_evap:.1f} °C")
+    res2.metric("Superaquecimento", f"{sh:.1f} K")
+    res3.metric("Delta T do Ar", f"{dt:.1f} °C")
+    res4.metric("Sub-resfriamento", f"{sr:.1f} K")
 
 with tab_diag:
-    if sh < 5: veredito = "ALERTA: SH Baixo. Risco de retorno de líquido."
+    if sh < 5: veredito = "ALERTA: SH Baixo. Perigo de retorno de líquido ao compressor."
     elif sh > 12: veredito = "ALERTA: SH Alto. Possível falta de fluido ou restrição."
     else: veredito = "Sistema operando em equilíbrio técnico conforme fabricante."
     
-    st.info(f"Veredito: {veredito}")
-    # ORDEM 2: Nome alterado para apenas "Observações"
+    st.warning(f"Diagnóstico Final: {veredito}")
+    # ORDEM: Campo renomeado para "Observações"
     obs_final = st.text_area("📝 Observações", height=150)
 
-    # --- RELATÓRIO PDF (ORDENS DE ENQUADRAMENTO E DATA BR) ---
+    st.markdown("---")
+    # GERAÇÃO DO PDF COM LAYOUT CORRIGIDO
     pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", "B", 14)
-    pdf.cell(190, 10, "LAUDO TÉCNICO DE ENGENHARIA - MPN", ln=True, align="C")
-    pdf.ln(5)
+    pdf.set_auto_page_break(auto=True, margin=15); pdf.add_page()
+    
+    pdf.set_font("helvetica", "B", 12); pdf.set_fill_color(230, 230, 230)
+    pdf.cell(190, 10, "LAUDO TECNICO DE DIAGNOSTICO - MPN", border=1, ln=True, align="C", fill=True)
+    
+    # INFORMAÇÕES CLIENTE (DATA BR)
+    pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " INFORMAÇÕES DO CLIENTE", border="LR", ln=True, fill=True)
+    pdf.set_font("helvetica", "", 8)
+    data_formatada = data_visita.strftime('%d/%m/%Y')
+    pdf.cell(130, 7, f" Cliente: {cliente} / Doc: {doc_cliente}", border=1); pdf.cell(60, 7, f" Data: {data_formatada}", border=1, ln=True)
+    pdf.cell(190, 7, f" Endereco: {endereco}", border=1, ln=True)
 
-    pdf.set_fill_color(230, 230, 230)
-    pdf.set_font("Arial", "B", 10)
-    pdf.cell(190, 8, " 1. IDENTIFICAÇÃO", border=1, ln=True, fill=True)
-    pdf.set_font("Arial", "", 10)
-    # ORDEM 1 (PDF): Data em formato brasileiro DD/MM/AAAA
-    data_br = data_visita.strftime('%d/%m/%Y')
-    pdf.cell(130, 8, f" Cliente: {cliente}", border=1)
-    pdf.cell(60, 8, f" Data: {data_br}", border=1, ln=True)
-    pdf.cell(190, 8, f" Endereço: {endereco}", border=1, ln=True)
+    # EQUIPAMENTO
+    pdf.ln(2); pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " DADOS DO EQUIPAMENTO", border="LR", ln=True, fill=True)
+    pdf.set_font("helvetica", "", 8)
+    pdf.cell(63, 7, f" Marca: {fabricante} ({linha})", border=1); pdf.cell(63, 7, f" Tipo: {tipo_eq}", border=1); pdf.cell(64, 7, f" Cap: {cap_btu} BTUs", border=1, ln=True)
+    pdf.cell(95, 7, f" Mod. Evap: {mod_evap} (S/N: {serie_evap})", border=1)
+    pdf.cell(95, 7, f" Mod. Cond: {mod_cond} (S/N: {serie_cond})", border=1, ln=True)
 
-    pdf.ln(2)
-    pdf.set_font("Arial", "B", 10)
-    pdf.cell(190, 8, " 2. DADOS DO EQUIPAMENTO", border=1, ln=True, fill=True)
-    pdf.set_font("Arial", "", 10)
-    pdf.cell(63, 8, f" Marca: {fabricante}", border=1); pdf.cell(63, 8, f" Linha: {linha}", border=1); pdf.cell(64, 8, f" Cap: {cap_btu} BTU", border=1, ln=True)
-    pdf.cell(95, 8, f" Evap S/N: {serie_evap}", border=1); pdf.cell(95, 8, f" Cond S/N: {serie_cond}", border=1, ln=True)
+    # ANÁLISE TÉCNICA
+    pdf.ln(2); pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " PARAMETROS MEDIDOS", border="LR", ln=True, fill=True)
+    pdf.set_font("helvetica", "", 8)
+    pdf.cell(47, 7, f" Tensao: {v_med}V", border=1); pdf.cell(47, 7, f" Corrente: {a_med}A", border=1); pdf.cell(48, 7, f" P. Suc: {p_suc} PSI", border=1); pdf.cell(48, 7, f" Fluido: {fluido}", border=1, ln=True)
+    pdf.cell(47, 7, f" Superaq: {sh:.1f} K", border=1); pdf.cell(47, 7, f" Subresf: {sr:.1f} K", border=1); pdf.cell(48, 7, f" Delta T: {dt:.1f} C", border=1); pdf.cell(48, 7, f" Tsat: {tsat_evap:.1f} C", border=1, ln=True)
 
-    pdf.ln(2)
-    pdf.set_font("Arial", "B", 10)
-    pdf.cell(190, 8, " 3. MEDIÇÕES", border=1, ln=True, fill=True)
-    pdf.set_font("Arial", "", 10)
-    pdf.cell(47, 8, f" Tensao: {v_med}V", border=1); pdf.cell(47, 8, f" Corrente: {a_med}A", border=1); pdf.cell(48, 8, f" P. Suc: {p_suc} PSI", border=1); pdf.cell(48, 8, f" P. Liq: {p_liq} PSI", border=1, ln=True)
-    pdf.cell(47, 8, f" SH: {sh:.1f} K", border=1); pdf.cell(47, 8, f" SR: {sr:.1f} K", border=1); pdf.cell(48, 8, f" DT Ar: {dt:.1f} C", border=1); pdf.cell(48, 8, f" Tsat: {tsat_evap:.1f} C", border=1, ln=True)
+    # DIAGNÓSTICO
+    pdf.ln(2); pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " DIAGNOSTICO", border="LR", ln=True, fill=True)
+    pdf.set_font("helvetica", "B", 8)
+    pdf.multi_cell(190, 7, f" Veredito: {veredito}", border=1, align="L")
 
-    pdf.ln(2)
-    pdf.set_font("Arial", "B", 10)
-    pdf.cell(190, 8, " 4. DIAGNÓSTICO", border=1, ln=True, fill=True)
-    pdf.set_font("Arial", "B", 10)
-    pdf.multi_cell(190, 8, f" Veredito: {veredito}", border=1, align="L")
+    # ORDEM: ÚLTIMO CAMPO, OBSERVACÕES, ALINHADO À ESQUERDA E ENQUADRADO (190mm)
+    pdf.ln(2); pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " OBSERVACOES", border="LR", ln=True, fill=True)
+    pdf.set_font("helvetica", "", 8)
+    pdf.multi_cell(190, 7, f" {obs_final}", border=1, align="L")
 
-    # ORDEM 3 E 4: Último campo, nomeado "Observações", alinhado à esquerda e enquadrado (190mm)
-    pdf.ln(2)
-    pdf.set_font("Arial", "B", 10)
-    pdf.cell(190, 8, " 5. OBSERVAÇÕES", border=1, ln=True, fill=True)
-    pdf.set_font("Arial", "", 10)
-    pdf.multi_cell(190, 8, f" {obs_final}", border=1, align="L")
+    # RODAPÉ
+    pdf.ln(10); pdf.set_font("helvetica", "B", 8)
+    pdf.cell(190, 5, tecnico_nome, ln=True, align="C")
+    pdf.cell(190, 5, doc_tecnico, ln=True, align="C")
 
-    pdf.ln(10)
-    pdf.set_font("Arial", "B", 10)
-    pdf.cell(190, 5, "MARCOS ALEXANDRE ALMEIDA DO NASCIMENTO", ln=True, align="C")
-    pdf.cell(190, 5, "CNPJ: 51.274.762/0001-17", ln=True, align="C")
-
-    # BUG FIX: Exportação compatível com Streamlit Cloud (fpdf2)
+    # BUG FIX PARA STREAMLIT CLOUD
     pdf_bytes = pdf.output()
-    st.download_button(
-        label="📥 BAIXAR RELATÓRIO PDF", 
-        data=bytes(pdf_bytes), 
-        file_name=f"Laudo_{cliente}.pdf", 
-        mime="application/pdf"
-    )
+    st.download_button(label="📥 BAIXAR RELATÓRIO PDF", data=bytes(pdf_bytes), file_name=f"Laudo_{cliente}.pdf", mime="application/pdf")
