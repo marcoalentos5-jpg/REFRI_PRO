@@ -1,322 +1,340 @@
 import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
 from fpdf import FPDF
 from datetime import datetime
 import urllib.parse
 
-# --- CONFIGURAÇÃO DA PÁGINA ---
+# -----------------------------------
+# CONFIGURAÇÃO
+# -----------------------------------
+
 st.set_page_config(
-    page_title="MPN | Engenharia & Diagnóstico",
+    page_title="MPN Engenharia HVAC",
     layout="wide",
     page_icon="❄️"
 )
 
-# --- ESTILO ---
-st.markdown("""
-<style>
-.main { background-color: #f0f2f6; }
+st.title("MPN Engenharia | Diagnóstico HVAC")
 
-[data-testid="stMetric"] {
-background-color: #004A99 !important;
-border-radius: 15px !important;
-padding: 20px !important;
-border: 2px solid #A9A9A9 !important;
-}
+# -----------------------------------
+# FUNÇÕES TERMODINÂMICAS
+# -----------------------------------
 
-[data-testid="stMetricLabel"] {
-color: white !important;
-font-weight: bold !important;
-}
+def calcular_tsat(psig, gas):
 
-[data-testid="stMetricValue"] {
-color: #00D1FF !important;
-font-size: 2rem !important;
-}
-
-.stButton>button {
-background-color: #004A99;
-color: white;
-border-radius: 10px;
-height: 3.5em;
-font-weight: bold;
-width: 100%;
-border: none;
-}
-
-h1,h2,h3,h4 {color:#004A99;}
-</style>
-""", unsafe_allow_html=True)
-
-# --- FUNÇÃO TERMODINÂMICA ---
-def calcular_t_sat_precisao(psig, gas):
-
-    if psig is None or gas == "" or psig <= 0:
+    if psig <= 0:
         return None
 
-    if gas == "R-410A":
-        return 0.23076923 * psig - 22.81538462
+    if gas == "R410A":
+        return 0.231 * psig - 22.8
 
-    elif gas == "R-22":
-        return 0.2854 * psig - 25.12
+    if gas == "R22":
+        return 0.285 * psig - 25.1
 
-    elif gas == "R-134a":
-        return 0.521 * psig - 38.54
+    if gas == "R134a":
+        return 0.52 * psig - 38.5
 
-    elif gas == "R-404A":
-        return 0.2105 * psig - 16.52
+    if gas == "R404A":
+        return 0.21 * psig - 16.5
 
     return None
 
 
-# --- SIDEBAR ---
-st.sidebar.header("⚙️ Setup do Ciclo & Elétrica")
+def calcular_cop(dt_ar, corrente):
 
-f_equip = st.sidebar.selectbox(
-    "Equipamento",
-    ["", "Split Hi-Wall", "Split Cassete", "Piso-Teto", "Chiller", "VRF/VRV", "Câmara Fria"]
+    if corrente <= 0:
+        return None
+
+    cop = (dt_ar * 0.293) / corrente
+
+    return round(cop,2)
+
+
+# -----------------------------------
+# MOTOR DE DIAGNÓSTICO
+# -----------------------------------
+
+def diagnostico(sh, sc, dt):
+
+    problemas = []
+
+    if sh is None or sc is None:
+        return ["Dados insuficientes"]
+
+    if sh > 15 and sc < 3:
+        problemas.append("Baixa carga de refrigerante")
+
+    if sh < 4 and sc > 12:
+        problemas.append("Excesso de refrigerante")
+
+    if sh > 15 and sc > 10:
+        problemas.append("Restrição na linha líquida ou filtro secador")
+
+    if dt > 14:
+        problemas.append("Baixa vazão de ar na evaporadora")
+
+    if dt < 8:
+        problemas.append("Troca térmica insuficiente")
+
+    if not problemas:
+        problemas.append("Sistema operando dentro dos parâmetros normais")
+
+    return problemas
+
+
+# -----------------------------------
+# BANCO DE COMPRESSORES
+# -----------------------------------
+
+compressores = pd.DataFrame({
+
+"Capacidade":[9000,12000,18000,24000],
+
+"Copeland":[
+"ZP14K5E",
+"ZP20K5E",
+"ZP31K5E",
+"ZP42K5E"
+],
+
+"Embraco":[
+"FFU80",
+"FFU130",
+"FFU160",
+"FFU200"
+]
+
+})
+
+# -----------------------------------
+# SIDEBAR
+# -----------------------------------
+
+st.sidebar.header("Configuração do Sistema")
+
+gas = st.sidebar.selectbox(
+"Refrigerante",
+["","R410A","R22","R134a","R404A"]
 )
 
-f_gas = st.sidebar.selectbox(
-    "Fluido Refrigerante",
-    ["", "R-410A", "R-22", "R-134a", "R-404A"]
+equip = st.sidebar.selectbox(
+"Equipamento",
+["Split","Cassete","VRF","Chiller","Câmara Fria"]
 )
 
-f_tec = st.sidebar.radio(
-    "Tecnologia",
-    ["ON-OFF", "Inverter", "Digital Scroll"]
-)
+# -----------------------------------
+# ABAS
+# -----------------------------------
 
-st.sidebar.markdown("---")
-st.sidebar.subheader("⚡ Parâmetros Elétricos")
-
-v_trab_str = st.sidebar.selectbox(
-    "Tensão Nominal",
-    ["", "127", "220", "380", "440"]
-)
-
-v_medida = st.sidebar.number_input(
-    "Tensão Medida [V]",
-    min_value=0,
-    step=1
-)
-
-diff_tensao_v = 0
-variacao_v = 0
-
-if v_trab_str != "" and v_medida > 0:
-
-    v_nominal = int(v_trab_str)
-
-    diff_tensao_v = v_medida - v_nominal
-    variacao_v = (diff_tensao_v / v_nominal) * 100
-
-st.sidebar.markdown(f"**Diferença de tensão:** `{diff_tensao_v} V`")
-
-# --- ABAS ---
-tab_iden, tab_termo, tab_solucoes, tab_carga, tab_subs = st.tabs([
-"📋 Identificação",
-"🌡️ Termodinâmica",
-"🤖 Diagnóstico IA",
-"📐 Carga VRF",
-"🔄 Peças"
+tab1,tab2,tab3,tab4,tab5 = st.tabs([
+"Identificação",
+"Medições",
+"Diagnóstico",
+"Gráfico do Ciclo",
+"Laudo"
 ])
 
-# --- IDENTIFICAÇÃO ---
-with tab_iden:
+# -----------------------------------
+# IDENTIFICAÇÃO
+# -----------------------------------
 
-    st.subheader("📋 Identificação do Sistema")
+with tab1:
 
     col1,col2,col3 = st.columns(3)
 
-    cli = col1.text_input("Cliente")
-    tec = col2.text_input("Responsável Técnico")
-    ser = col3.text_input("Número de Série")
+    cliente = col1.text_input("Cliente")
+    tecnico = col2.text_input("Responsável Técnico")
+    serie = col3.text_input("S/N")
 
-    col4,col5,col6,col7 = st.columns(4)
+    col4,col5,col6 = st.columns(3)
 
-    cap_btu = col4.text_input("Capacidade BTU")
-    mod_eq = col5.text_input("Modelo")
-    lin_eq = col6.text_input("Linha")
-    fab_eq = col7.text_input("Fabricante")
+    fabricante = col4.text_input("Fabricante")
+    modelo = col5.text_input("Modelo")
+    capacidade = col6.number_input("Capacidade BTU",0)
 
-    st.subheader("⚡ Análise de Corrente")
+    st.subheader("Corrente")
 
-    e1,e2,e3,e4 = st.columns(4)
+    rla = st.number_input("RLA",0.0)
+    corrente = st.number_input("Corrente medida",0.0)
 
-    v_rla = e1.number_input("RLA [A]",0.0)
-    v_lra = e2.number_input("LRA [A]",0.0)
-    v_med_amp = e3.number_input("Corrente medida [A]",0.0)
+# -----------------------------------
+# MEDIÇÕES
+# -----------------------------------
 
-    diff_amp = 0
+with tab2:
 
-    if v_rla > 0:
-        diff_amp = v_med_amp - v_rla
+    col1,col2,col3,col4 = st.columns(4)
 
-    e4.metric("Diferença corrente",f"{diff_amp:.2f} A")
+    with col1:
 
-# --- TERMODINÂMICA ---
-with tab_termo:
-
-    st.subheader("🌡️ Pressões e Temperaturas")
-
-    m1,m2,m3,m4 = st.columns(4)
-
-    with m1:
-
-        t_ret = st.number_input("Temp retorno °C",24.0)
-        t_ins = st.number_input("Temp insuflação °C",12.0)
+        t_ret = st.number_input("Temp retorno",24.0)
+        t_ins = st.number_input("Temp insuflação",12.0)
 
         dt_ar = t_ret - t_ins
 
-        st.metric("Delta T",f"{dt_ar:.2f} °C")
+        st.metric("Delta T",dt_ar)
 
-    with m2:
+    with col2:
 
-        p_suc = st.number_input("Pressão sucção PSIG",133.1)
+        p_suc = st.number_input("Pressão sucção",120.0)
 
-        tsat_evap = calcular_t_sat_precisao(p_suc,f_gas)
+        tsat_evap = calcular_tsat(p_suc,gas)
+
+        st.metric("Temp evaporação",tsat_evap)
+
+    with col3:
+
+        t_suc = st.number_input("Temp linha sucção",12.0)
+
+        sh = None
 
         if tsat_evap:
-            st.metric("Temp saturação",f"{tsat_evap:.2f} °C")
+            sh = t_suc - tsat_evap
+
+        st.metric("Superaquecimento",sh)
+
+    with col4:
+
+        p_desc = st.number_input("Pressão descarga",380.0)
+
+        tsat_cond = calcular_tsat(p_desc,gas)
+
+        t_liq = st.number_input("Temp linha liquida",30.0)
+
+        sc = None
+
+        if tsat_cond:
+            sc = tsat_cond - t_liq
+
+        st.metric("Sub-resfriamento",sc)
+
+# -----------------------------------
+# DIAGNÓSTICO
+# -----------------------------------
+
+with tab3:
+
+    problemas = diagnostico(sh,sc,dt_ar)
+
+    for p in problemas:
+
+        if "normal" in p.lower():
+            st.success(p)
+
         else:
-            st.metric("Temp saturação","--")
+            st.warning(p)
 
-    with m3:
+    cop = calcular_cop(dt_ar,corrente)
 
-        t_tubo_suc = st.number_input("Temp tubo sucção °C",12.0)
+    if cop:
+        st.metric("COP estimado",cop)
 
-        sh = 0
+# -----------------------------------
+# GRÁFICO CICLO
+# -----------------------------------
 
-        if tsat_evap is not None:
-            sh = t_tubo_suc - tsat_evap
+with tab4:
 
-        st.metric("Superaquecimento",f"{sh:.2f} K")
+    st.subheader("Ciclo frigorífico simplificado")
 
-    with m4:
+    if tsat_evap and tsat_cond:
 
-        p_desc = st.number_input("Pressão descarga PSIG",380.0)
+        x = [1,2,3,4]
+        y = [tsat_evap, t_suc, tsat_cond, t_liq]
 
-        tsat_cond = calcular_t_sat_precisao(p_desc,f_gas)
+        fig, ax = plt.subplots()
 
-        t_tubo_liq = st.number_input("Temp tubo líquido °C",30.0)
+        ax.plot(x,y,marker="o")
 
-        sr = 0
+        ax.set_title("Ciclo Frigorífico")
 
-        if tsat_cond is not None:
-            sr = tsat_cond - t_tubo_liq
+        ax.set_xlabel("Etapas")
+        ax.set_ylabel("Temperatura")
 
-        st.metric("Sub-resfriamento",f"{sr:.2f} K")
+        st.pyplot(fig)
 
-# --- DIAGNÓSTICO ---
-with tab_solucoes:
+# -----------------------------------
+# LAUDO
+# -----------------------------------
 
-    st.subheader("🤖 Diagnóstico automático")
+with tab5:
 
-    veredito = "Sistema operando dentro dos parâmetros normais."
+    data = datetime.now().strftime("%d/%m/%Y")
 
-    if sh < 5 and sr > 10:
-        veredito = "🚨 Excesso de fluido ou restrição na expansão."
+    texto = f"""
 
-    elif sh > 12 and sr < 3:
-        veredito = "🚨 Sistema com baixa carga de refrigerante."
+LAUDO TÉCNICO HVAC
 
-    elif dt_ar < 8:
-        veredito = "🚨 Baixa troca térmica na evaporadora."
+Cliente: {cliente}
+Técnico: {tecnico}
 
-    if "🚨" in veredito:
-        st.error(veredito)
-    else:
-        st.success(veredito)
+Equipamento: {fabricante} {modelo}
+Capacidade: {capacidade} BTU
 
-# --- CARGA VRF ---
-with tab_carga:
+Data: {data}
 
-    st.subheader("📐 Estimativa carga térmica")
+CONDIÇÕES
 
-    area_vrf = st.number_input("Área m²",0.0)
+Temp retorno: {t_ret}
+Temp insuflação: {t_ins}
 
-    total_btu = area_vrf * 800
+Delta T: {dt_ar}
 
-    st.metric("Carga estimada",f"{total_btu:,.0f} BTU/h")
+Pressão sucção: {p_suc}
+Superaquecimento: {sh}
 
-# --- PEÇAS ---
-with tab_subs:
+Pressão descarga: {p_desc}
+Sub-resfriamento: {sc}
 
-    st.subheader("🔄 Referência de compressores")
+DIAGNÓSTICO
 
-    dados = {
-    "Capacidade":["9k","12k","18k"],
-    "Embraco":["FFU80","FFU130","FFU160"],
-    "Tecumseh":["THB1380","AE4440","AK4476"]
-    }
+{", ".join(problemas)}
 
-    st.table(pd.DataFrame(dados))
+COP estimado: {cop}
 
-# --- EXPORTAÇÃO ---
-st.markdown("---")
+CONCLUSÃO
 
-col_p,col_w = st.columns(2)
+A avaliação foi realizada com base em parâmetros
+utilizados na engenharia de refrigeração e climatização.
+"""
 
-if col_p.button("🚀 GERAR PDF"):
+    st.text_area("Laudo técnico",texto,height=400)
 
-    if cli == "":
-        st.error("Informe o cliente")
-    else:
+    if st.button("Gerar PDF"):
 
         pdf = FPDF()
         pdf.add_page()
-
-        pdf.set_font("Arial","B",14)
-        pdf.cell(0,10,"LAUDO TECNICO MPN",0,1,"C")
-
         pdf.set_font("Arial","",10)
 
-        data = datetime.now().strftime("%d/%m/%Y")
+        for linha in texto.split("\n"):
 
-        pdf.cell(0,8,f"Data: {data}",0,1)
-        pdf.cell(0,8,f"Cliente: {cli}",0,1)
-        pdf.cell(0,8,f"Tecnico: {tec}",0,1)
-        pdf.cell(0,8,f"Equipamento: {fab_eq} {mod_eq}",0,1)
+            pdf.multi_cell(0,8,linha)
 
         pdf_bytes = pdf.output(dest="S").encode("latin-1","ignore")
 
         st.download_button(
-        "📥 Baixar PDF",
+        "Baixar PDF",
         pdf_bytes,
-        f"Laudo_{cli}.pdf",
+        "laudo_hvac.pdf",
         "application/pdf"
         )
 
-texto_wa = f"""
-MPN REFRIGERACAO
+# -----------------------------------
+# WHATSAPP
+# -----------------------------------
 
-Cliente: {cli}
-Equipamento: {fab_eq} {cap_btu} BTU
-Tensao medida: {v_medida} V
+resumo = f"""
+MPN ENGENHARIA HVAC
+
+Cliente: {cliente}
+
+Equipamento: {fabricante} {modelo}
+
+Diagnóstico:
+{", ".join(problemas)}
 """
 
-link_wa = f"https://wa.me/?text={urllib.parse.quote(texto_wa)}"
+link = f"https://wa.me/?text={urllib.parse.quote(resumo)}"
 
-col_w.link_button("📲 Enviar WhatsApp",link_wa)
-
-def diagnostico_hvac(sh, sc, dt_ar):
-
-    if 6 <= sh <= 12 and 5 <= sc <= 12 and 8 <= dt_ar <= 14:
-        return "Sistema operando dentro dos parâmetros ideais."
-
-    if sh > 15 and sc < 3:
-        return "Baixa carga de fluido refrigerante."
-
-    if sh < 4 and sc > 12:
-        return "Excesso de fluido refrigerante."
-
-    if sh > 15 and sc > 10:
-        return "Restrição na linha líquida ou filtro secador."
-
-    if dt_ar > 14:
-        return "Baixa vazão de ar na evaporadora."
-
-    if dt_ar < 8:
-        return "Baixa eficiência de troca térmica."
-
-    return "Sistema fora do padrão. Requer análise detalhada."
+st.link_button("Enviar diagnóstico WhatsApp",link)
