@@ -40,7 +40,7 @@ def calcular_t_sat_precisao(psig, gas):
     except: return None
     return None
 
-# --- 3. SIDEBAR (SETUP & ELÉTRICA CORRIGIDA) ---
+# --- 3. SIDEBAR (SETUP & ELÉTRICA SEM CASAS DECIMAIS) ---
 st.sidebar.header("⚙️ Setup do Ciclo & Elétrica")
 lista_equip = ["", "Split Hi-Wall", "Split Cassete", "Piso-Teto", "Chiller", "VRF/VRV", "Câmara Fria", "Self-Contained"]
 f_equip = st.sidebar.selectbox("Tipo de Equipamento", sorted(lista_equip))
@@ -49,20 +49,21 @@ f_tec = st.sidebar.radio("Tecnologia", ["ON-OFF", "Inverter", "Digital Scroll"])
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("⚡ Parâmetros Elétricos")
+# Tensão de Trabalho (Nominal) como Inteiro
 v_trab_str = st.sidebar.selectbox("Tensão de Trabalho (Nominal)", ["", "127", "220", "380", "440"])
 
-# CORREÇÃO: Tensão Medida sem zeros à esquerda fixos
-v_medida = st.sidebar.number_input("Tensão Medida [V]", min_value=0.0, step=1.0, format="%.2f")
+# CORREÇÃO: Tensão Medida como Inteiro (step=1 e format="%d")
+v_medida = st.sidebar.number_input("Tensão Medida [V]", min_value=0, step=1, format="%d")
 
-# Campo Diferença de Tensão [V]
-diff_tensao_v = 0.00
-variacao_v = 0.00
+# Diferença de Tensão como Inteiro [V]
+diff_tensao_v = 0
+variacao_v = 0.0
 if v_trab_str and v_medida > 0:
-    v_nominal = float(v_trab_str)
+    v_nominal = int(v_trab_str)
     diff_tensao_v = v_medida - v_nominal
     variacao_v = (diff_tensao_v / v_nominal) * 100
 
-st.sidebar.markdown(f"**Diferença de Tensão:** `{diff_tensao_v:.2f} V`")
+st.sidebar.markdown(f"**Diferença de Tensão:** `{diff_tensao_v} V`")
 
 # --- 4. NAVEGAÇÃO POR ABAS ---
 tab_diag, tab_solucoes, tab_carga = st.tabs(["📊 Diagnóstico Master", "🤖 IA & Soluções", "📐 Carga Térmica"])
@@ -85,60 +86,43 @@ with tab_diag:
     st.subheader("🛠️ Coleta de Dados de Campo")
     m1, m2, m3, m4 = st.columns(4)
     with m1:
+        st.markdown("#### 🌬️ Troca de Ar")
         t_ret = st.number_input("Temp. Retorno [°C]", value=24.00, format="%.2f")
         t_ins = st.number_input("Temp. Insuflação [°C]", value=12.00, format="%.2f")
         dt = t_ret - t_ins
         st.metric("DELTA T", f"{dt:.2f} °C")
     with m2:
+        st.markdown("#### 🧪 Pressão e Saturação")
         p_suc = st.number_input("Pressão Sucção (PSIG)", value=133.10, format="%.2f")
         tsat_evap = calcular_t_sat_precisao(p_suc, f_gas)
         st.metric("T. SATURAÇÃO (DEW)", f"{tsat_evap:.2f} °C" if tsat_evap else "--")
     with m3:
+        st.markdown("#### 🌡️ Superaquecimento")
         t_tubo_suc = st.number_input("Temp. Tubo Sucção [°C]", value=12.00, format="%.2f")
         sh = t_tubo_suc - tsat_evap if tsat_evap else 0.0
         st.metric("SUPER AQUECIMENTO", f"{sh:.2f} K")
     with m4:
-        v_rla = st.number_input("Corrente RLA [A]", value=1.00, format="%.2f")
-        v_med_amp = st.number_input("Corrente Medida [A]", value=0.00, format="%.2f")
-        st.metric("DIF. TENSÃO", f"{diff_tensao_v:.2f} V")
+        st.markdown("#### ⚡ Elétrica")
+        # Diferença de Tensão exibida como Inteiro
+        st.metric("DIF. TENSÃO", f"{diff_tensao_v} V", delta=f"{variacao_v:.1f}%")
 
-# --- ABA 3: CARGA TÉRMICA ---
-with tab_carga:
-    st.subheader("📐 Cálculo de Carga Térmica")
-    area = st.number_input("Área (m²)", min_value=0.0, format="%.2f")
-    sol = st.selectbox("Exposição Solar", ["Manhã", "Tarde"])
-    total_btu = 0.0
-    if area > 0:
-        fator = 800 if sol == "Tarde" else 600
-        total_btu = area * faktor
-        st.metric("CARGA NECESSÁRIA", f"{total_btu:.2f} BTU/h")
-
-# --- 5. GERAÇÃO DE PDF PROFISSIONAL MPN ---
+# --- 5. GERAÇÃO DE PDF ---
 if st.button("🚀 GERAR RELATÓRIO MASTER PDF"):
     if not cli:
         st.error("Preencha o nome do cliente.")
     else:
         pdf = FPDF()
         pdf.add_page()
-        
-        # Cabeçalho Azul Royal MPN
         pdf.set_fill_color(0, 74, 153) 
         pdf.rect(0, 0, 210, 40, 'F')
         pdf.set_font('Arial', 'B', 16)
         pdf.set_text_color(255, 255, 255)
         pdf.cell(0, 15, 'LAUDO TÉCNICO - MPN REFRIGERAÇÃO', 0, 1, 'C')
         pdf.ln(25)
-
-        # Dados Técnicos no PDF
         pdf.set_text_color(0, 0, 0)
-        pdf.set_font('Arial', 'B', 11)
-        pdf.cell(0, 10, f'Cliente: {cli} | Data: {datetime.now().strftime("%d/%m/%Y")}', ln=True)
-        pdf.ln(5)
         pdf.set_font('Arial', '', 10)
-        pdf.cell(0, 8, f'Tensão Nominal: {v_trab_str}V | Tensão Medida: {v_medida:.2f}V', ln=True)
-        pdf.cell(0, 8, f'Diferença de Tensão: {diff_tensao_v:.2f}V | Variação: {variacao_v:.2f}%', ln=True)
-        pdf.cell(0, 8, f'Pressão Sucção: {p_suc:.2f} PSIG | T. Sat: {tsat_evap:.2f} C', ln=True)
-        pdf.cell(0, 8, f'Superaquecimento (SH): {sh:.2f} K', ln=True)
+        pdf.cell(0, 8, f'Tensão Nominal: {v_trab_str}V | Tensão Medida: {v_medida}V', ln=True)
+        pdf.cell(0, 8, f'Diferença de Tensão: {diff_tensao_v}V', ln=True)
         
         pdf_output = pdf.output(dest='S').encode('latin-1')
-        st.download_button("📥 Baixar PDF Profissional", pdf_output, f"Laudo_MPN_{cli}.pdf", "application/pdf")
+        st.download_button("📥 Baixar PDF", pdf_output, f"Laudo_{cli}.pdf", "application/pdf")
