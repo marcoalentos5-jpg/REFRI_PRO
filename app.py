@@ -43,10 +43,11 @@ with tab_cad:
     cliente = c1.text_input("Nome do Cliente / Empresa")
     doc_cliente = c1.text_input("CPF / CNPJ")
     endereco = c2.text_input("Endereço Completo")
-    whatsapp_input = c2.text_input("🟢 WhatsApp (com DDD)", value="21980264217")
-    email_cli = c3.text_input("✉️ E-mail")
-    # ORDEM: Data Formato Brasileiro na interface
-    data_visita = st.date_input("Data da Visita", value=date.today(), format="DD/MM/YYYY")
+    
+    # WhatsApp e Data da Visita lado a lado na coluna 2 e 3
+    whatsapp_input = c3.text_input("🟢 WhatsApp (com DDD)", value="21980264217")
+    data_visita = c3.date_input("Data da Visita", value=date.today(), format="DD/MM/YYYY")
+    email_cli = c2.text_input("✉️ E-mail")
 
     st.markdown("---")
     st.subheader("⚙️ Dados Técnicos de Placa")
@@ -69,9 +70,8 @@ with tab_cad:
 
 with tab_ele:
     st.subheader("⚡ Parâmetros Elétricos")
-    e1, e2 = st.columns(2)
-    v_med = e1.number_input("Tensão Medida (V)", value=220.0)
-    a_med = e2.number_input("Corrente Medida Real (A)", value=0.0)
+    v_med = st.number_input("Tensão Medida (V)", value=220.0)
+    a_med = st.number_input("Corrente Medida Real (A)", value=0.0)
 
 with tab_termo:
     t1, t2 = st.columns(2)
@@ -99,32 +99,30 @@ with tab_diag:
     else: veredito = "Sistema operando em equilíbrio técnico conforme fabricante."
     
     st.warning(f"Diagnóstico Final: {veredito}")
-    # ORDEM: Campo renomeado para "Observações"
     obs_final = st.text_area("📝 Observações", height=150)
 
     st.markdown("---")
-    # GERAÇÃO DO PDF COM LAYOUT CORRIGIDO
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15); pdf.add_page()
     
     pdf.set_font("helvetica", "B", 12); pdf.set_fill_color(230, 230, 230)
     pdf.cell(190, 10, "LAUDO TECNICO DE DIAGNOSTICO - MPN", border=1, ln=True, align="C", fill=True)
     
-    # INFORMAÇÕES CLIENTE (DATA BR)
+    # DADOS CLIENTE (DATA BR)
     pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " INFORMAÇÕES DO CLIENTE", border="LR", ln=True, fill=True)
     pdf.set_font("helvetica", "", 8)
     data_formatada = data_visita.strftime('%d/%m/%Y')
     pdf.cell(130, 7, f" Cliente: {cliente} / Doc: {doc_cliente}", border=1); pdf.cell(60, 7, f" Data: {data_formatada}", border=1, ln=True)
     pdf.cell(190, 7, f" Endereco: {endereco}", border=1, ln=True)
 
-    # EQUIPAMENTO
+    # DADOS EQUIPAMENTO
     pdf.ln(2); pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " DADOS DO EQUIPAMENTO", border="LR", ln=True, fill=True)
     pdf.set_font("helvetica", "", 8)
     pdf.cell(63, 7, f" Marca: {fabricante} ({linha})", border=1); pdf.cell(63, 7, f" Tipo: {tipo_eq}", border=1); pdf.cell(64, 7, f" Cap: {cap_btu} BTUs", border=1, ln=True)
     pdf.cell(95, 7, f" Mod. Evap: {mod_evap} (S/N: {serie_evap})", border=1)
     pdf.cell(95, 7, f" Mod. Cond: {mod_cond} (S/N: {serie_cond})", border=1, ln=True)
 
-    # ANÁLISE TÉCNICA
+    # PARÂMETROS
     pdf.ln(2); pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " PARAMETROS MEDIDOS", border="LR", ln=True, fill=True)
     pdf.set_font("helvetica", "", 8)
     pdf.cell(47, 7, f" Tensao: {v_med}V", border=1); pdf.cell(47, 7, f" Corrente: {a_med}A", border=1); pdf.cell(48, 7, f" P. Suc: {p_suc} PSI", border=1); pdf.cell(48, 7, f" Fluido: {fluido}", border=1, ln=True)
@@ -135,16 +133,15 @@ with tab_diag:
     pdf.set_font("helvetica", "B", 8)
     pdf.multi_cell(190, 7, f" Veredito: {veredito}", border=1, align="L")
 
-    # ORDEM: ÚLTIMO CAMPO, OBSERVACÕES, ALINHADO À ESQUERDA E ENQUADRADO (190mm)
+    # OBSERVAÇÕES (ÚLTIMO E ENQUADRADO)
     pdf.ln(2); pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " OBSERVACOES", border="LR", ln=True, fill=True)
     pdf.set_font("helvetica", "", 8)
     pdf.multi_cell(190, 7, f" {obs_final}", border=1, align="L")
 
-    # RODAPÉ
+    # ASSINATURA
     pdf.ln(10); pdf.set_font("helvetica", "B", 8)
     pdf.cell(190, 5, tecnico_nome, ln=True, align="C")
     pdf.cell(190, 5, doc_tecnico, ln=True, align="C")
 
-    # BUG FIX PARA STREAMLIT CLOUD
     pdf_bytes = pdf.output()
     st.download_button(label="📥 BAIXAR RELATÓRIO PDF", data=bytes(pdf_bytes), file_name=f"Laudo_{cliente}.pdf", mime="application/pdf")
