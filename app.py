@@ -121,7 +121,8 @@ with tab_diag:
     else: veredito = "Sistema operando em equilíbrio técnico conforme fabricante."
     
     st.warning(f"Diagnóstico Final: {veredito}")
-    obs_final = st.text_area("📝 Recomendações e Observações Técnicas", height=150)
+    # CAMPO RENOMEADO CONFORME SOLICITADO
+    obs_final = st.text_area("📝 Observações", height=150)
 
     st.markdown("---")
     col_wa, col_pdf = st.columns(2)
@@ -133,11 +134,9 @@ with tab_diag:
         st.markdown(f'<a href="{url_wa}" target="_blank" style="text-decoration:none;"><button style="width:100%; background-color:#25D366; color:white; border:none; padding:15px; border-radius:8px; font-weight:bold; cursor:pointer;">📲 ENVIAR WHATSAPP</button></a>', unsafe_allow_html=True)
 
     with col_pdf:
-        # --- PDF COMPLETO E ORGANIZADO ---
         pdf = FPDF()
         pdf.set_auto_page_break(auto=True, margin=15); pdf.add_page()
         
-        # Logo
         if os.path.exists("logo.png"):
             try:
                 pdf.image("logo.png", 10, 8, 33)
@@ -150,8 +149,7 @@ with tab_diag:
         # INFORMAÇÕES CLIENTE
         pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " INFORMAÇÕES DO CLIENTE", border="LR", ln=True, fill=True)
         pdf.set_font("helvetica", "", 8)
-        # Formato de data brasileiro DD/MM/AAAA
-        data_formatada = data_visita.strftime('%d/%m/%Y')
+        data_formatada = data_visita.strftime('%d/%m/%Y') # DATA FORMATO BR
         pdf.cell(130, 7, f" Cliente: {cliente} / Doc: {doc_cliente}", border=1); pdf.cell(60, 7, f" Data: {data_formatada}", border=1, ln=True)
         pdf.cell(190, 7, f" Endereco: {endereco}", border=1, ln=True)
 
@@ -168,13 +166,15 @@ with tab_diag:
         pdf.cell(47, 7, f" Tensao: {v_med}V", border=1); pdf.cell(47, 7, f" Corrente: {a_med}A", border=1); pdf.cell(48, 7, f" Pressao Suc: {p_suc} PSIG", border=1); pdf.cell(48, 7, f" Fluido: {fluido}", border=1, ln=True)
         pdf.cell(47, 7, f" Superaq: {sh:.1f} K", border=1); pdf.cell(47, 7, f" Subresf: {sr:.1f} K", border=1); pdf.cell(48, 7, f" Delta T Ar: {dt:.1f} C", border=1); pdf.cell(48, 7, f" Tsat Evap: {tsat_evap:.1f} C", border=1, ln=True)
 
-        # VEREDITO E OBSERVAÇÕES (CORREÇÃO DE LAYOUT A4)
-        pdf.ln(2); pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " DIAGNOSTICO E RECOMENDACOES", border="LR", ln=True, fill=True)
+        # VEREDITO
+        pdf.ln(2); pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " DIAGNOSTICO", border="LR", ln=True, fill=True)
         pdf.set_font("helvetica", "B", 8)
-        pdf.multi_cell(190, 7, f" Veredito: {veredito}", border=1)
+        pdf.multi_cell(190, 7, f" Veredito: {veredito}", border=1, align="L")
+
+        # ÚLTIMO CAMPO: OBSERVAÇÕES (ENQUADRADO À ESQUERDA)
+        pdf.ln(2); pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " OBSERVACOES", border="LR", ln=True, fill=True)
         pdf.set_font("helvetica", "", 8)
-        # multi_cell garante que o texto não saia da página A4
-        pdf.multi_cell(190, 7, f" Observacoes: {obs_final}", border=1)
+        pdf.multi_cell(190, 7, f" {obs_final}", border=1, align="L")
 
         # RODAPÉ TÉCNICO
         pdf.ln(4); pdf.set_font("helvetica", "B", 8)
