@@ -66,11 +66,16 @@ with tab_diag:
 
         # Linha 3: Novos Campos de Tensão (Lado Esquerdo)
         c8, c9, c10, c11 = st.columns(4)
-        v_trab = c8.selectbox("Tensão de Trabalho (Nominal)", ["", "127V", "220V", "380V", "440V"])
+        v_trab_str = c8.selectbox("Tensão de Trabalho (Nominal)", ["", "127", "220", "380", "440"])
         v_medida = c9.number_input("Tensão Medida [V]", value=0.00, step=0.01, format="%.2f")
-        # Espaços vazios para manter o alinhamento à esquerda
-        c10.write("") 
-        c11.write("")
+        
+        # Cálculo da Variação de Tensão
+        variacao_v = 0.00
+        if v_trab_str and v_medida > 0:
+            v_nominal = float(v_trab_str)
+            variacao_v = ((v_medida - v_nominal) / v_nominal) * 100
+            color_v = "normal" if abs(variacao_v) <= 10 else "inverse"
+            c10.metric("VARIAÇÃO TENSÃO", f"{variacao_v:.2f}%", delta=f"{variacao_v:.1f}%", delta_color=color_v)
 
     st.sidebar.header("⚙️ Setup do Ciclo")
     lista_equip = ["", "ACJ", "Câmara Fria", "Chiller", "Geladeira/Freezer", "Piso-Teto", "Self-Contained", "Split Cassete (K-7)", "Split Hi-Wall", "Splitão", "VRF/VRV"]
@@ -109,26 +114,45 @@ with tab_diag:
         v_med = st.number_input("Corrente Medida [A]", value=0.00, step=0.01, format="%.2f")
         st.metric("AMPERAGEM REAL", f"{v_med:.2f} A")
 
-# --- ABA 2: IA & SOLUÇÕES ---
-with tab_solucoes:
-    st.subheader("🤖 Consultoria MPN IA")
-    if v_medida > 0:
-        if v_trab == "220V" and (v_medida < 198 or v_medida > 242):
-            st.error(f"🚨 **ALERTA ELÉTRICO:** Tensão medida ({v_medida}V) fora da tolerância de 10% para 220V.")
-    
-    if tsat is None or p_suc == 0:
-        st.warning("Aguardando dados de pressão na Aba 1...")
-    else:
-        if sh < 5.0:
-            st.error("🚨 **ALERTA TÉRMICO:** Superaquecimento Baixo. Risco de golpe de líquido.")
-        elif sh > 12.0:
-            st.warning("⚠️ **ALERTA TÉRMICO:** Superaquecimento Alto. Possível falta de fluido.")
-        else:
-            st.success("✅ Ciclo e Elétrica operando dentro da normalidade.")
+# --- LÓGICA DO PDF COM VARIAÇÃO DE TENSÃO ---
+class MPN_PDF(FPDF):
+    def header(self):
+        self.set_fill_color(0, 74, 153)
+        self.rect(0, 0, 210, 35, 'F')
+        self.set_font('Arial', 'B', 14)
+        self.set_text_color(255, 255, 255)
+        self.cell(0, 15, 'LAUDO TÉCNICO MPN REFRIGERAÇÃO', 0, 1, 'C')
+        self.ln(10)
 
-# --- BOTÃO FINAL PDF ---
 if st.button("🚀 GERAR RELATÓRIO MASTER PDF"):
     if not cli:
         st.error("Preencha o nome do cliente.")
     else:
-        st.success(f"Relatório de {cli} gerado com sucesso!")
+        pdf = MPN_PDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=10)
+        pdf.set_text_color(0,0,0)
+        
+        # Bloco de Identificação
+        pdf.cell(0, 8, f"CLIENTE: {cli} | TÉCNICO: {tec}", ln=True)
+        pdf.cell(0, 8, f"EQUIPAMENTO: {f_equip} | S/N: {ser}", ln=True)
+        pdf.ln(5)
+        
+        # Bloco Elétrico (Com Variação %)
+        pdf.set_font("Arial", 'B', 11)
+        pdf.cell(0, 8, "ANÁLISE ELÉTRICA:", ln=True)
+        pdf.set_font("Arial", size=10)
+        pdf.cell(0, 8, f"- Tensão Nominal: {v_trab_str}V | Medida: {v_medida:.2f}V", ln=True)
+        pdf.cell(0, 8, f"- Variação de Tensão: {variacao_v:.2f}%", ln=True)
+        pdf.cell(0, 8, f"- Amperagem Medida: {v_med:.2f}A (RLA: {v_rla:.2f}A)", ln=True)
+        
+        # Bloco Termodinâmico
+        pdf.ln(5)
+        pdf.set_font("Arial", 'B', 11)
+        pdf.cell(0, 8, "ANÁLISE TERMICA:", ln=True)
+        pdf.set_font("Arial", size=10)
+        pdf.cell(0, 8, f"- Pressão Sucção: {p_suc:.2f} PSIG | T. Sat: {tsat:.2f} C", ln=True)
+        pdf.cell(0, 8, f"- Superaquecimento (SH): {sh:.2f} K", ln=True)
+        pdf.cell(0, 8, f"- Delta T (Evaporação): {dt:.2f} C", ln=True)
+
+        st.download_button("📥 Baixar PDF", pdf.output(dest='S').encode('latin-1'), f"Laudo_{cli}.pdf", "application/pdf")
