@@ -25,7 +25,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. LÓGICA TÉCNICA (P x T) ---
+# --- 3. LÓGICA TÉCNICA ---
 def calcular_tsat(psig, gas):
     if psig <= 0: return 0
     tabelas = {
@@ -78,7 +78,6 @@ with tab_cad:
 
 # --- ABA 2: ELÉTRICA ---
 with tab_ele:
-    st.subheader("⚡ Parâmetros Elétricos")
     el1, el2 = st.columns(2)
     v_nom = el1.selectbox("Tensão Nominal (V)", ["127", "220", "380", "440"], index=1)
     v_med = el1.number_input("Tensão Medida (V)", value=float(v_nom))
@@ -87,16 +86,13 @@ with tab_ele:
 
 # --- ABA 3: TERMODINÂMICA ---
 with tab_termo:
-    st.subheader("🌡️ Ciclo Frigorífico")
     t1, t2 = st.columns(2)
-    with t1:
-        p_suc = t1.number_input("Pressão Sucção (PSIG)", value=120.0)
-        t_suc = t1.number_input("Temp. Tubo Sucção (°C)", value=10.0)
-        t_ret = t1.number_input("Ar Retorno (°C)", value=24.0)
-    with t2:
-        p_liq = t2.number_input("Pressão Descarga (PSIG)", value=350.0)
-        t_liq = t2.number_input("Temp. Tubo Líquido (°C)", value=30.0)
-        t_ins = t2.number_input("Ar Insuflação (°C)", value=12.0)
+    p_suc = t1.number_input("Pressão Sucção (PSIG)", value=120.0)
+    t_suc = t1.number_input("Temp. Tubo Sucção (°C)", value=10.0)
+    p_liq = t2.number_input("Pressão Descarga (PSIG)", value=350.0)
+    t_liq = t2.number_input("Temp. Tubo Líquido (°C)", value=30.0)
+    t_ret = t1.number_input("Ar Retorno (°C)", value=24.0)
+    t_ins = t2.number_input("Ar Insuflação (°C)", value=12.0)
 
     tsat_evap = calcular_tsat(p_suc, fluido)
     tsat_cond = calcular_tsat(p_liq, fluido)
@@ -104,7 +100,7 @@ with tab_termo:
 
 # --- ABA 4: DIAGNÓSTICO & EXPORTAÇÃO ---
 with tab_diag:
-    veredito = "Sistema operando em equilíbrio conforme parâmetros do fabricante."
+    veredito = "Sistema operando em equilíbrio conforme parâmetros."
     if sh < 5: veredito = "ALERTA: Superaquecimento Crítico (Baixo)."
     elif sh > 12: veredito = "ALERTA: Superaquecimento Alto (Falta de Gás)."
     
@@ -118,21 +114,21 @@ with tab_diag:
         num_clean = "".join(filter(str.isdigit, whatsapp_input))
         if not num_clean.startswith("55"): num_clean = "55" + num_clean
         msg_wa = f"❄️ *LAUDO TÉCNICO MPN*\n\n*Cliente:* {cliente}\n*Veredito:* {veredito}\n\n*Técnico:* {tecnico_nome}\n*{doc_tecnico}*"
-        url_wa = f"https://web.whatsapp.com{num_clean}&text={urllib.parse.quote(msg_wa)}"
+        url_wa = f"https://api.whatsapp.com{num_clean}&text={urllib.parse.quote(msg_wa)}"
         
         st.markdown(f'''
             <a href="{url_wa}" target="_blank" style="text-decoration:none;">
                 <button style="width:100%; background-color:#25D366; color:white; border:none; padding:15px; border-radius:8px; font-weight:bold; cursor:pointer;">
-                    📲 ENVIAR VIA WHATSAPP WEB
+                    📲 ENVIAR VIA WHATSAPP
                 </button>
             </a>
         ''', unsafe_allow_html=True)
 
     with col_pdf:
+        # --- GERAÇÃO DO PDF ---
         pdf = FPDF()
         pdf.add_page()
         
-        # LOGO
         if os.path.exists("logo.png"):
             try:
                 img = Image.open("logo.png").convert("RGB")
@@ -144,40 +140,31 @@ with tab_diag:
         pdf.set_font("Arial", "B", 13); pdf.set_fill_color(235, 235, 235)
         pdf.cell(190, 10, "RELATÓRIO DE DIAGNÓSTICO TÉCNICO", border=1, ln=True, align="C", fill=True)
         
-        # CLIENTE
-        pdf.set_font("Arial", "B", 8); pdf.cell(190, 6, " INFORMAÇÕES DO CLIENTE", border="LR", ln=True, fill=True)
+        # TABELA DE DADOS
+        pdf.set_font("Arial", "B", 8); pdf.cell(190, 6, " DADOS GERAIS", border="LR", ln=True, fill=True)
         pdf.set_font("Arial", "", 8)
         pdf.cell(130, 7, f" Cliente: {cliente}", border=1); pdf.cell(60, 7, f" Doc: {doc_cliente}", border=1, ln=True)
-        pdf.cell(190, 7, f" Endereco: {endereco}", border=1, ln=True)
+        pdf.cell(190, 7, f" Equipamento: {fabricante} / {cap_btu} / {fluido}", border=1, ln=True)
 
-        # EQUIPAMENTO
-        pdf.ln(2); pdf.set_font("Arial", "B", 8); pdf.cell(190, 6, " DADOS DO EQUIPAMENTO", border="LR", ln=True, fill=True)
+        pdf.ln(2); pdf.set_font("Arial", "B", 8); pdf.cell(190, 6, " PARÂMETROS MEDIDOS", border="LR", ln=True, fill=True)
         pdf.set_font("Arial", "", 8)
-        pdf.cell(63, 6, f" Marca: {fabricante}", border=1); pdf.cell(63, 6, f" Cap: {cap_btu}", border=1); pdf.cell(64, 6, f" Gas: {fluido}", border=1, ln=True)
-        pdf.cell(95, 6, f" Mod. Evap: {mod_evap}", border=1); pdf.cell(95, 6, f" S/N: {serie_evap}", border=1, ln=True)
-        pdf.cell(95, 6, f" Mod. Cond: {mod_cond}", border=1); pdf.cell(95, 6, f" TAG: {tag_loc}", border=1, ln=True)
+        pdf.cell(47, 7, f" Tensao: {v_med}V", border=1); pdf.cell(47, 7, f" Corrente: {a_med}A", border=1)
+        pdf.cell(48, 7, f" SH: {sh:.1f} K", border=1); pdf.cell(48, 7, f" Delta T: {dt:.1f} C", border=1, ln=True)
 
-        # PARÂMETROS TÉCNICOS
-        pdf.ln(2); pdf.set_font("Arial", "B", 8); pdf.cell(190, 6, " PARÂMETROS ELÉTRICOS E TERMODINÂMICOS", border="LR", ln=True, fill=True)
-        pdf.set_font("Arial", "", 8)
-        pdf.cell(47, 6, f" Tensao: {v_med}V", border=1); pdf.cell(47, 6, f" Corrente: {a_med}A", border=1)
-        pdf.cell(48, 6, f" P. Suc: {p_suc} PSI", border=1); pdf.cell(48, 6, f" T. Suc: {t_suc} C", border=1, ln=True)
-        pdf.cell(63, 6, f" Superaq. (SH): {sh:.1f} K", border=1); pdf.cell(63, 6, f" Sub-resf. (SR): {sr:.1f} K", border=1); pdf.cell(64, 6, f" Delta T Ar: {dt:.1f} C", border=1, ln=True)
-
-        # PARECER
         pdf.ln(2); pdf.set_font("Arial", "B", 8); pdf.cell(190, 6, " PARECER TÉCNICO", border="LR", ln=True, fill=True)
-        pdf.set_font("Arial", "B", 8); pdf.multi_cell(190, 6, f" Veredito: {veredito}", border=1)
-        pdf.set_font("Arial", "", 8); pdf.multi_cell(190, 6, f" Recomendacoes: {obs_final}", border=1)
+        pdf.set_font("Arial", "B", 8); pdf.multi_cell(190, 7, f" Veredito: {veredito}", border=1)
+        pdf.set_font("Arial", "", 8); pdf.multi_cell(190, 7, f" Recomendações: {obs_final}", border=1)
 
-        # RODAPÉ (Letra de Imprensa, Sem Caligrafia)
+        # RODAPÉ
         pdf.ln(12); pdf.cell(60); pdf.cell(70, 0, "", border="T", ln=True)
         pdf.set_font("Arial", "B", 10)
         pdf.cell(190, 6, tecnico_nome.upper(), ln=True, align="C")
         pdf.set_font("Arial", "", 9)
         pdf.cell(190, 5, doc_tecnico, ln=True, align="C")
 
-        # --- GERAÇÃO DO PDF EM MEMÓRIA (Ajustado para fpdf2) ---
-        pdf_output = pdf.output()
+        # --- CORREÇÃO DO ERRO DE DOWNLOAD ---
+        # Transformamos a saída do PDF em bytes para o Streamlit aceitar
+        pdf_output = bytes(pdf.output())
         
         st.download_button(
             label="📄 BAIXAR LAUDO TÉCNICO", 
