@@ -4,32 +4,11 @@ from fpdf import FPDF
 import urllib.parse
 import os
 import io
-import streamlit.components.v1 as components
 
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="MPN | Engenharia", layout="wide", page_icon="❄️")
 
-# --- 2. SCRIPT PARA FAZER O 'ENTER' PULAR DE CAMPO (ORDEM SOLICITADA) ---
-components.html(
-    """
-    <script>
-    const doc = window.parent.document;
-    doc.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-            const focusable = doc.querySelectorAll('input, select, textarea, button');
-            const index = Array.from(focusable).indexOf(doc.activeElement);
-            if (index > -1 && index + 1 < focusable.length) {
-                focusable[index + 1].focus();
-                e.preventDefault();
-            }
-        }
-    });
-    </script>
-    """,
-    height=0,
-)
-
-# --- 3. ESTILIZAÇÃO ORIGINAL MPN ---
+# --- 2. ESTILIZAÇÃO ORIGINAL MPN (LAYOUT ANTERIOR) ---
 st.markdown("""
     <style>
     .main { background-color: #f8f9fa; }
@@ -42,7 +21,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 4. LÓGICA TÉCNICA ---
+# --- 3. LÓGICA TÉCNICA ---
 def calcular_tsat(psig, gas):
     if psig <= 0: return 0
     tabelas = {
@@ -52,7 +31,7 @@ def calcular_tsat(psig, gas):
     }
     return tabelas.get(gas, 0)
 
-# --- 5. TÍTULO E ABAS ---
+# --- 4. TÍTULO E ABAS ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
 
 tab_cad, tab_ele, tab_termo, tab_diag = st.tabs([
@@ -65,6 +44,7 @@ with tab_cad:
     cliente = c1.text_input("Nome do Cliente / Empresa")
     doc_cliente = c1.text_input("CPF / CNPJ")
     endereco = c2.text_input("Endereço Completo")
+    
     whatsapp_input = c3.text_input("🟢 WhatsApp (com DDD)", value="21980264217")
     data_visita = c3.date_input("Data da Visita", value=date.today(), format="DD/MM/YYYY")
     email_cli = c2.text_input("✉️ E-mail")
@@ -75,18 +55,24 @@ with tab_cad:
     fabricante = d1.text_input("Fabricante (Marca)")
     linha = d1.text_input("Linha (Ex: Artcool, WindFree)")
     tecnologia = d2.selectbox("Tecnologia do Compressor", ["Inverter", "WindFree", "Scroll", "On-Off"])
+    
     tipo_eq = d2.selectbox("Tipo de Sistema", [
         "Split Hi-Wall", "Cassete", "Piso-Teto", "Multi-Split", "VRF/VRV", 
         "Geladeira", "Freezer", "Chiller", "Câmara Fria", "Balcão Frigorífico", 
         "Bebedouro", "Ar-Condicionado Janela", "Self-Contained", "Fan-Coil"
     ])
-    fluido = d3.selectbox("Gás Refrigerante", ["R-410A", "R-22", "R-32", "R-134a", "R-600a", "R-290", "R-404A", "R-407C", "R-417A", "R-507A"])
+    
+    fluido = d3.selectbox("Gás Refrigerante", [
+        "R-410A", "R-22", "R-32", "R-134a", "R-600a", 
+        "R-290", "R-404A", "R-407C", "R-417A", "R-507A"
+    ])
     cap_btu = d3.text_input("Capacidade (Mil BTUs/h)")
 
-    mod_evap = st.text_input("Modelo da Unidade (Evap)")
-    serie_evap = st.text_input("Nº de Série da Unidade (Evap)")
-    mod_cond = st.text_input("Modelo da Unidade (Cond)")
-    serie_cond = st.text_input("Nº de Série da Unidade (Cond)")
+    col_u1, col_u2 = st.columns(2)
+    mod_evap = col_u1.text_input("Modelo da Unidade (Evap)")
+    serie_evap = col_u1.text_input("Nº de Série da Unidade (Evap)")
+    mod_cond = col_u2.text_input("Modelo da Unidade (Cond)")
+    serie_cond = col_u2.text_input("Nº de Série da Unidade (Cond)")
 
     tecnico_nome = "MARCOS ALEXANDRE ALMEIDA DO NASCIMENTO"
     doc_tecnico = "CNPJ: 51.274.762/0001-17"
@@ -131,7 +117,7 @@ with tab_diag:
     pdf.set_font("helvetica", "B", 12); pdf.set_fill_color(230, 230, 230)
     pdf.cell(190, 10, "LAUDO TECNICO DE DIAGNOSTICO - MPN", border=1, ln=True, align="C", fill=True)
     
-    # DADOS CLIENTE (DATA BR)
+    # DADOS CLIENTE
     pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " INFORMAÇÕES DO CLIENTE", border="LR", ln=True, fill=True)
     pdf.set_font("helvetica", "", 8)
     data_formatada = data_visita.strftime('%d/%m/%Y')
@@ -156,7 +142,7 @@ with tab_diag:
     pdf.set_font("helvetica", "B", 8)
     pdf.multi_cell(190, 7, f" Veredito: {veredito}", border=1, align="L")
 
-    # OBSERVAÇÕES (ÚLTIMO E ENQUADRADO)
+    # OBSERVAÇÕES (ÚLTIMO E ENQUADRADO A4)
     pdf.ln(2); pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " OBSERVACOES", border="LR", ln=True, fill=True)
     pdf.set_font("helvetica", "", 8)
     pdf.multi_cell(190, 7, f" {obs_final}", border=1, align="L")
