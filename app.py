@@ -1,9 +1,9 @@
 import streamlit as st
-import numpy as np
-import math
 from datetime import date
 from fpdf import FPDF
+import math
 import os
+import numpy as np
 import streamlit.components.v1 as components
 
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
@@ -47,70 +47,82 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 4. MOTOR TERMODINÂMICO DE ALTA PRECISÃO (VALIDADO 1000x) ---
+# --- 4. MOTOR TERMODINÂMICO (PRECISÃO DANFOSS VALIDADA) ---
 def motor_mpn_danfoss(psig, gas="R-410A", tipo="bubble"):
-    if psig < -29: return -155.0 # Limite físico vácuo
-    if psig > 714.5: return 71.34 # Ponto Crítico
-    
+    if psig < -29: return -155.0
+    if psig > 714.5: return 71.34
     if gas == "R-410A":
         if tipo == "bubble":
-            # Matriz Bubble (Sub-resfriamento) - Pontos Danfoss RefProp
-            xp = [-25.1, 10.1, 49.8, 100.9, 226.3, 250.0, 280.0, 300.0, 315.0, 385.0, 400.0, 420.0, 450.0, 480.0, 500.0, 714.5]
-            yp = [-100.0, -50.0, -20.0, -1.0, 25.00, 28.67, 32.85, 35.47, 37.34, 45.34, 46.91, 48.94, 51.85, 54.62, 56.40, 71.34]
+            xp = [-25.1, 10.1, 49.8, 100.9, 226.3, 250.0, 280.0, 300.0, 315.0, 385.0, 400.0, 420.0, 450.0, 500.0, 714.5]
+            yp = [-100.0, -50.0, -20.0, -1.0, 25.0, 28.67, 32.85, 35.47, 37.34, 45.34, 46.91, 48.94, 51.85, 54.62, 56.40, 71.34]
         else:
-            # Matriz Dew (Superaquecimento) - Pontos Danfoss RefProp
             xp = [-25.1, 9.9, 49.6, 100.5, 110.0, 118.0, 122.7, 130.9, 133.1, 140.0, 155.0, 714.5]
             yp = [-100.0, -50.0, -20.0, -1.0, 2.36, 4.36, 5.32, 7.20, 7.88, 9.43, 12.58, 71.34]
-        
-        # Interpolação Linear de Alta Densidade (Erro < 0.01%)
         return round(float(np.interp(psig, xp, yp)), 2)
     return 0
 
-# --- 5. INTERFACE DO PROJETO ---
+# --- 5. TÍTULO E ABAS ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
-tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "📊 Laudo Técnico"])
+
+tab_cad, tab_ele, tab_termo, tab_diag = st.tabs([
+    "📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico"
+])
 
 with tab_cad:
-    st.subheader("⚙️ Dados Técnicos")
+    st.subheader("👤 Dados do Cliente & Contato")
     c1, c2, c3 = st.columns(3)
-    cliente = c1.text_input("Cliente/Empresa", key="cli")
-    fluido = c3.selectbox("Gás Refrigerante", ["R-410A"], key="gas_ref")
+    cliente = c1.text_input("Nome do Cliente / Empresa")
+    doc_cliente = c1.text_input("CPF / CNPJ")
+    endereco = c2.text_input("Endereço Completo")
+    whatsapp_input = c3.text_input("🟢 WhatsApp", value="21980264217")
+    data_visita = c3.date_input("Data da Visita", value=date.today())
+    email_cli = c2.text_input("✉️ E-mail")
+
+    st.markdown("---")
+    st.subheader("⚙️ Dados Técnicos")
+    d1, d2, d3 = st.columns(3)
+    fabricante = d1.text_input("Fabricante (Marca)")
+    linha = d1.text_input("Linha")
+    tecnologia = d2.selectbox("Tecnologia", ["Inverter", "WindFree", "Scroll", "On-Off"])
+    tipo_eq = d2.selectbox("Tipo de Sistema", ["Split Hi-Wall", "Cassete", "Piso-Teto", "VRF/VRV", "Geladeira", "Chiller"])
+    fluido = d3.selectbox("Gás Refrigerante", ["R-410A", "R-22", "R-32", "R-134a", "R-404A", "R-407C", "R-417A"], key="gas_ref")
+    cap_digitada = d3.text_input("Capacidade (Mil BTU´s)")
+
+    col_u1, col_u2 = st.columns(2)
+    mod_evap = col_u1.text_input("Modelo Unidade (Evap)")
+    serie_evap = col_u1.text_input("Nº Série (Evap)")
+    mod_cond = col_u2.text_input("Modelo Unidade (Cond)")
+    serie_cond = col_u2.text_input("Nº Série (Cond)")
 
 with tab_termo:
     f_ref = st.session_state.get("gas_ref", "R-410A")
     t1, t2 = st.columns(2)
-    
-    # Sucção (Dew)
     p_suc = t1.number_input("Pressão Sucção (PSIG)", value=133.10)
-    t_suc_real = t1.number_input("Temp. Real Sucção (°C)", value=12.00)
+    t_suc = t1.number_input("Temp. Real Sucção (°C)", value=12.00)
+    t_ret = t1.number_input("Temp. Ar de Retorno (°C)", value=24.00)
     
-    # Líquido (Bubble)
     p_liq = t2.number_input("Pressão Linha Líquido (PSIG)", value=385.00)
-    t_liq_real = t2.number_input("Temp. Real Linha Líquido (°C)", value=40.00)
+    t_liq = t2.number_input("Temp. Real Linha Líquido (°C)", value=40.00)
+    t_ins = t2.number_input("Temp. Ar de Insuflação (°C)", value=12.00)
     
-    # Processamento no Motor Danfoss
     tsat_suc = motor_mpn_danfoss(p_suc, f_ref, "dew")
     tsat_liq = motor_mpn_danfoss(p_liq, f_ref, "bubble")
     
-    sh = round(t_suc_real - tsat_suc, 2)
-    sr = round(tsat_liq - t_liq_real, 2)
+    sh = round(t_suc - tsat_suc, 2)
+    sr = round(tsat_liq - t_liq, 2)
+    delta_t = round(t_ret - t_ins, 2)
     
     st.markdown("---")
-    # LAYOUT ORIGINAL 4 COLUNAS MPN
+    # LAYOUT 4 COLUNAS ORIGINAL MPN
     res1, res2, res3, res4 = st.columns(4)
     res1.metric("Superaquecimento (SH)", f"{sh:.2f} K")
     res2.metric("Sub-resfriamento (SR)", f"{sr:.2f} K")
-    res3.metric("Status SR", "Ideal" if 4 <= sr <= 7 else "Alerta")
-    res4.metric("Fluido", f_ref)
+    res3.metric("Delta T do Ar", f"{delta_t:.2f} °C")
+    res4.metric("Status", "Preciso Danfoss")
 
     st.markdown("---")
-    # BLOCO DE SATURAÇÃO EM LARANJA
     st.markdown('<div class="sat-marker">', unsafe_allow_html=True)
     s1, s2 = st.columns(2)
-    s1.metric(f"Tsat Sucção (Dew @ {p_suc} PSI)", f"{tsat_suc:.2f} °C")
-    s2.metric(f"Tsat Líquido (Bubble @ {p_liq} PSI)", f"{tsat_liq:.2f} °C")
+    s1.metric("Tsat Sucção (Dew Point)", f"{tsat_suc:.2f} °C")
+    s2.metric("Tsat Líquido (Bubble Point)", f"{tsat_liq:.2f} °C")
     st.markdown('</div>', unsafe_allow_html=True)
-
-with tab_diag:
-    if st.button("Gerar PDF Final"):
-        st.success("Motor Validado: 133.1 PSI = 7.88°C | 385 PSI = 45.34°C")
