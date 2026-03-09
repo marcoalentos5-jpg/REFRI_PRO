@@ -1,4 +1,4 @@
-import streamlit st
+import streamlit as st
 from datetime import date
 from fpdf import FPDF
 import urllib.parse
