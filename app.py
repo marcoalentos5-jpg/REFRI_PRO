@@ -37,6 +37,7 @@ st.markdown("""
     div[data-testid="column"]:nth-of-type(3) div[data-testid="stMetric"] { background-color: #FFFDE7; border-radius: 10px; padding: 15px; border: 1px solid #FFF9C4; }
     div[data-testid="column"]:nth-of-type(4) div[data-testid="stMetric"] { background-color: #E1F5FE; border-radius: 10px; padding: 15px; border: 1px solid #B3E5FC; }
     
+    /* DESTAQUE DAS MÉTRICAS DE SATURAÇÃO EM LARANJA */
     div.sat-marker div[data-testid="stMetric"] { 
         background-color: #FFE0B2 !important; 
         border-radius: 10px; 
@@ -49,15 +50,15 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 4. LÓGICA TÉCNICA (ANTOINE PRECISION - DANFOSS) ---
+# --- 4. LÓGICA TÉCNICA (ANTOINE PRECISION - CALIBRADO PARA 45.34C @ 385PSI) ---
 def calcular_tsat_antoine(psig, gas, tipo="bubble"):
     if psig <= 0: return 0
     psia = psig + 14.696
     log_p = math.log10(psia)
     
-    # Calibração exata: R-410A @ 385 PSIG = 45.34 °C
+    # Coeficientes Antoine calibrados para a régua Danfoss
     coefs = {
-        "R-410A": (4.13529, 672.43, 209.68),
+        "R-410A": (4.13529, 672.43, 209.68), # 385 PSIG -> 45.34°C
         "R-22":   (4.108, 720.0, 225.0),
         "R-134a": (4.430, 941.5, 235.0),
         "R-404A": {"bubble": (4.012, 595.6, 220.2), "dew": (4.021, 608.2, 218.5)},
@@ -72,7 +73,7 @@ def calcular_tsat_antoine(psig, gas, tipo="bubble"):
         return (t_f - 32) / 1.8
     return 0
 
-# --- 5. INTERFACE ---
+# --- 5. TÍTULO E ABAS ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
 
 tab_cad, tab_ele, tab_termo, tab_diag = st.tabs([
@@ -87,9 +88,18 @@ with tab_cad:
     st.markdown("---")
     st.subheader("⚙️ Dados Técnicos")
     d1, d2, d3 = st.columns(3)
+    # Session State garante que o fluido seja acessível na tab_termo
     fluido = d3.selectbox("Gás Refrigerante", ["R-410A", "R-22", "R-134a", "R-404A", "R-407C", "R-417A"], key="gas_ref")
+    cap_btu = d3.text_input("Capacidade (BTU´s)")
+
+with tab_ele:
+    st.subheader("⚡ Parâmetros Elétricos")
+    col_v, col_a = st.columns(2)
+    v_med = col_v.number_input("Tensão Medida (V)", value=220.0)
+    a_med = col_a.number_input("Corrente Medida (A)", value=0.0)
 
 with tab_termo:
+    # Resgate seguro da variável fluido
     f_ref = st.session_state.get("gas_ref", "R-410A")
     t1, t2 = st.columns(2)
     p_suc = t1.number_input("Pressão Sucção (PSIG)", value=120.0)
@@ -104,7 +114,7 @@ with tab_termo:
     sh, sr, dt_ar = t_suc - tsat_evap, tsat_cond - t_liq, t_ret - t_ins
     
     st.markdown("---")
-    # QUATRO COLUNAS ORIGINAIS
+    # LAYOUT ORIGINAL DE 4 COLUNAS
     res1, res2, res3, res4 = st.columns(4)
     res1.metric("Superaquecimento", f"{sh:.1f} K")
     res2.metric("Sub-resfriamento", f"{sr:.1f} K")
@@ -112,7 +122,7 @@ with tab_termo:
     res4.metric("Fluido Selecionado", f_ref)
 
     st.markdown("---")
-    # BLOCO DE SATURAÇÃO EM LARANJA
+    # MÉTRICAS DE SATURAÇÃO EM BLOCO LARANJA SEPARADO
     st.markdown('<div class="sat-marker">', unsafe_allow_html=True)
     s1, s2 = st.columns(2)
     s1.metric(f"Tsat Sucção (Dew)", f"{tsat_evap:.2f} °C")
@@ -120,4 +130,4 @@ with tab_termo:
     st.markdown('</div>', unsafe_allow_html=True)
 
 with tab_diag:
-    st.write("Diagnóstico e geração de PDF habilitados.")
+    st.write("Diagnóstico técnico e geração de laudo PDF.")
