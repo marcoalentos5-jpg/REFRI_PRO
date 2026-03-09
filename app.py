@@ -47,7 +47,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 4. MOTOR TERMODINÂMICO (PRECISÃO DANFOSS VALIDADA) ---
+# --- 4. MOTOR TERMODINÂMICO (ORDENADO PARA EVITAR VALUEERROR) ---
 def motor_mpn_danfoss(psig, gas="R-410A", tipo="bubble"):
     if psig < -29: return -155.0
     if psig > 714.5: return 71.34
@@ -61,12 +61,9 @@ def motor_mpn_danfoss(psig, gas="R-410A", tipo="bubble"):
         return round(float(np.interp(psig, xp, yp)), 2)
     return 0
 
-# --- 5. TÍTULO E ABAS ---
+# --- 5. INTERFACE ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
-
-tab_cad, tab_ele, tab_termo, tab_diag = st.tabs([
-    "📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico"
-])
+tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico"])
 
 with tab_cad:
     st.subheader("👤 Dados do Cliente & Contato")
@@ -74,7 +71,7 @@ with tab_cad:
     cliente = c1.text_input("Nome do Cliente / Empresa")
     doc_cliente = c1.text_input("CPF / CNPJ")
     endereco = c2.text_input("Endereço Completo")
-    whatsapp_input = c3.text_input("🟢 WhatsApp", value="21980264217")
+    whatsapp = c3.text_input("🟢 WhatsApp", value="21980264217")
     data_visita = c3.date_input("Data da Visita", value=date.today())
     email_cli = c2.text_input("✉️ E-mail")
 
@@ -84,15 +81,15 @@ with tab_cad:
     fabricante = d1.text_input("Fabricante (Marca)")
     linha = d1.text_input("Linha")
     tecnologia = d2.selectbox("Tecnologia", ["Inverter", "WindFree", "Scroll", "On-Off"])
-    tipo_eq = d2.selectbox("Tipo de Sistema", ["Split Hi-Wall", "Cassete", "Piso-Teto", "VRF/VRV", "Geladeira", "Chiller"])
-    fluido = d3.selectbox("Gás Refrigerante", ["R-410A", "R-22", "R-32", "R-134a", "R-404A", "R-407C", "R-417A"], key="gas_ref")
-    cap_digitada = d3.text_input("Capacidade (Mil BTU´s)")
+    tipo_eq = d2.selectbox("Tipo de Sistema", ["Split Hi-Wall", "Cassete", "Piso-Teto", "VRF/VRV", "Chiller"])
+    fluido = d3.selectbox("Gás Refrigerante", ["R-410A", "R-22", "R-32", "R-134a"], key="gas_ref")
+    cap = d3.text_input("Capacidade (Mil BTU´s)")
 
     col_u1, col_u2 = st.columns(2)
-    mod_evap = col_u1.text_input("Modelo Unidade (Evap)")
-    serie_evap = col_u1.text_input("Nº Série (Evap)")
-    mod_cond = col_u2.text_input("Modelo Unidade (Cond)")
-    serie_cond = col_u2.text_input("Nº Série (Cond)")
+    mod_evap = col_u1.text_input("Modelo (Evap)")
+    serie_evap = col_u1.text_input("S/N (Evap)")
+    mod_cond = col_u2.text_input("Modelo (Cond)")
+    serie_cond = col_u2.text_input("S/N (Cond)")
 
 with tab_termo:
     f_ref = st.session_state.get("gas_ref", "R-410A")
@@ -107,22 +104,20 @@ with tab_termo:
     
     tsat_suc = motor_mpn_danfoss(p_suc, f_ref, "dew")
     tsat_liq = motor_mpn_danfoss(p_liq, f_ref, "bubble")
-    
     sh = round(t_suc - tsat_suc, 2)
     sr = round(tsat_liq - t_liq, 2)
-    delta_t = round(t_ret - t_ins, 2)
+    dt_ar = round(t_ret - t_ins, 2)
     
     st.markdown("---")
-    # LAYOUT 4 COLUNAS ORIGINAL MPN
     res1, res2, res3, res4 = st.columns(4)
     res1.metric("Superaquecimento (SH)", f"{sh:.2f} K")
     res2.metric("Sub-resfriamento (SR)", f"{sr:.2f} K")
-    res3.metric("Delta T do Ar", f"{delta_t:.2f} °C")
-    res4.metric("Status", "Preciso Danfoss")
+    res3.metric("Delta T do Ar", f"{dt_ar:.2f} °C")
+    res4.metric("Status", "Danfoss OK")
 
     st.markdown("---")
     st.markdown('<div class="sat-marker">', unsafe_allow_html=True)
     s1, s2 = st.columns(2)
-    s1.metric("Tsat Sucção (Dew Point)", f"{tsat_suc:.2f} °C")
-    s2.metric("Tsat Líquido (Bubble Point)", f"{tsat_liq:.2f} °C")
+    s1.metric("Tsat Sucção (Dew)", f"{tsat_suc:.2f} °C")
+    s2.metric("Tsat Líquido (Bubble)", f"{tsat_liq:.2f} °C")
     st.markdown('</div>', unsafe_allow_html=True)
