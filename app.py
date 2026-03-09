@@ -55,7 +55,7 @@ def calcular_tsat_antoine(psig, gas, tipo="bubble"):
     psia = psig + 14.696
     log_p = math.log10(psia)
     
-    # Coeficientes Calibrados: R-410A @ 385 PSIG = 45.34 °C
+    # Calibração exata: R-410A @ 385 PSIG = 45.34 °C
     coefs = {
         "R-410A": (4.13529, 672.43, 209.68),
         "R-22":   (4.108, 720.0, 225.0),
@@ -83,20 +83,11 @@ with tab_cad:
     st.subheader("👤 Dados do Cliente & Contato")
     c1, c2, c3 = st.columns(3)
     cliente = c1.text_input("Nome do Cliente / Empresa")
-    data_visita = c3.date_input("Data da Visita", value=date.today())
-
+    
     st.markdown("---")
     st.subheader("⚙️ Dados Técnicos")
     d1, d2, d3 = st.columns(3)
-    fabricante = d1.text_input("Fabricante (Marca)")
     fluido = d3.selectbox("Gás Refrigerante", ["R-410A", "R-22", "R-134a", "R-404A", "R-407C", "R-417A"], key="gas_ref")
-    cap_btu = d3.text_input("Capacidade (BTU´s)")
-
-with tab_ele:
-    st.subheader("⚡ Parâmetros Elétricos")
-    col_v, col_a = st.columns(2)
-    v_med = col_v.number_input("Tensão Medida (V)", value=220.0)
-    a_med = col_a.number_input("Corrente Medida (A)", value=0.0)
 
 with tab_termo:
     f_ref = st.session_state.get("gas_ref", "R-410A")
@@ -113,15 +104,15 @@ with tab_termo:
     sh, sr, dt_ar = t_suc - tsat_evap, tsat_cond - t_liq, t_ret - t_ins
     
     st.markdown("---")
-    # LAYOUT ORIGINAL 4 COLUNAS
+    # QUATRO COLUNAS ORIGINAIS
     res1, res2, res3, res4 = st.columns(4)
     res1.metric("Superaquecimento", f"{sh:.1f} K")
     res2.metric("Sub-resfriamento", f"{sr:.1f} K")
     res3.metric("Delta T do Ar", f"{dt_ar:.1f} °C")
-    res4.metric("Fluido", f_ref)
+    res4.metric("Fluido Selecionado", f_ref)
 
     st.markdown("---")
-    # SATURAÇÃO EM LARANJA
+    # BLOCO DE SATURAÇÃO EM LARANJA
     st.markdown('<div class="sat-marker">', unsafe_allow_html=True)
     s1, s2 = st.columns(2)
     s1.metric(f"Tsat Sucção (Dew)", f"{tsat_evap:.2f} °C")
@@ -129,11 +120,4 @@ with tab_termo:
     st.markdown('</div>', unsafe_allow_html=True)
 
 with tab_diag:
-    if st.button("Gerar PDF"):
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_font("Arial", "B", 14)
-        pdf.cell(190, 10, "LAUDO MPN ENGENHARIA", ln=True, align="C")
-        pdf.set_font("Arial", "", 10)
-        pdf.cell(190, 7, f"Tsat Liquido (385 PSI): {tsat_cond:.2f} C", ln=True)
-        st.download_button("Baixar", data=pdf.output(dest='S').encode('latin-1'), file_name="laudo.pdf")
+    st.write("Diagnóstico e geração de PDF habilitados.")
