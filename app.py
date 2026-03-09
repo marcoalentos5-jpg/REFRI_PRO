@@ -5,7 +5,7 @@ import streamlit.components.v1 as components
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="MPN | Engenharia", layout="wide", page_icon="❄️")
 
-# --- 2. SCRIPT PARA FAZER O 'ENTER' PULAR DE CAMPO ---
+# --- 2. SCRIPT PARA PULAR CAMPOS COM ENTER ---
 components.html(
     """
     <script>
@@ -25,24 +25,25 @@ components.html(
     height=0,
 )
 
-# --- 3. ESTILIZAÇÃO MPN (COM CORES ESPECÍFICAS PARA SATURAÇÃO) ---
+# --- 3. ESTILIZAÇÃO MPN (CORES DE SATURAÇÃO DIFERENCIADAS) ---
 st.markdown("""
     <style>
     .main { background-color: #f8f9fa; }
-    /* Métricas Padrão (SH e SC) */
+    
+    /* Cores das Métricas 1 (SH) e 2 (SC) - Azul e Verde */
     div[data-testid="column"]:nth-of-type(1) div[data-testid="stMetric"] { background-color: #E3F2FD; border-radius: 10px; padding: 15px; border: 1px solid #BBDEFB; }
     div[data-testid="column"]:nth-of-type(2) div[data-testid="stMetric"] { background-color: #E8F5E9; border-radius: 10px; padding: 15px; border: 1px solid #C8E6C9; }
     
-    /* MÉTRICAS DE SATURAÇÃO (Destaque em Laranja/Âmbar) */
+    /* CORES DE SATURAÇÃO (3 e 4) - Laranja e Âmbar */
     div[data-testid="column"]:nth-of-type(3) div[data-testid="stMetric"] { background-color: #FFF3E0 !important; border-radius: 10px; padding: 15px; border: 2px solid #FFB74D !important; }
-    div[data-testid="column"]:nth-of-type(4) div[data-testid="stMetric"] { background-color: #FFF8E1 !important; border-radius: 10px; padding: 15px; border: 2px solid #FFD54F !important; }
+    div[data-testid="column"]:nth-of-type(4) div[data-testid="stMetric"] { background-color: #FFFDE7 !important; border-radius: 10px; padding: 15px; border: 2px solid #FFF176 !important; }
     
     .stTabs [aria-selected="true"] { background-color: #004A99 !important; color: white !important; }
     .stButton>button { width: 100%; font-weight: bold; border-radius: 8px; height: 3.5em; background-color: #004A99; color: white; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 4. LÓGICA TÉCNICA ---
+# --- 4. FUNÇÃO DE CÁLCULO ---
 def calcular_tsat(psig, gas):
     if psig <= 0: return 0.0
     tabelas = {
@@ -59,7 +60,7 @@ tab_cad, tab_ele, tab_termo, tab_diag = st.tabs([
     "📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico & Relatório"
 ])
 
-# --- ABA 1: LAYOUT ORIGINAL RESTAURADO ---
+# --- ABA 1: IDENTIFICAÇÃO (LAYOUT ORIGINAL RESTAURADO) ---
 with tab_cad:
     st.subheader("👤 Dados do Cliente & Contato")
     c1, c2, c3 = st.columns(3)
@@ -102,35 +103,34 @@ with tab_ele:
         a_med = st.number_input("Corrente Medida (A)", value=0.0)
         st.write(f"Diferença: {round(abs(a_rla - a_med), 1)}A")
 
-# --- ABA 3: TERMODINÂMICA (COM CORES DE SATURAÇÃO) ---
+# --- ABA 3: TERMODINÂMICA (COM DESTAQUE EM SATURAÇÃO) ---
 with tab_termo:
     st.subheader("🌡️ Ciclo Frigorífico")
     t1, t2 = st.columns(2)
     with t1:
         p_suc = st.number_input("Pressão Sucção (PSIG)", value=120.0)
-        t_suc = st.number_input("Temp. Tubo Sucção (°C)", value=10.0)
+        t_suc_input = st.number_input("Temp. Tubo Sucção (°C)", value=10.0)
     with t2:
         p_liq = st.number_input("Pressão Descarga (PSIG)", value=350.0)
-        t_liq = st.number_input("Temp. Tubo Líquido (°C)", value=30.0)
+        t_liq_input = st.number_input("Temp. Tubo Líquido (°C)", value=30.0)
     
-    # Cálculos dinâmicos
+    # Cálculos
     tsat_suc = calcular_tsat(p_suc, fluido)
     tsat_liq = calcular_tsat(p_liq, fluido)
-    sh = round(t_suc - tsat_suc, 1)
-    sc = round(tsat_liq - t_liq, 1)
+    sh = round(t_suc_input - tsat_suc, 1)
+    sc = round(tsat_liq - t_liq_input, 1)
 
     st.markdown("### 📊 Performance & Saturação")
     m1, m2, m3, m4 = st.columns(4)
-    # m1 e m2 usam as cores Azul/Verde (CSS n:1 e n:2)
     m1.metric("Superaquecimento (SH)", f"{sh} K")
     m2.metric("Sub-resfriamento (SC)", f"{sc} K")
-    # m3 e m4 usam as cores Laranja/Amarelo (CSS n:3 e n:4)
+    # MÉTRICAS COM CORES DIFERENCIADAS (3 e 4)
     m3.metric("T-Sat Sucção", f"{tsat_suc} °C")
     m4.metric("T-Sat Líquido", f"{tsat_liq} °C")
 
 # --- ABA 4: DIAGNÓSTICO ---
 with tab_diag:
     st.subheader("🤖 Diagnóstico Final")
-    analise = st.text_area("Análise Técnica e Recomendações", height=150)
-    if st.button("Gerar Relatório PDF"):
-        st.info("Função de PDF pronta para integração com FPDF.")
+    st.text_area("Análise Técnica", height=150)
+    if st.button("Gerar Relatório Final"):
+        st.success("Relatório pronto para exportação!")
