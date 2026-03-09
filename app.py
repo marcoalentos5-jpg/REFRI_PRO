@@ -29,7 +29,7 @@ components.html(
     height=0,
 )
 
-# --- 3. ESTILIZAÇÃO ORIGINAL MPN ---
+# --- 3. ESTILIZAÇÃO ORIGINAL MPN (AJUSTADA) ---
 st.markdown("""
     <style>
     .main { background-color: #f8f9fa; }
@@ -37,6 +37,16 @@ st.markdown("""
     div[data-testid="column"]:nth-of-type(2) div[data-testid="stMetric"] { background-color: #E8F5E9; border-radius: 10px; padding: 15px; border: 1px solid #C8E6C9; }
     div[data-testid="column"]:nth-of-type(3) div[data-testid="stMetric"] { background-color: #FFFDE7; border-radius: 10px; padding: 15px; border: 1px solid #FFF9C4; }
     div[data-testid="column"]:nth-of-type(4) div[data-testid="stMetric"] { background-color: #E1F5FE; border-radius: 10px; padding: 15px; border: 1px solid #B3E5FC; }
+    
+    /* COR DE FUNDO ESPECÍFICA PARA AS MÉTRICAS DE SATURAÇÃO (COLUNA 5 E 6) */
+    div[data-testid="column"]:nth-of-type(5) div[data-testid="stMetric"], 
+    div[data-testid="column"]:nth-of-type(6) div[data-testid="stMetric"] { 
+        background-color: #FFE0B2; 
+        border-radius: 10px; 
+        padding: 15px; 
+        border: 2px solid #FFB74D; 
+    }
+
     .stTabs [aria-selected="true"] { background-color: #004A99 !important; color: white !important; }
     .stButton>button { width: 100%; font-weight: bold; border-radius: 8px; height: 3.5em; }
     </style>
@@ -118,12 +128,19 @@ with tab_termo:
     tsat_evap = calcular_tsat(p_suc, fluido)
     tsat_cond = calcular_tsat(p_liq, fluido)
     sh, sr, dt = t_suc - tsat_evap, tsat_cond - t_liq, t_ret - t_ins
+    
     st.markdown("---")
     res1, res2, res3, res4 = st.columns(4)
-    res1.metric("Temp. Saturação", f"{tsat_evap:.1f} °C")
-    res2.metric("Superaquecimento", f"{sh:.1f} K")
-    res3.metric("Delta T do Ar", f"{dt:.1f} °C")
-    res4.metric("Sub-resfriamento", f"{sr:.1f} K")
+    res1.metric("Superaquecimento", f"{sh:.1f} K")
+    res2.metric("Delta T do Ar", f"{dt:.1f} °C")
+    res3.metric("Sub-resfriamento", f"{sr:.1f} K")
+    
+    st.markdown("### 🌡️ Temperaturas de Saturação")
+    sat1, sat2 = st.columns(2)
+    with sat1:
+        st.metric("Saturação Evaporadora (Tsat)", f"{tsat_evap:.1f} °C")
+    with sat2:
+        st.metric("Saturação Condensadora (Tsat)", f"{tsat_cond:.1f} °C")
 
 with tab_diag:
     if sh < 5: veredito = "ALERTA: SH Baixo. Perigo de retorno de líquido ao compressor."
@@ -132,50 +149,3 @@ with tab_diag:
     st.warning(f"Diagnóstico Final: {veredito}")
     med_corretivas = st.text_area("🔧 Medidas Corretivas", height=100)
     obs_final = st.text_area("📝 Observações", height=150)
-
-    st.markdown("---")
-    pdf = FPDF()
-    pdf.set_auto_page_break(auto=True, margin=15)
-    pdf.add_page()
-    pdf.set_line_width(0.5)
-    if os.path.exists("logo.png"):
-        try:
-            pdf.image("logo.png", 10, 8, 33)
-            pdf.ln(20)
-        except: pass
-    pdf.set_font("helvetica", "B", 12); pdf.set_fill_color(230, 230, 230)
-    pdf.cell(190, 10, "LAUDO TECNICO DE DIAGNOSTICO - MPN", border=1, ln=True, align="C", fill=True)
-    pdf.ln(2)
-    pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " INFORMAÇÕES DO CLIENTE", border=1, ln=True, fill=True)
-    pdf.set_font("helvetica", "", 8)
-    data_formatada = data_visita.strftime('%d/%m/%Y')
-    pdf.cell(130, 7, f" Cliente: {cliente} / Doc: {doc_cliente}", border=1); pdf.cell(60, 7, f" Data: {data_formatada}", border=1, ln=True)
-    pdf.cell(190, 7, f" Endereço: {endereco}", border=1, ln=True)
-    pdf.ln(4)
-    pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " DADOS DO EQUIPAMENTO", border=1, ln=True, fill=True)
-    pdf.set_font("helvetica", "", 8)
-    pdf.cell(63, 7, f" Marca: {fabricante} ({linha})", border=1); pdf.cell(63, 7, f" Tipo: {tipo_eq}", border=1); pdf.cell(64, 7, f" Cap: {cap_btu}", border=1, ln=True)
-    pdf.cell(95, 7, f" Mod. Evap: {mod_evap} (S/N: {serie_evap})", border=1); pdf.cell(95, 7, f" Mod. Cond: {mod_cond} (S/N: {serie_cond})", border=1, ln=True)
-    pdf.ln(4)
-    pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " PARAMETROS MEDIDOS", border=1, ln=True, fill=True)
-    pdf.set_font("helvetica", "", 8)
-    pdf.cell(63, 7, f" Tensão: Nom {v_nom}V / Med {v_med}V / Dif {v_dif}V", border=1)
-    pdf.cell(63, 7, f" Corrente: Med {a_med}A / Dif {a_dif}A", border=1)
-    pdf.cell(64, 7, f" LRA: {a_lra}A / RLA: {a_rla}A", border=1, ln=True)
-    pdf.cell(47, 7, f" P. Suc: {p_suc} PSI", border=1); pdf.cell(47, 7, f" Gás: {fluido}", border=1); pdf.cell(48, 7, f" Superaq: {sh:.1f} K", border=1); pdf.cell(48, 7, f" Subresf: {sr:.1f} K", border=1, ln=True)
-    pdf.ln(4)
-    pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " DIAGNÓSTICO", border=1, ln=True, fill=True)
-    pdf.set_font("helvetica", "B", 8); pdf.multi_cell(190, 7, f" Veredito: {veredito}", border=1, align="L")
-    pdf.ln(4)
-    pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " MEDIDAS CORRETIVAS", border=1, ln=True, fill=True)
-    pdf.set_font("helvetica", "", 8); pdf.multi_cell(190, 4, f" {med_corretivas}", border=1, align="L")
-    pdf.ln(4)
-    pdf.set_font("helvetica", "B", 8); pdf.cell(190, 6, " OBSERVAÇÕES", border=1, ln=True, fill=True)
-    pdf.set_font("helvetica", "", 8); pdf.multi_cell(190, 4, f" {obs_final}", border=1, align="L")
-    pdf.ln(15); pdf.set_font("helvetica", "B", 8)
-    pdf.set_x(65); pdf.cell(80, 0, "", border="T", ln=True, align="C"); pdf.ln(2)
-    pdf.cell(190, 5, tecnico_nome, ln=True, align="C")
-    pdf.cell(190, 5, doc_tecnico, ln=True, align="C")
-
-    pdf_bytes = pdf.output()
-    st.download_button(label="📥 BAIXAR RELATÓRIO PDF", data=bytes(pdf_bytes), file_name=f"Laudo_{cliente}.pdf", mime="application/pdf")
