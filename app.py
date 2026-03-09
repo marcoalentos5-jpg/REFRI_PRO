@@ -28,7 +28,7 @@ components.html(
     height=0,
 )
 
-# --- 3. ESTILIZAÇÃO ORIGINAL MPN ---
+# --- 3. ESTILIZAÇÃO ORIGINAL MPN (4 COLUNAS + SATURAÇÃO EM LARANJA) ---
 st.markdown("""
     <style>
     .main { background-color: #f8f9fa; }
@@ -37,25 +37,27 @@ st.markdown("""
     div[data-testid="column"]:nth-of-type(3) div[data-testid="stMetric"] { background-color: #FFFDE7; border-radius: 10px; padding: 15px; border: 1px solid #FFF9C4; }
     div[data-testid="column"]:nth-of-type(4) div[data-testid="stMetric"] { background-color: #E1F5FE; border-radius: 10px; padding: 15px; border: 1px solid #B3E5FC; }
     
-    div.sat-marker div[data-testid="stMetric"] { background-color: #FFE0B2 !important; border-radius: 10px; padding: 15px; border: 2px solid #FFB74D !important; }
+    div.sat-marker div[data-testid="stMetric"] { 
+        background-color: #FFE0B2 !important; 
+        border-radius: 10px; 
+        padding: 15px; 
+        border: 2px solid #FFB74D !important; 
+    }
     
     .stTabs [aria-selected="true"] { background-color: #004A99 !important; color: white !important; }
     .stButton>button { width: 100%; font-weight: bold; border-radius: 8px; height: 3.5em; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 4. LÓGICA TÉCNICA CORRIGIDA (DANFOSS REF TOOLS - PRECISION 45.34C @ 385PSI) ---
+# --- 4. LÓGICA TÉCNICA (ANTOINE PRECISION - DANFOSS) ---
 def calcular_tsat_antoine(psig, gas, tipo="bubble"):
     if psig <= 0: return 0
     psia = psig + 14.696
     log_p = math.log10(psia)
     
-    # Coeficientes calibrados para máxima precisão industrial
+    # Coeficientes Calibrados: R-410A @ 385 PSIG = 45.34 °C
     coefs = {
-        "R-410A": {
-            "bubble": (4.13529, 672.43, 209.68), # Bate 45.34C em 385 PSIG
-            "dew":    (4.14200, 675.20, 209.10)
-        },
+        "R-410A": (4.13529, 672.43, 209.68),
         "R-22":   (4.108, 720.0, 225.0),
         "R-134a": (4.430, 941.5, 235.0),
         "R-404A": {"bubble": (4.012, 595.6, 220.2), "dew": (4.021, 608.2, 218.5)},
@@ -70,54 +72,68 @@ def calcular_tsat_antoine(psig, gas, tipo="bubble"):
         return (t_f - 32) / 1.8
     return 0
 
-# --- 5. TÍTULO E ABAS ---
+# --- 5. INTERFACE ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
-tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico & Relatório"])
+
+tab_cad, tab_ele, tab_termo, tab_diag = st.tabs([
+    "📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico & Relatório"
+])
 
 with tab_cad:
+    st.subheader("👤 Dados do Cliente & Contato")
+    c1, c2, c3 = st.columns(3)
+    cliente = c1.text_input("Nome do Cliente / Empresa")
+    data_visita = c3.date_input("Data da Visita", value=date.today())
+
+    st.markdown("---")
+    st.subheader("⚙️ Dados Técnicos")
     d1, d2, d3 = st.columns(3)
+    fabricante = d1.text_input("Fabricante (Marca)")
     fluido = d3.selectbox("Gás Refrigerante", ["R-410A", "R-22", "R-134a", "R-404A", "R-407C", "R-417A"], key="gas_ref")
-    cliente = d1.text_input("Cliente/Empresa", key="cli_nome")
+    cap_btu = d3.text_input("Capacidade (BTU´s)")
+
+with tab_ele:
+    st.subheader("⚡ Parâmetros Elétricos")
+    col_v, col_a = st.columns(2)
+    v_med = col_v.number_input("Tensão Medida (V)", value=220.0)
+    a_med = col_a.number_input("Corrente Medida (A)", value=0.0)
 
 with tab_termo:
     f_ref = st.session_state.get("gas_ref", "R-410A")
     t1, t2 = st.columns(2)
     p_suc = t1.number_input("Pressão Sucção (PSIG)", value=120.0)
     t_suc = t1.number_input("Temp. Tubo Sucção (°C)", value=10.0)
+    t_ret = t1.number_input("Ar Retorno (°C)", value=24.0)
     p_liq = t2.number_input("Pressão Descarga (PSIG)", value=385.0)
     t_liq = t2.number_input("Temp. Tubo Líquido (°C)", value=30.0)
+    t_ins = t2.number_input("Ar Insuflação (°C)", value=12.0)
     
     tsat_evap = calcular_tsat_antoine(p_suc, f_ref, tipo="dew")
     tsat_cond = calcular_tsat_antoine(p_liq, f_ref, tipo="bubble")
-    sh, sr = t_suc - tsat_evap, tsat_cond - t_liq
-    dt_ar = 12.0 # Placeholder
+    sh, sr, dt_ar = t_suc - tsat_evap, tsat_cond - t_liq, t_ret - t_ins
     
     st.markdown("---")
-    # LAYOUT 4 COLUNAS RESTAURADO
+    # LAYOUT ORIGINAL 4 COLUNAS
     res1, res2, res3, res4 = st.columns(4)
     res1.metric("Superaquecimento", f"{sh:.1f} K")
     res2.metric("Sub-resfriamento", f"{sr:.1f} K")
     res3.metric("Delta T do Ar", f"{dt_ar:.1f} °C")
-    res4.metric("Status", "Estável")
+    res4.metric("Fluido", f_ref)
 
     st.markdown("---")
+    # SATURAÇÃO EM LARANJA
     st.markdown('<div class="sat-marker">', unsafe_allow_html=True)
     s1, s2 = st.columns(2)
-    s1.metric(f"Saturação Sucção ({f_ref})", f"{tsat_evap:.2f} °C")
-    s2.metric(f"Saturação Líquido ({f_ref})", f"{tsat_cond:.2f} °C")
+    s1.metric(f"Tsat Sucção (Dew)", f"{tsat_evap:.2f} °C")
+    s2.metric(f"Tsat Líquido (Bubble)", f"{tsat_cond:.2f} °C")
     st.markdown('</div>', unsafe_allow_html=True)
 
 with tab_diag:
-    st.subheader("📊 Tabela de Referência Antoine (Danfoss)")
-    st.write("Valores calculados com base na relação Pressão-Temperatura (Equação de Antoine).")
-    
-    if st.button("Gerar Relatório Final PDF"):
+    if st.button("Gerar PDF"):
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Arial", "B", 14)
-        pdf.cell(190, 10, "LAUDO TÉCNICO MPN - ENGENHARIA", ln=True, align="C")
-        pdf.ln(5)
+        pdf.cell(190, 10, "LAUDO MPN ENGENHARIA", ln=True, align="C")
         pdf.set_font("Arial", "", 10)
-        pdf.cell(190, 7, f"Fluido: {f_ref} | Psig: {p_liq} | Tsat: {tsat_cond:.2f} C", ln=True)
-        pdf.cell(190, 7, f"SH: {sh:.1f} K | SR: {sr:.1f} K", ln=True)
-        st.download_button("Baixar PDF", data=pdf.output(dest='S').encode('latin-1'), file_name="laudo_final.pdf")
+        pdf.cell(190, 7, f"Tsat Liquido (385 PSI): {tsat_cond:.2f} C", ln=True)
+        st.download_button("Baixar", data=pdf.output(dest='S').encode('latin-1'), file_name="laudo.pdf")
