@@ -29,7 +29,7 @@ components.html(
     height=0,
 )
 
-# --- 3. ESTILIZAÇÃO ORIGINAL MPN (AJUSTADA) ---
+# --- 3. ESTILIZAÇÃO ORIGINAL MPN ---
 st.markdown("""
     <style>
     .main { background-color: #f8f9fa; }
@@ -38,13 +38,12 @@ st.markdown("""
     div[data-testid="column"]:nth-of-type(3) div[data-testid="stMetric"] { background-color: #FFFDE7; border-radius: 10px; padding: 15px; border: 1px solid #FFF9C4; }
     div[data-testid="column"]:nth-of-type(4) div[data-testid="stMetric"] { background-color: #E1F5FE; border-radius: 10px; padding: 15px; border: 1px solid #B3E5FC; }
     
-    /* COR DE FUNDO ESPECÍFICA PARA AS MÉTRICAS DE SATURAÇÃO (COLUNA 5 E 6) */
-    div[data-testid="column"]:nth-of-type(5) div[data-testid="stMetric"], 
-    div[data-testid="column"]:nth-of-type(6) div[data-testid="stMetric"] { 
-        background-color: #FFE0B2; 
+    /* CORREÇÃO PARA AS MÉTRICAS DE SATURAÇÃO */
+    div.sat-marker div[data-testid="stMetric"] { 
+        background-color: #FFE0B2 !important; 
         border-radius: 10px; 
         padding: 15px; 
-        border: 2px solid #FFB74D; 
+        border: 2px solid #FFB74D !important; 
     }
 
     .stTabs [aria-selected="true"] { background-color: #004A99 !important; color: white !important; }
@@ -128,19 +127,19 @@ with tab_termo:
     tsat_evap = calcular_tsat(p_suc, fluido)
     tsat_cond = calcular_tsat(p_liq, fluido)
     sh, sr, dt = t_suc - tsat_evap, tsat_cond - t_liq, t_ret - t_ins
-    
     st.markdown("---")
     res1, res2, res3, res4 = st.columns(4)
-    res1.metric("Superaquecimento", f"{sh:.1f} K")
-    res2.metric("Delta T do Ar", f"{dt:.1f} °C")
-    res3.metric("Sub-resfriamento", f"{sr:.1f} K")
+    res1.metric("Temp. Saturação", f"{tsat_evap:.1f} °C")
+    res2.metric("Superaquecimento", f"{sh:.1f} K")
+    res3.metric("Delta T do Ar", f"{dt:.1f} °C")
+    res4.metric("Sub-resfriamento", f"{sr:.1f} K")
     
-    st.markdown("### 🌡️ Temperaturas de Saturação")
-    sat1, sat2 = st.columns(2)
-    with sat1:
-        st.metric("Saturação Evaporadora (Tsat)", f"{tsat_evap:.1f} °C")
-    with sat2:
-        st.metric("Saturação Condensadora (Tsat)", f"{tsat_cond:.1f} °C")
+    st.markdown("---")
+    st.markdown('<div class="sat-marker">', unsafe_allow_html=True)
+    c_sat1, c_sat2 = st.columns(2)
+    c_sat1.metric("Saturação Evap. (Tsat)", f"{tsat_evap:.1f} °C")
+    c_sat2.metric("Saturação Cond. (Tsat)", f"{tsat_cond:.1f} °C")
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with tab_diag:
     if sh < 5: veredito = "ALERTA: SH Baixo. Perigo de retorno de líquido ao compressor."
