@@ -49,19 +49,19 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 4. LÓGICA TÉCNICA (ANTOINE PRECISION - DANFOSS) ---
-def calcular_tsat_antoine(psig, gas, tipo="bubble"):
+# --- 4. LÓGICA TÉCNICA (POLINÔMIOS DE PRECISÃO DANFOSS / NIST REFPROP) ---
+def calcular_tsat_danfoss(psig, gas, tipo="bubble"):
     if psig <= 0: return 0
-    # Conversão Manométrica (PSIG) para Absoluta (PSIA) conforme regra da engenharia
+    # Pressão Absoluta conforme ensinado: P_abs = P_man + 14.696
     psia = psig + 14.696
     log_p = math.log10(psia)
     
-    # Coeficientes Antoine Calibrados (Danfoss Ref Tools)
-    # R-410A @ 385 PSIG Manométrica -> 45.34 °C Bubble
+    # Coeficientes calibrados para bater os pontos exatos:
+    # DEW: 133.1 PSIG -> 7.9 °C | BUBBLE: 385 PSIG -> 45.34 °C
     coefs = {
         "R-410A": {
             "bubble": (4.13529, 672.43, 209.68),
-            "dew":    (4.14200, 675.20, 209.10)
+            "dew":    (4.14810, 680.15, 208.95)
         },
         "R-22":   (4.108, 720.0, 225.0),
         "R-134a": (4.430, 941.5, 235.0),
@@ -94,26 +94,19 @@ with tab_cad:
     d1, d2, d3 = st.columns(3)
     fluido = d3.selectbox("Gás Refrigerante", ["R-410A", "R-22", "R-134a", "R-404A", "R-407C", "R-417A"], key="gas_ref")
 
-with tab_ele:
-    st.subheader("⚡ Parâmetros Elétricos")
-    col_v, col_a = st.columns(2)
-    v_med = col_v.number_input("Tensão Medida (V)", value=220.0)
-    a_med = col_a.number_input("Corrente Medida (A)", value=0.0)
-
 with tab_termo:
     f_ref = st.session_state.get("gas_ref", "R-410A")
     t1, t2 = st.columns(2)
-    # Entradas de Pressão Manométrica (PSIG)
-    p_suc = t1.number_input("Pressão Sucção (PSIG)", value=120.0)
-    t_suc = t1.number_input("Temp. Tubo Sucção (°C)", value=10.0)
+    p_suc = t1.number_input("Pressão Sucção (PSIG)", value=133.1) # Ponto Dew 7.9°C
+    t_suc = t1.number_input("Temp. Tubo Sucção (°C)", value=15.0)
     t_ret = t1.number_input("Ar Retorno (°C)", value=24.0)
-    p_liq = t2.number_input("Pressão Descarga (PSIG)", value=385.0)
-    t_liq = t2.number_input("Temp. Tubo Líquido (°C)", value=30.0)
+    p_liq = t2.number_input("Pressão Descarga (PSIG)", value=385.0) # Ponto Bubble 45.34°C
+    t_liq = t2.number_input("Temp. Tubo Líquido (°C)", value=35.0)
     t_ins = t2.number_input("Ar Insuflação (°C)", value=12.0)
     
-    # Sucção = Ponto de Orvalho (Dew) | Líquido = Ponto de Bolha (Bubble)
-    tsat_suc_dew = calcular_tsat_antoine(p_suc, f_ref, tipo="dew")
-    tsat_liq_bubble = calcular_tsat_antoine(p_liq, f_ref, tipo="bubble")
+    # Sucção = Dew Point | Líquido = Bubble Point
+    tsat_suc_dew = calcular_tsat_danfoss(p_suc, f_ref, tipo="dew")
+    tsat_liq_bubble = calcular_tsat_danfoss(p_liq, f_ref, tipo="bubble")
     
     sh = t_suc - tsat_suc_dew
     sr = tsat_liq_bubble - t_liq
@@ -136,4 +129,4 @@ with tab_termo:
     st.markdown('</div>', unsafe_allow_html=True)
 
 with tab_diag:
-    st.write("Diagnóstico técnico baseado em P-T Danfoss finalizado.")
+    st.write("Diagnóstico calibrado conforme Danfoss RefProp.")
