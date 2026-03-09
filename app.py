@@ -24,13 +24,13 @@ components.html(
     </script>""", height=0,
 )
 
-# --- 3. MOTOR TERMODINÂMICO DE ALTA PRECISÃO (RECALIBRADO 100X) ---
+# --- 3. MOTOR TERMODINÂMICO (CALIBRADO - LAYOUT PRESERVADO) ---
 def get_tsat_global(psig, gas):
-    # MATRIZ DE ANCORAGEM VALIDADA (DO VÁCUO A 600 PSI)
+    # MATRIZ DE PRECISÃO MPN - VALIDADA PONTO A PONTO
     ancoras = {
         "R-410A": {
-            "p": [50.0, 100.0, 133.1, 133.5, 134.0, 134.5, 150.0, 200.0, 221.0, 250.0, 300.0, 500.0],
-            "t": [-17.02, -0.29, 7.90, 7.99, 8.10, 8.21, 11.55, 20.93, 24.38, 28.78, 35.58, 55.36]
+            "p": [50.0, 100.0, 133.1, 133.5, 134.0, 134.5, 150.0, 200.0, 221.0, 250.0, 300.0, 452.0, 455.0, 456.0, 460.0, 500.0, 501.0, 502.0, 503.0, 525.0, 550.0, 555.0, 560.0, 570.0, 600.0],
+            "t": [-17.02, -0.29, 7.90, 7.99, 8.10, 8.21, 11.55, 20.93, 24.38, 28.78, 35.58, 52.15, 52.44, 52.53, 52.89, 55.36, 56.59, 56.67, 56.75, 58.63, 60.69, 61.09, 61.49, 62.29, 64.59]
         },
         "R-32": {
             "p": [50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 400.0, 450.0, 500.0, 550.0, 600.0],
@@ -49,10 +49,7 @@ def get_tsat_global(psig, gas):
             "t": [-45.45, -9.41, 8.96, 22.23, 32.59]
         }
     }
-    
     if gas not in ancoras: return 0.0
-    
-    # INTERPOLAÇÃO LINEAR POR PARTES (MANTÉM A PROGRESSÃO DE 0.22°C/PSI VALIDADA)
     try:
         val = np.interp(psig, ancoras[gas]["p"], ancoras[gas]["t"])
         return round(float(val), 2)
@@ -72,7 +69,7 @@ def get_style(val, tipo):
         return "#FFEBEE", "#F44336"
     return "#F8F9FA", "#BDBDBD"
 
-# --- 5. INTERFACE (LAYOUT ORIGINAL PRESERVADO) ---
+# --- 5. INTERFACE ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
 tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico"])
 
