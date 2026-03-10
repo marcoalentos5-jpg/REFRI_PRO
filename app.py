@@ -32,18 +32,25 @@ tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ El
 
 with tab_cad:
     st.subheader("👤 Dados do Cliente & Contato")
-    c1, c2 = st.columns([2.5, 1]) 
-    cliente = c1.text_input("Nome do Cliente / Empresa")
-    doc_cliente = c2.text_input("CPF / CNPJ")
+    
+    # AJUSTE SOLICITADO: Aumento do campo nome (ocupando largura total)
+    cliente = st.text_input("Nome do Cliente / Empresa")
+    
+    # CPF/CNPJ movido para linha de baixo para manter organização rigorosa
+    c_doc, c_vazio = st.columns([1, 1])
+    doc_cliente = c_doc.text_input("CPF / CNPJ", max_chars=12, placeholder="010497927-50")
+    
     l2_c1, l2_c2, l2_c3 = st.columns(3)
     endereco = l2_c1.text_input("Endereço (Rua e Número)")
     bairro = l2_c2.text_input("Bairro")
     cep = l2_c3.text_input("CEP", placeholder="00000-000")
-    l3_c1, l3_c2, l3_c3, l3_c4 = st.columns([1.2, 1, 1.5, 1])
-    comodo_sala = l3_c1.text_input("🏠 COMODO DO PROCEDIMENTO")
-    whatsapp = l3_c2.text_input("🟢 WhatsApp", value="21980264217")
-    email_cli = l3_c3.text_input("✉️ E-mail")
-    data_visita = l3_c4.date_input("Data da Visita", value=date.today())
+    l3_c1, l3_c2, l3_c3 = st.columns([1, 1.5, 1])
+    whatsapp = l3_c1.text_input("🟢 WhatsApp", value="21980264217")
+    email_cli = l3_c2.text_input("✉️ E-mail")
+    data_visita = l3_c3.date_input("Data da Visita", value=date.today())
+    
+    comodo_proc = st.text_input("🏠 Cômodo para Procedimento")
+    
     st.markdown("---")
     st.subheader("⚙️ Dados Técnicos")
     d1, d2, d3 = st.columns(3)
@@ -102,18 +109,27 @@ with tab_diag:
     st.subheader("🤖 Diagnóstico e Recomendações")
     obs_raw = st.text_area("✍️ Observações Técnicas Detalhadas", height=150)
     med_tomadas_raw = st.text_area("🔧 Medidas Técnicas Tomadas", height=150)
+    
     diag_termo = []
+    diag_eletr = []
+    if any(x in obs_raw.lower() for x in ["óleo", "vazamento"]): diag_termo.append("Vazamento detectado.")
     if sh < 6: diag_termo.append(f"SH CRÍTICO ({sh}K).")
-    if sc > 12: diag_termo.append(f"SC ELEVADO ({sc}K).")
-    propostas_sugestao = "\n".join(diag_termo) if diag_termo else "Sem anomalias detectadas."
+    if diff_v > (v_rede * 0.05): diag_eletr.append(f"QUEDA TENSÃO ({diff_v}V).")
+    
+    propostas_sugestao = "\n".join(diag_termo + diag_eletr) if (diag_termo + diag_eletr) else "Sem anomalias detectadas."
     ia_raw = st.text_area("🤖 Medidas Técnicas Propostas pela IA", value=propostas_sugestao, height=150)
 
     st.markdown("---")
     if st.button("📄 Gerar Relatório Profissional"):
         pdf = FPDF()
         pdf.add_page()
+        
+        # --- CABEÇALHO ---
         pdf.set_fill_color(0, 74, 153)
         pdf.rect(0, 0, 210, 42, 'F')
+        if os.path.exists("logo.png"):
+            pdf.image("logo.png", x=10, y=8, h=25)
+        
         pdf.set_text_color(255, 255, 255)
         pdf.set_font("Arial", 'B', 18)
         pdf.cell(0, 15, "RELATORIO TECNICO", ln=True, align='C')
@@ -130,56 +146,74 @@ with tab_diag:
             pdf.set_text_color(0, 0, 0)
             pdf.ln(3)
 
+        # --- 1. IDENTIFICAÇÃO ---
         draw_header("1. Identificacao do Cliente")
         pdf.set_font("Arial", 'B', 9)
         pdf.cell(30, 6, "Cliente:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{cliente}", ln=0)
         pdf.set_x(120) 
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "CPF/CNPJ:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{doc_cliente}", ln=1)
-        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Cômodo Proc.:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{comodo_sala}", ln=0)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Endereco:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{endereco}", ln=0)
         pdf.set_x(120) 
-        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Data Visita:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{data_visita}", ln=1)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Bairro/CEP:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{bairro} / {cep}", ln=1)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Comodo:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{comodo_proc}", ln=1)
+        pdf.ln(2)
+
+        # --- 2. EQUIPAMENTO ---
+        draw_header("2. Dados do Equipamento")
+        pdf.set_font("Arial", 'B', 9)
+        pdf.cell(30, 6, "Fabricante:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{fabricante} - {linha}", ln=0)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Capacidade:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(0, 6, f"{cap_digitada} BTU/h", ln=1)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Fluido Refrig.:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{fluido}", ln=0)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Tecnologia:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(0, 6, f"{tecnologia} / {tipo_eq}", ln=1)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Serie Evap.:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{serie_evap}", ln=0)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Serie Cond.:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(0, 6, f"{serie_cond}", ln=1)
         pdf.ln(5)
 
-        draw_header("3. Parametros Operacionais (Medicoes)")
-        pdf.set_font("Arial", 'B', 8)
+        # --- 3. PARÂMETROS TÉCNICOS ---
+        draw_header("3. Analise de Ciclo e Eletrica")
+        pdf.set_font("Arial", 'B', 9)
+        col_w = 45
         pdf.set_fill_color(245, 245, 245)
-        pdf.cell(47, 7, "  PRESSAO SUCÇÃO", 1, 0, 'L', True)
-        pdf.cell(47, 7, "  SUPER-AQUECIMENTO", 1, 0, 'L', True)
-        pdf.cell(47, 7, "  CORRENTE MEDIDA", 1, 0, 'L', True)
-        pdf.cell(47, 7, "  TENSAO REDE", 1, 1, 'L', True)
-        pdf.set_font("Arial", '', 10)
-        pdf.cell(47, 8, f"  {p_suc} PSIG", 1, 0, 'L')
-        pdf.cell(47, 8, f"  {sh} K", 1, 0, 'L')
-        pdf.cell(47, 8, f"  {a_med} A", 1, 0, 'L')
-        pdf.cell(47, 8, f"  {v_med} V", 1, 1, 'L')
-        pdf.set_font("Arial", 'B', 8)
-        pdf.cell(47, 7, "  PRESSAO DESCARGA", 1, 0, 'L', True)
-        pdf.cell(47, 7, "  SUB-RESFRIAMENTO", 1, 0, 'L', True)
-        pdf.cell(47, 7, "  DELTA T (AR)", 1, 0, 'L', True)
-        pdf.cell(47, 7, "  CARGA MOTOR", 1, 1, 'L', True)
-        pdf.set_font("Arial", '', 10)
-        pdf.cell(47, 8, f"  {p_liq} PSIG", 1, 0, 'L')
-        pdf.cell(47, 8, f"  {sc} K", 1, 0, 'L')
-        pdf.cell(47, 8, f"  {dt} K", 1, 0, 'L')
-        perc_carga = round((a_med/rla_comp*100),1) if rla_comp > 0 else 0
-        pdf.cell(47, 8, f"  {perc_carga} %", 1, 1, 'L')
+        pdf.cell(col_w, 7, " Item", 1, 0, 'L', True)
+        pdf.cell(col_w, 7, " Valor Medido", 1, 1, 'C', True)
+        
+        dados_tabela = [
+            ("Pressão de Sucção", f"{p_suc} PSIG"),
+            ("Superaquecimento (SH)", f"{sh} K"),
+            ("Sub-resfriamento (SC)", f"{sc} K"),
+            ("Delta T (Insuflamento)", f"{dt} K"),
+            ("Corrente Medida", f"{a_med} A"),
+            ("Tensão Rede/Medida", f"{v_rede}V / {v_med}V")
+        ]
+        
+        pdf.set_font("Arial", '', 9)
+        for label, valor in dados_tabela:
+            pdf.cell(col_w, 6, f" {label}", 1)
+            pdf.cell(col_w, 6, f" {valor}", 1, 1, 'C')
         pdf.ln(5)
 
-        draw_header("4. Diagnostico e Medidas Tecnicas")
-        pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Observacoes Tecnicas:", ln=1)
-        pdf.set_font("Arial", '', 9); pdf.multi_cell(0, 5, f"{obs_raw}"); pdf.ln(2)
+        # --- 4. DIAGNÓSTICO ---
+        draw_header("4. Diagnostico e Medidas")
+        pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Observacoes:", ln=1)
+        pdf.set_font("Arial", '', 9); pdf.multi_cell(0, 5, obs_raw if obs_raw else "Nada declarado.")
+        pdf.ln(2)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Medidas Tomadas:", ln=1)
+        pdf.set_font("Arial", '', 9); pdf.multi_cell(0, 5, med_tomadas_raw if med_tomadas_raw else "Nenhuma.")
+        pdf.ln(2)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Recomendacoes Tecnicas (IA):", ln=1)
+        pdf.set_font("Arial", 'I', 9); pdf.multi_cell(0, 5, ia_raw)
 
-        # --- CORREÇÃO TÉCNICA DEFINITIVA PARA STREAMLIT ---
-        try:
-            pdf_bytes = pdf.output(dest='S')
-            if isinstance(pdf_bytes, str):
-                pdf_bytes = pdf_bytes.encode('latin-1', 'ignore')
-        except:
-            pdf_bytes = pdf.output()
+        # --- ASSINATURA ---
+        pdf.set_y(-40)
+        pdf.line(60, pdf.get_y(), 150, pdf.get_y())
+        pdf.set_font("Arial", 'I', 8)
+        pdf.cell(0, 5, "Responsavel Tecnico - MPN Engenharia", ln=1, align='C')
 
+        # DOWNLOAD
+        pdf_output = pdf.output(dest='S').encode('latin-1')
         st.download_button(
-            label="⬇️ Baixar Relatório PDF", 
-            data=pdf_bytes, 
-            file_name=f"Relatorio_{cliente if cliente else 'Tecnico'}.pdf", 
+            label="⬇️ Baixar Relatório em PDF",
+            data=pdf_output,
+            file_name=f"Relatorio_{cliente}_{data_visita}.pdf",
             mime="application/pdf"
         )
