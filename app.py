@@ -32,7 +32,7 @@ tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ El
 
 with tab_cad:
     st.subheader("👤 Dados do Cliente & Contato")
-    c1, c2 = st.columns([3, 1]) # CORREÇÃO TÉCNICA: Definida proporção para evitar erro
+    c1, c2 = st.columns([3, 1]) 
     cliente = c1.text_input("Nome do Cliente / Empresa")
     doc_cliente = c2.text_input("CPF / CNPJ")
     
@@ -41,7 +41,7 @@ with tab_cad:
     bairro = l2_c2.text_input("Bairro")
     cep = l2_c3.text_input("CEP", placeholder="00000-000")
     
-    l3_c1, l3_c2, l3_c3, l3_c4 = st.columns(4)
+    l3_c1, l3_c2, l3_c3, l3_c4 = st.columns([1.2, 1, 1.5, 1])
     comodo_sala = l3_c1.text_input("🏠 COMODO DO PROCEDIMENTO")
     whatsapp = l3_c2.text_input("🟢 WhatsApp", value="21980264217")
     email_cli = l3_c3.text_input("✉️ E-mail")
@@ -120,7 +120,6 @@ with tab_diag:
         pdf = FPDF()
         pdf.add_page()
         
-        # --- CABEÇALHO ---
         pdf.set_fill_color(0, 74, 153)
         pdf.rect(0, 0, 210, 42, 'F')
         if os.path.exists("logo.png"):
@@ -142,7 +141,6 @@ with tab_diag:
             pdf.set_text_color(0, 0, 0)
             pdf.ln(3)
 
-        # --- 1. IDENTIFICAÇÃO ---
         draw_header("1. Identificacao do Cliente")
         pdf.set_font("Arial", 'B', 9)
         pdf.cell(30, 6, "Cliente:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{cliente}", ln=0)
@@ -157,7 +155,6 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Data Visita:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{data_visita}", ln=1)
         pdf.ln(5)
 
-        # --- 2. DADOS DO EQUIPAMENTO ---
         draw_header("2. Dados Tecnicos do Equipamento")
         pdf.set_font("Arial", 'B', 9)
         pdf.cell(30, 6, "Marca/Linha:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{fabricante} / {linha}", ln=0)
@@ -180,7 +177,6 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Série Cond:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{serie_cond}", ln=1)
         pdf.ln(5)
 
-        # --- 3. ANALISE OPERACIONAL ---
         draw_header("3. Parametros Operacionais (Medicoes)")
         pdf.set_font("Arial", 'B', 8)
         pdf.set_fill_color(245, 245, 245)
@@ -209,7 +205,6 @@ with tab_diag:
         pdf.cell(47, 8, f"  {perc_carga} %", 1, 1, 'L')
         pdf.ln(5)
 
-        # --- 4. DIAGNOSTICO ---
         draw_header("4. Diagnostico e Medidas Tecnicas")
         pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Observacoes Tecnicas:", ln=1)
         pdf.set_font("Arial", '', 9); pdf.multi_cell(0, 5, f"{obs_raw}"); pdf.ln(2)
@@ -220,12 +215,16 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Recomendacoes e Medidas Propostas:", ln=1)
         pdf.set_font("Arial", '', 9); pdf.multi_cell(0, 5, f"{ia_raw}")
 
-        # --- RODAPÉ ---
         pdf.set_y(265)
         pdf.set_font("Arial", 'I', 8)
         pdf.set_text_color(120, 120, 120)
         pdf.cell(0, 5, "Este relatório é um documento técnico para fins de diagnóstico e manutenção.", ln=True, align='C')
         pdf.cell(0, 5, f"Gerado em {date.today().strftime('%d/%m/%Y')} | MPN Engenharia", ln=True, align='C')
 
-        pdf_output = pdf.output(dest='S').encode('latin-1', 'ignore')
-        st.download_button(label="⬇️ Baixar Relatório PDF", data=pdf_output, file_name=f"Relatorio_{cliente}_{data_visita}.pdf", mime="application/pdf")
+        # Geração segura do PDF
+        try:
+            pdf_bytes = pdf.output(dest='S').encode('latin-1', 'ignore')
+        except:
+            pdf_bytes = pdf.output()
+            
+        st.download_button(label="⬇️ Baixar Relatório PDF", data=pdf_bytes, file_name=f"Relatorio_{cliente}_{data_visita}.pdf", mime="application/pdf")
