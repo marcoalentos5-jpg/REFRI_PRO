@@ -186,14 +186,14 @@ with tab_diag:
         pdf.cell(95, 8, f"WhatsApp: {whatsapp}", border="B")
         pdf.cell(95, 8, f"E-mail: {email_cli}", border="B", ln=True)
 
-        # CORREÇÃO DEFINITIVA DO OUTPUT PARA BYTES
-        pdf_bytes = pdf.output(dest='S')
-        if isinstance(pdf_bytes, str):
-            pdf_bytes = pdf_bytes.encode('latin-1')
-
+        # CORREÇÃO DE DOWNLOAD USANDO IO BYTES
+        pdf_output = pdf.output(dest='S')
+        if isinstance(pdf_output, str):
+            pdf_output = pdf_output.encode('latin-1')
+        
         st.download_button(
             label="📥 Baixar Relatório", 
-            data=pdf_bytes, 
+            data=io.BytesIO(pdf_output), 
             file_name=f"Relatorio_{cliente}.pdf", 
             mime="application/pdf"
         )
