@@ -154,7 +154,7 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Tecnologia:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(60, 6, f"{tecnologia}", ln=1)
         pdf.ln(3)
 
-        # --- 3. ANÁLISE TÉCNICA (ELÉTRICA E TERMO) ---
+        # --- 3. ANÁLISE TÉCNICA ---
         draw_header("3. Parâmetros de Performance")
         pdf.set_font("Arial", 'B', 9)
         pdf.cell(45, 6, "Tensão (Nom/Med):", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{v_rede}V / {v_med}V", ln=0)
@@ -169,7 +169,7 @@ with tab_diag:
         pdf.set_font("Arial", '', 9)
         pdf.multi_cell(0, 5, f"OBSERVAÇÕES:\n{obs_raw}\n\nMEDIDAS TOMADAS:\n{med_tomadas_raw}\n\nRECOMENDAÇÕES:\n{ia_raw}")
         
-        # --- RODAPÉ (NOME E CNPJ NO FIM) ---
+        # --- RODAPÉ ---
         pdf.set_y(-30)
         pdf.set_font("Arial", 'B', 9)
         pdf.set_text_color(100, 100, 100)
@@ -177,14 +177,17 @@ with tab_diag:
         pdf.set_font("Arial", '', 8)
         pdf.cell(0, 5, "CNPJ: 45.451.272/0001-38 | Responsável Técnico", ln=True, align='C')
 
-        # --- ATUALIZAÇÃO DA SAÍDA PARA EVITAR ERRO ---
-        pdf_bytes = pdf.output()
-        if isinstance(pdf_bytes, str):
-            pdf_bytes = pdf_bytes.encode('latin-1')
-
+        # --- EXPORTAÇÃO SEGURA ---
+        output_pdf = io.BytesIO()
+        pdf_content = pdf.output()
+        if isinstance(pdf_content, str):
+            output_pdf.write(pdf_content.encode('latin-1'))
+        else:
+            output_pdf.write(pdf_content)
+        
         st.download_button(
             label="⬇️ Baixar PDF", 
-            data=pdf_bytes, 
+            data=output_pdf.getvalue(), 
             file_name=f"Relatorio_{cliente}_{date.today()}.pdf", 
             mime="application/pdf"
         )
