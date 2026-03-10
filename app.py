@@ -58,8 +58,9 @@ with tab_cad:
     col_cd1, col_cd2 = st.columns(2)
     mod_cond = col_cd1.text_input("Modelo Unidade Condensadora")
     serie_cond = col_cd2.text_input("Nº de Série Condensadora")
-    
     tipo_procedimento = st.selectbox("Tipo de Procedimento", ["INSTALAÇÃO", "MANUTENÇÃO CORRETIVA", "MANUTENÇÃO PREVENTIVA"])
+    
+    # CAMPOS ATUALIZADOS CONFORME INSTRUÇÃO
     local_equipamento = st.text_input("LOCAL DO EQUIPAMENTO")
     comodo_sala = st.text_input("COMODO/SALA")
 
@@ -105,13 +106,11 @@ with tab_diag:
     st.subheader("🤖 Diagnóstico e Recomendações")
     obs_raw = st.text_area("✍️ Observações Técnicas Detalhadas", height=150)
     med_tomadas_raw = st.text_area("🔧 Medidas Técnicas Tomadas", height=150)
-    
     diag_termo = []
     diag_eletr = []
     if any(x in obs_raw.lower() for x in ["óleo", "vazamento"]): diag_termo.append("Vazamento detectado.")
     if sh < 6: diag_termo.append(f"SH CRÍTICO ({sh}K).")
     if diff_v > (v_rede * 0.05): diag_eletr.append(f"QUEDA TENSÃO ({diff_v}V).")
-    
     propostas_sugestao = "\n".join(diag_termo + diag_eletr) if (diag_termo + diag_eletr) else "Sem anomalias detectadas."
     ia_raw = st.text_area("🤖 Medidas Técnicas Propostas pela IA", value=propostas_sugestao, height=150)
 
@@ -119,7 +118,6 @@ with tab_diag:
     if st.button("📄 Gerar Relatório Profissional"):
         pdf = FPDF()
         pdf.add_page()
-        
         pdf.set_fill_color(0, 74, 153)
         pdf.rect(0, 0, 210, 42, 'F')
         pdf.set_text_color(255, 255, 255)
@@ -129,31 +127,29 @@ with tab_diag:
         pdf.cell(0, 5, "CNPJ: 45.451.272/0001-00 | Tel: 21-98545-3763", ln=True, align='C')
         pdf.ln(15)
 
-        def draw_header(title):
-            pdf.set_fill_color(235, 235, 235)
-            pdf.set_text_color(0, 74, 153)
-            pdf.set_font("Arial", 'B', 11)
-            pdf.cell(0, 8, f" {title.upper()}", ln=True, fill=True)
-            pdf.set_text_color(0, 0, 0)
-            pdf.ln(3)
+        pdf.set_fill_color(235, 235, 235)
+        pdf.set_text_color(0, 74, 153)
+        pdf.set_font("Arial", 'B', 11)
+        pdf.cell(0, 8, " 1. IDENTIFICACAO E DADOS DO EQUIPAMENTO", ln=True, fill=True)
+        pdf.set_text_color(0, 0, 0)
+        pdf.ln(3)
 
-        draw_header("1. Identificacao e Dados do Equipamento")
         pdf.set_font("Arial", 'B', 9)
         pdf.cell(40, 6, "Cliente:", 0); pdf.set_font("Arial", '', 9); pdf.cell(0, 6, f"{cliente}", 1, 1)
         pdf.set_font("Arial", 'B', 9); pdf.cell(40, 6, "Local do Equip.:", 0); pdf.set_font("Arial", '', 9); pdf.cell(0, 6, f"{local_equipamento}", 1, 1)
         pdf.set_font("Arial", 'B', 9); pdf.cell(40, 6, "Comodo/Sala:", 0); pdf.set_font("Arial", '', 9); pdf.cell(0, 6, f"{comodo_sala}", 1, 1)
         pdf.set_font("Arial", 'B', 9); pdf.cell(40, 6, "Equipamento:", 0); pdf.set_font("Arial", '', 9); pdf.cell(0, 6, f"{fabricante} {tipo_eq} {cap_digitada} BTUs", 1, 1)
-        pdf.set_font("Arial", 'B', 9); pdf.cell(40, 6, "Procedimento:", 0); pdf.set_font("Arial", '', 9); pdf.cell(0, 6, f"{tipo_procedimento}", 1, 1)
         
-        # CORREÇÃO DEFINITIVA USANDO BUFFER DE BYTES
-        pdf_bytes = pdf.output(dest='S')
-        if isinstance(pdf_bytes, str):
-            pdf_bytes = pdf_bytes.encode('latin-1')
+        # EXPORTAÇÃO SEGURA DE BYTES PARA O STREAMLIT
+        pdf_bytes = io.BytesIO()
+        pdf_str = pdf.output(dest='S').encode('latin-1')
+        pdf_bytes.write(pdf_str)
+        pdf_bytes.seek(0)
         
         st.download_button(
             label="⬇️ Baixar Relatório PDF",
             data=pdf_bytes,
             file_name=f"Relatorio_{cliente}.pdf",
             mime="application/pdf",
-            key="btn_download_final_v1"
+            key="btn_relatorio_final"
         )
