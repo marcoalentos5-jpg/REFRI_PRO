@@ -7,7 +7,7 @@ import io
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="MPN | Engenharia Pro", layout="wide", page_icon="❄️")
 
-# --- 2. MOTOR TERMODINÂMICO ---
+# --- 2. MOTOR TERMODINÂMICO (PRECISÃO PERICIAL) ---
 def get_tsat_global(psig, gas):
     ancoras = {
         "R-410A": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 550.0, 600.0], 
@@ -114,22 +114,22 @@ with tab_diag:
     if st.button("📄 Gerar Relatório PDF"):
         pdf = FPDF()
         pdf.add_page()
-        pdf.set_font("Helvetica", 'B', 16)
+        pdf.set_font("Arial", 'B', 16)
         pdf.cell(200, 10, "Relatorio Tecnico - MPN Engenharia", ln=True, align='C')
-        pdf.set_font("Helvetica", '', 12)
+        pdf.set_font("Arial", '', 12)
         pdf.ln(10)
         pdf.cell(0, 10, f"Cliente: {cliente} | Data: {data_visita}", ln=True)
         pdf.cell(0, 10, f"Equipamento: {fabricante} {cap_digitada} BTUs", ln=True)
         pdf.ln(5)
-        pdf.set_font("Helvetica", 'B', 12)
+        pdf.set_font("Arial", 'B', 12)
         pdf.cell(0, 10, "Parametros Termodinamicos:", ln=True)
-        pdf.set_font("Helvetica", '', 12)
+        pdf.set_font("Arial", '', 12)
         pdf.cell(0, 8, f"SH: {sh} K | SC: {sc} K | Delta T: {dt} K", ln=True)
         pdf.ln(5)
-        pdf.set_font("Helvetica", 'B', 12)
+        pdf.set_font("Arial", 'B', 12)
         pdf.cell(0, 10, "Diagnostico IA:", ln=True)
-        pdf.set_font("Helvetica", '', 12)
+        pdf.set_font("Arial", '', 12)
         pdf.multi_cell(0, 8, ia_raw)
         
-        pdf_output = pdf.output()
-        st.download_button("⬇️ Baixar PDF", data=bytes(pdf_output), file_name=f"Relatorio_{cliente}_{data_visita}.pdf", mime="application/pdf")
+        pdf_bytes = pdf.output()
+        st.download_button("⬇️ Baixar PDF", data=bytes(pdf_bytes), file_name=f"Relatorio_{cliente}_{data_visita}.pdf", mime="application/pdf")
