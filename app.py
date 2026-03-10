@@ -3,6 +3,7 @@ import numpy as np
 from datetime import date
 from fpdf import FPDF
 import io
+import os
 import streamlit.components.v1 as components
 
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
@@ -149,41 +150,87 @@ with tab_diag:
     if st.button("Gerar Relatório PDF"):
         pdf = FPDF()
         pdf.add_page()
-        pdf.set_font("Arial", "B", 16)
-        pdf.cell(190, 10, "MPN ENGENHARIA - RELATÓRIO TÉCNICO", ln=True, align="C")
+        
+        # LOGOMARCA (OPCIONAL)
+        if os.path.exists("logo.png"):
+            pdf.image("logo.png", 10, 8, 33)
+            pdf.set_x(45)
+        
+        # CABEÇALHO PROFISSIONAL
+        pdf.set_font("Arial", "B", 18)
+        pdf.set_text_color(0, 74, 153) # Azul MPN
+        pdf.cell(145, 10, "RELATÓRIO TÉCNICO DE ENGENHARIA", ln=True, align="R")
+        pdf.set_font("Arial", "I", 10)
+        pdf.set_text_color(100)
+        pdf.cell(190, 5, f"Gerado em: {data_visita.strftime('%d/%m/%Y')}", ln=True, align="R")
         pdf.ln(10)
         
+        # SEÇÃO 1: IDENTIFICAÇÃO DO CLIENTE (TODOS OS DADOS)
+        pdf.set_fill_color(240, 240, 240)
         pdf.set_font("Arial", "B", 12)
-        pdf.cell(190, 10, f"CLIENTE: {cliente}", ln=True)
-        pdf.set_font("Arial", "", 11)
-        pdf.cell(190, 8, f"Data: {data_visita} | Equipamento: {fabricante} {cap_digitada} BTU", ln=True)
-        pdf.cell(190, 8, f"Gás: {fluido} | Tecnologia: {tecnologia}", ln=True)
+        pdf.set_text_color(0)
+        pdf.cell(190, 8, " IDENTIFICAÇÃO DO CLIENTE", ln=True, fill=True)
+        pdf.set_font("Arial", "", 10)
+        pdf.cell(95, 8, f"Cliente: {cliente}", border="B")
+        pdf.cell(95, 8, f"CPF/CNPJ: {doc_cliente}", border="B", ln=True)
+        pdf.cell(190, 8, f"Endereço: {endereco}", border="B", ln=True)
+        pdf.cell(95, 8, f"WhatsApp: {whatsapp}", border="B")
+        pdf.cell(95, 8, f"E-mail: {email_cli}", border="B", ln=True)
         pdf.ln(5)
-        
-        pdf.set_font("Arial", "B", 12)
-        pdf.cell(190, 10, "PARÂMETROS TERMODINÂMICOS:", ln=True)
-        pdf.set_font("Arial", "", 11)
-        pdf.cell(190, 8, f"Superaquecimento (SH): {sh} K", ln=True)
-        pdf.cell(190, 8, f"Sub-resfriamento (SC): {sc} K", ln=True)
-        pdf.cell(190, 8, f"Delta T (Evaporadora): {dt} K", ln=True)
-        pdf.cell(190, 8, f"T-Sat Sucção: {tsat_suc} C | T-Sat Líquido: {tsat_liq} C", ln=True)
-        pdf.ln(5)
-        
-        pdf.set_font("Arial", "B", 12)
-        pdf.cell(190, 10, "OBSERVAÇÕES DO ESPECIALISTA:", ln=True)
-        pdf.set_font("Arial", "", 11)
-        pdf.multi_cell(190, 8, obs)
-        
-        # CORREÇÃO DEFINITIVA PARA STREAMLIT CLOUD (PYTHON 3.14+)
-        pdf_content = pdf.output(dest='S')
-        if isinstance(pdf_content, str):
-            pdf_bytes = pdf_content.encode('latin-1')
-        else:
-            pdf_bytes = bytes(pdf_content)
 
+        # SEÇÃO 2: DADOS DO EQUIPAMENTO
+        pdf.set_font("Arial", "B", 12)
+        pdf.cell(190, 8, " ESPECIFICAÇÕES TÉCNICAS DO SISTEMA", ln=True, fill=True)
+        pdf.set_font("Arial", "", 10)
+        pdf.cell(63, 8, f"Marca: {fabricante}", border="B")
+        pdf.cell(63, 8, f"Linha: {linha}", border="B")
+        pdf.cell(64, 8, f"Capacidade: {cap_digitada} BTU", border="B", ln=True)
+        pdf.cell(63, 8, f"Gás: {fluido}", border="B")
+        pdf.cell(63, 8, f"Tecnologia: {tecnologia}", border="B")
+        pdf.cell(64, 8, f"Tipo: {tipo_eq}", border="B", ln=True)
+        pdf.cell(95, 8, f"Modelo Condensadora: {mod_cond}", border="B")
+        pdf.cell(95, 8, f"Série Condensadora: {serie_cond}", border="B", ln=True)
+        pdf.ln(5)
+
+        # SEÇÃO 3: PARÂMETROS ELÉTRICOS
+        pdf.set_font("Arial", "B", 12)
+        pdf.cell(190, 8, " PARÂMETROS ELÉTRICOS MEDIDOS", ln=True, fill=True)
+        pdf.set_font("Arial", "", 10)
+        pdf.cell(95, 8, f"Tensão Nominal: {v_nom} V", border="B")
+        pdf.cell(95, 8, f"Tensão Medida: {v_med} V", border="B", ln=True)
+        pdf.cell(95, 8, f"Corrente RLA: {a_rla} A", border="B")
+        pdf.cell(95, 8, f"Corrente Medida: {a_med} A", border="B", ln=True)
+        pdf.ln(5)
+
+        # SEÇÃO 4: TERMODINÂMICA (PRECISÃO MPN)
+        pdf.set_font("Arial", "B", 12)
+        pdf.cell(190, 8, " ANÁLISE TERMODINÂMICA DO CICLO", ln=True, fill=True)
+        pdf.set_font("Arial", "B", 10)
+        pdf.cell(63, 8, f"Superheat (SH): {sh} K", border=1, align="C")
+        pdf.cell(63, 8, f"Subcooling (SC): {sc} K", border=1, align="C")
+        pdf.cell(64, 8, f"Delta T: {dt} K", border=1, ln=True, align="C")
+        pdf.set_font("Arial", "", 10)
+        pdf.cell(95, 8, f"P. Sucção: {p_suc} psig | T-Sat: {tsat_suc} C", border="B")
+        pdf.cell(95, 8, f"P. Líquido: {p_liq} psig | T-Sat: {tsat_liq} C", border="B", ln=True)
+        pdf.ln(5)
+
+        # SEÇÃO 5: CONCLUSÃO
+        pdf.set_font("Arial", "B", 12)
+        pdf.cell(190, 8, " PARECER TÉCNICO E OBSERVAÇÕES", ln=True, fill=True)
+        pdf.set_font("Arial", "", 11)
+        pdf.multi_cell(190, 8, obs if obs else "Nenhuma observação adicional relatada.", border=1)
+        
+        pdf.ln(15)
+        pdf.set_font("Arial", "I", 8)
+        pdf.cell(190, 5, "Este documento é um relatório técnico gerado pelo sistema MPN Engenharia Pro.", ln=True, align="C")
+
+        # SAÍDA DE BYTES PARA DOWNLOAD
+        pdf_out = pdf.output(dest='S')
+        pdf_bytes = pdf_out.encode('latin-1') if isinstance(pdf_out, str) else pdf_out
+        
         st.download_button(
-            label="📥 Baixar Relatório em PDF", 
+            label="📥 Baixar Relatório Profissional (PDF)", 
             data=pdf_bytes, 
-            file_name=f"Relatorio_{cliente}.pdf", 
+            file_name=f"Relatorio_{cliente}_{data_visita}.pdf", 
             mime="application/pdf"
         )
