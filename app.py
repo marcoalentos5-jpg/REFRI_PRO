@@ -138,14 +138,20 @@ with tab_diag:
             pdf.set_text_color(0, 0, 0)
             pdf.ln(3)
 
-        # --- 1. IDENTIFICAÇÃO ---
+        # --- 1. IDENTIFICAÇÃO (COLUNAS AJUSTADAS) ---
         draw_header("1. Identificação do Cliente")
         pdf.set_font("Arial", 'B', 9)
+        # Linha 1
         pdf.cell(30, 6, "Cliente:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{cliente}", ln=0)
+        pdf.set_x(110) # Move para a direita
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "CPF/CNPJ:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(60, 6, f"{doc_cliente}", ln=1)
+        # Linha 2
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Endereço:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{endereco}", ln=0)
+        pdf.set_x(110) # Move para a direita
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Bairro/CEP:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(60, 6, f"{bairro} / {cep}", ln=1)
+        # Linha 3
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "WhatsApp:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{whatsapp}", ln=0)
+        pdf.set_x(110) # Move para a direita
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "E-mail:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(60, 6, f"{email_cli}", ln=1)
         pdf.ln(3)
 
@@ -162,17 +168,13 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(35, 6, "Ser. Condensadora:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(55, 6, f"{serie_cond}", ln=1)
         pdf.ln(3)
 
-        # --- 3. ANÁLISE TÉCNICA (DISTRIBUIÇÃO EM COLUNAS) ---
+        # --- 3. ANÁLISE TÉCNICA ---
         draw_header("3. Parâmetros de Performance")
         pdf.set_font("Arial", 'B', 9)
-        
-        # Coluna Esquerda: Elétrica (Tensão -> RLA/Med -> LRA)
         pdf.cell(45, 6, "Tensão (Nom/Med):", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{v_rede}V / {v_med}V", ln=0)
         pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Sub-resfriamento:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{sc} K", ln=1)
-        
         pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Corrente (RLA/Med):", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{rla_comp}A / {a_med}A", ln=0)
         pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Superaquecimento:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{sh} K", ln=1)
-        
         pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Corrente LRA:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{lra_comp} A", ln=0)
         pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Delta T (Ar):", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{dt} K", ln=1)
         pdf.ln(3)
@@ -180,7 +182,6 @@ with tab_diag:
         # --- 4. CONCLUSÃO ---
         draw_header("4. Diagnóstico & Observações")
         pdf.set_draw_color(200, 200, 200)
-
         y_obs_start = pdf.get_y()
         pdf.set_font("Arial", 'B', 10)
         pdf.cell(0, 6, chr(149) + " OBSERVAÇÕES:", ln=True)
@@ -189,7 +190,6 @@ with tab_diag:
         y_obs_end = pdf.get_y()
         pdf.rect(10, y_obs_start - 1, 190, (y_obs_end - y_obs_start) + 2)
         pdf.ln(4)
-
         y_med_start = pdf.get_y()
         pdf.set_font("Arial", 'B', 10)
         pdf.cell(0, 6, chr(149) + " MEDIDAS TOMADAS:", ln=True)
@@ -198,13 +198,12 @@ with tab_diag:
         y_med_end = pdf.get_y()
         pdf.rect(10, y_med_start - 1, 190, (y_med_end - y_med_start) + 2)
         
-        # --- RODAPÉ COM LINHA DE ASSINATURA ---
+        # --- RODAPÉ ---
         pdf.set_y(-35)
         pdf.set_draw_color(100, 100, 100)
         pdf.set_line_width(0.3)
         pdf.line(60, pdf.get_y(), 150, pdf.get_y())
         pdf.ln(2)
-        
         pdf.set_font("Arial", 'B', 9)
         pdf.set_text_color(100, 100, 100)
         pdf.cell(0, 5, "MARCOS ALEXANDRE ALMEIDA DO NASCIMENTO", ln=True, align='C')
