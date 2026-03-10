@@ -61,7 +61,7 @@ def get_style(val, tipo):
         return "#FFEBEE", "#F44336"
     return "#F8F9FA", "#BDBDBD"
 
-# --- 5. INTERFACE ---
+# --- 5. INTERFACE (LAYOUT ORIGINAL PRESERVADO) ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
 tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico"])
 
@@ -142,11 +142,9 @@ with tab_diag:
     if st.button("Gerar Relatório PDF"):
         pdf = FPDF()
         pdf.add_page()
-        
         if os.path.exists("logo.png"):
             pdf.image("logo.png", 10, 8, 33)
             pdf.set_x(45)
-        
         pdf.set_font("Arial", "B", 18)
         pdf.set_text_color(0, 74, 153)
         pdf.cell(145, 10, "RELATÓRIO TÉCNICO DE ENGENHARIA", ln=True, align="R")
@@ -154,7 +152,6 @@ with tab_diag:
         pdf.set_text_color(100)
         pdf.cell(190, 5, f"Gerado em: {data_visita.strftime('%d/%m/%Y')}", ln=True, align="R")
         pdf.ln(10)
-        
         pdf.set_fill_color(240, 240, 240)
         pdf.set_font("Arial", "B", 12)
         pdf.set_text_color(0)
@@ -166,7 +163,6 @@ with tab_diag:
         pdf.cell(95, 8, f"WhatsApp: {whatsapp}", border="B")
         pdf.cell(95, 8, f"E-mail: {email_cli}", border="B", ln=True)
         pdf.ln(5)
-
         pdf.set_font("Arial", "B", 12)
         pdf.cell(190, 8, " ESPECIFICAÇÕES TÉCNICAS DO SISTEMA", ln=True, fill=True)
         pdf.set_font("Arial", "", 10)
@@ -179,7 +175,6 @@ with tab_diag:
         pdf.cell(95, 8, f"Modelo Condensadora: {mod_cond}", border="B")
         pdf.cell(95, 8, f"Série Condensadora: {serie_cond}", border="B", ln=True)
         pdf.ln(5)
-
         pdf.set_font("Arial", "B", 12)
         pdf.cell(190, 8, " PARÂMETROS ELÉTRICOS MEDIDOS", ln=True, fill=True)
         pdf.set_font("Arial", "", 10)
@@ -188,7 +183,6 @@ with tab_diag:
         pdf.cell(95, 8, f"Corrente RLA: {a_rla} A", border="B")
         pdf.cell(95, 8, f"Corrente Medida: {a_med} A", border="B", ln=True)
         pdf.ln(5)
-
         pdf.set_font("Arial", "B", 12)
         pdf.cell(190, 8, " ANÁLISE TERMODINÂMICA DO CICLO", ln=True, fill=True)
         pdf.set_font("Arial", "B", 10)
@@ -199,27 +193,23 @@ with tab_diag:
         pdf.cell(95, 8, f"P. Sucção: {p_suc} psig | T-Sat: {tsat_suc} C", border="B")
         pdf.cell(95, 8, f"P. Líquido: {p_liq} psig | T-Sat: {tsat_liq} C", border="B", ln=True)
         pdf.ln(5)
-
         pdf.set_font("Arial", "B", 12)
         pdf.cell(190, 8, " PARECER TÉCNICO E OBSERVAÇÕES", ln=True, fill=True)
         pdf.set_font("Arial", "", 11)
         pdf.multi_cell(190, 8, obs if obs else "Nenhuma observação adicional relatada.", border=1)
-        
         pdf.ln(10)
         pdf.set_font("Arial", "I", 8)
         pdf.cell(190, 5, "Relatório gerado pelo sistema MPN Engenharia Pro.", ln=True, align="C")
 
-        # --- CORREÇÃO DEFINITIVA DO DOWNLOAD ---
-        # Converte para string e depois encoda para bytes de forma explícita
-        pdf_str = pdf.output(dest='S')
-        if isinstance(pdf_str, bytes):
-            pdf_bytes = pdf_str
-        else:
-            pdf_bytes = pdf_str.encode('latin-1')
+        # --- CORREÇÃO TÉCNICA DEFINITIVA ---
+        # pdf_output agora retorna bytes ou string dependendo do ambiente
+        pdf_output = pdf.output(dest='S')
+        # Se for string, converte. Se for bytes, usa direto.
+        final_pdf = pdf_output.encode('latin-1') if isinstance(pdf_output, str) else pdf_output
 
         st.download_button(
             label="📥 Baixar Relatório Profissional (PDF)", 
-            data=pdf_bytes, 
+            data=final_pdf, 
             file_name=f"Relatorio_{cliente}.pdf", 
             mime="application/pdf"
         )
