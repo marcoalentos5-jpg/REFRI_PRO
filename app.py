@@ -60,11 +60,10 @@ with tab_cad:
     serie_cond = col_cd2.text_input("Nº de Série Condensadora")
     
     tipo_procedimento = st.selectbox("Tipo de Procedimento", ["INSTALAÇÃO", "MANUTENÇÃO CORRETIVA", "MANUTENÇÃO PREVENTIVA"])
-    local_equipamento = st.text_input("LOCAL DO EQUIPAMENTO") # Campo atualizado
-    comodo_sala = st.text_input("COMODO/SALA") # Campo adicionado
+    local_equipamento = st.text_input("LOCAL DO EQUIPAMENTO")
+    comodo_sala = st.text_input("COMODO/SALA")
 
 with tab_ele:
-    # (Mantido integralmente conforme original)
     st.subheader("⚡ Parâmetros Elétricos")
     e1, e2 = st.columns(2)
     v_rede = e1.number_input("Tensão da Rede (V)", value=220.0)
@@ -81,19 +80,18 @@ with tab_ele:
     res3.metric("Carga Motor", f"{round((a_med/rla_comp*100),1) if rla_comp > 0 else 0}%")
 
 with tab_termo:
-    # (Mantido integralmente conforme original)
     st.subheader("🌡️ Ciclo Frigorífico")
     col1, col2, col3 = st.columns(3)
     p_suc = col1.number_input("Pressão Sucção (PSIG)", value=118.0)
     t_suc_tubo = col1.number_input("Temp. Tubo Sucção (°C)", value=12.0)
     p_liq = col2.number_input("Pressão Descarga (PSIG)", value=345.0)
     t_liq_tubo = col2.number_input("Temp. Tubo Líquido (°C)", value=30.0)
+    t_ret = col3.number_input("Temp. Ar Retorno (°C)", value=24.0)
+    t_ins = col3.number_input("Temp. Ar Insufl. (°C)", value=12.0)
     tsat_suc = get_tsat_global(p_suc, fluido)
     tsat_liq = get_tsat_global(p_liq, fluido)
     sh = round(t_suc_tubo - tsat_suc, 1)
     sc = round(tsat_liq - t_liq_tubo, 1)
-    t_ret = col3.number_input("Temp. Ar Retorno (°C)", value=24.0)
-    t_ins = col3.number_input("Temp. Ar Insufl. (°C)", value=12.0)
     dt = round(t_ret - t_ins, 1)
     st.markdown("---")
     ct1, ct2 = st.columns(2)
@@ -122,7 +120,6 @@ with tab_diag:
         pdf = FPDF()
         pdf.add_page()
         
-        # Cabeçalho MPN
         pdf.set_fill_color(0, 74, 153)
         pdf.rect(0, 0, 210, 42, 'F')
         pdf.set_text_color(255, 255, 255)
@@ -148,8 +145,15 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(40, 6, "Equipamento:", 0); pdf.set_font("Arial", '', 9); pdf.cell(0, 6, f"{fabricante} {tipo_eq} {cap_digitada} BTUs", 1, 1)
         pdf.set_font("Arial", 'B', 9); pdf.cell(40, 6, "Procedimento:", 0); pdf.set_font("Arial", '', 9); pdf.cell(0, 6, f"{tipo_procedimento}", 1, 1)
         
-        # Buffer para download
-        pdf_output = io.BytesIO()
-        pdf_str = pdf.output(dest='S').encode('latin-1')
-        pdf_output.write(pdf_str)
-        st.download_button("⬇️ Baixar Relatório PDF", data=pdf_output.getvalue(), file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
+        # --- ATUALIZAÇÃO RIGOROSA DA GERAÇÃO DO PDF PARA CORREÇÃO DO ERRO ---
+        try:
+            pdf_bytes = pdf.output() # fpdf2 retorna bytes por padrão aqui
+            st.download_button("⬇️ Baixar Relatório PDF", data=pdf_bytes, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
+        except:
+            # Caso a versão instalada exija dest='S'
+            pdf_str = pdf.output(dest='S')
+            if isinstance(pdf_str, str):
+                pdf_bytes = pdf_str.encode('latin-1')
+            else:
+                pdf_bytes = pdf_str
+            st.download_button("⬇️ Baixar Relatório PDF", data=pdf_bytes, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
