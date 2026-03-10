@@ -14,7 +14,7 @@ def get_tsat_global(psig, gas):
     ancoras = {
         "R-410A": {"p": [50.0, 100.0, 150.0, 200.0, 300.0, 400.0, 500.0, 600.0], "t": [-17.02, -0.29, 11.55, 20.93, 35.58, 47.30, 56.59, 64.59]},
         "R-32": {"p": [50.0, 100.0, 150.0, 200.0, 300.0, 400.0, 500.0, 600.0], "t": [-17.46, 0.87, 10.86, 20.14, 34.63, 45.96, 55.36, 63.43]},
-        "R-22": {"p": [50.0, 100.0, 150.0, 200.0, 300.0, 400.0, 500.0, 600.0], "t": [-3.34, 15.80, 28.15, 38.56, 54.89, 67.72, 78.38, 87.53]},
+        "R-22": {"p": [50.0, 100.0, 150.0, 200.0, 300.0, 350.0, 400.0, 500.0, 600.0], "t": [-3.34, 15.80, 28.15, 38.56, 47.30, 54.89, 61.63, 67.72, 78.38, 83.12, 87.53]},
         "R-134a": {"p": [0.0, 50.0, 100.0, 150.0, 200.0], "t": [-26.08, 12.23, 30.92, 43.65, 53.74]},
         "R-404A": {"p": [0.0, 50.0, 100.0, 150.0, 200.0], "t": [-45.45, -9.41, 8.96, 22.23, 32.59]}
     }
@@ -22,7 +22,7 @@ def get_tsat_global(psig, gas):
     try: return round(float(np.interp(psig, ancoras[gas]["p"], ancoras[gas]["t"])), 2)
     except: return 0.0
 
-# --- 3. INTERFACE (LAYOUT DO APP PRESERVADO) ---
+# --- 3. INTERFACE DO APP (LAYOUT PRESERVADO) ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
 tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico"])
 
@@ -71,22 +71,23 @@ with tab_diag:
         pdf = FPDF()
         pdf.add_page()
         
+        # CABEÇALHO COM LOGOMARCA
         if os.path.exists("logo.png"):
             pdf.image("logo.png", 10, 8, 25)
             pdf.set_x(40)
         
-        pdf.set_font("Arial", "B", 12) # Título menor
+        pdf.set_font("Arial", "B", 12)
         pdf.set_text_color(0, 74, 153)
         pdf.cell(150, 8, "RELATÓRIO TÉCNICO DE ENGENHARIA", ln=True, align="R")
         pdf.ln(5)
         
-        # --- 1. IDENTIFICAÇÃO DO CLIENTE ---
+        # --- 1. IDENTIFICAÇÃO DO CLIENTE (LAYOUT CONGELADO) ---
         pdf.set_fill_color(240, 240, 240)
         pdf.set_font("Arial", "B", 9)
         pdf.set_text_color(0)
         pdf.cell(190, 6, " 1. IDENTIFICAÇÃO DO CLIENTE", ln=True, fill=True)
         
-        # CNPJ DO CLIENTE NO TOPO
+        # CPF/CNPJ DO CLIENTE NO TOPO DA SEÇÃO
         pdf.set_font("Arial", "", 8)
         pdf.cell(190, 6, f"CPF/CNPJ DO CLIENTE: {doc_cliente}", border="B", ln=True)
         
@@ -122,14 +123,15 @@ with tab_diag:
         pdf.set_font("Arial", "", 8)
         pdf.multi_cell(190, 5, obs if obs else "Sem observações.", border=1)
 
-        # --- RODAPÉ (ASSINATURA) ---
+        # --- RODAPÉ PERMANENTE (ASSINATURA TRAVADA) ---
         pdf.ln(10)
         pdf.line(60, pdf.get_y(), 150, pdf.get_y())
         pdf.set_font("Arial", "B", 8)
-        pdf.cell(190, 4, "MARCIO PAULA NEVES", ln=True, align="C") # Substitua pelo seu Nome
+        pdf.cell(190, 4, "MARCOS ALEXANDRE ALMEIDA DO NASCIMENTO", ln=True, align="C")
         pdf.set_font("Arial", "", 7)
-        pdf.cell(190, 4, "CNPJ: 46.128.525/0001-44", ln=True, align="C") # Substitua pelo seu CNPJ
+        pdf.cell(190, 4, "CNPJ: 51.274.762/0001-17", ln=True, align="C")
 
+        # SAÍDA DE BYTES SEGURA PARA DOWNLOAD
         pdf_bytes = pdf.output(dest='S')
         if isinstance(pdf_bytes, str): pdf_bytes = pdf_bytes.encode('latin-1')
         st.download_button(label="📥 Baixar Relatório", data=io.BytesIO(pdf_bytes), file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
