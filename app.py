@@ -69,7 +69,7 @@ def get_style(val, tipo):
         return "#FFEBEE", "#F44336"
     return "#F8F9FA", "#BDBDBD"
 
-# --- 5. INTERFACE (LAYOUT ORIGINAL PRESERVADO) ---
+# --- 5. INTERFACE ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
 tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico"])
 
@@ -215,9 +215,9 @@ with tab_diag:
         
         pdf.ln(10)
         pdf.set_font("Arial", "I", 8)
-        pdf.cell(190, 5, "Relatório gerado pelo sistema MPN Engenharia Pro.", ln=True, align="C")
+        # --- NOME E CNPJ ATUALIZADOS ---
+        pdf.cell(190, 5, "Marcos Alexandre Almeida do Nascimento | CNPJ: 51.274.762/0001-17", ln=True, align="C")
 
-        # --- CORREÇÃO DEFINITIVA USANDO BYTESIO ---
         buf = io.BytesIO()
         pdf_out = pdf.output(dest='S')
         if isinstance(pdf_out, str):
