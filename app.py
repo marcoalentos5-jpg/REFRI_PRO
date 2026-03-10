@@ -48,7 +48,7 @@ with tab_cad:
     d1, d2, d3 = st.columns(3)
     fabricante = d1.text_input("Fabricante (Marca)")
     linha = d1.text_input("Linha")
-    tecnologia = d2.selectbox("Tecnologia", ["Inverter", "WindFree", "Scroll", "On-Off"])
+    tecnologia = d2.selectbox("Technology", ["Inverter", "WindFree", "Scroll", "On-Off"])
     tipo_eq = d2.selectbox("Tipo de Sistema", ["Split Hi-Wall", "Cassete", "Piso-Teto", "VRF", "Chiller"])
     fluido = d3.selectbox("Gás Refrigerante", ["R-410A", "R-32", "R-22", "R-134a", "R-404A"])
     cap_digitada = d3.text_input("Capacidade (Mil BTU´s)", value="0")
@@ -124,7 +124,7 @@ with tab_diag:
         
         pdf.set_text_color(255, 255, 255)
         pdf.set_font("Arial", 'B', 18)
-        pdf.cell(0, 15, "RELATÓRIO TÉCNICO", ln=True, align='C')
+        pdf.cell(0, 15, "RELATORIO TECNICO", ln=True, align='C')
         pdf.set_font("Arial", '', 10)
         pdf.cell(0, 5, "CNPJ: 45.451.272/0001-00 | Tel: 21-98545-3763", ln=True, align='C')
         pdf.ln(12)
@@ -138,15 +138,15 @@ with tab_diag:
             pdf.set_text_color(0, 0, 0)
             pdf.ln(3)
 
-        # --- 1. IDENTIFICAÇÃO (COLUNAS AJUSTADAS RIGOROSAMENTE) ---
-        draw_header("1. Identificação do Cliente")
+        # --- 1. IDENTIFICAÇÃO (COLUNAS À DIREITA - RIGOROSO) ---
+        draw_header("1. Identificacao do Cliente")
         pdf.set_font("Arial", 'B', 9)
         # Linha 1
         pdf.cell(30, 6, "Cliente:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{cliente}", ln=0)
         pdf.set_x(120) 
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "CPF/CNPJ:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{doc_cliente}", ln=1)
         # Linha 2
-        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Endereço:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{endereco}", ln=0)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Endereco:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{endereco}", ln=0)
         pdf.set_x(120) 
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Bairro/CEP:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{bairro} / {cep}", ln=1)
         # Linha 3
@@ -155,23 +155,24 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "E-mail:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{email_cli}", ln=1)
         pdf.ln(5)
 
-        # --- RESTO DO RELATÓRIO (PRESERVADO) ---
-        draw_header("2. Especificações do Equipamento")
+        # --- 2. ESPECIFICAÇÕES (PRESERVADO) ---
+        draw_header("2. Especificacoes do Equipamento")
         pdf.set_font("Arial", 'B', 9)
         pdf.cell(30, 6, "Equipamento:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{fabricante} - {tipo_eq}", ln=0)
-        pdf.set_x(110); pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Capacidade:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(60, 6, f"{cap_digitada} BTU's", ln=1)
+        pdf.set_x(110); pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Capacidade:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(60, 6, f"{cap_digitada} BTUs", ln=1)
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Fluido:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{fluido}", ln=0)
-        pdf.set_x(110); pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Série Cond.:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(60, 6, f"{serie_cond}", ln=1)
+        pdf.set_x(110); pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Serie Cond.:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(60, 6, f"{serie_cond}", ln=1)
         pdf.ln(5)
 
-        draw_header("3. Parâmetros de Performance")
+        # --- 3. ANÁLISE (TRATAMENTO DE UNICODE Δ/°) ---
+        draw_header("3. Parametros de Performance")
         data_table = [
-            ["PARÂMETRO", "MEDIDO", "REFERÊNCIA", "STATUS"],
-            ["Tensão Rede", f"{v_med}V", f"{v_rede}V", "OK" if abs(v_med-v_rede)<(v_rede*0.1) else "ALERTA"],
+            ["PARAMETRO", "MEDIDO", "REFERENCIA", "STATUS"],
+            ["Tensao Rede", f"{v_med}V", f"{v_rede}V", "OK" if abs(v_med-v_rede)<(v_rede*0.1) else "ALERTA"],
             ["Corrente (A)", f"{a_med}A", f"{rla_comp}A", "NOMINAL" if a_med <= rla_comp else "SOBRECARGA"],
-            ["Superaq. (SH)", f"{sh} K", "5 a 8 K", "OK" if 5<=sh<=12 else "CRÍTICO"],
+            ["Superaq. (SH)", f"{sh} K", "5 a 8 K", "OK" if 5<=sh<=12 else "CRITICO"],
             ["Sub-resf. (SC)", f"{sc} K", "5 a 8 K", "OK" if 5<=sc<=12 else "FORA"],
-            ["Delta T (ΔT)", f"{dt} K", "> 10 K", "EFICIENTE" if dt>=10 else "BAIXA EFIC."]
+            ["Delta T (DT)", f"{dt} K", "> 10 K", "EFICIENTE" if dt>=10 else "BAIXA EFIC."]
         ]
         pdf.set_fill_color(245, 245, 245)
         pdf.set_font("Arial", 'B', 8)
@@ -182,18 +183,21 @@ with tab_diag:
             pdf.cell(50, 7, row[3], 1, 1, 'C')
         pdf.ln(5)
 
-        draw_header("4. Diagnóstico Final")
-        pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Observações Técnicas:", ln=1)
+        # --- 4. CONCLUSÃO ---
+        draw_header("4. Diagnostico Final")
+        pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Observacoes Tecnicas:", ln=1)
         pdf.set_font("Arial", '', 9); pdf.multi_cell(0, 5, f"{obs_raw}")
         pdf.ln(2)
-        pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Recomendações e Medidas Propostas:", ln=1)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Recomendacoes e Medidas Propostas:", ln=1)
         pdf.set_font("Arial", '', 9); pdf.multi_cell(0, 5, f"{ia_raw}")
 
+        # --- RODAPÉ ---
         pdf.set_y(-30)
         pdf.line(10, 275, 90, 275); pdf.line(110, 275, 190, 275)
         pdf.set_font("Arial", 'I', 7)
-        pdf.cell(90, 10, "Assinatura do Técnico", 0, 0, 'C')
+        pdf.cell(90, 10, "Assinatura do Tecnico", 0, 0, 'C')
         pdf.cell(100, 10, "Assinatura do Cliente", 0, 1, 'C')
         
-        report_data = pdf.output(dest='S').encode('latin1')
+        # Encodificação segura para evitar FPDFUnicodeEncodingException
+        report_data = pdf.output(dest='S').encode('cp1252', 'replace')
         st.download_button(label="⬇️ Baixar Relatório em PDF", data=report_data, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
