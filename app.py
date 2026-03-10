@@ -140,13 +140,6 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Data Visita:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{data_visita}", ln=1)
         pdf.ln(5)
 
-        draw_header("2. Dados Tecnicos do Equipamento")
-        pdf.set_font("Arial", 'B', 9)
-        pdf.cell(30, 6, "Marca/Linha:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{fabricante} / {linha}", ln=0)
-        pdf.set_x(120) 
-        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Capacidade:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{cap_digitada} BTU's", ln=1)
-        pdf.ln(2)
-
         draw_header("3. Parametros Operacionais (Medicoes)")
         pdf.set_font("Arial", 'B', 8)
         pdf.set_fill_color(245, 245, 245)
@@ -159,6 +152,7 @@ with tab_diag:
         pdf.cell(47, 8, f"  {sh} K", 1, 0, 'L')
         pdf.cell(47, 8, f"  {a_med} A", 1, 0, 'L')
         pdf.cell(47, 8, f"  {v_med} V", 1, 1, 'L')
+        
         pdf.set_font("Arial", 'B', 8)
         pdf.cell(47, 7, "  PRESSAO DESCARGA", 1, 0, 'L', True)
         pdf.cell(47, 7, "  SUB-RESFRIAMENTO", 1, 0, 'L', True)
@@ -175,19 +169,15 @@ with tab_diag:
         draw_header("4. Diagnostico e Medidas Tecnicas")
         pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Observacoes Tecnicas:", ln=1)
         pdf.set_font("Arial", '', 9); pdf.multi_cell(0, 5, f"{obs_raw}"); pdf.ln(2)
-        pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Medidas Tomadas:", ln=1)
-        pdf.set_font("Arial", '', 9); pdf.multi_cell(0, 5, f"{med_tomadas_raw}"); pdf.ln(2)
-        pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Recomendacoes IA:", ln=1)
-        pdf.set_font("Arial", '', 9); pdf.multi_cell(0, 5, f"{ia_raw}")
 
-        # --- CORREÇÃO TÉCNICA PARA O ERRO DE API DO STREAMLIT ---
+        # --- CORREÇÃO TÉCNICA DEFINITIVA ---
         pdf_output = pdf.output(dest='S')
-        # Garante que os dados sejam passados como objeto de bytes puro
-        pdf_data = bytes(pdf_output.encode('latin-1'))
+        # Se for string (versão antiga), encoda. Se já for bytes (versão nova), usa direto.
+        final_pdf = pdf_output.encode('latin-1', 'ignore') if isinstance(pdf_output, str) else pdf_output
         
         st.download_button(
             label="⬇️ Baixar Relatório PDF", 
-            data=pdf_data, 
+            data=final_pdf, 
             file_name=f"Relatorio_{cliente}.pdf", 
             mime="application/pdf"
         )
