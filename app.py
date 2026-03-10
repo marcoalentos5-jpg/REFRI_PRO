@@ -27,20 +27,17 @@ tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ El
 
 with tab_cad:
     st.subheader("👤 Dados do Cliente & Contato")
-    # Linha 1: Nome, Endereço, Bairro e CPF (Alinhados conforme solicitado)
-    l1_c1, l1_c2, l1_c3, l1_c4 = st.columns([2, 2, 1.5, 1.5])
-    cliente = l1_c1.text_input("Nome do Cliente / Empresa")
-    endereco = l1_c2.text_input("Endereço (Rua e Número)")
-    bairro = l1_c3.text_input("Bairro")
-    doc_cliente = l1_c4.text_input("CPF / CNPJ")
+    c1, c2, c3 = st.columns(3)
+    cliente = c1.text_input("Nome do Cliente / Empresa")
+    doc_cliente = c1.text_input("CPF / CNPJ")
     
-    # Linha 2: WhatsApp reduzido, CEP, Data e E-mail
-    l2_c1, l2_c2, l2_c3, l2_c4 = st.columns(4)
-    col_zap, _ = l2_c1.columns([0.7, 0.3])
-    whatsapp = col_zap.text_input("🟢 WhatsApp", value="21980264217")
-    cep = l2_c2.text_input("CEP", placeholder="00000-000")
-    data_visita = l2_c3.date_input("Data da Visita", value=date.today())
-    email_cli = l2_c4.text_input("✉️ E-mail")
+    endereco = c2.text_input("Endereço Completo")
+    bairro = c2.text_input("Bairro")
+    cep = c2.text_input("CEP", placeholder="00000-000")
+    
+    whatsapp = c3.text_input("🟢 WhatsApp", value="21980264217")
+    data_visita = c3.date_input("Data da Visita", value=date.today())
+    email_cli = c2.text_input("✉️ E-mail")
     
     st.markdown("---")
     st.subheader("⚙️ Dados Técnicos")
@@ -51,6 +48,13 @@ with tab_cad:
     tipo_eq = d2.selectbox("Tipo de Sistema", ["Split Hi-Wall", "Cassete", "Piso-Teto", "VRF", "Chiller"])
     fluido = d3.selectbox("Gás Refrigerante", ["R-410A", "R-32", "R-22", "R-134a", "R-404A"])
     cap_digitada = d3.text_input("Capacidade (Mil BTU´s)")
+    
+    col_evap1, col_evap2 = st.columns(2)
+    mod_evap = col_evap1.text_input("Modelo Unidade Evaporadora")
+    serie_evap = col_evap2.text_input("Nº de Série Evaporadora")
+    col_cond1, col_cond2 = st.columns(2)
+    mod_cond = col_cond1.text_input("Modelo Unidade Condensadora")
+    serie_cond = col_cond2.text_input("Nº de Série Condensadora")
 
 with tab_ele:
     st.subheader("⚡ Parâmetros Elétricos")
@@ -64,7 +68,7 @@ with tab_ele:
         rla_comp = st.number_input("RLA (A)", value=0.0)
         a_med = st.number_input("Corrente Medida (A)", value=0.0)
         diff_a = round(rla_comp - a_med, 1)
-
+    
     st.markdown("---")
     res1, res2, res3 = st.columns(3)
     res1.metric("Queda de Tensão", f"{diff_v} V", delta=f"-{diff_v}V", delta_color="inverse")
@@ -88,16 +92,17 @@ with tab_termo:
     dt = round(t_ret - t_ins, 1)
     
     st.markdown("---")
-    # DESTAQUE FONTE GRANDE E DELTA (Δ)
-    st.markdown(f"### Temperatura de Saturação (Sucção): {tsat_suc} °C")
-    st.markdown(f"### Superaquecimento (SH): {sh} K")
-    st.markdown(f"### Temperatura de Saturação (Líquido): {tsat_liq} °C")
-    st.markdown(f"### Sub-resfriamento (SC): {sc} K")
-    st.markdown(f"### Diferencial de Temperatura (ΔT): {dt} K")
+    st.subheader("📊 Destaque dos Resultados")
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("🌡️ T-Sat Sucção", f"{tsat_suc} °C")
+    m2.metric("🔥 Superaquecimento", f"{sh} K")
+    m3.metric("❄️ T-Sat Líquido", f"{tsat_liq} °C")
+    m4.metric("💧 Sub-resfriamento", f"{sc} K")
+    
+    st.info(f"### Diferencial de Temperatura (ΔT): {dt} K")
 
 with tab_diag:
     obs = st.text_area("Observações Técnicas Detalhadas", height=150)
-    
     if st.button("Gerar Relatório PDF"):
         pdf = FPDF()
         pdf.add_page()
@@ -106,7 +111,6 @@ with tab_diag:
         pdf.cell(190, 10, "RELATÓRIO TÉCNICO", ln=True, align="C")
         pdf.ln(5)
         
-        # 1. Identificação
         pdf.set_fill_color(245, 245, 245)
         pdf.set_font("Helvetica", "B", 10)
         pdf.set_text_color(60)
@@ -122,18 +126,19 @@ with tab_diag:
         pdf.cell(63, 6, f"E-mail: {email_cli}", border="B")
         pdf.cell(64, 6, f" CEP: {cep}", border="B", ln=True)
 
-        # 3. Medições (Mantendo Layout solicitado)
         pdf.ln(4)
         pdf.set_font("Helvetica", "B", 10)
         pdf.cell(190, 7, " 3. ANÁLISE TÉCNICA E MEDIÇÕES", ln=True, fill=True)
         pdf.set_font("Helvetica", "", 8)
-        pdf.cell(47, 6, f"V. Rede: {v_rede}V", border="B"); pdf.cell(47, 6, f"V. Med: {v_med}V", border="B")
-        pdf.cell(48, 6, f"LRA: {lra_comp}A", border="B"); pdf.cell(48, 6, f"RLA: {rla_comp}A", border="B", ln=True)
-        pdf.cell(47, 6, f"SH: {sh}K", border="B"); pdf.cell(47, 6, f"SC: {sc}K", border="B")
-        pdf.cell(96, 6, f" Delta T: {dt} K", border="B", ln=True)
+        pdf.cell(47, 6, f"V. Rede: {v_rede} V", border="B"); pdf.cell(47, 6, f"V. Med: {v_med} V", border="B")
+        pdf.cell(48, 6, f"LRA: {lra_comp} A", border="B"); pdf.cell(48, 6, f"RLA: {rla_comp} A", border="B", ln=True)
+        pdf.cell(47, 6, f"P. Suc: {p_suc} PSI", border="B"); pdf.cell(47, 6, f"P. Liq: {p_liq} PSI", border="B")
+        pdf.cell(48, 6, f"SH: {sh} K", border="B"); pdf.cell(48, 6, f"SC: {sc} K", border="B", ln=True)
+        pdf.set_font("Helvetica", "B", 8)
+        pdf.cell(190, 6, f" Delta T: {dt} K", border="B", ln=True)
 
         pdf.ln(4)
-        pdf.multi_cell(190, 5, f"Observações: {obs}", border=1)
+        pdf.multi_cell(190, 5, f"Diagnóstico: {obs}", border=1)
 
         pdf_bytes = pdf.output(dest='S')
         if isinstance(pdf_bytes, str): pdf_bytes = pdf_bytes.encode('latin-1')
