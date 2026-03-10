@@ -204,4 +204,3 @@ with tab_diag:
         
         report_data = pdf.output()
         st.download_button(label="⬇️ Baixar Relatório em PDF", data=bytes(report_data), file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
-
