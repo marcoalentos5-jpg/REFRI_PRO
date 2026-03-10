@@ -25,37 +25,20 @@ components.html(
     </script>""", height=0,
 )
 
-# --- 3. MOTOR TERMODINÂMICO (MATRIZ DE PRECISÃO MPN) ---
+# --- 3. MOTOR TERMODINÂMICO ---
 def get_tsat_global(psig, gas):
     ancoras = {
-        "R-410A": {
-            "p": [50.0, 100.0, 133.1, 133.5, 134.0, 134.5, 150.0, 200.0, 221.0, 250.0, 300.0, 452.0, 455.0, 456.0, 460.0, 500.0, 501.0, 502.0, 503.0, 525.0, 550.0, 555.0, 560.0, 570.0, 600.0],
-            "t": [-17.02, -0.29, 7.90, 7.99, 8.10, 8.21, 11.55, 20.93, 24.38, 28.78, 35.58, 52.15, 52.44, 52.53, 52.89, 55.36, 56.59, 56.67, 56.75, 58.63, 60.69, 61.09, 61.49, 62.29, 64.59]
-        },
-        "R-32": {
-            "p": [50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 400.0, 450.0, 500.0, 550.0, 600.0],
-            "t": [-17.46, 0.87, 10.86, 20.14, 27.91, 34.63, 45.96, 51.02, 55.36, 59.54, 63.43]
-        },
-        "R-22": {
-            "p": [50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 500.0, 550.0, 600.0],
-            "t": [-3.34, 15.80, 28.15, 38.56, 47.30, 54.89, 61.63, 67.72, 78.38, 83.12, 87.53]
-        },
-        "R-134a": {
-            "p": [0.0, 50.0, 100.0, 150.0, 200.0],
-            "t": [-26.08, 12.23, 30.92, 43.65, 53.74]
-        },
-        "R-404A": {
-            "p": [0.0, 50.0, 100.0, 150.0, 200.0],
-            "t": [-45.45, -9.41, 8.96, 22.23, 32.59]
-        }
+        "R-410A": {"p": [50.0, 100.0, 133.1, 133.5, 134.0, 134.5, 150.0, 200.0, 221.0, 250.0, 300.0, 452.0, 455.0, 456.0, 460.0, 500.0, 501.0, 502.0, 503.0, 525.0, 550.0, 555.0, 560.0, 570.0, 600.0], "t": [-17.02, -0.29, 7.90, 7.99, 8.10, 8.21, 11.55, 20.93, 24.38, 28.78, 35.58, 52.15, 52.44, 52.53, 52.89, 55.36, 56.59, 56.67, 56.75, 58.63, 60.69, 61.09, 61.49, 62.29, 64.59]},
+        "R-32": {"p": [50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 400.0, 450.0, 500.0, 550.0, 600.0], "t": [-17.46, 0.87, 10.86, 20.14, 27.91, 34.63, 45.96, 51.02, 55.36, 59.54, 63.43]},
+        "R-22": {"p": [50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 500.0, 550.0, 600.0], "t": [-3.34, 15.80, 28.15, 38.56, 47.30, 54.89, 61.63, 67.72, 78.38, 83.12, 87.53]},
+        "R-134a": {"p": [0.0, 50.0, 100.0, 150.0, 200.0], "t": [-26.08, 12.23, 30.92, 43.65, 53.74]},
+        "R-404A": {"p": [0.0, 50.0, 100.0, 150.0, 200.0], "t": [-45.45, -9.41, 8.96, 22.23, 32.59]}
     }
     if gas not in ancoras: return 0.0
-    try:
-        val = np.interp(psig, ancoras[gas]["p"], ancoras[gas]["t"])
-        return round(float(val), 2)
+    try: return round(float(np.interp(psig, ancoras[gas]["p"], ancoras[gas]["t"])), 2)
     except: return 0.0
 
-# --- 4. LÓGICA DE CORES DINÂMICAS ---
+# --- 4. CORES ---
 def get_style(val, tipo):
     if tipo == "SH":
         if 5 <= val <= 11: return "#E8F5E9", "#4CAF50"
@@ -108,63 +91,28 @@ with tab_ele:
 with tab_termo:
     st.subheader("🌡️ Ciclo Frigorífico & Delta T")
     t1, t2, t3 = st.columns(3)
-    p_suc = t1.number_input("Pressão Sucção (PSIG)", value=118.0)
-    t_suc_tubo = t1.number_input("Temp. Tubo Sucção (°C)", value=12.0)
-    p_liq = t2.number_input("Pressão Descarga (PSIG)", value=345.0)
-    t_liq_tubo = t2.number_input("Temp. Tubo Líquido (°C)", value=30.0)
-    t_ret = t3.number_input("Temp. Ar Retorno (°C)", value=24.0)
-    t_ins = t3.number_input("Temp. Ar Insuflamento (°C)", value=12.0)
-    
-    tsat_suc = get_tsat_global(p_suc, fluido)
-    tsat_liq = get_tsat_global(p_liq, fluido)
-    sh = round(t_suc_tubo - tsat_suc, 1)
-    sc = round(tsat_liq - t_liq_tubo, 1)
-    dt = round(t_ret - t_ins, 1)
-
-    bg_sh, b_sh = get_style(sh, "SH")
-    bg_sc, b_sc = get_style(sc, "SC")
-    bg_dt, b_dt = get_style(dt, "DT")
-
-    st.markdown(f"""
-        <style>
-        div[data-testid="column"]:nth-of-type(1) div[data-testid="stMetric"] {{ background-color: {bg_sh} !important; border: 2px solid {b_sh} !important; border-radius: 10px; padding: 15px; }}
-        div[data-testid="column"]:nth-of-type(2) div[data-testid="stMetric"] {{ background-color: {bg_sc} !important; border: 2px solid {b_sc} !important; border-radius: 10px; padding: 15px; }}
-        div[data-testid="column"]:nth-of-type(3) div[data-testid="stMetric"] {{ background-color: #FFF3E0 !important; border: 2px solid #FFB74D !important; border-radius: 10px; padding: 15px; }}
-        div[data-testid="column"]:nth-of-type(4) div[data-testid="stMetric"] {{ background-color: #FFFDE7 !important; border: 2px solid #FFF176 !important; border-radius: 10px; padding: 15px; }}
-        div[data-testid="column"]:nth-of-type(5) div[data-testid="stMetric"] {{ background-color: {bg_dt} !important; border: 2px solid {b_dt} !important; border-radius: 10px; padding: 15px; }}
-        .stButton>button {{ background-color: #004A99; color: white; font-weight: bold; border-radius: 8px; }}
-        </style>
-    """, unsafe_allow_html=True)
-
+    p_suc = t1.number_input("Pressão Sucção (PSIG)", value=118.0); t_suc_tubo = t1.number_input("Temp. Tubo Sucção (°C)", value=12.0)
+    p_liq = t2.number_input("Pressão Descarga (PSIG)", value=345.0); t_liq_tubo = t2.number_input("Temp. Tubo Líquido (°C)", value=30.0)
+    t_ret = t3.number_input("Temp. Ar Retorno (°C)", value=24.0); t_ins = t3.number_input("Temp. Ar Insuflamento (°C)", value=12.0)
+    tsat_suc = get_tsat_global(p_suc, fluido); tsat_liq = get_tsat_global(p_liq, fluido)
+    sh = round(t_suc_tubo - tsat_suc, 1); sc = round(tsat_liq - t_liq_tubo, 1); dt = round(t_ret - t_ins, 1)
+    bg_sh, b_sh = get_style(sh, "SH"); bg_sc, b_sc = get_style(sc, "SC"); bg_dt, b_dt = get_style(dt, "DT")
+    st.markdown(f"""<style>div[data-testid="column"]:nth-of-type(1) div[data-testid="stMetric"] {{ background-color: {bg_sh} !important; border: 2px solid {b_sh} !important; border-radius: 10px; padding: 15px; }} div[data-testid="column"]:nth-of-type(2) div[data-testid="stMetric"] {{ background-color: {bg_sc} !important; border: 2px solid {b_sc} !important; border-radius: 10px; padding: 15px; }} div[data-testid="column"]:nth-of-type(5) div[data-testid="stMetric"] {{ background-color: {bg_dt} !important; border: 2px solid {b_dt} !important; border-radius: 10px; padding: 15px; }} .stButton>button {{ background-color: #004A99; color: white; font-weight: bold; border-radius: 8px; }}</style>""", unsafe_allow_html=True)
     m1, m2, m3, m4, m5 = st.columns(5)
-    m1.metric("Superheat (SH)", f"{sh} K")
-    m2.metric("Subcooling (SC)", f"{sc} K")
-    m3.metric("T-Sat Sucção", f"{tsat_suc} °C")
-    m4.metric("T-Sat Líquido", f"{tsat_liq} °C")
-    m5.metric("Delta T", f"{dt} K")
+    m1.metric("Superheat (SH)", f"{sh} K"); m2.metric("Subcooling (SC)", f"{sc} K"); m3.metric("T-Sat Sucção", f"{tsat_suc} °C"); m4.metric("T-Sat Líquido", f"{tsat_liq} °C"); m5.metric("Delta T", f"{dt} K")
 
 with tab_diag:
     st.subheader("🤖 Diagnóstico & Relatório Final")
     obs = st.text_area("Observações Técnicas", height=150)
-    
     if st.button("Gerar Relatório PDF"):
         pdf = FPDF()
         pdf.add_page()
-        
         if os.path.exists("logo.png"):
-            pdf.image("logo.png", 10, 8, 33)
-            pdf.set_x(45)
-        
-        pdf.set_font("Arial", "B", 18)
-        pdf.set_text_color(0, 74, 153)
+            pdf.image("logo.png", 10, 8, 33); pdf.set_x(45)
+        pdf.set_font("Arial", "B", 18); pdf.set_text_color(0, 74, 153)
         pdf.cell(145, 10, "RELATÓRIO TÉCNICO DE ENGENHARIA", ln=True, align="R")
-        
-        # CAMPO "GERADO EM" REMOVIDO
         pdf.ln(10)
-        
-        pdf.set_fill_color(240, 240, 240)
-        pdf.set_font("Arial", "B", 12)
-        pdf.set_text_color(0)
+        pdf.set_fill_color(240, 240, 240); pdf.set_font("Arial", "B", 12); pdf.set_text_color(0)
         pdf.cell(190, 8, " IDENTIFICAÇÃO DO CLIENTE", ln=True, fill=True)
         
         # LINHA ACIMA DO NOME
@@ -173,27 +121,19 @@ with tab_diag:
         pdf.set_font("Arial", "", 10)
         pdf.cell(85, 8, f"Cliente: {cliente}", border="B")
         
-        # DATA EM DESTAQUE (QUADRO PREENCHIDO)
-        pdf.set_font("Arial", "B", 10)
-        pdf.set_fill_color(225, 225, 225)
+        # DATA EM DESTAQUE
+        pdf.set_font("Arial", "B", 10); pdf.set_fill_color(225, 225, 225)
         pdf.cell(55, 8, f" DATA: {data_visita.strftime('%d/%m/%Y')} ", border=1, fill=True, align="C")
         
-        # "DOC" SUBSTITUÍDO POR "CNPJ/CPF"
+        # CNPJ/CPF NO LUGAR DE DOC
         pdf.set_font("Arial", "", 10)
         pdf.cell(50, 8, f"CNPJ/CPF: {doc_cliente}", border="B", ln=True, align="R")
         
+        # CAMPOS ANTERIORES DEVOLVIDOS
         pdf.cell(190, 8, f"Endereço: {endereco}", border="B", ln=True)
         pdf.cell(95, 8, f"WhatsApp: {whatsapp}", border="B")
         pdf.cell(95, 8, f"E-mail: {email_cli}", border="B", ln=True)
 
-        # CORREÇÃO DE DOWNLOAD USANDO IO BYTES
-        pdf_output = pdf.output(dest='S')
-        if isinstance(pdf_output, str):
-            pdf_output = pdf_output.encode('latin-1')
-        
-        st.download_button(
-            label="📥 Baixar Relatório", 
-            data=io.BytesIO(pdf_output), 
-            file_name=f"Relatorio_{cliente}.pdf", 
-            mime="application/pdf"
-        )
+        pdf_bytes = pdf.output(dest='S')
+        if isinstance(pdf_bytes, str): pdf_bytes = pdf_bytes.encode('latin-1')
+        st.download_button(label="📥 Baixar Relatório", data=io.BytesIO(pdf_bytes), file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
