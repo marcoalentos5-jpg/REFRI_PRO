@@ -180,14 +180,14 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Recomendacoes IA:", ln=1)
         pdf.set_font("Arial", '', 9); pdf.multi_cell(0, 5, f"{ia_raw}")
 
-        # --- GERAÇÃO SEGURA DO PDF USANDO BYTESIO ---
-        pdf_bytes = pdf.output(dest='S')
-        if isinstance(pdf_bytes, str):
-            pdf_bytes = pdf_bytes.encode('latin-1', 'ignore')
+        # --- CORREÇÃO TÉCNICA PARA O ERRO DE API DO STREAMLIT ---
+        pdf_output = pdf.output(dest='S')
+        # Garante que os dados sejam passados como objeto de bytes puro
+        pdf_data = bytes(pdf_output.encode('latin-1'))
         
         st.download_button(
             label="⬇️ Baixar Relatório PDF", 
-            data=pdf_bytes, 
+            data=pdf_data, 
             file_name=f"Relatorio_{cliente}.pdf", 
             mime="application/pdf"
         )
