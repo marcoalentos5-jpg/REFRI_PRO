@@ -43,7 +43,6 @@ with tab_cad:
     whatsapp = l3_c1.text_input("🟢 WhatsApp", value="21980264217")
     email_cli = l3_c2.text_input("✉️ E-mail")
     data_visita = l3_c3.date_input("Data da Visita", value=date.today())
-    # NOVO CAMPO SOLICITADO
     comodo_proc = st.text_input("🏠 Cômodo do Procedimento")
     st.markdown("---")
     st.subheader("⚙️ Dados Técnicos")
@@ -164,7 +163,7 @@ with tab_diag:
         draw_header("3. Analise de Ciclo e Eletrica")
         pdf.set_font("Arial", 'B', 9)
         pdf.cell(45, 8, "Superaquecimento (SH):", 1, 0, 'C'); pdf.cell(45, 8, f"{sh} K", 1, 0, 'C')
-        pdf.cell(45, 8, "Sub-resfriamento (SC):", 1, 0, 'C'); pdf.cell(45, 8, f"{sc} K", 1, 0, 'C')
+        pdf.cell(45, 8, "Sub-resfriamento (SC):", 1, 0, 'C'); pdf.cell(45, 8, f"{sc} K", 1, 1, 'C')
         pdf.cell(45, 8, "Delta T (Ar):", 1, 0, 'C'); pdf.cell(45, 8, f"{dt} K", 1, 0, 'C')
         pdf.cell(45, 8, "Corrente Medida:", 1, 0, 'C'); pdf.cell(45, 8, f"{a_med} A", 1, 1, 'C')
         pdf.ln(4)
@@ -182,7 +181,8 @@ with tab_diag:
         pdf.set_font("Arial", 'I', 8)
         pdf.cell(0, 10, f"Relatorio gerado em {data_visita.strftime('%d/%m/%Y')} - MPN Engenharia", 0, 0, 'C')
 
-        pdf_output = pdf.output(dest='S').encode('latin-1')
+        # --- CORREÇÃO DO ERRO DE ATRIBUTO ---
+        pdf_output = pdf.output(dest='S')
         st.download_button(
             label="⬇️ Baixar Relatório PDF",
             data=pdf_output,
