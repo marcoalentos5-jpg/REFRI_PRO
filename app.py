@@ -168,8 +168,9 @@ with tab_diag:
         pdf.set_text_color(0)
         pdf.cell(190, 8, " IDENTIFICAÇÃO DO CLIENTE", ln=True, fill=True)
         pdf.set_font("Arial", "", 10)
-        pdf.cell(95, 8, f"Cliente: {cliente}", border="B")
-        pdf.cell(95, 8, f"CPF/CNPJ: {doc_cliente}", border="B", ln=True)
+        pdf.cell(85, 8, f"Cliente: {cliente}", border="B")
+        pdf.cell(55, 8, f"Data: {data_visita.strftime('%d/%m/%Y')}", border="B") # Data à direita do cliente
+        pdf.cell(50, 8, f"Doc: {doc_cliente}", border="B", ln=True, align="R") # Doc mais à direita
         pdf.cell(190, 8, f"Endereço: {endereco}", border="B", ln=True)
         pdf.cell(95, 8, f"WhatsApp: {whatsapp}", border="B")
         pdf.cell(95, 8, f"E-mail: {email_cli}", border="B", ln=True)
@@ -184,6 +185,8 @@ with tab_diag:
         pdf.cell(63, 8, f"Gás: {fluido}", border="B")
         pdf.cell(63, 8, f"Tecnologia: {tecnologia}", border="B")
         pdf.cell(64, 8, f"Tipo: {tipo_eq}", border="B", ln=True)
+        pdf.cell(95, 8, f"Modelo Evaporadora: {mod_evap}", border="B") # Adicionado
+        pdf.cell(95, 8, f"Série Evaporadora: {serie_evap}", border="B", ln=True) # Adicionado
         pdf.cell(95, 8, f"Modelo Condensadora: {mod_cond}", border="B")
         pdf.cell(95, 8, f"Série Condensadora: {serie_cond}", border="B", ln=True)
         pdf.ln(5)
@@ -215,8 +218,9 @@ with tab_diag:
         
         pdf.ln(10)
         pdf.set_font("Arial", "I", 8)
-        # --- NOME E CNPJ ATUALIZADOS ---
-        pdf.cell(190, 5, "Marcos Alexandre Almeida do Nascimento | CNPJ: 51.274.762/0001-17", ln=True, align="C")
+        # --- NOME E CNPJ REESTRUTURADOS ---
+        pdf.cell(190, 5, "Marcos Alexandre Almeida do Nascimento", ln=True, align="C")
+        pdf.cell(190, 5, "CNPJ: 51.274.762/0001-17", ln=True, align="C")
 
         buf = io.BytesIO()
         pdf_out = pdf.output(dest='S')
