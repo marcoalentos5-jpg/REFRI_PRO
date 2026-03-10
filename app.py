@@ -138,7 +138,7 @@ with tab_diag:
             pdf.set_text_color(0, 0, 0)
             pdf.ln(3)
 
-        # --- 1. IDENTIFICAÇÃO (COLUNAS À DIREITA) ---
+        # --- 1. IDENTIFICAÇÃO ---
         draw_header("1. Identificacao do Cliente")
         pdf.set_font("Arial", 'B', 9)
         pdf.cell(30, 6, "Cliente:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{cliente}", ln=0)
@@ -164,7 +164,7 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Fluido:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{fluido}", ln=1)
         pdf.ln(5)
 
-        # --- 3. PERFORMANCE (CORREÇÃO DE ÍNDICE) ---
+        # --- 3. PERFORMANCE ---
         draw_header("3. Parametros de Performance")
         data_table = [
             ["PARAMETRO", "MEDIDO", "REFERENCIA", "STATUS"],
@@ -183,26 +183,13 @@ with tab_diag:
             pdf.cell(50, 7, row[3], 1, 1, 'C')
         pdf.ln(5)
 
-        # --- 4. CONCLUSÃO (DUAS COLUNAS + ESPAÇAMENTO 4) ---
+        # --- 4. CONCLUSÃO ---
         draw_header("4. Diagnostico Final")
         pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Observacoes Tecnicas:", ln=1)
-        pdf.set_font("Arial", '', 9)
-        
-        # Divisão do texto para duas colunas
-        obs_total = obs_raw if obs_raw else 'Nenhuma.'
-        metade = len(obs_total) // 2
-        lado_a = obs_total[:metade]
-        lado_b = obs_total[metade:]
-
-        y_topo = pdf.get_y()
-        pdf.multi_cell(95, 4, lado_a, border=1) # Coluna 1
-        y_fim_a = pdf.get_y()
-        
-        pdf.set_xy(105, y_topo)
-        pdf.multi_cell(95, 4, lado_b, border=1) # Coluna 2
-        y_fim_b = pdf.get_y()
-        
-        pdf.set_y(max(y_fim_a, y_fim_b) + 5)
+        # FONTE DIMINUÍDA PARA 8 CONFORME SOLICITADO
+        pdf.set_font("Arial", '', 8)
+        pdf.multi_cell(0, 4, f"{obs_raw if obs_raw else 'Nenhuma.'}", border=1)
+        pdf.ln(4)
         
         pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Recomendacoes e Medidas Propostas:", ln=1)
         pdf.set_font("Arial", '', 9)
