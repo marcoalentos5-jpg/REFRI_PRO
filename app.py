@@ -4,7 +4,6 @@ from datetime import date
 from fpdf import FPDF
 import io
 import os
-import streamlit.components.v1 as components
 
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="MPN | Engenharia Pro", layout="wide", page_icon="❄️")
@@ -31,10 +30,16 @@ with tab_cad:
     c1, c2, c3 = st.columns(3)
     cliente = c1.text_input("Nome do Cliente / Empresa")
     doc_cliente = c1.text_input("CPF / CNPJ")
-    endereco = c2.text_input("Endereço Completo")
+    
+    # CAMPOS BAIRRO E CEP INSERIDOS
+    endereco = c2.text_input("Endereço (Rua e Número)")
+    bairro = c2.text_input("Bairro")
+    cep = c2.text_input("CEP", placeholder="00000-000")
+    
     whatsapp = c3.text_input("🟢 WhatsApp", value="21980264217")
     data_visita = c3.date_input("Data da Visita", value=date.today())
-    email_cli = c2.text_input("✉️ E-mail")
+    email_cli = c3.text_input("✉️ E-mail")
+    
     st.markdown("---")
     st.subheader("⚙️ Dados Técnicos")
     d1, d2, d3 = st.columns(3)
@@ -75,11 +80,12 @@ with tab_termo:
     dt = round(t_ret - t_ins, 1)
     
     st.markdown("---")
-    st.write(f"**Temperatura de Saturação (Sucção):** {tsat_suc} °C")
-    st.write(f"**Superaquecimento (SH):** {sh} K")
-    st.write(f"**Temperatura de Saturação (Líquido):** {tsat_liq} °C")
-    st.write(f"**Sub-resfriamento (SC):** {sc} K")
-    st.write(f"**Diferencial de Temperatura (Delta T):** {dt} K")
+    # FONTE AUMENTADA E SIMBOLO DELTA (Δ) INSERIDO
+    st.markdown(f"### Temperatura de Saturação (Sucção): {tsat_suc} °C")
+    st.markdown(f"### Superaquecimento (SH): {sh} K")
+    st.markdown(f"### Temperatura de Saturação (Líquido): {tsat_liq} °C")
+    st.markdown(f"### Sub-resfriamento (SC): {sc} K")
+    st.markdown(f"### Diferencial de Temperatura (ΔT): {dt} K")
 
 with tab_diag:
     obs = st.text_area("Observações Técnicas Detalhadas", height=150)
@@ -112,9 +118,11 @@ with tab_diag:
         pdf.cell(55, 7, f" DATA DA VISITA: {data_visita.strftime('%d/%m/%Y')} ", border=1, fill=True, align="C", ln=True)
         
         pdf.set_font("Helvetica", "", 8)
-        pdf.cell(190, 6, f"Endereço: {endereco}", border="B", ln=True)
-        pdf.cell(95, 6, f"WhatsApp: {whatsapp}", border="B")
-        pdf.cell(95, 6, f"E-mail: {email_cli}", border="B", ln=True)
+        # RELATÓRIO PDF: ENDEREÇO, BAIRRO E CEP
+        pdf.cell(190, 6, f"Endereço: {endereco} - Bairro: {bairro}", border="B", ln=True)
+        pdf.cell(63, 6, f"CEP: {cep}", border="B")
+        pdf.cell(63, 6, f"WhatsApp: {whatsapp}", border="B")
+        pdf.cell(64, 6, f"E-mail: {email_cli}", border="B", ln=True)
 
         pdf.ln(4)
         pdf.set_font("Helvetica", "B", 10)
@@ -150,6 +158,8 @@ with tab_diag:
         pdf.set_font("Helvetica", "B", 8); pdf.set_fill_color(248, 248, 248)
         pdf.cell(32, 6, f" SH: {sh} K", border="B", fill=True)
         pdf.cell(32, 6, f" SC: {sc} K", border="B", fill=True)
+        # RELATÓRIO PDF: ALTERAÇÃO PARA ΔT
+        delta_label = " \xceT: ".encode('latin-1').decode('utf-8') # Fallback para Delta
         pdf.cell(32, 6, f" DT: {dt} K", border="B", fill=True, ln=True)
 
         pdf.ln(4)
