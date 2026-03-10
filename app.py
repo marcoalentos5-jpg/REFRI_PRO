@@ -159,7 +159,7 @@ with tab_diag:
         pdf.set_text_color(0, 74, 153)
         pdf.cell(145, 10, "RELATÓRIO TÉCNICO DE ENGENHARIA", ln=True, align="R")
         
-        # CAMPO "GERADO EM" REMOVIDO DAQUI
+        # CAMPO "GERADO EM" REMOVIDO
         pdf.ln(10)
         
         pdf.set_fill_color(240, 240, 240)
@@ -186,9 +186,14 @@ with tab_diag:
         pdf.cell(95, 8, f"WhatsApp: {whatsapp}", border="B")
         pdf.cell(95, 8, f"E-mail: {email_cli}", border="B", ln=True)
 
-        # Download seguro para Streamlit Cloud/Local
-        pdf_output = pdf.output(dest='S')
-        if isinstance(pdf_output, str):
-            pdf_output = pdf_output.encode('latin-1')
-        
-        st.download_button(label="📥 Baixar Relatório", data=pdf_output, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
+        # CORREÇÃO DEFINITIVA DO OUTPUT PARA BYTES
+        pdf_bytes = pdf.output(dest='S')
+        if isinstance(pdf_bytes, str):
+            pdf_bytes = pdf_bytes.encode('latin-1')
+
+        st.download_button(
+            label="📥 Baixar Relatório", 
+            data=pdf_bytes, 
+            file_name=f"Relatorio_{cliente}.pdf", 
+            mime="application/pdf"
+        )
