@@ -152,7 +152,6 @@ with tab_diag:
         pdf.cell(47, 8, f"  {sh} K", 1, 0, 'L')
         pdf.cell(47, 8, f"  {a_med} A", 1, 0, 'L')
         pdf.cell(47, 8, f"  {v_med} V", 1, 1, 'L')
-        
         pdf.set_font("Arial", 'B', 8)
         pdf.cell(47, 7, "  PRESSAO DESCARGA", 1, 0, 'L', True)
         pdf.cell(47, 7, "  SUB-RESFRIAMENTO", 1, 0, 'L', True)
@@ -170,14 +169,17 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Observacoes Tecnicas:", ln=1)
         pdf.set_font("Arial", '', 9); pdf.multi_cell(0, 5, f"{obs_raw}"); pdf.ln(2)
 
-        # --- CORREÇÃO TÉCNICA DEFINITIVA ---
-        pdf_output = pdf.output(dest='S')
-        # Se for string (versão antiga), encoda. Se já for bytes (versão nova), usa direto.
-        final_pdf = pdf_output.encode('latin-1', 'ignore') if isinstance(pdf_output, str) else pdf_output
-        
+        # --- CORREÇÃO TÉCNICA DEFINITIVA PARA STREAMLIT ---
+        try:
+            pdf_bytes = pdf.output(dest='S')
+            if isinstance(pdf_bytes, str):
+                pdf_bytes = pdf_bytes.encode('latin-1', 'ignore')
+        except:
+            pdf_bytes = pdf.output()
+
         st.download_button(
             label="⬇️ Baixar Relatório PDF", 
-            data=final_pdf, 
-            file_name=f"Relatorio_{cliente}.pdf", 
+            data=pdf_bytes, 
+            file_name=f"Relatorio_{cliente if cliente else 'Tecnico'}.pdf", 
             mime="application/pdf"
         )
