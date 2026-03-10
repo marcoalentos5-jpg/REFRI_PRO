@@ -143,6 +143,8 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "CPF/CNPJ:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(60, 6, f"{doc_cliente}", ln=1)
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Endereço:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{endereco}", ln=0)
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Bairro/CEP:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(60, 6, f"{bairro} / {cep}", ln=1)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "WhatsApp:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{whatsapp}", ln=0)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "E-mail:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(60, 6, f"{email_cli}", ln=1)
         pdf.ln(3)
 
         # --- 2. DADOS DO EQUIPAMENTO ---
@@ -159,15 +161,25 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9)
         pdf.cell(45, 6, "Tensão (Nom/Med):", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{v_rede}V / {v_med}V", ln=0)
         pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Corrente (RLA/Med):", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{rla_comp}A / {a_med}A", ln=1)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Corrente LRA:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{lra_comp} A", ln=1)
         pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Superaquecimento:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{sh} K", ln=0)
         pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Sub-resfriamento:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{sc} K", ln=1)
         pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Delta T (Ar):", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{dt} K", ln=1)
         pdf.ln(3)
 
-        # --- 4. CONCLUSÃO ---
+        # --- 4. CONCLUSÃO (DESTAQUE REFORÇADO) ---
         draw_header("4. Diagnóstico & Observações")
+        
+        pdf.set_font("Arial", 'B', 10) # Tamanho 10 e negrito
+        pdf.cell(0, 5, "| OBSERVAÇÕES:", ln=True) # Símbolo pipe adicionado
         pdf.set_font("Arial", '', 9)
-        pdf.multi_cell(0, 5, f"OBSERVAÇÕES:\n{obs_raw}\n\nMEDIDAS TOMADAS:\n{med_tomadas_raw}\n\nRECOMENDAÇÕES:\n{ia_raw}")
+        pdf.multi_cell(0, 5, f"{obs_raw}")
+        pdf.ln(2)
+        
+        pdf.set_font("Arial", 'B', 10) # Tamanho 10 e negrito
+        pdf.cell(0, 5, "| MEDIDAS TOMADAS:", ln=True) # Símbolo pipe adicionado
+        pdf.set_font("Arial", '', 9)
+        pdf.multi_cell(0, 5, f"{med_tomadas_raw}")
         
         # --- RODAPÉ ---
         pdf.set_y(-30)
@@ -177,7 +189,7 @@ with tab_diag:
         pdf.set_font("Arial", '', 8)
         pdf.cell(0, 5, "CNPJ: 45.451.272/0001-38 | Responsável Técnico", ln=True, align='C')
 
-        # --- EXPORTAÇÃO SEGURA ---
+        # --- EXPORTAÇÃO ---
         output_pdf = io.BytesIO()
         pdf_content = pdf.output()
         if isinstance(pdf_content, str):
