@@ -169,7 +169,7 @@ with tab_diag:
         pdf.set_font("Arial", '', 9)
         pdf.multi_cell(0, 5, f"OBSERVAÇÕES:\n{obs_raw}\n\nMEDIDAS TOMADAS:\n{med_tomadas_raw}\n\nRECOMENDAÇÕES:\n{ia_raw}")
         
-        # --- RODAPÉ (NOME E CNPJ MOVIDOS PARA CÁ) ---
+        # --- RODAPÉ (NOME E CNPJ NO FIM) ---
         pdf.set_y(-30)
         pdf.set_font("Arial", 'B', 9)
         pdf.set_text_color(100, 100, 100)
@@ -177,6 +177,14 @@ with tab_diag:
         pdf.set_font("Arial", '', 8)
         pdf.cell(0, 5, "CNPJ: 45.451.272/0001-38 | Responsável Técnico", ln=True, align='C')
 
-        # Gerar Download
-        pdf_output = pdf.output(dest='S').encode('latin-1')
-        st.download_button(label="⬇️ Baixar PDF", data=pdf_output, file_name=f"Relatorio_{cliente}_{date.today()}.pdf", mime="application/pdf")
+        # --- ATUALIZAÇÃO DA SAÍDA PARA EVITAR ERRO ---
+        pdf_bytes = pdf.output()
+        if isinstance(pdf_bytes, str):
+            pdf_bytes = pdf_bytes.encode('latin-1')
+
+        st.download_button(
+            label="⬇️ Baixar PDF", 
+            data=pdf_bytes, 
+            file_name=f"Relatorio_{cliente}_{date.today()}.pdf", 
+            mime="application/pdf"
+        )
