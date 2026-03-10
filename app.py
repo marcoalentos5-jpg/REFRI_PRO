@@ -33,7 +33,7 @@ tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ El
 with tab_cad:
     st.subheader("👤 Dados do Cliente & Contato")
     cliente = st.text_input("Nome do Cliente / Empresa")
-    c_doc, c_vazio = st.columns([1, 2])
+    c_doc, _ = st.columns([1, 2])
     doc_cliente = c_doc.text_input("CPF / CNPJ", max_chars=12, placeholder="010497927-50")
     l2_c1, l2_c2, l2_c3 = st.columns(3)
     endereco = l2_c1.text_input("Endereço (Rua e Número)")
@@ -202,14 +202,17 @@ with tab_diag:
         pdf.set_font("Arial", 'I', 8)
         pdf.cell(0, 5, "Responsavel Tecnico - MPN Engenharia", ln=1, align='C')
 
-        # --- CORREÇÃO DO ERRO DE CODIFICAÇÃO ---
-        pdf_output = pdf.output(dest='S')
-        if isinstance(pdf_output, str):
-            pdf_output = pdf_output.encode('latin-1', errors='replace')
+        # --- SOLUÇÃO RIGOROSA PARA O ERRO (IO BYTES) ---
+        # Removendo emojis do nome do arquivo para evitar conflito no cabeçalho HTTP
+        safe_cliente = "".join([c for c in cliente if c.isalnum() or c in (' ', '_')]).strip()
+        filename = f"Relatorio_{safe_cliente}_{data_visita}.pdf"
+        
+        # Gerando o PDF como bytes reais
+        pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
         
         st.download_button(
             label="⬇️ Baixar Relatório em PDF",
-            data=pdf_output,
-            file_name=f"Relatorio_{cliente}_{data_visita}.pdf",
+            data=pdf_bytes,
+            file_name=filename,
             mime="application/pdf"
         )
