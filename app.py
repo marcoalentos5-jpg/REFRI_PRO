@@ -27,7 +27,6 @@ tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ El
 
 with tab_cad:
     st.subheader("👤 Dados do Cliente & Contato")
-    # Organização Rigorosa conforme solicitado
     c1, c2 = st.columns(2)
     cliente = c1.text_input("Nome do Cliente / Empresa")
     doc_cliente = c2.text_input("CPF / CNPJ")
@@ -93,21 +92,21 @@ with tab_termo:
     dt = round(t_ret - t_ins, 1)
     
     st.markdown("---")
-    # Destaque com Ícones e Cards
-    c1, c2 = st.columns(2)
-    with c1:
-        st.markdown(f"<div style='background-color:#f0f2f6;padding:15px;border-radius:10px;border-left:5px solid #004a99;'><b>🌡️ T-Sat Sucção:</b><h2 style='margin:0;color:#004a99;'>{tsat_suc} °C</h2><b>🔥 Superaquecimento (SH):</b><h2 style='margin:0;color:#ff4b4b;'>{sh} K</h2></div>", unsafe_allow_html=True)
-    with c2:
-        st.markdown(f"<div style='background-color:#f0f2f6;padding:15px;border-radius:10px;border-left:5px solid #00d2ff;'><b>❄️ T-Sat Líquido:</b><h2 style='margin:0;color:#004a99;'>{tsat_liq} °C</h2><b>💧 Sub-resfriamento (SC):</b><h2 style='margin:0;color:#008000;'>{sc} K</h2></div>", unsafe_allow_html=True)
-    st.markdown(f"<div style='background-color:#004a99;padding:20px;border-radius:15px;text-align:center;margin-top:10px;'><span style='color:white;font-weight:bold;'>📈 Diferencial de Temperatura (ΔT)</span><h1 style='margin:0;color:white;font-size:45px;'>{dt} K</h1></div>", unsafe_allow_html=True)
+    # RIGOR: FUNDO AZUL (#004a99) E TEXTO BRANCO
+    ct1, ct2 = st.columns(2)
+    with ct1:
+        st.markdown(f"""<div style='background-color:#004a99;padding:15px;border-radius:10px;border-left:5px solid #ffcc00;color:white;'><b>🌡️ T-Sat Sucção:</b><h2 style='margin:0;color:white;'>{tsat_suc} °C</h2><b>🔥 Superaquecimento (SH):</b><h2 style='margin:0;color:white;'>{sh} K</h2></div>""", unsafe_allow_html=True)
+    with ct2:
+        st.markdown(f"""<div style='background-color:#004a99;padding:15px;border-radius:10px;border-left:5px solid #00d2ff;color:white;'><b>❄️ T-Sat Líquido:</b><h2 style='margin:0;color:white;'>{tsat_liq} °C</h2><b>💧 Sub-resfriamento (SC):</b><h2 style='margin:0;color:white;'>{sc} K</h2></div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div style='background-color:#004a99;padding:20px;border-radius:15px;text-align:center;margin-top:10px;border:2px solid #ffcc00;'><span style='color:white;font-weight:bold;'>📈 Diferencial de Temperatura (ΔT)</span><h1 style='margin:0;color:white;font-size:45px;'>{dt} K</h1></div>""", unsafe_allow_html=True)
 
 with tab_diag:
     obs = st.text_area("Observações Técnicas Detalhadas", height=150)
-    if st.button("Gerar Relatório PDF Profissional"):
+    if st.button("Gerar Relatório PDF"):
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Helvetica", "B", 14); pdf.set_text_color(0, 74, 153)
-        pdf.cell(190, 10, "RELATÓRIO TÉCNICO DE ENGENHARIA", ln=True, align="C"); pdf.ln(5)
+        pdf.cell(190, 10, "RELATÓRIO TÉCNICO", ln=True, align="C"); pdf.ln(5)
         
         # 1. IDENTIFICAÇÃO COM DATA EM DESTAQUE
         pdf.set_fill_color(245, 245, 245); pdf.set_font("Helvetica", "B", 10); pdf.set_text_color(60)
@@ -115,33 +114,36 @@ with tab_diag:
         pdf.set_font("Helvetica", "", 8); pdf.cell(130, 8, f"Cliente: {cliente}", border="B")
         pdf.set_font("Helvetica", "B", 9); pdf.set_fill_color(230, 230, 230)
         pdf.cell(60, 8, f" DATA DA VISITA: {data_visita.strftime('%d/%m/%Y')} ", border=1, fill=True, align="C", ln=True)
-        pdf.set_font("Helvetica", "", 8); pdf.cell(95, 6, f"CPF/CNPJ: {doc_cliente}", border="B"); pdf.cell(95, 6, f"WhatsApp: {whatsapp}", border="B", ln=True)
-        pdf.cell(190, 6, f"Endereco: {endereco}", border="B", ln=True)
-        pdf.cell(95, 6, f"Bairro: {bairro}", border="B"); pdf.cell(95, 6, f"CEP: {cep}", border="B", ln=True); pdf.cell(190, 6, f"E-mail: {email_cli}", border="B", ln=True)
+        
+        pdf.set_font("Helvetica", "", 8); pdf.cell(95, 6, f"CPF/CNPJ: {doc_cliente}", border="B")
+        pdf.cell(95, 6, f"WhatsApp: {whatsapp}", border="B", ln=True)
+        pdf.cell(190, 6, f"Endereço: {endereco}", border="B", ln=True)
+        pdf.cell(95, 6, f"Bairro: {bairro}", border="B")
+        pdf.cell(95, 6, f"CEP: {cep}", border="B", ln=True)
+        pdf.cell(190, 6, f"E-mail: {email_cli}", border="B", ln=True)
 
-        # 2. DADOS TÉCNICOS COMPLETOS
+        # 2. ESPECIFICAÇÕES
         pdf.ln(4); pdf.set_font("Helvetica", "B", 10); pdf.cell(190, 7, " 2. ESPECIFICAÇÕES DO EQUIPAMENTO", ln=True, fill=True)
         pdf.set_font("Helvetica", "", 8)
-        pdf.cell(63, 6, f"Fabricante: {fabricante}", border="B"); pdf.cell(63, 6, f"Linha: {linha}", border="B"); pdf.cell(64, 6, f"Capacidade: {cap_digitada}k BTU", border="B", ln=True)
-        pdf.cell(95, 6, f"Mod. Evap: {mod_evap}", border="B"); pdf.cell(95, 6, f"Serie Evap: {serie_evap}", border="B", ln=True)
-        pdf.cell(95, 6, f"Mod. Cond: {mod_cond}", border="B"); pdf.cell(95, 6, f"Serie Cond: {serie_cond}", border="B", ln=True)
-        pdf.cell(63, 6, f"Tecnologia: {tecnologia}", border="B"); pdf.cell(63, 6, f"Tipo: {tipo_eq}", border="B"); pdf.cell(64, 6, f"Fluido: {fluido}", border="B", ln=True)
+        pdf.cell(95, 6, f"Modelo Evap: {mod_evap}", border="B"); pdf.cell(95, 6, f"N/S Evap: {serie_evap}", border="B", ln=True)
+        pdf.cell(95, 6, f"Modelo Cond: {mod_cond}", border="B"); pdf.cell(95, 6, f"N/S Cond: {serie_cond}", border="B", ln=True)
 
-        # 3. MEDIÇÕES COMPLETAS
+        # 3. ANÁLISE TÉCNICA (RIGOR: INCLUI CORRENTE MEDIDA)
         pdf.ln(4); pdf.set_font("Helvetica", "B", 10); pdf.cell(190, 7, " 3. ANÁLISE TÉCNICA E MEDIÇÕES", ln=True, fill=True)
         pdf.set_font("Helvetica", "", 8)
         pdf.cell(47, 6, f"V. Rede: {v_rede}V", border="B"); pdf.cell(47, 6, f"V. Med: {v_med}V", border="B")
         pdf.cell(48, 6, f"LRA: {lra_comp}A", border="B"); pdf.cell(48, 6, f"RLA: {rla_comp}A", border="B", ln=True)
-        pdf.cell(47, 6, f"P. Suc: {p_suc} PSI", border="B"); pdf.cell(47, 6, f"T-Sat Suc: {tsat_suc}C", border="B")
-        pdf.cell(48, 6, f"P. Liq: {p_liq} PSI", border="B"); pdf.cell(48, 6, f"T-Sat Liq: {tsat_liq}C", border="B", ln=True)
+        pdf.cell(47, 6, f"Corrente Med: {a_med}A", border="B"); pdf.cell(47, 6, f"P. Suc: {p_suc} PSI", border="B")
+        pdf.cell(48, 6, f"P. Liq: {p_liq} PSI", border="B"); pdf.cell(48, 6, f"T-Sat Suc: {tsat_suc}C", border="B", ln=True)
+        
         pdf.set_font("Helvetica", "B", 9); pdf.set_fill_color(248, 248, 248)
-        pdf.cell(47, 8, f" Corrente: {a_med}A", border=1, fill=True); pdf.cell(47, 8, f" SH: {sh}K", border=1, fill=True)
-        pdf.cell(48, 8, f" SC: {sc}K", border=1, fill=True); pdf.cell(48, 8, f" Delta T: {dt}K", border=1, fill=True, ln=True)
+        pdf.cell(47, 8, f" SH: {sh}K", border=1, fill=True); pdf.cell(47, 8, f" SC: {sc}K", border=1, fill=True)
+        pdf.cell(96, 8, f" Delta T: {dt}K", border=1, fill=True, ln=True)
 
         # 4. DIAGNÓSTICO
-        pdf.ln(4); pdf.set_font("Helvetica", "B", 10); pdf.cell(190, 7, " 4. PARECER TÉCNICO", ln=True, fill=True)
+        pdf.ln(4); pdf.set_font("Helvetica", "B", 10); pdf.cell(190, 7, " 4. DIAGNÓSTICO", ln=True, fill=True)
         pdf.set_font("Helvetica", "", 9); pdf.multi_cell(190, 6, obs if obs else "Equipamento operando em conformidade técnica.", border=1)
 
         pdf_bytes = pdf.output(dest='S')
         if isinstance(pdf_bytes, str): pdf_bytes = pdf_bytes.encode('latin-1')
-        st.download_button("📥 Baixar Relatório Profissional", io.BytesIO(pdf_bytes), f"Relatorio_{cliente}.pdf")
+        st.download_button("📥 Baixar Relatório", io.BytesIO(pdf_bytes), f"Relatorio_{cliente}.pdf")
