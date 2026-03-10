@@ -3,6 +3,7 @@ import numpy as np
 from datetime import date
 from fpdf import FPDF
 import io
+import os
 
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="MPN | Engenharia Pro", layout="wide", page_icon="❄️")
@@ -111,64 +112,90 @@ with tab_diag:
     ia_raw = st.text_area("🤖 Medidas Técnicas Propostas pela IA", value=propostas_sugestao, height=150)
 
     st.markdown("---")
-    if st.button("📄 Gerar Relatório PDF"):
+    if st.button("📄 Gerar Relatório Profissional"):
         pdf = FPDF()
         pdf.add_page()
         
-        # Cabeçalho
-        pdf.set_font("Arial", 'B', 16)
-        pdf.cell(200, 10, "Relatório Técnico - MPN Engenharia", ln=True, align='C')
-        pdf.ln(5)
+        # --- CABEÇALHO ---
+        pdf.set_fill_color(0, 74, 153)
+        pdf.rect(0, 0, 210, 35, 'F')
+        if os.path.exists("logo.png"):
+            pdf.image("logo.png", x=10, y=8, h=20)
         
-        # 1. Identificação
-        pdf.set_font("Arial", 'B', 12)
-        pdf.cell(0, 10, "1. Identificação do Cliente e Sistema", ln=True)
-        pdf.set_font("Arial", '', 10)
-        pdf.cell(0, 7, f"Cliente: {cliente} | CNPJ/CPF: {doc_cliente}", ln=True)
-        pdf.cell(0, 7, f"Endereço: {endereco}, {bairro} | CEP: {cep}", ln=True)
-        pdf.cell(0, 7, f"WhatsApp: {whatsapp} | E-mail: {email_cli} | Data: {data_visita}", ln=True)
-        pdf.cell(0, 7, f"Equipamento: {fabricante} {linha} | {tipo_eq} {tecnologia}", ln=True)
-        pdf.cell(0, 7, f"Fluido: {fluido} | Capacidade: {cap_digitada} BTUs", ln=True)
-        pdf.cell(0, 7, f"Evap (Mod/Série): {mod_evap} / {serie_evap}", ln=True)
-        pdf.cell(0, 7, f"Cond (Mod/Série): {mod_cond} / {serie_cond}", ln=True)
-        pdf.ln(5)
+        pdf.set_text_color(255, 255, 255)
+        pdf.set_font("Arial", 'B', 18)
+        pdf.cell(0, 15, "RELATÓRIO TÉCNICO", ln=True, align='C')
+        pdf.set_font("Arial", 'I', 9)
+        pdf.cell(0, 5, f"MPN Engenharia e Diagnóstico | Emissão: {date.today().strftime('%d/%m/%Y')}", ln=True, align='C')
+        pdf.ln(15)
+
+        def draw_header(title):
+            pdf.set_fill_color(235, 235, 235)
+            pdf.set_text_color(0, 74, 153)
+            pdf.set_font("Arial", 'B', 10)
+            pdf.cell(0, 8, f" {title.upper()}", ln=True, fill=True)
+            pdf.set_text_color(0, 0, 0)
+            pdf.ln(2)
+
+        # --- 1. IDENTIFICAÇÃO ---
+        draw_header("1. Identificação do Cliente")
+        pdf.set_font("Arial", '', 9)
+        pdf.cell(100, 6, f"Cliente: {cliente}", ln=0)
+        pdf.cell(90, 6, f"CPF/CNPJ: {doc_cliente}", ln=1)
+        pdf.cell(100, 6, f"Endereço: {endereco}", ln=0)
+        pdf.cell(90, 6, f"Bairro: {bairro}", ln=1)
+        pdf.cell(100, 6, f"WhatsApp: {whatsapp}", ln=0)
+        pdf.set_fill_color(220, 220, 220)
+        pdf.cell(90, 6, f" Data da Visita: {data_visita.strftime('%d/%m/%Y')}", ln=1, fill=True)
+        pdf.ln(4)
+
+        # --- 2. EQUIPAMENTO ---
+        draw_header("2. Dados Técnicos do Sistema")
+        pdf.set_font("Arial", '', 9)
+        pdf.cell(63, 6, f"Marca: {fabricante}", ln=0)
+        pdf.cell(63, 6, f"Modelo: {linha}", ln=0)
+        pdf.cell(64, 6, f"Fluido: {fluido}", ln=1)
+        pdf.cell(63, 6, f"Tipo: {tipo_eq} ({tecnologia})", ln=0)
+        pdf.cell(63, 6, f"Capacidade: {cap_digitada} BTU/h", ln=1)
+        pdf.cell(95, 6, f"Série Evap: {serie_evap}", ln=0)
+        pdf.cell(95, 6, f"Série Cond: {serie_cond}", ln=1)
+        pdf.ln(4)
+
+        # --- 3. OPERAÇÃO ---
+        draw_header("3. Análise Operacional")
+        pdf.set_font("Arial", '', 9)
+        pdf.cell(95, 5, f"Tensão (Rede/Med): {v_rede}V / {v_med}V", ln=0)
+        pdf.cell(95, 5, f"Pressão Sucção: {p_suc} PSIG | T-Sat: {tsat_suc} C", ln=1)
+        pdf.cell(95, 5, f"Corrente Medida: {a_med} A", ln=0)
+        pdf.cell(95, 5, f"Pressão Líquido: {p_liq} PSIG | T-Sat: {tsat_liq} C", ln=1)
+        pdf.ln(3)
         
-        # 2. Elétrica
-        pdf.set_font("Arial", 'B', 12)
-        pdf.cell(0, 10, "2. Parâmetros Elétricos", ln=True)
-        pdf.set_font("Arial", '', 10)
-        pdf.cell(0, 7, f"Tensão Rede: {v_rede}V | Tensão Medida: {v_med}V | Queda: {diff_v}V", ln=True)
-        pdf.cell(0, 7, f"LRA: {lra_comp}A | RLA: {rla_comp}A | Corrente Medida: {a_med}A", ln=True)
-        pdf.ln(5)
-        
-        # 3. Termodinâmica
-        pdf.set_font("Arial", 'B', 12)
-        pdf.cell(0, 10, "3. Ciclo Frigorífico", ln=True)
-        pdf.set_font("Arial", '', 10)
-        pdf.cell(0, 7, f"Pressão Sucção: {p_suc} PSIG | T-Sat: {tsat_suc}°C | Temp. Tubo: {t_suc_tubo}°C", ln=True)
-        pdf.cell(0, 7, f"Pressão Líquido: {p_liq} PSIG | T-Sat: {tsat_liq}°C | Temp. Tubo: {t_liq_tubo}°C", ln=True)
-        pdf.cell(0, 7, f"Temp. Retorno: {t_ret}°C | Temp. Insuflamento: {t_ins}°C", ln=True)
+        pdf.set_fill_color(220, 220, 220)
         pdf.set_font("Arial", 'B', 10)
-        pdf.cell(0, 7, f"Superaquecimento (SH): {sh} K | Sub-resfriamento (SC): {sc} K | Delta T: {dt} K", ln=True)
-        pdf.ln(5)
-        
-        # 4. Diagnóstico
-        pdf.set_font("Arial", 'B', 12)
-        pdf.cell(0, 10, "4. Diagnóstico e Observações", ln=True)
-        pdf.set_font("Arial", 'I', 10)
-        pdf.cell(0, 7, "Observações Técnicas:", ln=True)
-        pdf.set_font("Arial", '', 10)
-        pdf.multi_cell(0, 7, obs_raw)
+        pdf.cell(190, 8, f"Delta T: {dt} K", ln=1, fill=True, align='C', border=1)
         pdf.ln(2)
-        pdf.set_font("Arial", 'I', 10)
-        pdf.cell(0, 7, "Medidas Tomadas:", ln=True)
-        pdf.set_font("Arial", '', 10)
-        pdf.multi_cell(0, 7, med_tomadas_raw)
-        pdf.ln(2)
+        pdf.cell(95, 10, f"Superaquecimento (SH): {sh} K", border=1, align='C', fill=True)
+        pdf.cell(95, 10, f"Sub-resfriamento (SC): {sc} K", border=1, align='C', fill=True, ln=1)
+        pdf.ln(6)
+
+        # --- 4. CONCLUSÃO ---
+        draw_header("4. Conclusão")
+        pdf.set_font("Arial", 'B', 9)
+        pdf.cell(0, 6, "Observações Técnicas:", ln=True)
+        pdf.set_font("Arial", '', 9)
+        pdf.multi_cell(0, 5, obs_raw if obs_raw else "N/D")
+        pdf.ln(3)
+        pdf.set_font("Arial", 'B', 9)
+        pdf.cell(0, 6, "Medidas Realizadas:", ln=True)
+        pdf.set_font("Arial", '', 9)
+        pdf.multi_cell(0, 5, med_tomadas_raw if med_tomadas_raw else "N/D")
+        pdf.ln(3)
         pdf.set_font("Arial", 'B', 10)
-        pdf.cell(0, 7, "Recomendações IA:", ln=True)
-        pdf.set_font("Arial", '', 10)
-        pdf.multi_cell(0, 7, ia_raw)
-        
+        pdf.set_text_color(0, 74, 153)
+        pdf.cell(0, 8, "DIAGNÓSTICO IA:", ln=True)
+        pdf.set_text_color(0, 0, 0)
+        pdf.set_font("Arial", '', 9)
+        pdf.multi_cell(0, 5, ia_raw)
+
         pdf_output = pdf.output()
-        st.download_button("⬇️ Baixar Relatório Completo", data=bytes(pdf_output), file_name=f"Relatorio_Completo_{cliente}.pdf", mime="application/pdf")
+        st.download_button("⬇️ Baixar Relatório", data=bytes(pdf_output), file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
