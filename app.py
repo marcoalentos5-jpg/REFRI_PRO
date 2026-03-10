@@ -4,13 +4,13 @@ from datetime import date
 from fpdf import FPDF
 import io
 import os
+from PIL import Image
 
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="MPN | Engenharia Pro", layout="wide", page_icon="❄️")
 
-# --- 2. MOTOR TERMODINÂMICO (AJUSTE DE PRECISÃO PERICIAL) ---
+# --- 2. MOTOR TERMODINÂMICO (PRECISÃO PERICIAL) ---
 def get_tsat_global(psig, gas):
-    # Ancoras expandidas para garantir precisão em toda a faixa de operação
     ancoras = {
         "R-410A": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 550.0, 600.0], 
                    "t": [-51.0, -17.02, -0.29, 11.55, 20.93, 28.84, 35.58, 41.74, 47.3, 52.1, 56.59, 60.7, 64.59]},
@@ -27,11 +27,31 @@ def get_tsat_global(psig, gas):
     try: return round(float(np.interp(psig, ancoras[gas]["p"], ancoras[gas]["t"])), 2)
     except: return 0.0
 
-# --- 3. INTERFACE DO APP ---
+# --- 3. MOTOR DE GERAÇÃO PDF ---
+class PDF(FPDF):
+    def __init__(self, logo_path=None):
+        super().__init__()
+        self.logo_path = logo_path
+    def header(self):
+        if self.logo_path:
+            self.image(self.logo_path, 10, 8, 33)
+            self.set_x(45)
+        self.set_font('Arial', 'B', 14)
+        self.cell(0, 10, 'RELATÓRIO TÉCNICO DE MANUTENÇÃO - MPN ENGENHARIA', 0, 1, 'R')
+        self.ln(10)
+    def footer(self):
+        self.set_y(-15)
+        self.set_font('Arial', 'I', 8)
+        self.cell(0, 10, f'Página {self.page_no()}', 0, 0, 'C')
+
+# --- 4. INTERFACE DO APP ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
 tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico"])
 
 with tab_cad:
+    st.subheader("🖼️ Identidade Visual")
+    logo_file = st.file_uploader("Upload da Logomarca (PNG/JPG)", type=['png', 'jpg', 'jpeg'])
+    st.markdown("---")
     st.subheader("👤 Dados do Cliente & Contato")
     c1, c2 = st.columns(2)
     cliente = c1.text_input("Nome do Cliente / Empresa")
@@ -100,109 +120,81 @@ with tab_termo:
 
 with tab_diag:
     st.subheader("🤖 Diagnóstico e Recomendações")
-    obs = st.text_area("Observações Técnicas Detalhadas", height=100)
-    medidas_tomadas = st.text_area("🔧 Medidas Técnicas Tomadas", height=100)
-
-    st.markdown("### 🔧 Medidas Técnicas Propostas pela IA")
-    col_ia_1, col_ia_2 = st.columns(2)
-    
+    col_obs_in, col_obs_out = st.columns(2)
+    with col_obs_in:
+        obs_raw = st.text_area("✍️ Observações Técnicas Detalhadas", height=150)
+    if obs_raw:
+        linhas_obs = obs_raw.split('\n')
+        obs = "\n".join([f"• {l.strip()}" if l.strip() and not l.startswith('•') else l for l in linhas_obs])
+    else: obs = ""
+    with col_obs_out:
+        st.markdown("**📝 Conteúdo Ajustado (Observações):**")
+        st.info(obs if obs else "Aguardando preenchimento...")
+    st.markdown("---")
+    col_med_in, col_med_out = st.columns(2)
+    with col_med_in:
+        med_tomadas_raw = st.text_area("🔧 Medidas Técnicas Tomadas", height=150)
+    if med_tomadas_raw:
+        linhas_med = med_tomadas_raw.split('\n')
+        medidas_tomadas = "\n".join([f"• {l.strip()}" if l.strip() and not l.startswith('•') else l for l in linhas_med])
+    else: medidas_tomadas = ""
+    with col_med_out:
+        st.markdown("**📝 Conteúdo Ajustado (Tomadas):**")
+        st.success(medidas_tomadas if medidas_tomadas else "Aguardando preenchimento...")
+    st.markdown("---")
     diag_termo = []
     diag_eletr = []
     obs_low = obs.lower()
-    
     if any(x in obs_low for x in ["óleo", "mancha", "vazamento"]):
-        if sh > 12: diag_termo.append("🚨 [MEDIDA]: Vazamento confirmado. Localizar fuga com N2 e refazer carga por massa.")
-        else: diag_termo.append("⚠️ [MEDIDA]: Presença de óleo relatada. Verificar estanqueidade das flanges.")
-    if any(x in obs_low for x in ["gelo", "congelando"]):
-        if sc > 10: diag_termo.append("⚙️ [MEDIDA]: Restrição na expansão. Substituir filtro secador ou capilar.")
-        elif sh < 5: diag_termo.append("❄️ [MEDIDA]: Inundação do evaporador. Higienizar serpentinas e testar ventilador.")
-    
-    if sh < 6: diag_termo.append(f"🌡️ [SH CRÍTICO]: {sh}K. Risco de golpe de líquido.")
-    if diff_v > (v_rede * 0.05): diag_eletr.append(f"⚡ [QUEDA TENSÃO]: {diff_v}V excedida.")
+        if sh > 12: diag_termo.append("Vazamento confirmado. Localizar fuga com N2 e refazer carga.")
+        else: diag_termo.append("Presença de óleo. Verificar estanqueidade.")
+    if sh < 6: diag_termo.append(f"SH CRÍTICO ({sh}K). Risco de golpe de líquido.")
+    if diff_v > (v_rede * 0.05): diag_eletr.append(f"QUEDA TENSÃO ({diff_v}V) excedida.")
+    propostas_raw = "\n".join(diag_termo + diag_eletr) if (diag_termo + diag_eletr) else "Sem anomalias críticas detectadas."
+    st.markdown("**🤖 Medidas Técnicas Propostas pela IA**")
+    col_ia_in, col_ia_out = st.columns(2)
+    with col_ia_in:
+        ia_raw = st.text_area("Sugestões Geradas (Edição Opcional)", value=propostas_raw, height=150)
+    if ia_raw:
+        linhas_ia = ia_raw.split('\n')
+        medidas_ia_final = "\n".join([f"• {l.strip()}" if l.strip() and not l.startswith('•') else l for l in linhas_ia])
+    else: medidas_ia_final = ""
+    with col_ia_out:
+        st.warning(medidas_ia_final if medidas_ia_final else "IA sem sugestões adicionais.")
+    st.markdown("---")
 
-    with col_ia_1:
-        st.info("**🌡️ Ciclo Frigorífico**")
-        txt_termo = "\n".join(diag_termo) if diag_termo else "✅ Sem anomalias térmicas."
-        st.write(txt_termo)
-
-    with col_ia_2:
-        st.info("**⚡ Parte Elétrica**")
-        txt_eletr = "\n".join(diag_eletr) if diag_eletr else "✅ Sem anomalias elétricas."
-        st.write(txt_eletr)
-
-    medidas_ia_pdf = f"TERMODINAMICA:\n{txt_termo}\n\nELETRICA:\n{txt_eletr}"
-    
-    # --- GERAÇÃO DE PDF PROFISSIONAL COMPLETO ---
-    if st.button("Gerar Relatório PDF Profissional"):
-        pdf = FPDF()
-        pdf.set_auto_page_break(auto=True, margin=20)
+    # --- FINALIZAÇÃO E DOWNLOAD DO PDF ---
+    if st.button("🚀 PROCESSAR RELATÓRIO PDF"):
+        temp_logo = None
+        if logo_file:
+            temp_logo = "temp_logo.png"
+            with open(temp_logo, "wb") as f:
+                f.write(logo_file.getvalue())
+        
+        pdf = PDF(logo_path=temp_logo)
         pdf.add_page()
-        pdf.set_line_width(0.5)
+        pdf.set_font('Arial', 'B', 11)
+        pdf.cell(0, 8, f"CLIENTE: {cliente if cliente else 'Não informado'}", 0, 1)
+        pdf.cell(0, 8, f"EQUIPAMENTO: {fabricante} {cap_digitada} BTU ({fluido})", 0, 1)
+        pdf.cell(0, 8, f"DATA: {data_visita}", 0, 1)
+        pdf.ln(5)
+        pdf.set_fill_color(240, 240, 240)
+        pdf.cell(0, 8, 'PARÂMETROS TÉCNICOS', 1, 1, 'C', 1)
+        pdf.set_font('Arial', '', 10)
+        pdf.cell(95, 8, f"Pressão Sucção: {p_suc} PSIG", 1)
+        pdf.cell(95, 8, f"Pressão Descarga: {p_liq} PSIG", 1, 1)
+        pdf.cell(95, 8, f"Superaquecimento: {sh} K", 1)
+        pdf.cell(95, 8, f"Sub-resfriamento: {sc} K", 1, 1)
+        pdf.cell(95, 8, f"Corrente Medida: {a_med} A", 1)
+        pdf.cell(95, 8, f"Tensão Medida: {v_med} V", 1, 1)
+        pdf.ln(5)
+        pdf.set_font('Arial', 'B', 11)
+        pdf.cell(0, 8, 'DIAGNÓSTICO E OBSERVAÇÕES', 1, 1, 'C', 1)
+        pdf.set_font('Arial', '', 10)
+        pdf.multi_cell(0, 8, f"Observações:\n{obs}\n\nMedidas Tomadas:\n{medidas_tomadas}\n\nPropostas Técnicas:\n{medidas_ia_final}", 1)
         
-        def fix_text(t):
-            if t is None: return ""
-            subst = {"🚨": "!!", "⚠️": "!", "⚙️": "*", "⚡": ">>", "🔥": "!!", "❌": "X", "✅": "OK", "❄️": "*", "🌡️": "T", "📋": "-", "🤖": "IA", "🔧": "CORRECAO:"}
-            t = str(t)
-            for k, v in subst.items(): t = t.replace(k, v)
-            return t.encode('latin-1', 'ignore').decode('latin-1')
-
-        if os.path.exists("logo.png"):
-            pdf.image("logo.png", 10, 8, 33)
-            pdf.ln(10)
+        pdf_bytes = pdf.output(dest='S').encode('latin-1')
+        st.download_button(label="📥 BAIXAR RELATÓRIO TÉCNICO", data=pdf_bytes, file_name=f"Relatorio_{cliente}_{data_visita}.pdf", mime="application/pdf")
         
-        pdf.set_font("Helvetica", "B", 16); pdf.set_text_color(40, 40, 40)
-        pdf.cell(190, 10, fix_text("LAUDO TÉCNICO DE ENGENHARIA"), ln=True, align="R")
-        pdf.set_draw_color(40, 40, 40); pdf.line(10, 32, 200, 32); pdf.ln(8)
-
-        # 1. IDENTIFICAÇÃO COMPLETA
-        pdf.set_fill_color(240, 240, 240); pdf.set_font("Helvetica", "B", 10)
-        pdf.cell(190, 8, fix_text(" 1. DADOS DO CLIENTE E LOCALIDADE"), ln=True, fill=True, border=1)
-        pdf.set_font("Helvetica", "", 9)
-        pdf.cell(95, 7, fix_text(f"Cliente: {cliente}"), border=1); pdf.cell(95, 7, fix_text(f"CPF/CNPJ: {doc_cliente}"), border=1, ln=True)
-        pdf.cell(190, 7, fix_text(f"Endereço: {endereco}, {bairro} - CEP: {cep}"), border=1, ln=True)
-        pdf.cell(95, 7, fix_text(f"WhatsApp: {whatsapp}"), border=1); pdf.cell(95, 7, fix_text(f"E-mail: {email_cli}"), border=1, ln=True)
-        pdf.cell(190, 7, fix_text(f"Data: {data_visita}"), border=1, ln=True); pdf.ln(3)
-
-        # 2. ESPECIFICAÇÕES DO EQUIPAMENTO
-        pdf.set_fill_color(240, 240, 240); pdf.set_font("Helvetica", "B", 10)
-        pdf.cell(190, 8, fix_text(" 2. ESPECIFICAÇÕES DO EQUIPAMENTO"), ln=True, fill=True, border=1)
-        pdf.set_font("Helvetica", "", 9)
-        pdf.cell(63.3, 7, fix_text(f"Fab: {fabricante}"), border=1); pdf.cell(63.3, 7, fix_text(f"Lin: {linha}"), border=1); pdf.cell(63.4, 7, fix_text(f"Tec: {tecnologia}"), border=1, ln=True)
-        pdf.cell(63.3, 7, fix_text(f"Tipo: {tipo_eq}"), border=1); pdf.cell(63.3, 7, fix_text(f"Flu: {fluido}"), border=1); pdf.cell(63.4, 7, fix_text(f"Cap: {cap_digitada}"), border=1, ln=True)
-        pdf.cell(95, 7, fix_text(f"Mod. Evap: {mod_evap}"), border=1); pdf.cell(95, 7, fix_text(f"Série Evap: {serie_evap}"), border=1, ln=True)
-        pdf.cell(95, 7, fix_text(f"Mod. Cond: {mod_cond}"), border=1); pdf.cell(95, 7, fix_text(f"Série Cond: {serie_cond}"), border=1, ln=True); pdf.ln(3)
-
-        # 3. PARÂMETROS ELÉTRICOS
-        pdf.set_fill_color(240, 240, 240); pdf.set_font("Helvetica", "B", 10)
-        pdf.cell(190, 8, fix_text(" 3. GRANDEZAS ELÉTRICAS"), ln=True, fill=True, border=1)
-        pdf.set_font("Helvetica", "", 9)
-        pdf.cell(47.5, 7, fix_text(f"V.Rede: {v_rede}V"), 1); pdf.cell(47.5, 7, fix_text(f"V.Med: {v_med}V"), 1); pdf.cell(47.5, 7, fix_text(f"LRA: {lra_comp}A"), 1); pdf.cell(47.5, 7, fix_text(f"RLA: {rla_comp}A"), 1, ln=True)
-        pdf.cell(95, 7, fix_text(f"Corrente Med: {a_med}A"), 1); pdf.cell(95, 7, fix_text(f"Queda: {diff_v}V"), 1, ln=True); pdf.ln(3)
-
-        # 4. TERMODINÂMICA (PRECISÃO PERICIAL)
-        pdf.set_fill_color(240, 240, 240); pdf.set_font("Helvetica", "B", 10)
-        pdf.cell(190, 8, fix_text(" 4. CICLO FRIGORÍFICO (TERMOMETRIA)"), ln=True, fill=True, border=1)
-        pdf.set_font("Helvetica", "B", 8)
-        pdf.cell(31.6, 7, "P.SUC", 1, 0, 'C'); pdf.cell(31.6, 7, "P.LIQ", 1, 0, 'C'); pdf.cell(31.6, 7, "T.SUC", 1, 0, 'C'); pdf.cell(31.6, 7, "T.LIQ", 1, 0, 'C'); pdf.cell(31.6, 7, "SH(K)", 1, 0, 'C'); pdf.cell(32, 7, "SC(K)", 1, 1, 'C')
-        pdf.set_font("Helvetica", "", 9)
-        pdf.cell(31.6, 7, f"{p_suc}", 1, 0, 'C'); pdf.cell(31.6, 7, f"{p_liq}", 1, 0, 'C'); pdf.cell(31.6, 7, f"{t_suc_tubo}", 1, 0, 'C'); pdf.cell(31.6, 7, f"{t_liq_tubo}", 1, 0, 'C'); pdf.cell(31.6, 7, f"{sh}", 1, 0, 'C'); pdf.cell(32, 7, f"{sc}", 1, 1, 'C')
-        pdf.cell(63.3, 7, fix_text(f"Ar Retorno: {t_ret}C"), 1); pdf.cell(63.3, 7, fix_text(f"Ar Insufl: {t_ins}C"), 1); pdf.cell(63.4, 7, fix_text(f"Delta T: {dt}K"), 1, ln=True); pdf.ln(3)
-
-        # 5. DIAGNÓSTICO E OBSERVAÇÕES
-        pdf.set_fill_color(240, 240, 240); pdf.set_font("Helvetica", "B", 10)
-        pdf.cell(190, 8, fix_text(" 5. PARECER TÉCNICO E PROVIDÊNCIAS"), ln=True, fill=True, border=1)
-        pdf.set_font("Helvetica", "B", 9); pdf.cell(190, 6, fix_text("> Medidas Propostas (IA):"), ln=True)
-        pdf.set_font("Helvetica", "", 9); pdf.multi_cell(190, 5, fix_text(medidas_ia_pdf), border='LRB'); pdf.ln(2)
-        pdf.set_font("Helvetica", "B", 9); pdf.cell(190, 6, fix_text("> Obs Detalhadas Campo:"), ln=True)
-        pdf.set_font("Helvetica", "", 9); pdf.multi_cell(190, 5, fix_text(obs), border='LRB'); pdf.ln(2)
-        pdf.set_font("Helvetica", "B", 9); pdf.cell(190, 6, fix_text("> Medidas Tomadas Local:"), ln=True)
-        pdf.set_font("Helvetica", "", 9); pdf.multi_cell(190, 5, fix_text(medidas_tomadas), border='LRB')
-
-        pdf.ln(15); pdf.line(60, pdf.get_y(), 130, pdf.get_y())
-        pdf.set_font("Helvetica", "I", 8); pdf.cell(190, 5, fix_text("Assinatura do Responsável Técnico"), ln=True, align="C")
-
-        pdf_output = io.BytesIO()
-        pdf_content = pdf.output(dest='S')
-        if isinstance(pdf_content, str): pdf_content = pdf_content.encode('latin-1', 'replace')
-        pdf_output.write(pdf_content)
-        st.download_button(label="📥 Baixar Laudo Profissional", data=pdf_output.getvalue(), file_name=f"Laudo_{cliente}.pdf", mime="application/pdf")
+        if temp_logo and os.path.exists(temp_logo):
+            os.remove(temp_logo)
