@@ -40,23 +40,25 @@ with tab_cad:
     d1, d2, d3 = st.columns(3)
     fabricante = d1.text_input("Fabricante (Marca)")
     linha = d1.text_input("Linha")
-    tecnologia = d2.selectbox("Tecnologia", ["Inverter", "On-Off"])
-    tipo_eq = d2.selectbox("Tipo de Sistema", ["Split Hi-Wall", "Cassete", "Piso-Teto"])
+    tecnologia = d2.selectbox("Tecnologia", ["Inverter", "WindFree", "Scroll", "On-Off"])
+    tipo_eq = d2.selectbox("Tipo de Sistema", ["Split Hi-Wall", "Cassete", "Piso-Teto", "VRF", "Chiller"])
     fluido = d3.selectbox("Gás Refrigerante", ["R-410A", "R-32", "R-22", "R-134a", "R-404A"])
     cap_digitada = d3.text_input("Capacidade (BTU´s)")
-    mod_cond = st.text_input("Modelo Unidade (Cond)")
+    mod_cond = st.text_input("Modelo Unidade Condensadora")
+    serie_cond = st.text_input("Nº de Série Condensadora")
 
 with tab_ele:
     v_med = st.number_input("Tensão Medida (V)", value=0.0)
     a_med = st.number_input("Corrente Medida (A)", value=0.0)
 
 with tab_termo:
-    p_suc = st.number_input("Pressão Sucção (PSIG)", value=118.0)
-    t_suc_tubo = st.number_input("Temp. Tubo Sucção (°C)", value=12.0)
-    p_liq = st.number_input("Pressão Descarga (PSIG)", value=345.0)
-    t_liq_tubo = st.number_input("Temp. Tubo Líquido (°C)", value=30.0)
-    t_ret = st.number_input("Temp. Ar Retorno (°C)", value=24.0)
-    t_ins = st.number_input("Temp. Ar Insuflamento (°C)", value=12.0)
+    col1, col2 = st.columns(2)
+    p_suc = col1.number_input("Pressão Sucção (PSIG)", value=118.0)
+    t_suc_tubo = col1.number_input("Temp. Tubo Sucção (°C)", value=12.0)
+    p_liq = col2.number_input("Pressão Descarga (PSIG)", value=345.0)
+    t_liq_tubo = col2.number_input("Temp. Tubo Líquido (°C)", value=30.0)
+    t_ret = col1.number_input("Temp. Ar Retorno (°C)", value=24.0)
+    t_ins = col2.number_input("Temp. Ar Insuflamento (°C)", value=12.0)
     
     tsat_suc = get_tsat_global(p_suc, fluido)
     tsat_liq = get_tsat_global(p_liq, fluido)
@@ -65,73 +67,95 @@ with tab_termo:
     dt = round(t_ret - t_ins, 1)
 
 with tab_diag:
-    obs = st.text_area("Observações Técnicas", height=150)
+    obs = st.text_area("Observações Técnicas Detalhadas", height=150)
     
     if st.button("Gerar Relatório PDF"):
         pdf = FPDF()
         pdf.add_page()
         
-        # CABEÇALHO COM LOGOMARCA
-        if os.path.exists("logo.png"):
-            pdf.image("logo.png", 10, 8, 25)
-            pdf.set_x(40)
+        # TIPOGRAFIA PROFISSIONAL
+        pdf.set_font("Helvetica", "B", 14)
         
-        pdf.set_font("Arial", "B", 12)
+        if os.path.exists("logo.png"):
+            pdf.image("logo.png", 10, 8, 22)
+            pdf.set_x(35)
+        
         pdf.set_text_color(0, 74, 153)
-        pdf.cell(150, 8, "RELATÓRIO TÉCNICO DE ENGENHARIA", ln=True, align="R")
+        pdf.cell(155, 10, "RELATÓRIO TÉCNICO", ln=True, align="R")
         pdf.ln(5)
         
-        # --- 1. IDENTIFICAÇÃO DO CLIENTE (LAYOUT CONGELADO) ---
-        pdf.set_fill_color(240, 240, 240)
-        pdf.set_font("Arial", "B", 9)
-        pdf.set_text_color(0)
-        pdf.cell(190, 6, " 1. IDENTIFICAÇÃO DO CLIENTE", ln=True, fill=True)
+        # --- 1. IDENTIFICAÇÃO DO CLIENTE ---
+        pdf.set_fill_color(245, 245, 245)
+        pdf.set_font("Helvetica", "B", 10)
+        pdf.set_text_color(60)
+        pdf.cell(190, 7, " 1. IDENTIFICAÇÃO DO CLIENTE", ln=True, fill=True)
         
-        # CPF/CNPJ DO CLIENTE NO TOPO DA SEÇÃO
-        pdf.set_font("Arial", "", 8)
+        pdf.set_font("Helvetica", "B", 8)
         pdf.cell(190, 6, f"CPF/CNPJ DO CLIENTE: {doc_cliente}", border="B", ln=True)
+        pdf.line(10, pdf.get_y(), 200, pdf.get_y()) # LINHA ACIMA DO NOME
         
-        # LINHA ACIMA DO NOME (ORDEM PRIORITÁRIA)
-        pdf.line(10, pdf.get_y(), 200, pdf.get_y())
-        pdf.cell(100, 6, f"Cliente: {cliente}", border="B")
+        pdf.set_font("Helvetica", "", 8)
+        pdf.cell(105, 7, f"Cliente: {cliente}", border="B")
         
         # DATA DA VISITA EM DESTAQUE
-        pdf.set_font("Arial", "B", 8); pdf.set_fill_color(225, 225, 225)
-        pdf.cell(90, 6, f" DATA DA VISITA: {data_visita.strftime('%d/%m/%Y')} ", border=1, fill=True, align="C", ln=True)
+        pdf.set_font("Helvetica", "B", 8); pdf.set_fill_color(235, 235, 235)
+        pdf.cell(85, 7, f" DATA DA VISITA: {data_visita.strftime('%d/%m/%Y')} ", border=1, fill=True, align="C", ln=True)
         
-        pdf.set_font("Arial", "", 8)
+        pdf.set_font("Helvetica", "", 8)
         pdf.cell(190, 6, f"Endereço: {endereco}", border="B", ln=True)
         pdf.cell(95, 6, f"WhatsApp: {whatsapp}", border="B")
         pdf.cell(95, 6, f"E-mail: {email_cli}", border="B", ln=True)
 
-        # --- 2. DADOS DO EQUIPAMENTO E MEDIÇÕES ---
-        pdf.ln(3)
-        pdf.set_font("Arial", "B", 9)
-        pdf.cell(190, 6, " 2. DADOS DO EQUIPAMENTO E MEDIÇÕES", ln=True, fill=True)
-        pdf.set_font("Arial", "", 8)
-        pdf.cell(95, 6, f"Fabricante: {fabricante} | Linha: {linha}", border="B")
-        pdf.cell(95, 6, f"Modelo Cond: {mod_cond}", border="B", ln=True)
-        pdf.cell(47, 6, f"Tensão: {v_med} V", border="B")
-        pdf.cell(47, 6, f"Corrente: {a_med} A", border="B")
-        pdf.cell(48, 6, f"Fluido: {fluido}", border="B")
-        pdf.cell(48, 6, f"Superheat: {sh} K", border="B", ln=True)
+        # --- 2. DADOS DO EQUIPAMENTO ---
+        pdf.ln(4)
+        pdf.set_font("Helvetica", "B", 10)
+        pdf.cell(190, 7, " 2. DADOS DO EQUIPAMENTO", ln=True, fill=True)
+        pdf.set_font("Helvetica", "", 8)
+        pdf.cell(63, 6, f"Fabricante: {fabricante}", border="B")
+        pdf.cell(63, 6, f"Linha: {linha}", border="B")
+        pdf.cell(64, 6, f"Capacidade: {cap_digitada} BTU", border="B", ln=True)
+        pdf.cell(95, 6, f"Mod. Cond: {mod_cond}", border="B")
+        pdf.cell(95, 6, f"Série Cond: {serie_cond}", border="B", ln=True)
+        pdf.cell(63, 6, f"Tecnologia: {tecnologia}", border="B")
+        pdf.cell(63, 6, f"Tipo: {tipo_eq}", border="B")
+        pdf.cell(64, 6, f"Gás: {fluido}", border="B", ln=True)
 
-        # --- 3. DIAGNÓSTICO ---
-        pdf.ln(3)
-        pdf.set_font("Arial", "B", 9)
-        pdf.cell(190, 6, " 3. DIAGNÓSTICO E OBSERVAÇÕES", ln=True, fill=True)
-        pdf.set_font("Arial", "", 8)
-        pdf.multi_cell(190, 5, obs if obs else "Sem observações.", border=1)
+        # --- 3. ANÁLISE TÉCNICA E MEDIÇÕES ---
+        pdf.ln(4)
+        pdf.set_font("Helvetica", "B", 10)
+        pdf.cell(190, 7, " 3. ANÁLISE TÉCNICA E MEDIÇÕES", ln=True, fill=True)
+        pdf.set_font("Helvetica", "", 8)
+        pdf.cell(47, 6, f"Pressão Sucção: {p_suc} PSI", border="B")
+        pdf.cell(47, 6, f"Pressão Líquido: {p_liq} PSI", border="B")
+        pdf.cell(48, 6, f"Tensão: {v_med} V", border="B")
+        pdf.cell(48, 6, f"Corrente: {a_med} A", border="B", ln=True)
+        
+        pdf.cell(47, 6, f"T. Tubo Suc: {t_suc_tubo} C", border="B")
+        pdf.cell(47, 6, f"T. Tubo Liq: {t_liq_tubo} C", border="B")
+        pdf.cell(48, 6, f"T. Retorno: {t_ret} C", border="B")
+        pdf.cell(48, 6, f"T. Insufl.: {t_ins} C", border="B", ln=True)
+        
+        # RESULTADOS EM DESTAQUE SÓBRIO
+        pdf.set_font("Helvetica", "B", 8); pdf.set_fill_color(248, 248, 248)
+        pdf.cell(63, 7, f"SUPERHEAT (SH): {sh} K", border="B", fill=True)
+        pdf.cell(63, 7, f"SUBCOOLING (SC): {sc} K", border="B", fill=True)
+        pdf.cell(64, 7, f"DELTA T: {dt} K", border="B", fill=True, ln=True)
 
-        # --- RODAPÉ PERMANENTE (ASSINATURA TRAVADA) ---
-        pdf.ln(10)
+        # --- 4. DIAGNÓSTICO ---
+        pdf.ln(4)
+        pdf.set_font("Helvetica", "B", 10)
+        pdf.cell(190, 7, " 4. DIAGNÓSTICO E OBSERVAÇÕES", ln=True, fill=True)
+        pdf.set_font("Helvetica", "", 8)
+        pdf.multi_cell(190, 5, obs if obs else "Equipamento operando conforme especificações.", border=1)
+
+        # --- RODAPÉ PERMANENTE ---
+        pdf.ln(12)
         pdf.line(60, pdf.get_y(), 150, pdf.get_y())
-        pdf.set_font("Arial", "B", 8)
+        pdf.set_font("Helvetica", "B", 8)
         pdf.cell(190, 4, "MARCOS ALEXANDRE ALMEIDA DO NASCIMENTO", ln=True, align="C")
-        pdf.set_font("Arial", "", 7)
+        pdf.set_font("Helvetica", "", 7)
         pdf.cell(190, 4, "CNPJ: 51.274.762/0001-17", ln=True, align="C")
 
-        # SAÍDA DE BYTES SEGURA PARA DOWNLOAD
         pdf_bytes = pdf.output(dest='S')
         if isinstance(pdf_bytes, str): pdf_bytes = pdf_bytes.encode('latin-1')
         st.download_button(label="📥 Baixar Relatório", data=io.BytesIO(pdf_bytes), file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
