@@ -145,15 +145,17 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(40, 6, "Equipamento:", 0); pdf.set_font("Arial", '', 9); pdf.cell(0, 6, f"{fabricante} {tipo_eq} {cap_digitada} BTUs", 1, 1)
         pdf.set_font("Arial", 'B', 9); pdf.cell(40, 6, "Procedimento:", 0); pdf.set_font("Arial", '', 9); pdf.cell(0, 6, f"{tipo_procedimento}", 1, 1)
         
-        # --- ATUALIZAÇÃO RIGOROSA DA GERAÇÃO DO PDF PARA CORREÇÃO DO ERRO ---
-        try:
-            pdf_bytes = pdf.output() # fpdf2 retorna bytes por padrão aqui
-            st.download_button("⬇️ Baixar Relatório PDF", data=pdf_bytes, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
-        except:
-            # Caso a versão instalada exija dest='S'
-            pdf_str = pdf.output(dest='S')
-            if isinstance(pdf_str, str):
-                pdf_bytes = pdf_str.encode('latin-1')
-            else:
-                pdf_bytes = pdf_str
-            st.download_button("⬇️ Baixar Relatório PDF", data=pdf_bytes, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
+        # --- CORREÇÃO DO ERRO DE ID DUPLICADO ---
+        pdf_output = pdf.output()
+        if isinstance(pdf_output, str):
+            pdf_data = pdf_output.encode('latin-1')
+        else:
+            pdf_data = pdf_output
+            
+        st.download_button(
+            label="⬇️ Baixar Relatório PDF",
+            data=pdf_data,
+            file_name=f"Relatorio_{cliente}.pdf",
+            mime="application/pdf",
+            key="btn_download_pdf" # Chave única para evitar DuplicateElementId
+        )
