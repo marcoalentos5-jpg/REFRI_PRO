@@ -130,7 +130,6 @@ with tab_diag:
             pdf.set_text_color(0, 0, 0)
             pdf.ln(3)
 
-        # 1. IDENTIFICAÇÃO
         draw_header("1. Identificacao do Cliente")
         pdf.set_font("Arial", 'B', 9)
         pdf.cell(30, 6, "Cliente:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{cliente}", ln=0)
@@ -141,7 +140,6 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Data Visita:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{data_visita}", ln=1)
         pdf.ln(5)
 
-        # 2. DADOS EQUIPAMENTO
         draw_header("2. Dados Tecnicos do Equipamento")
         pdf.set_font("Arial", 'B', 9)
         pdf.cell(30, 6, "Marca/Linha:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{fabricante} / {linha}", ln=0)
@@ -149,7 +147,6 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Capacidade:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{cap_digitada} BTU's", ln=1)
         pdf.ln(2)
 
-        # 3. MEDIÇÕES (A TABELA PERFEITA)
         draw_header("3. Parametros Operacionais (Medicoes)")
         pdf.set_font("Arial", 'B', 8)
         pdf.set_fill_color(245, 245, 245)
@@ -175,7 +172,6 @@ with tab_diag:
         pdf.cell(47, 8, f"  {perc_carga} %", 1, 1, 'L')
         pdf.ln(5)
 
-        # 4. CONCLUSÕES
         draw_header("4. Diagnostico e Medidas Tecnicas")
         pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Observacoes Tecnicas:", ln=1)
         pdf.set_font("Arial", '', 9); pdf.multi_cell(0, 5, f"{obs_raw}"); pdf.ln(2)
@@ -184,6 +180,14 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Recomendacoes IA:", ln=1)
         pdf.set_font("Arial", '', 9); pdf.multi_cell(0, 5, f"{ia_raw}")
 
+        # --- GERAÇÃO SEGURA DO PDF USANDO BYTESIO ---
         pdf_bytes = pdf.output(dest='S')
-        if isinstance(pdf_bytes, str): pdf_bytes = pdf_bytes.encode('latin-1', 'ignore')
-        st.download_button(label="⬇️ Baixar Relatório PDF", data=pdf_bytes, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
+        if isinstance(pdf_bytes, str):
+            pdf_bytes = pdf_bytes.encode('latin-1', 'ignore')
+        
+        st.download_button(
+            label="⬇️ Baixar Relatório PDF", 
+            data=pdf_bytes, 
+            file_name=f"Relatorio_{cliente}.pdf", 
+            mime="application/pdf"
+        )
