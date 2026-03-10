@@ -32,14 +32,9 @@ tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ El
 
 with tab_cad:
     st.subheader("👤 Dados do Cliente & Contato")
-    
-    # AJUSTE SOLICITADO: Aumento do campo nome (ocupando largura total)
     cliente = st.text_input("Nome do Cliente / Empresa")
-    
-    # CPF/CNPJ movido para linha de baixo para manter organização rigorosa
-    c_doc, c_vazio = st.columns([1, 1])
+    c_doc, c_vazio = st.columns([1, 2])
     doc_cliente = c_doc.text_input("CPF / CNPJ", max_chars=12, placeholder="010497927-50")
-    
     l2_c1, l2_c2, l2_c3 = st.columns(3)
     endereco = l2_c1.text_input("Endereço (Rua e Número)")
     bairro = l2_c2.text_input("Bairro")
@@ -48,9 +43,7 @@ with tab_cad:
     whatsapp = l3_c1.text_input("🟢 WhatsApp", value="21980264217")
     email_cli = l3_c2.text_input("✉️ E-mail")
     data_visita = l3_c3.date_input("Data da Visita", value=date.today())
-    
     comodo_proc = st.text_input("🏠 Cômodo para Procedimento")
-    
     st.markdown("---")
     st.subheader("⚙️ Dados Técnicos")
     d1, d2, d3 = st.columns(3)
@@ -209,8 +202,11 @@ with tab_diag:
         pdf.set_font("Arial", 'I', 8)
         pdf.cell(0, 5, "Responsavel Tecnico - MPN Engenharia", ln=1, align='C')
 
-        # DOWNLOAD
-        pdf_output = pdf.output(dest='S').encode('latin-1')
+        # --- CORREÇÃO DO ERRO DE CODIFICAÇÃO ---
+        pdf_output = pdf.output(dest='S')
+        if isinstance(pdf_output, str):
+            pdf_output = pdf_output.encode('latin-1', errors='replace')
+        
         st.download_button(
             label="⬇️ Baixar Relatório em PDF",
             data=pdf_output,
