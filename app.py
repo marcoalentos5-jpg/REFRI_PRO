@@ -152,15 +152,16 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "E-mail:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{email_cli}", ln=1)
         pdf.ln(5)
 
-        # --- 2. DADOS TÉCNICOS ---
+        # --- 2. DADOS TÉCNICOS (ATUALIZADO) ---
         draw_header("2. Especificacoes do Equipamento")
         pdf.set_font("Arial", 'B', 9)
         pdf.cell(30, 6, "Equipamento:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{fabricante} - {tipo_eq}", ln=0)
-        pdf.set_x(110); pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Capacidade:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(60, 6, f"{cap_digitada} BTUs", ln=1)
+        # TEXTO ATUALIZADO ABAIXO
+        pdf.set_x(110); pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Capacidade (Mil BTU´s):", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(45, 6, f"{cap_digitada}", ln=1)
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Mod. Evap.:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{mod_evap}", ln=0)
-        pdf.set_x(110); pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Serie Evap.:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(60, 6, f"{serie_evap}", ln=1)
+        pdf.set_x(110); pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Serie Evap.:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(45, 6, f"{serie_evap}", ln=1)
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Mod. Cond.:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{mod_cond}", ln=0)
-        pdf.set_x(110); pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Serie Cond.:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(60, 6, f"{serie_cond}", ln=1)
+        pdf.set_x(110); pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Serie Cond.:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(45, 6, f"{serie_cond}", ln=1)
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Fluido:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{fluido}", ln=1)
         pdf.ln(5)
 
@@ -186,7 +187,6 @@ with tab_diag:
         # --- 4. CONCLUSÃO ---
         draw_header("4. Diagnostico Final")
         pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Observacoes Tecnicas:", ln=1)
-        # FONTE DIMINUÍDA PARA 8 CONFORME SOLICITADO
         pdf.set_font("Arial", '', 8)
         pdf.multi_cell(0, 4, f"{obs_raw if obs_raw else 'Nenhuma.'}", border=1)
         pdf.ln(4)
