@@ -26,7 +26,7 @@ def get_tsat_global(psig, gas):
     try: return round(float(np.interp(psig, ancoras[gas]["p"], ancoras[gas]["t"])), 2)
     except: return 0.0
 
-# --- 3. INTERFACE DO APP (PRESERVADA) ---
+# --- 3. INTERFACE DO APP ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
 tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico"])
 
@@ -48,6 +48,7 @@ with tab_cad:
     d1, d2, d3 = st.columns(3)
     fabricante = d1.text_input("Fabricante (Marca)")
     linha = d1.text_input("Linha")
+    local_eq = d1.text_input("Localização")
     tecnologia = d2.selectbox("Tecnologia", ["Inverter", "WindFree", "Scroll", "On-Off"])
     tipo_eq = d2.selectbox("Tipo de Sistema", ["Split Hi-Wall", "Cassete", "Piso-Teto", "VRF", "Chiller"])
     fluido = d3.selectbox("Gás Refrigerante", ["R-410A", "R-32", "R-22", "R-134a", "R-404A"])
@@ -99,16 +100,26 @@ with tab_termo:
 
 with tab_diag:
     st.subheader("🤖 Diagnóstico e Recomendações")
-    obs_raw = st.text_area("✍️ Observações Técnicas Detalhadas", height=150)
-    med_tomadas_raw = st.text_area("🔧 Medidas Técnicas Tomadas", height=150)
+    obs_raw = st.text_area("✍️ Observações Técnicas Detalhadas", height=100)
+    med_tomadas_raw = st.text_area("🔧 Medidas Técnicas Tomadas", height=100)
     
-    diag_termo = []
-    diag_eletr = []
-    if any(x in obs_raw.lower() for x in ["óleo", "vazamento"]): diag_termo.append("Vazamento detectado.")
-    if sh < 6: diag_termo.append(f"SH CRÍTICO ({sh}K).")
-    if diff_v > (v_rede * 0.05): diag_eletr.append(f"QUEDA TENSÃO ({diff_v}V).")
+    # --- NOVO MOTOR DE DIAGNÓSTICO ---
+    alertas = []
     
-    propostas_sugestao = "\n".join(diag_termo + diag_eletr) if (diag_termo + diag_eletr) else "Sem anomalias detectadas."
+    # 1. Cruzamento SH + SC
+    if sh > 12 and sc < 3: alertas.append("⚠️ DIAGNÓSTICO: Provável FALTA DE FLUIDO (SH Alto + SC Baixo).")
+    elif sh < 5 and sc > 12: alertas.append("⚠️ DIAGNÓSTICO: Provável EXCESSO DE FLUIDO (SH Baixo + SC Alto).")
+    elif sh > 12 and sc > 12: alertas.append("⚠️ DIAGNÓSTICO: Provável OBSTRUÇÃO no Dispositivo de Expansão/Linha de Líquido.")
+    elif sh < 5: alertas.append("🚨 ALERTA CRÍTICO: Risco de GOLPE DE LÍQUIDO no Compressor (SH muito baixo).")
+    
+    # 2. Performance Térmica
+    if dt < 8: alertas.append("📉 PERFORMANCE: Diferencial de Temperatura (ΔT) insuficiente. Verificar troca térmica ou carga.")
+    
+    # 3. Elétrica
+    if a_med > rla_comp and rla_comp > 0: alertas.append(f"⚡ ELÉTRICA: Sobrecarga detectada! Corrente ({a_med}A) acima do RLA ({rla_comp}A).")
+    if diff_v > (v_rede * 0.05): alertas.append(f"⚡ ELÉTRICA: Queda de tensão elevada ({diff_v}V). Risco para componentes eletrônicos.")
+
+    propostas_sugestao = "\n".join(alertas) if alertas else "✅ Ciclo frigorífico e parâmetros elétricos operando dentro da normalidade."
     ia_raw = st.text_area("🤖 Medidas Técnicas Propostas pela IA", value=propostas_sugestao, height=150)
 
     st.markdown("---")
@@ -119,14 +130,12 @@ with tab_diag:
         # --- CABEÇALHO ---
         pdf.set_fill_color(0, 74, 153)
         pdf.rect(0, 0, 210, 42, 'F')
-        if os.path.exists("logo.png"):
-            pdf.image("logo.png", x=10, y=8, h=25)
         
         pdf.set_text_color(255, 255, 255)
         pdf.set_font("Arial", 'B', 18)
-        pdf.cell(0, 15, "RELATORIO TECNICO", ln=True, align='C')
+        pdf.cell(0, 15, "RELATORIO TECNICO PERICIAL", ln=True, align='C')
         pdf.set_font("Arial", '', 10)
-        pdf.cell(0, 5, "CNPJ: 45.451.272/0001-00 | Tel: 21-98545-3763", ln=True, align='C')
+        pdf.cell(0, 5, "CNPJ: 45.451.272/0001-00 | MPN Engenharia", ln=True, align='C')
         pdf.ln(12)
 
         def draw_header(title):
@@ -139,68 +148,39 @@ with tab_diag:
             pdf.ln(3)
 
         # --- 1. IDENTIFICAÇÃO ---
-        draw_header("1. Identificacao do Cliente")
+        draw_header("1. Identificacao e Localizacao")
         pdf.set_font("Arial", 'B', 9)
         pdf.cell(30, 6, "Cliente:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{cliente}", ln=0)
         pdf.set_x(120) 
-        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "CPF/CNPJ:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{doc_cliente}", ln=1)
-        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Endereco:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{endereco}", ln=0)
-        pdf.set_x(120) 
-        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Bairro/CEP:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{bairro} / {cep}", ln=1)
-        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "WhatsApp:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{whatsapp}", ln=0)
-        pdf.set_x(120) 
-        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "E-mail:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{email_cli}", ln=1)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Local:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{local_eq}", ln=1)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Equipamento:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{fabricante} / {cap_digitada} BTU", ln=0)
+        pdf.set_x(120)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Data:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{data_visita}", ln=1)
         pdf.ln(5)
 
-        # --- 2. DADOS TÉCNICOS ---
-        draw_header("2. Especificacoes do Equipamento")
+        # --- 2. PARECER TÉCNICO ---
+        draw_header("2. Analise de Performance e Eletrica")
         pdf.set_font("Arial", 'B', 9)
-        pdf.cell(30, 6, "Equipamento:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{fabricante} - {tipo_eq}", ln=0)
-        pdf.set_x(110); pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Capacidade (Mil BTU´s):", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(45, 6, f"{cap_digitada}", ln=1)
-        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Mod. Evap.:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{mod_evap}", ln=0)
-        pdf.set_x(110); pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Serie Evap.:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(45, 6, f"{serie_evap}", ln=1)
-        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Mod. Cond.:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{mod_cond}", ln=0)
-        pdf.set_x(110); pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Serie Cond.:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(45, 6, f"{serie_cond}", ln=1)
-        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Fluido:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{fluido}", ln=1)
+        pdf.cell(50, 6, f"SH: {sh} K", ln=0); pdf.cell(50, 6, f"SC: {sc} K", ln=0); pdf.cell(50, 6, f"Delta T: {dt} K", ln=1)
+        pdf.cell(50, 6, f"Corrente: {a_med} A", ln=0); pdf.cell(50, 6, f"Tensao: {v_med} V", ln=1)
         pdf.ln(5)
-
-        # --- 3. PERFORMANCE (CORREÇÃO DE LOOP TÉCNICO) ---
-        draw_header("3. Parametros de Performance")
-        data_table = [
-            ["PARAMETRO", "MEDIDO", "REFERENCIA", "STATUS"],
-            ["Tensao Rede", f"{v_med}V", f"{v_rede}V", "OK" if abs(v_med-v_rede)<(v_rede*0.1) else "ALERTA"],
-            ["Corrente (A)", f"{a_med}A", f"{rla_comp}A", "NOMINAL" if a_med <= rla_comp else "SOBRECARGA"],
-            ["Superaq. (SH)", f"{sh} K", "5 a 8 K", "OK" if 5<=sh<=12 else "CRITICO"],
-            ["Sub-resf. (SC)", f"{sc} K", "5 a 8 K", "OK" if 5<=sc<=12 else "FORA"],
-            ["Delta T (DT)", f"{dt} K", "> 10 K", "EFICIENTE" if dt>=10 else "BAIXA EFIC."]
-        ]
-        pdf.set_fill_color(245, 245, 245)
-        pdf.set_font("Arial", 'B', 8)
-        for row in data_table:
-            pdf.cell(40, 7, row[0], 1, 0, 'C', fill=True)
-            pdf.cell(50, 7, row[1], 1, 0, 'C')
-            pdf.cell(50, 7, row[2], 1, 0, 'C')
-            pdf.cell(50, 7, row[3], 1, 1, 'C')
-        pdf.ln(5)
-
-        # --- 4. CONCLUSÃO (MOLDURA E FONTE 8) ---
-        draw_header("4. Diagnostico Final")
-        pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Observacoes Tecnicas:", ln=1)
-        pdf.set_font("Arial", '', 8)
-        pdf.multi_cell(0, 4, f"{obs_raw if obs_raw else 'Nenhuma.'}", border=1)
-        pdf.ln(4)
         
-        # Campo Medidas Tecnicas Tomadas com moldura
-        pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Medidas Tecnicas Tomadas:", ln=1)
-        pdf.set_font("Arial", '', 9)
-        pdf.multi_cell(0, 8, f"{med_tomadas_raw if med_tomadas_raw else 'Nenhuma.'}", border=1)
-
-        # --- RODAPÉ ---
-        pdf.set_y(-30)
-        pdf.line(10, 275, 90, 275); pdf.line(110, 275, 190, 275)
-        pdf.set_font("Arial", 'I', 7)
-        pdf.cell(90, 10, "Assinatura do Tecnico", 0, 0, 'C')
-        pdf.cell(100, 10, "Assinatura do Cliente", 0, 1, 'C')
+        draw_header("3. Diagnostico Final")
+        pdf.set_font("Arial", '', 10)
+        pdf.multi_cell(0, 6, ia_raw)
         
-        report_data = pdf.output()
-        st.download_button(label="⬇️ Baixar Relatório em PDF", data=bytes(report_data), file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
+        # --- EXPORTAR ---
+        try:
+            pdf_bytes = pdf.output(dest='S')
+            if isinstance(pdf_bytes, str):
+                pdf_bytes = pdf_bytes.encode('latin-1', 'replace')
+            
+            st.download_button(
+                label="⬇️ Baixar Relatório Técnico Atualizado",
+                data=pdf_bytes,
+                file_name=f"Relatorio_{cliente}.pdf",
+                mime="application/pdf"
+            )
+        except Exception as e:
+            st.error(f"Erro ao gerar PDF: {e}")
+
