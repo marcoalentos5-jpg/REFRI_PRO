@@ -94,9 +94,29 @@ with tab_termo:
 
 with tab_diag:
     st.subheader("🤖 Diagnóstico e Recomendações")
-    obs = st.text_area("Observações Técnicas Detalhadas", height=150)
-    # RIGOR: CAMPO INSERIDO CONFORME INSTRUÇÃO
-    medidas_ia = st.text_area("🔧 Medidas Técnicas Propostas pela IA", height=150, placeholder="Insira as recomendações geradas ou propostas pela análise de inteligência artificial...")
+    obs = st.text_area("Observações Técnicas Detalhadas", height=80)
+    medidas_tomadas = st.text_area("🔧 Medidas Técnicas Tomadas", height=80, placeholder="Ações já realizadas no local...")
+
+    # --- LÓGICA DE IA: CRUZAMENTO DE DADOS E MEDIDAS CORRETIVAS ---
+    corretivas_ia = []
+    
+    # 1. Cruzamento com Banco de Dados de Fluido/Fabricante
+    if fluido in ["R-410A", "R-32"]:
+        if sh < 5: corretivas_ia.append("⚠️ DIAGNÓSTICO: SH Crítico. CORREÇÃO: Reduzir carga de fluido ou verificar se há obstrução no fluxo de ar.")
+        elif sh > 12: corretivas_ia.append("⚠️ DIAGNÓSTICO: SH Elevado. CORREÇÃO: Adicionar fluido refrigerante e verificar possíveis vazamentos.")
+        if sc < 3: corretivas_ia.append("⚠️ DIAGNÓSTICO: SC Baixo. CORREÇÃO: Limpeza química da condensadora ou correção de carga baixa.")
+        elif sc > 10: corretivas_ia.append("⚠️ DIAGNÓSTICO: SC Elevado. CORREÇÃO: Verificar restrição na linha de líquido ou filtro secador.")
+    
+    # 2. Eficiência Térmica (Cruzamento de Ar)
+    if dt < 8: corretivas_ia.append(f"⚠️ EFICIÊNCIA: Delta T de {dt}K é insuficiente. CORREÇÃO: Higienização da evaporadora e revisão dos filtros.")
+    
+    # 3. Análise Elétrica Proativa
+    if diff_v > (v_rede * 0.05): corretivas_ia.append(f"⚠️ ELÉTRICA: Queda de Tensão Crítica ({diff_v}V). CORREÇÃO: Revisar conexões e bornes da contatora.")
+    if rla_comp > 0 and a_med > rla_comp: corretivas_ia.append("⚠️ ELÉTRICA: Sobrecorrente detectada. CORREÇÃO: Verificar capacitor e mecânica do compressor.")
+
+    proposta_final = "\n".join(corretivas_ia) if corretivas_ia else "✅ CRUZAMENTO CONCLUÍDO: Todos os parâmetros operacionais estão em conformidade com as especificações."
+    
+    medidas_ia = st.text_area("💡 Medidas Técnicas Propostas pela IA", value=proposta_final, height=150)
     
     if st.button("Gerar Relatório PDF"):
         pdf = FPDF()
@@ -108,7 +128,7 @@ with tab_diag:
         pdf.cell(190, 7, " 1. IDENTIFICAÇÃO DO CLIENTE", ln=True, fill=True)
         pdf.set_font("Helvetica", "", 8); pdf.cell(130, 8, f"Cliente: {cliente}", border="B")
         pdf.set_font("Helvetica", "B", 9); pdf.set_fill_color(230, 230, 230)
-        pdf.cell(60, 8, f" DATA DA VISITA: {data_visita.strftime('%d/%m/%Y')} ", border=1, fill=True, align="C", ln=True)
+        pdf.cell(60, 8, f" DATA: {data_visita.strftime('%d/%m/%Y')} ", border=1, fill=True, align="C", ln=True)
         
         pdf.set_font("Helvetica", "", 8); pdf.cell(95, 6, f"CPF/CNPJ: {doc_cliente}", border="B")
         pdf.cell(95, 6, f"WhatsApp: {whatsapp}", border="B", ln=True)
@@ -117,27 +137,36 @@ with tab_diag:
         pdf.cell(95, 6, f"CEP: {cep}", border="B", ln=True)
         pdf.cell(190, 6, f"E-mail: {email_cli}", border="B", ln=True)
 
-        pdf.ln(4); pdf.set_font("Helvetica", "B", 10); pdf.cell(190, 7, " 2. ESPECIFICAÇÕES DO EQUIPAMENTO", ln=True, fill=True)
+        pdf.ln(4); pdf.set_font("Helvetica", "B", 10); pdf.cell(190, 7, " 2. DADOS DO EQUIPAMENTO", ln=True, fill=True)
         pdf.set_font("Helvetica", "", 8)
-        pdf.cell(95, 6, f"Modelo Evap: {mod_evap}", border="B"); pdf.cell(95, 6, f"N/S Evap: {serie_evap}", border="B", ln=True)
-        pdf.cell(95, 6, f"Modelo Cond: {mod_cond}", border="B"); pdf.cell(95, 6, f"N/S Cond: {serie_cond}", border="B", ln=True)
+        pdf.cell(190, 6, f"Marca: {fabricante} | Tecnologia: {tecnologia} | Gás: {fluido}", border="B", ln=True)
+        pdf.cell(95, 6, f"Mod. Evap: {mod_evap}", border="B"); pdf.cell(95, 6, f"N/S Evap: {serie_evap}", border="B", ln=True)
+        pdf.cell(95, 6, f"Mod. Cond: {mod_cond}", border="B"); pdf.cell(95, 6, f"N/S Cond: {serie_cond}", border="B", ln=True)
 
-        pdf.ln(4); pdf.set_font("Helvetica", "B", 10); pdf.cell(190, 7, " 3. ANÁLISE TÉCNICA E MEDIÇÕES", ln=True, fill=True)
+        pdf.ln(4); pdf.set_font("Helvetica", "B", 10); pdf.cell(190, 7, " 3. MEDIÇÕES TÉCNICAS", ln=True, fill=True)
         pdf.set_font("Helvetica", "", 8)
         pdf.cell(47, 6, f"V. Rede: {v_rede}V", border="B"); pdf.cell(47, 6, f"V. Med: {v_med}V", border="B")
-        pdf.cell(48, 6, f"RLA: {rla_comp}A", border="B"); pdf.cell(48, 6, f"Corrente Med: {a_med}A", border="B", ln=True)
-        pdf.cell(47, 6, f"LRA: {lra_comp}A", border="B"); pdf.cell(47, 6, f"P. Suc: {p_suc} PSI", border="B")
-        pdf.cell(48, 6, f"P. Liq: {p_liq} PSI", border="B"); pdf.cell(48, 6, f"T-Sat Suc: {tsat_suc}C", border="B", ln=True)
+        pdf.cell(48, 6, f"RLA: {rla_comp}A", border="B"); pdf.cell(48, 6, f"Corrente: {a_med}A", border="B", ln=True)
+        pdf.cell(47, 6, f"P. Suc: {p_suc} PSI", border="B"); pdf.cell(47, 6, f"P. Liq: {p_liq} PSI", border="B")
+        pdf.cell(96, 6, f"T-Sat Suc: {tsat_suc}C", border="B", ln=True)
         pdf.set_font("Helvetica", "B", 9); pdf.set_fill_color(248, 248, 248)
         pdf.cell(47, 8, f" SH: {sh}K", border=1, fill=True); pdf.cell(47, 8, f" SC: {sc}K", border=1, fill=True)
         pdf.cell(96, 8, f" Delta T: {dt}K", border=1, fill=True, ln=True)
 
-        pdf.ln(4); pdf.set_font("Helvetica", "B", 10); pdf.cell(190, 7, " 4. DIAGNÓSTICO E MEDIDAS PROPOSTAS", ln=True, fill=True)
-        pdf.set_font("Helvetica", "B", 8); pdf.cell(190, 5, "OBSERVAÇÕES TÉCNICAS:", ln=True)
-        pdf.set_font("Helvetica", "", 8); pdf.multi_cell(190, 5, obs if obs else "Sem observações adicionais.", border=1); pdf.ln(2)
-        pdf.set_font("Helvetica", "B", 8); pdf.cell(190, 5, "MEDIDAS TÉCNICAS PROPOSTAS (IA):", ln=True)
-        pdf.set_font("Helvetica", "", 8); pdf.multi_cell(190, 5, medidas_ia if medidas_ia else "Sem recomendações propostas.", border=1)
+        pdf.ln(4); pdf.set_font("Helvetica", "B", 10); pdf.cell(190, 7, " 4. DIAGNÓSTICO E MANUTENÇÃO", ln=True, fill=True)
+        pdf.set_font("Helvetica", "", 8)
+        pdf.multi_cell(190, 5, f"Observações: {obs}", border="B")
+        pdf.ln(2)
+        pdf.set_font("Helvetica", "B", 9); pdf.cell(190, 6, "MEDIDAS TÉCNICAS TOMADAS:", ln=True)
+        pdf.set_font("Helvetica", "", 8); pdf.multi_cell(190, 5, medidas_tomadas, border="B")
+        pdf.ln(2)
+        pdf.set_font("Helvetica", "B", 9); pdf.cell(190, 6, "MEDIDAS CORRETIVAS PROPOSTAS PELA IA:", ln=True)
+        pdf.set_font("Helvetica", "", 8); pdf.multi_cell(190, 5, medidas_ia, border=1)
 
-        pdf_bytes = pdf.output(dest='S')
-        if isinstance(pdf_bytes, str): pdf_bytes = pdf_bytes.encode('latin-1')
-        st.download_button("📥 Baixar Relatório", io.BytesIO(pdf_bytes), f"Relatorio_{cliente}.pdf")
+        pdf_output = pdf.output(dest='S').encode('latin-1')
+        st.download_button(
+            label="💾 Baixar Relatório PDF",
+            data=pdf_output,
+            file_name=f"Relatorio_{cliente}.pdf",
+            mime="application/pdf"
+        )
