@@ -30,17 +30,14 @@ with tab_cad:
     c1, c2 = st.columns(2)
     cliente = c1.text_input("Nome do Cliente / Empresa")
     doc_cliente = c2.text_input("CPF / CNPJ")
-    
     l2_c1, l2_c2, l2_c3 = st.columns(3)
     endereco = l2_c1.text_input("Endereço (Rua e Número)")
     bairro = l2_c2.text_input("Bairro")
     cep = l2_c3.text_input("CEP", placeholder="00000-000")
-    
     l3_c1, l3_c2, l3_c3 = st.columns([1, 1.5, 1])
     whatsapp = l3_c1.text_input("🟢 WhatsApp", value="21980264217")
     email_cli = l3_c2.text_input("✉️ E-mail")
     data_visita = l3_c3.date_input("Data da Visita", value=date.today())
-    
     st.markdown("---")
     st.subheader("⚙️ Dados Técnicos")
     d1, d2, d3 = st.columns(3)
@@ -50,7 +47,6 @@ with tab_cad:
     tipo_eq = d2.selectbox("Tipo de Sistema", ["Split Hi-Wall", "Cassete", "Piso-Teto", "VRF", "Chiller"])
     fluido = d3.selectbox("Gás Refrigerante", ["R-410A", "R-32", "R-22", "R-134a", "R-404A"])
     cap_digitada = d3.text_input("Capacidade (Mil BTU´s)")
-    
     col_ev1, col_ev2 = st.columns(2)
     mod_evap = col_ev1.text_input("Modelo Unidade Evaporadora")
     serie_evap = col_ev2.text_input("Nº de Série Evaporadora")
@@ -66,7 +62,6 @@ with tab_ele:
     lra_comp = e2.number_input("LRA (A)", value=0.0)
     rla_comp = e2.number_input("RLA (A)", value=0.0)
     a_med = e2.number_input("Corrente Medida (A)", value=0.0)
-    
     diff_v = round(v_rede - v_med, 1)
     diff_a = round(rla_comp - a_med, 1)
     st.markdown("---")
@@ -84,15 +79,12 @@ with tab_termo:
     t_liq_tubo = col2.number_input("Temp. Tubo Líquido (°C)", value=30.0)
     t_ret = col3.number_input("Temp. Ar Retorno (°C)", value=24.0)
     t_ins = col3.number_input("Temp. Ar Insufl. (°C)", value=12.0)
-    
     tsat_suc = get_tsat_global(p_suc, fluido)
     tsat_liq = get_tsat_global(p_liq, fluido)
     sh = round(t_suc_tubo - tsat_suc, 1)
     sc = round(tsat_liq - t_liq_tubo, 1)
     dt = round(t_ret - t_ins, 1)
-    
     st.markdown("---")
-    # RIGOR: FUNDO AZUL (#004a99) E TEXTO BRANCO
     ct1, ct2 = st.columns(2)
     with ct1:
         st.markdown(f"""<div style='background-color:#004a99;padding:15px;border-radius:10px;border-left:5px solid #ffcc00;color:white;'><b>🌡️ T-Sat Sucção:</b><h2 style='margin:0;color:white;'>{tsat_suc} °C</h2><b>🔥 Superaquecimento (SH):</b><h2 style='margin:0;color:white;'>{sh} K</h2></div>""", unsafe_allow_html=True)
@@ -101,14 +93,17 @@ with tab_termo:
     st.markdown(f"""<div style='background-color:#004a99;padding:20px;border-radius:15px;text-align:center;margin-top:10px;border:2px solid #ffcc00;'><span style='color:white;font-weight:bold;'>📈 Diferencial de Temperatura (ΔT)</span><h1 style='margin:0;color:white;font-size:45px;'>{dt} K</h1></div>""", unsafe_allow_html=True)
 
 with tab_diag:
+    st.subheader("🤖 Diagnóstico e Recomendações")
     obs = st.text_area("Observações Técnicas Detalhadas", height=150)
+    # RIGOR: CAMPO INSERIDO CONFORME INSTRUÇÃO
+    medidas_ia = st.text_area("🔧 Medidas Técnicas Propostas pela IA", height=150, placeholder="Insira as recomendações geradas ou propostas pela análise de inteligência artificial...")
+    
     if st.button("Gerar Relatório PDF"):
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Helvetica", "B", 14); pdf.set_text_color(0, 74, 153)
         pdf.cell(190, 10, "RELATÓRIO TÉCNICO", ln=True, align="C"); pdf.ln(5)
         
-        # 1. IDENTIFICAÇÃO COM DATA EM DESTAQUE
         pdf.set_fill_color(245, 245, 245); pdf.set_font("Helvetica", "B", 10); pdf.set_text_color(60)
         pdf.cell(190, 7, " 1. IDENTIFICAÇÃO DO CLIENTE", ln=True, fill=True)
         pdf.set_font("Helvetica", "", 8); pdf.cell(130, 8, f"Cliente: {cliente}", border="B")
@@ -122,27 +117,26 @@ with tab_diag:
         pdf.cell(95, 6, f"CEP: {cep}", border="B", ln=True)
         pdf.cell(190, 6, f"E-mail: {email_cli}", border="B", ln=True)
 
-        # 2. ESPECIFICAÇÕES
         pdf.ln(4); pdf.set_font("Helvetica", "B", 10); pdf.cell(190, 7, " 2. ESPECIFICAÇÕES DO EQUIPAMENTO", ln=True, fill=True)
         pdf.set_font("Helvetica", "", 8)
         pdf.cell(95, 6, f"Modelo Evap: {mod_evap}", border="B"); pdf.cell(95, 6, f"N/S Evap: {serie_evap}", border="B", ln=True)
         pdf.cell(95, 6, f"Modelo Cond: {mod_cond}", border="B"); pdf.cell(95, 6, f"N/S Cond: {serie_cond}", border="B", ln=True)
 
-        # 3. ANÁLISE TÉCNICA (RIGOR: INCLUI CORRENTE MEDIDA)
         pdf.ln(4); pdf.set_font("Helvetica", "B", 10); pdf.cell(190, 7, " 3. ANÁLISE TÉCNICA E MEDIÇÕES", ln=True, fill=True)
         pdf.set_font("Helvetica", "", 8)
         pdf.cell(47, 6, f"V. Rede: {v_rede}V", border="B"); pdf.cell(47, 6, f"V. Med: {v_med}V", border="B")
-        pdf.cell(48, 6, f"LRA: {lra_comp}A", border="B"); pdf.cell(48, 6, f"RLA: {rla_comp}A", border="B", ln=True)
-        pdf.cell(47, 6, f"Corrente Med: {a_med}A", border="B"); pdf.cell(47, 6, f"P. Suc: {p_suc} PSI", border="B")
+        pdf.cell(48, 6, f"RLA: {rla_comp}A", border="B"); pdf.cell(48, 6, f"Corrente Med: {a_med}A", border="B", ln=True)
+        pdf.cell(47, 6, f"LRA: {lra_comp}A", border="B"); pdf.cell(47, 6, f"P. Suc: {p_suc} PSI", border="B")
         pdf.cell(48, 6, f"P. Liq: {p_liq} PSI", border="B"); pdf.cell(48, 6, f"T-Sat Suc: {tsat_suc}C", border="B", ln=True)
-        
         pdf.set_font("Helvetica", "B", 9); pdf.set_fill_color(248, 248, 248)
         pdf.cell(47, 8, f" SH: {sh}K", border=1, fill=True); pdf.cell(47, 8, f" SC: {sc}K", border=1, fill=True)
         pdf.cell(96, 8, f" Delta T: {dt}K", border=1, fill=True, ln=True)
 
-        # 4. DIAGNÓSTICO
-        pdf.ln(4); pdf.set_font("Helvetica", "B", 10); pdf.cell(190, 7, " 4. DIAGNÓSTICO", ln=True, fill=True)
-        pdf.set_font("Helvetica", "", 9); pdf.multi_cell(190, 6, obs if obs else "Equipamento operando em conformidade técnica.", border=1)
+        pdf.ln(4); pdf.set_font("Helvetica", "B", 10); pdf.cell(190, 7, " 4. DIAGNÓSTICO E MEDIDAS PROPOSTAS", ln=True, fill=True)
+        pdf.set_font("Helvetica", "B", 8); pdf.cell(190, 5, "OBSERVAÇÕES TÉCNICAS:", ln=True)
+        pdf.set_font("Helvetica", "", 8); pdf.multi_cell(190, 5, obs if obs else "Sem observações adicionais.", border=1); pdf.ln(2)
+        pdf.set_font("Helvetica", "B", 8); pdf.cell(190, 5, "MEDIDAS TÉCNICAS PROPOSTAS (IA):", ln=True)
+        pdf.set_font("Helvetica", "", 8); pdf.multi_cell(190, 5, medidas_ia if medidas_ia else "Sem recomendações propostas.", border=1)
 
         pdf_bytes = pdf.output(dest='S')
         if isinstance(pdf_bytes, str): pdf_bytes = pdf_bytes.encode('latin-1')
