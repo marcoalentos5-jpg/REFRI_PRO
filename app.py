@@ -138,7 +138,7 @@ with tab_diag:
             pdf.set_text_color(0, 0, 0)
             pdf.ln(3)
 
-        # --- 1. IDENTIFICAÇÃO ---
+        # --- 1. IDENTIFICAÇÃO (COLUNAS À DIREITA) ---
         draw_header("1. Identificacao do Cliente")
         pdf.set_font("Arial", 'B', 9)
         pdf.cell(30, 6, "Cliente:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{cliente}", ln=0)
@@ -164,7 +164,7 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Fluido:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{fluido}", ln=1)
         pdf.ln(5)
 
-        # --- 3. PARÂMETROS DE PERFORMANCE ---
+        # --- 3. PERFORMANCE (CORREÇÃO DE ÍNDICE) ---
         draw_header("3. Parametros de Performance")
         data_table = [
             ["PARAMETRO", "MEDIDO", "REFERENCIA", "STATUS"],
@@ -177,27 +177,32 @@ with tab_diag:
         pdf.set_fill_color(245, 245, 245)
         pdf.set_font("Arial", 'B', 8)
         for row in data_table:
-            pdf.cell(40, 7, row, 1, 0, 'C', fill=True)
-            pdf.cell(50, 7, row, 1, 0, 'C')
-            pdf.cell(50, 7, row, 1, 0, 'C')
-            pdf.cell(50, 7, row, 1, 1, 'C')
+            pdf.cell(40, 7, row[0], 1, 0, 'C', fill=True)
+            pdf.cell(50, 7, row[1], 1, 0, 'C')
+            pdf.cell(50, 7, row[2], 1, 0, 'C')
+            pdf.cell(50, 7, row[3], 1, 1, 'C')
         pdf.ln(5)
 
-        # --- 4. CONCLUSÃO (COLUNAS E ESPAÇAMENTO REDUZIDO) ---
+        # --- 4. CONCLUSÃO (DUAS COLUNAS + ESPAÇAMENTO 4) ---
         draw_header("4. Diagnostico Final")
         pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Observacoes Tecnicas:", ln=1)
         pdf.set_font("Arial", '', 9)
         
-        # Divisão em duas colunas para Observações com espaçamento 4
-        y_before = pdf.get_y()
-        pdf.multi_cell(95, 4, f"{obs_raw if obs_raw else 'Nenhuma.'}", border=1)
-        y_after_left = pdf.get_y()
+        # Divisão do texto para duas colunas
+        obs_total = obs_raw if obs_raw else 'Nenhuma.'
+        metade = len(obs_total) // 2
+        lado_a = obs_total[:metade]
+        lado_b = obs_total[metade:]
+
+        y_topo = pdf.get_y()
+        pdf.multi_cell(95, 4, lado_a, border=1) # Coluna 1
+        y_fim_a = pdf.get_y()
         
-        pdf.set_xy(105, y_before)
-        pdf.multi_cell(95, 4, " ", border=1) # Coluna B (Espaço reservado conforme instrução de duas colunas)
+        pdf.set_xy(105, y_topo)
+        pdf.multi_cell(95, 4, lado_b, border=1) # Coluna 2
+        y_fim_b = pdf.get_y()
         
-        # Retoma o fluxo abaixo do maior bloco
-        pdf.set_y(max(y_after_left, pdf.get_y()) + 4)
+        pdf.set_y(max(y_fim_a, y_fim_b) + 5)
         
         pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Recomendacoes e Medidas Propostas:", ln=1)
         pdf.set_font("Arial", '', 9)
