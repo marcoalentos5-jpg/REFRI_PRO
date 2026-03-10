@@ -164,7 +164,7 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Fluido:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{fluido}", ln=1)
         pdf.ln(5)
 
-        # --- 3. PERFORMANCE ---
+        # --- 3. PERFORMANCE (CORREÇÃO DE LOOP TÉCNICO) ---
         draw_header("3. Parametros de Performance")
         data_table = [
             ["PARAMETRO", "MEDIDO", "REFERENCIA", "STATUS"],
@@ -177,20 +177,20 @@ with tab_diag:
         pdf.set_fill_color(245, 245, 245)
         pdf.set_font("Arial", 'B', 8)
         for row in data_table:
-            pdf.cell(40, 7, row, 1, 0, 'C', fill=True)
-            pdf.cell(50, 7, row, 1, 0, 'C')
-            pdf.cell(50, 7, row, 1, 0, 'C')
-            pdf.cell(50, 7, row, 1, 1, 'C')
+            pdf.cell(40, 7, row[0], 1, 0, 'C', fill=True)
+            pdf.cell(50, 7, row[1], 1, 0, 'C')
+            pdf.cell(50, 7, row[2], 1, 0, 'C')
+            pdf.cell(50, 7, row[3], 1, 1, 'C')
         pdf.ln(5)
 
-        # --- 4. CONCLUSÃO (CAMPO ATUALIZADO RIGOROSAMENTE) ---
+        # --- 4. CONCLUSÃO (MOLDURA E FONTE 8) ---
         draw_header("4. Diagnostico Final")
         pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Observacoes Tecnicas:", ln=1)
         pdf.set_font("Arial", '', 8)
         pdf.multi_cell(0, 4, f"{obs_raw if obs_raw else 'Nenhuma.'}", border=1)
         pdf.ln(4)
         
-        # Substituição do campo Recomendacoes por Medidas Tecnicas Tomadas
+        # Campo Medidas Tecnicas Tomadas com moldura
         pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Medidas Tecnicas Tomadas:", ln=1)
         pdf.set_font("Arial", '', 9)
         pdf.multi_cell(0, 8, f"{med_tomadas_raw if med_tomadas_raw else 'Nenhuma.'}", border=1)
