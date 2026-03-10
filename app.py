@@ -102,7 +102,7 @@ with tab_diag:
     txt_c = (o_raw + " " + m_raw).upper()
     erros_db = {
         "Samsung": {"WINDFREE": {"E101": "Erro comunicação", "E554": "Vazamento gás"}},
-        "LG": {"DUAL INVERTER": {"CH05": "Falha Comunicacao"}},
+        "LG": {"DUAL INVERTER": {"CH05": "Falha Comunicação"}},
         "Hitachi": {"AIRHOME": {"08": "Alta temp descarga"}},
         "TCL": {"ELITE SERIES": {"P4": "Proteção IPM"}}
     }
@@ -144,8 +144,8 @@ with tab_diag:
                 t_imgs.append(t_p)
                 pdf.image(t_p, x=10 + ((idx % 2) * 95), y=y_f + ((idx // 2) * 65), w=90)
         
-        pdf_out = pdf.output(dest='S').encode('latin-1', errors='replace')
-        st.download_button("📥 Baixar PDF", pdf_out, f"Relatorio_MPN_{cliente}.pdf", "application/pdf")
+        pdf_bytes = pdf.output()
+        st.download_button("📥 Baixar PDF", pdf_bytes, f"Relatorio_MPN_{cliente}.pdf", "application/pdf")
         if t_logo and os.path.exists(t_logo): os.remove(t_logo)
         for t in t_imgs: 
             if os.path.exists(t): os.remove(t)
@@ -163,8 +163,7 @@ with tab_ref:
     with c2: st.checkbox("Dreno Testado"); st.checkbox("Aperto Elétrico")
     st.markdown("---")
     st.subheader("📚 Tabela NTC")
-    # Tabela corrigida para evitar SyntaxError
     st.table({
         "Temp (C)": [10, 15, 20, 25, 30],
-        "10k (Ohm)": [18700, 14800, 12100, 10000, 8200]
+        "10k (Ohm)": [17900, 14700, 12100, 10000, 8300]
     })
