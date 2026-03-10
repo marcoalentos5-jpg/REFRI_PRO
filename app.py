@@ -27,17 +27,23 @@ tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ El
 
 with tab_cad:
     st.subheader("👤 Dados do Cliente & Contato")
-    c1, c2, c3 = st.columns(3)
+    
+    # Linha 1: Identificação Principal
+    c1, c2 = st.columns(2)
     cliente = c1.text_input("Nome do Cliente / Empresa")
-    doc_cliente = c1.text_input("CPF / CNPJ")
+    doc_cliente = c2.text_input("CPF / CNPJ")
     
-    endereco = c2.text_input("Endereço Completo")
-    bairro = c2.text_input("Bairro")
-    cep = c2.text_input("CEP", placeholder="00000-000")
+    # Linha 2: Localização Técnica
+    l2_c1, l2_c2, l2_c3 = st.columns([2, 1, 1])
+    endereco = l2_c1.text_input("Endereço (Rua e Número)")
+    bairro = l2_c2.text_input("Bairro")
+    cep = l2_c3.text_input("CEP", placeholder="00000-000")
     
-    whatsapp = c3.text_input("🟢 WhatsApp", value="21980264217")
-    data_visita = c3.date_input("Data da Visita", value=date.today())
-    email_cli = c2.text_input("✉️ E-mail")
+    # Linha 3: Comunicação e Agendamento
+    l3_c1, l3_c2, l3_c3 = st.columns([1, 1.5, 1])
+    whatsapp = l3_c1.text_input("🟢 WhatsApp", value="21980264217")
+    email_cli = l3_c2.text_input("✉️ E-mail")
+    data_visita = l3_c3.date_input("Data da Visita", value=date.today())
     
     st.markdown("---")
     st.subheader("⚙️ Dados Técnicos")
@@ -77,13 +83,13 @@ with tab_ele:
 
 with tab_termo:
     st.subheader("🌡️ Ciclo Frigorífico")
-    col1, col2 = st.columns(2)
-    p_suc = col1.number_input("Pressão de Sucção (PSIG)", value=118.0)
-    t_suc_tubo = col1.number_input("Temp. do Tubo de Sucção (°C)", value=12.0)
-    p_liq = col2.number_input("Pressão de Descarga (PSIG)", value=345.0)
-    t_liq_tubo = col2.number_input("Temp. do Tubo de Líquido (°C)", value=30.0)
-    t_ret = col1.number_input("Temp. do Ar de Retorno (°C)", value=24.0)
-    t_ins = col2.number_input("Temp. do Ar de Insuflamento (°C)", value=12.0)
+    col1, col2, col3 = st.columns(3)
+    p_suc = col1.number_input("Pressão Sucção (PSIG)", value=118.0)
+    t_suc_tubo = col1.number_input("Temp. Tubo Sucção (°C)", value=12.0)
+    p_liq = col2.number_input("Pressão Descarga (PSIG)", value=345.0)
+    t_liq_tubo = col2.number_input("Temp. Tubo Líquido (°C)", value=30.0)
+    t_ret = col3.number_input("Temp. Ar Retorno (°C)", value=24.0)
+    t_ins = col3.number_input("Temp. Ar Insufl. (°C)", value=12.0)
     
     tsat_suc = get_tsat_global(p_suc, fluido)
     tsat_liq = get_tsat_global(p_liq, fluido)
@@ -92,54 +98,78 @@ with tab_termo:
     dt = round(t_ret - t_ins, 1)
     
     st.markdown("---")
-    st.subheader("📊 Destaque dos Resultados")
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("🌡️ T-Sat Sucção", f"{tsat_suc} °C")
-    m2.metric("🔥 Superaquecimento", f"{sh} K")
-    m3.metric("❄️ T-Sat Líquido", f"{tsat_liq} °C")
-    m4.metric("💧 Sub-resfriamento", f"{sc} K")
-    
-    st.info(f"### Diferencial de Temperatura (ΔT): {dt} K")
+    st.markdown(f"### Temperatura de Saturação (Sucção): {tsat_suc} °C")
+    st.markdown(f"### Superaquecimento (SH): {sh} K")
+    st.markdown(f"### Temperatura de Saturação (Líquido): {tsat_liq} °C")
+    st.markdown(f"### Sub-resfriamento (SC): {sc} K")
+    st.markdown(f"### Diferencial de Temperatura (ΔT): {dt} K")
 
 with tab_diag:
     obs = st.text_area("Observações Técnicas Detalhadas", height=150)
     if st.button("Gerar Relatório PDF"):
         pdf = FPDF()
         pdf.add_page()
-        pdf.set_font("Helvetica", "B", 14)
-        pdf.set_text_color(0, 74, 153)
-        pdf.cell(190, 10, "RELATÓRIO TÉCNICO", ln=True, align="C")
-        pdf.ln(5)
         
-        pdf.set_fill_color(245, 245, 245)
-        pdf.set_font("Helvetica", "B", 10)
-        pdf.set_text_color(60)
-        pdf.cell(190, 7, " 1. IDENTIFICAÇÃO DO CLIENTE", ln=True, fill=True)
-        pdf.set_font("Helvetica", "B", 8)
-        pdf.cell(190, 6, f"CPF/CNPJ: {doc_cliente}", border="B", ln=True)
-        pdf.set_font("Helvetica", "", 8)
-        pdf.cell(135, 7, f"Cliente: {cliente}", border="B") 
-        pdf.cell(55, 7, f" DATA: {data_visita.strftime('%d/%m/%Y')} ", border=1, ln=True)
-        pdf.cell(135, 6, f"Endereço: {endereco}", border="B")
-        pdf.cell(55, 6, f" Bairro: {bairro}", border="B", ln=True)
-        pdf.cell(63, 6, f"WhatsApp: {whatsapp}", border="B")
-        pdf.cell(63, 6, f"E-mail: {email_cli}", border="B")
-        pdf.cell(64, 6, f" CEP: {cep}", border="B", ln=True)
+        # Cabeçalho Profissional
+        pdf.set_font("Helvetica", "B", 16)
+        pdf.set_text_color(0, 74, 153)
+        pdf.cell(190, 10, "RELATÓRIO TÉCNICO DE ENGENHARIA", ln=True, align="C")
+        pdf.ln(5)
 
-        pdf.ln(4)
-        pdf.set_font("Helvetica", "B", 10)
-        pdf.cell(190, 7, " 3. ANÁLISE TÉCNICA E MEDIÇÕES", ln=True, fill=True)
-        pdf.set_font("Helvetica", "", 8)
-        pdf.cell(47, 6, f"V. Rede: {v_rede} V", border="B"); pdf.cell(47, 6, f"V. Med: {v_med} V", border="B")
-        pdf.cell(48, 6, f"LRA: {lra_comp} A", border="B"); pdf.cell(48, 6, f"RLA: {rla_comp} A", border="B", ln=True)
-        pdf.cell(47, 6, f"P. Suc: {p_suc} PSI", border="B"); pdf.cell(47, 6, f"P. Liq: {p_liq} PSI", border="B")
-        pdf.cell(48, 6, f"SH: {sh} K", border="B"); pdf.cell(48, 6, f"SC: {sc} K", border="B", ln=True)
-        pdf.set_font("Helvetica", "B", 8)
-        pdf.cell(190, 6, f" Delta T: {dt} K", border="B", ln=True)
+        # Função auxiliar para seções
+        def add_section(title):
+            pdf.set_fill_color(240, 240, 240)
+            pdf.set_font("Helvetica", "B", 10)
+            pdf.set_text_color(0)
+            pdf.cell(190, 8, f" {title}", ln=True, fill=True)
+            pdf.ln(2)
 
+        # 1. IDENTIFICAÇÃO
+        add_section("1. IDENTIFICAÇÃO DO CLIENTE E LOCAL")
+        pdf.set_font("Helvetica", "", 9)
+        pdf.cell(135, 7, f"Cliente: {cliente}", border="B")
+        pdf.cell(55, 7, f" DATA: {data_visita.strftime('%d/%m/%Y')}", border="B", ln=True)
+        pdf.cell(95, 7, f"CPF/CNPJ: {doc_cliente}", border="B")
+        pdf.cell(95, 7, f"WhatsApp: {whatsapp}", border="B", ln=True)
+        pdf.cell(190, 7, f"Endereco: {endereco}", border="B", ln=True)
+        pdf.cell(95, 7, f"Bairro: {bairro}", border="B")
+        pdf.cell(95, 7, f"CEP: {cep}", border="B", ln=True)
+        pdf.cell(190, 7, f"E-mail: {email_cli}", border="B", ln=True)
         pdf.ln(4)
-        pdf.multi_cell(190, 5, f"Diagnóstico: {obs}", border=1)
+
+        # 2. DADOS DO EQUIPAMENTO
+        add_section("2. DADOS DO EQUIPAMENTO")
+        pdf.set_font("Helvetica", "", 9)
+        pdf.cell(63, 7, f"Fabricante: {fabricante}", border="B")
+        pdf.cell(63, 7, f"Linha: {linha}", border="B")
+        pdf.cell(64, 7, f"Capacidade: {cap_digitada} Mil BTU's", border="B", ln=True)
+        pdf.cell(95, 7, f"Evaporadora: {mod_evap} / SN: {serie_evap}", border="B")
+        pdf.cell(95, 7, f"Condensadora: {mod_cond} / SN: {serie_cond}", border="B", ln=True)
+        pdf.cell(63, 7, f"Tecnologia: {tecnologia}", border="B")
+        pdf.cell(63, 7, f"Tipo: {tipo_eq}", border="B")
+        pdf.cell(64, 7, f"Gas: {fluido}", border="B", ln=True)
+        pdf.ln(4)
+
+        # 3. MEDIÇÕES
+        add_section("3. ANÁLISE TÉCNICA E MEDIÇÕES")
+        pdf.set_font("Helvetica", "", 9)
+        pdf.cell(47, 7, f"V. Rede: {v_rede}V", border="B"); pdf.cell(47, 7, f"V. Med: {v_med}V", border="B")
+        pdf.cell(48, 7, f"LRA: {lra_comp}A", border="B"); pdf.cell(48, 7, f"RLA: {rla_comp}A", border="B", ln=True)
+        pdf.cell(47, 7, f"P. Suc: {p_suc} PSI", border="B"); pdf.cell(47, 7, f"P. Liq: {p_liq} PSI", border="B")
+        pdf.cell(48, 7, f"T-Sat Suc: {tsat_suc}C", border="B"); pdf.cell(48, 7, f"T-Sat Liq: {tsat_liq}C", border="B", ln=True)
+        
+        pdf.set_font("Helvetica", "B", 9); pdf.set_fill_color(250, 250, 250)
+        pdf.cell(47, 8, f" Corrente: {a_med}A", border=1, fill=True)
+        pdf.cell(47, 8, f" SH: {sh}K", border=1, fill=True)
+        pdf.cell(48, 8, f" SC: {sc}K", border=1, fill=True)
+        pdf.cell(48, 8, f" Delta T: {dt}K", border=1, fill=True, ln=True)
+        pdf.ln(4)
+
+        # 4. DIAGNÓSTICO
+        add_section("4. DIAGNÓSTICO E OBSERVAÇÕES")
+        pdf.set_font("Helvetica", "", 10)
+        pdf.multi_cell(190, 6, obs if obs else "Equipamento operando em conformidade técnica.", border=1)
 
         pdf_bytes = pdf.output(dest='S')
         if isinstance(pdf_bytes, str): pdf_bytes = pdf_bytes.encode('latin-1')
-        st.download_button("📥 Baixar Relatório", io.BytesIO(pdf_bytes), f"Relatorio_{cliente}.pdf")
+        st.download_button("📥 Baixar Relatório Profissional", io.BytesIO(pdf_bytes), f"Relatorio_{cliente}.pdf")
