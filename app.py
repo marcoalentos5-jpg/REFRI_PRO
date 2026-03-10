@@ -3,12 +3,11 @@ import numpy as np
 from datetime import date
 from fpdf import FPDF
 import io
-import os
 
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="MPN | Engenharia Pro", layout="wide", page_icon="❄️")
 
-# --- 2. MOTOR TERMODINÂMICO (PRECISÃO PERICIAL) ---
+# --- 2. MOTOR TERMODINÂMICO ---
 def get_tsat_global(psig, gas):
     ancoras = {
         "R-410A": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 550.0, 600.0], 
@@ -99,18 +98,38 @@ with tab_termo:
 
 with tab_diag:
     st.subheader("🤖 Diagnóstico e Recomendações")
-    
     obs_raw = st.text_area("✍️ Observações Técnicas Detalhadas", height=150)
     med_tomadas_raw = st.text_area("🔧 Medidas Técnicas Tomadas", height=150)
 
-    # Lógica de cruzamento IA
     diag_termo = []
     diag_eletr = []
-    if "óleo" in obs_raw.lower() or "vazamento" in obs_raw.lower():
-        diag_termo.append("Vazamento confirmado. Localizar fuga e refazer carga.")
-    if sh < 6: diag_termo.append(f"SH CRÍTICO ({sh}K). Risco de golpe de líquido.")
-    if diff_v > (v_rede * 0.05): diag_eletr.append(f"QUEDA TENSÃO ({diff_v}V) excessiva.")
+    if any(x in obs_raw.lower() for x in ["óleo", "vazamento"]): diag_termo.append("Vazamento detectado.")
+    if sh < 6: diag_termo.append(f"SH CRÍTICO ({sh}K).")
+    if diff_v > (v_rede * 0.05): diag_eletr.append(f"QUEDA TENSÃO ({diff_v}V).")
     
-    propostas_sugestao = "\n".join(diag_termo + diag_eletr) if (diag_termo + diag_eletr) else "Sem anomalias críticas detectadas."
-    
+    propostas_sugestao = "\n".join(diag_termo + diag_eletr) if (diag_termo + diag_eletr) else "Sem anomalias detectadas."
     ia_raw = st.text_area("🤖 Medidas Técnicas Propostas pela IA", value=propostas_sugestao, height=150)
+
+    st.markdown("---")
+    if st.button("📄 Gerar Relatório PDF"):
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", 'B', 16)
+        pdf.cell(200, 10, "Relatorio Tecnico - MPN Engenharia", ln=True, align='C')
+        pdf.set_font("Arial", '', 12)
+        pdf.ln(10)
+        pdf.cell(0, 10, f"Cliente: {cliente} | Data: {data_visita}", ln=True)
+        pdf.cell(0, 10, f"Equipamento: {fabricante} {cap_digitada} BTUs", ln=True)
+        pdf.ln(5)
+        pdf.set_font("Arial", 'B', 12)
+        pdf.cell(0, 10, "Parametros Termodinamicos:", ln=True)
+        pdf.set_font("Arial", '', 12)
+        pdf.cell(0, 8, f"SH: {sh} K | SC: {sc} K | Delta T: {dt} K", ln=True)
+        pdf.ln(5)
+        pdf.set_font("Arial", 'B', 12)
+        pdf.cell(0, 10, "Diagnostico IA:", ln=True)
+        pdf.set_font("Arial", '', 12)
+        pdf.multi_cell(0, 8, ia_raw)
+        
+        pdf_output = pdf.output(dest='S').encode('latin-1', 'replace')
+        st.download_button("⬇️ Baixar PDF", data=pdf_output, file_name=f"Relatorio_{cliente}_{data_visita}.pdf", mime="application/pdf")
