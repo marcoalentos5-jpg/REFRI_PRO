@@ -58,9 +58,8 @@ with tab_cad:
     col_cd1, col_cd2 = st.columns(2)
     mod_cond = col_cd1.text_input("Modelo Unidade Condensadora")
     serie_cond = col_cd2.text_input("Nº de Série Condensadora")
-    tipo_procedimento = st.selectbox("Tipo de Procedimento", ["INSTALAÇÃO", "MANUTENÇÃO CORRETIVA", "MANUTENÇÃO PREVENTIVA"])
     
-    # CAMPOS ATUALIZADOS CONFORME INSTRUÇÃO
+    tipo_procedimento = st.selectbox("Tipo de Procedimento", ["INSTALAÇÃO", "MANUTENÇÃO CORRETIVA", "MANUTENÇÃO PREVENTIVA"])
     local_equipamento = st.text_input("LOCAL DO EQUIPAMENTO")
     comodo_sala = st.text_input("COMODO/SALA")
 
@@ -87,12 +86,12 @@ with tab_termo:
     t_suc_tubo = col1.number_input("Temp. Tubo Sucção (°C)", value=12.0)
     p_liq = col2.number_input("Pressão Descarga (PSIG)", value=345.0)
     t_liq_tubo = col2.number_input("Temp. Tubo Líquido (°C)", value=30.0)
-    t_ret = col3.number_input("Temp. Ar Retorno (°C)", value=24.0)
-    t_ins = col3.number_input("Temp. Ar Insufl. (°C)", value=12.0)
     tsat_suc = get_tsat_global(p_suc, fluido)
     tsat_liq = get_tsat_global(p_liq, fluido)
     sh = round(t_suc_tubo - tsat_suc, 1)
     sc = round(tsat_liq - t_liq_tubo, 1)
+    t_ret = col3.number_input("Temp. Ar Retorno (°C)", value=24.0)
+    t_ins = col3.number_input("Temp. Ar Insufl. (°C)", value=12.0)
     dt = round(t_ret - t_ins, 1)
     st.markdown("---")
     ct1, ct2 = st.columns(2)
@@ -140,16 +139,14 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(40, 6, "Comodo/Sala:", 0); pdf.set_font("Arial", '', 9); pdf.cell(0, 6, f"{comodo_sala}", 1, 1)
         pdf.set_font("Arial", 'B', 9); pdf.cell(40, 6, "Equipamento:", 0); pdf.set_font("Arial", '', 9); pdf.cell(0, 6, f"{fabricante} {tipo_eq} {cap_digitada} BTUs", 1, 1)
         
-        # EXPORTAÇÃO SEGURA DE BYTES PARA O STREAMLIT
-        pdf_bytes = io.BytesIO()
-        pdf_str = pdf.output(dest='S').encode('latin-1')
-        pdf_bytes.write(pdf_str)
-        pdf_bytes.seek(0)
+        # CORREÇÃO TÉCNICA DEFINITIVA PARA STREAMLIT / FPDF2
+        # O método output() sem argumentos retorna os bytes do PDF diretamente
+        pdf_data = pdf.output()
         
         st.download_button(
             label="⬇️ Baixar Relatório PDF",
-            data=pdf_bytes,
+            data=pdf_data,
             file_name=f"Relatorio_{cliente}.pdf",
             mime="application/pdf",
-            key="btn_relatorio_final"
+            key="btn_download_final_MPN"
         )
