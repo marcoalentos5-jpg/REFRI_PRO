@@ -32,16 +32,18 @@ tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ El
 
 with tab_cad:
     st.subheader("👤 Dados do Cliente & Contato")
-    c1, c2 = st.columns(2)
+    c1, c2 = st.columns() 
     cliente = c1.text_input("Nome do Cliente / Empresa")
     doc_cliente = c2.text_input("CPF / CNPJ")
+    
     l2_c1, l2_c2, l2_c3 = st.columns(3)
     endereco = l2_c1.text_input("Endereço (Rua e Número)")
     bairro = l2_c2.text_input("Bairro")
     cep = l2_c3.text_input("CEP", placeholder="00000-000")
     
-    l3_c1, l3_c2, l3_c3, l3_c4 = st.columns([1, 1, 1, 1])
-    comodo_sala = l3_c1.text_input("🏠 Cômodo / Sala") # NOVO CAMPO SOLICITADO
+    l3_c1, l3_c2, l3_c3, l3_c4 = st.columns(4)
+    # ALTERAÇÃO: Nome do campo alterado conforme instrução
+    comodo_sala = l3_c1.text_input("🏠 COMODO DO PROCEDIMENTO")
     whatsapp = l3_c2.text_input("🟢 WhatsApp", value="21980264217")
     email_cli = l3_c3.text_input("✉️ E-mail")
     data_visita = l3_c4.date_input("Data da Visita", value=date.today())
@@ -51,7 +53,7 @@ with tab_cad:
     d1, d2, d3 = st.columns(3)
     fabricante = d1.text_input("Fabricante (Marca)")
     linha = d1.text_input("Linha")
-    tecnologia = d2.selectbox("Tecnologia", ["Inverter", "WindFree", "Scroll", "On-Off"])
+    tecnologia = d2.selectbox("Technology", ["Inverter", "WindFree", "Scroll", "On-Off"])
     tipo_eq = d2.selectbox("Tipo de Sistema", ["Split Hi-Wall", "Cassete", "Piso-Teto", "VRF", "Chiller"])
     fluido = d3.selectbox("Gás Refrigerante", ["R-410A", "R-32", "R-22", "R-134a", "R-404A"])
     cap_digitada = d3.text_input("Capacidade (Mil BTU´s)", value="0")
@@ -151,7 +153,8 @@ with tab_diag:
         pdf.set_x(120) 
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Bairro/CEP:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{bairro} / {cep}", ln=1)
         
-        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Cômodo/Sala:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{comodo_sala}", ln=0) # NOVO CAMPO NO PDF
+        # ALTERAÇÃO: Nome do campo alterado no PDF conforme instrução
+        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Cômodo Proc.:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{comodo_sala}", ln=0)
         pdf.set_x(120) 
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Data Visita:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{data_visita}", ln=1)
         pdf.ln(5)
@@ -179,9 +182,8 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Série Cond:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{serie_cond}", ln=1)
         pdf.ln(5)
 
-        # --- 3. ANALISE TERMICA E ELETRICA ---
+        # --- 3. ANALISE OPERACIONAL ---
         draw_header("3. Parametros Operacionais (Medicoes)")
-        
         pdf.set_font("Arial", 'B', 8)
         pdf.set_fill_color(245, 245, 245)
         pdf.cell(47, 7, "  PRESSAO SUCÇÃO", 1, 0, 'L', True)
@@ -211,22 +213,14 @@ with tab_diag:
 
         # --- 4. DIAGNOSTICO ---
         draw_header("4. Diagnostico e Medidas Tecnicas")
-        pdf.set_font("Arial", 'B', 9)
-        pdf.cell(0, 6, "Observacoes Tecnicas:", ln=1)
-        pdf.set_font("Arial", '', 9)
-        pdf.multi_cell(0, 5, f"{obs_raw}")
-        pdf.ln(2)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Observacoes Tecnicas:", ln=1)
+        pdf.set_font("Arial", '', 9); pdf.multi_cell(0, 5, f"{obs_raw}"); pdf.ln(2)
         
-        pdf.set_font("Arial", 'B', 9)
-        pdf.cell(0, 6, "Medidas Tomadas no Local:", ln=1)
-        pdf.set_font("Arial", '', 9)
-        pdf.multi_cell(0, 5, f"{med_tomadas_raw}")
-        pdf.ln(2)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Medidas Tomadas no Local:", ln=1)
+        pdf.set_font("Arial", '', 9); pdf.multi_cell(0, 5, f"{med_tomadas_raw}"); pdf.ln(2)
 
-        pdf.set_font("Arial", 'B', 9)
-        pdf.cell(0, 6, "Recomendacoes e Medidas Propostas:", ln=1)
-        pdf.set_font("Arial", '', 9)
-        pdf.multi_cell(0, 5, f"{ia_raw}")
+        pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Recomendacoes e Medidas Propostas:", ln=1)
+        pdf.set_font("Arial", '', 9); pdf.multi_cell(0, 5, f"{ia_raw}")
 
         # --- RODAPÉ ---
         pdf.set_y(265)
