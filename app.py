@@ -3,6 +3,7 @@ import numpy as np
 from datetime import date
 from fpdf import FPDF
 import io
+import os
 
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="MPN | Engenharia Pro", layout="wide", page_icon="❄️")
@@ -103,64 +104,61 @@ with tab_diag:
     diag_eletr = []
     obs_low = obs.lower()
     
-    # --- CRUZAMENTO RIGOROSO DE DADOS PARA MEDIDAS DE CONSERTO ---
+    # Cruzamento de Dados e Medidas de Conserto
     if any(x in obs_low for x in ["óleo", "mancha", "vazamento"]):
-        if sh > 12: diag_termo.append("🚨 [MEDIDA]: Vazamento confirmado. Ação: Pressurizar N2 (450 PSI), vedar fuga e vácuo < 500microns.")
-        else: diag_termo.append("⚠️ [MEDIDA]: Suspeita de microvazamento. Ação: Higienizar área e monitorar com contraste UV.")
-    
-    if any(x in obs_low for x in ["gelo", "congelando", "obstrução"]):
-        if sc > 12: diag_termo.append("⚙️ [MEDIDA]: Restrição na linha de líquido. Ação: Substituir filtro secador e dispositivo de expansão.")
-        elif sh < 5: diag_termo.append("❄️ [MEDIDA]: Inundação do evaporador. Ação: Limpeza química das serpentinas e testar ventilador.")
-
-    if any(x in obs_low for x in ["comunicação", "e1", "ch05", "sinal"]):
-        diag_eletr.append("⚡ [MEDIDA]: Erro Serial. Ação: Testar continuidade do cabo de sinal (Borne 3) e medir tensão DC.")
-    
+        if sh > 12: diag_termo.append("🚨 [MEDIDA]: Vazamento confirmado. Localizar fuga com N2 e refazer carga por massa.")
+        else: diag_termo.append("⚠️ [MEDIDA]: Presença de óleo relatada. Verificar estanqueidade das flanges.")
+    if any(x in obs_low for x in ["gelo", "congelando"]):
+        if sc > 10: diag_termo.append("⚙️ [MEDIDA]: Restrição na expansão. Substituir filtro secador ou capilar.")
+        elif sh < 5: diag_termo.append("❄️ [MEDIDA]: Inundação do evaporador. Higienizar serpentinas e testar ventilador.")
+    if any(x in obs_low for x in ["comunicação", "e1", "ch05"]):
+        diag_eletr.append("⚡ [MEDIDA]: Falha Serial. Testar continuidade do cabo de sinal e aterramento.")
     if "odor" in obs_low or "queimado" in obs_low:
-        diag_eletr.append("🔥 [MEDIDA]: Sobrecarga Elétrica. Ação: Reapertar bornes e testar isolamento do compressor.")
+        diag_eletr.append("🔥 [MEDIDA]: Sobrecarga. Reapertar bornes e testar isolamento do compressor.")
 
-    if sh < 5: diag_termo.append(f"⚠️ [ALERTA]: SH ({sh}K) Crítico. Risco de golpe de líquido. Ação: Ajustar carga ou sensor de sucção.")
-    if diff_v > (v_rede * 0.05): diag_eletr.append(f"❌ [ALERTA]: Queda de tensão ({diff_v}V) fora da norma. Ação: Redimensionar fiação.")
+    # Diagnóstico Termodinâmico Base
+    if sh < 6: diag_termo.append(f"🌡️ [SH CRÍTICO]: {sh}K. Risco de golpe de líquido.")
+    elif sh > 10: diag_termo.append(f"🌡️ [SH ELEVADO]: {sh}K. Carga insuficiente.")
+    if sc < 3: diag_termo.append(f"🌡️ [SC BAIXO]: {sc}K. Higienizar unidade condensadora.")
+    if diff_v > (v_rede * 0.05): diag_eletr.append(f"⚡ [QUEDA TENSÃO]: {diff_v}V excedida.")
 
     with col_ia_1:
         st.info("**🌡️ Ciclo Frigorífico**")
-        txt_termo = "\n\n".join(diag_termo) if diag_termo else "✅ Ciclo normal."
+        txt_termo = "\n".join(diag_termo) if diag_termo else "✅ Sem anomalias térmicas."
         st.write(txt_termo)
 
     with col_ia_2:
         st.info("**⚡ Parte Elétrica**")
-        txt_eletr = "\n\n".join(diag_eletr) if diag_eletr else "✅ Elétrica normal."
+        txt_eletr = "\n".join(diag_eletr) if diag_eletr else "✅ Sem anomalias elétricas."
         st.write(txt_eletr)
 
-    # --- 4. GERAÇÃO DE PDF (FIX PARA FPDF UNICODE ERROR) ---
+    medidas_ia_pdf = f"TERMODINAMICA:\n{txt_termo}\n\nELETRICA:\n{txt_eletr}"
+    
     if st.button("Gerar Relatório PDF"):
         pdf = FPDF()
         pdf.add_page()
-        pdf.set_font("Arial", "B", 14)
+        pdf.set_font("Helvetica", "B", 14); pdf.set_text_color(0, 74, 153)
+        pdf.cell(190, 10, "RELATORIO TECNICO", ln=True, align="C"); pdf.ln(5)
         
-        def safe_text(t):
-            # Higienização rigorosa para evitar FPDFUnicodeEncodingException
-            subst = {"🚨": "!!", "⚠️": "!", "⚙️": "*", "⚡": ">>", "🔥": "!!", "❌": "X", "✅": "OK", "❄️": "*", "🌡️": "T", "📋": "-", "🤖": "IA", "🔧": "CORRECAO:"}
-            for k, v in subst.items(): t = t.replace(k, v)
-            return t.encode('latin-1', 'ignore').decode('latin-1')
+        pdf.set_fill_color(245, 245, 245); pdf.set_font("Helvetica", "B", 10); pdf.set_text_color(60)
+        pdf.cell(190, 7, " 1. IDENTIFICACAO DO CLIENTE", ln=True, fill=True)
+        pdf.set_font("Helvetica", "", 8)
+        
+        # Tratamento de Encoding para evitar FPDFUnicodeEncodingException
+        def fix_text(t): return str(t).encode('latin-1', 'replace').decode('latin-1')
 
-        pdf.set_text_color(0, 74, 153)
-        pdf.cell(190, 10, safe_text("RELATORIO TECNICO DE ENGENHARIA"), ln=True, align="C"); pdf.ln(5)
-        
-        pdf.set_fill_color(245, 245, 245); pdf.set_font("Arial", "B", 10); pdf.set_text_color(60)
-        pdf.cell(190, 7, safe_text(" 1. IDENTIFICACAO DO CLIENTE"), ln=True, fill=True)
-        pdf.set_font("Arial", "", 8)
-        pdf.cell(100, 8, safe_text(f"Cliente: {cliente}"))
-        pdf.cell(90, 8, safe_text(f"Data: {data_visita}"), ln=True)
-        pdf.cell(100, 8, safe_text(f"Equipamento: {tipo_eq} - {fabricante}"))
-        pdf.cell(90, 8, safe_text(f"Fluido: {fluido}"), ln=True); pdf.ln(3)
+        pdf.cell(130, 8, fix_text(f"Cliente: {cliente}"))
+        pdf.cell(60, 8, fix_text(f"Data: {data_visita}"), ln=True)
+        pdf.cell(130, 8, fix_text(f"Equipamento: {tipo_eq} - {fabricante}"))
+        pdf.cell(60, 8, fix_text(f"Fluido: {fluido}"), ln=True); pdf.ln(5)
 
-        pdf.set_fill_color(245, 245, 245); pdf.set_font("Arial", "B", 10)
-        pdf.cell(190, 7, safe_text(" 2. DIAGNOSTICO E MEDIDAS DE CONSERTO"), ln=True, fill=True)
-        pdf.set_font("Arial", "", 9)
-        pdf.multi_cell(190, 6, safe_text(f"{txt_termo}\n\n{txt_eletr}"))
-        
+        pdf.set_fill_color(245, 245, 245); pdf.set_font("Helvetica", "B", 10)
+        pdf.cell(190, 7, " 2. DIAGNOSTICO E MEDIDAS PROPOSTAS", ln=True, fill=True)
+        pdf.set_font("Helvetica", "", 8)
+        pdf.multi_cell(190, 6, fix_text(f"{medidas_ia_pdf}"))
+
         pdf_output = io.BytesIO()
         pdf_content = pdf.output(dest='S')
-        if isinstance(pdf_content, str): pdf_content = pdf_content.encode('latin-1')
+        if isinstance(pdf_content, str): pdf_content = pdf_content.encode('latin-1', 'replace')
         pdf_output.write(pdf_content)
-        st.download_button(label="📥 Baixar PDF", data=pdf_output.getvalue(), file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
+        st.download_button(label="Gerar Relatório PDF", data=pdf_output.getvalue(), file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
