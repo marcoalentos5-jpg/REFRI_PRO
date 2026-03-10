@@ -26,7 +26,6 @@ components.html(
 
 # --- 3. MOTOR TERMODINÂMICO RECALIBRADO (MATRIZ DE PRECISÃO MPN) ---
 def get_tsat_global(psig, gas):
-    # MATRIZ DE ANCORAGEM VALIDADA PONTO A PONTO (VÁCUO A 600 PSI)
     ancoras = {
         "R-410A": {
             "p": [50.0, 100.0, 133.1, 133.5, 134.0, 134.5, 150.0, 200.0, 221.0, 250.0, 300.0, 452.0, 455.0, 456.0, 460.0, 500.0, 501.0, 502.0, 503.0, 525.0, 550.0, 555.0, 560.0, 570.0, 600.0],
@@ -175,8 +174,16 @@ with tab_diag:
         pdf.set_font("Arial", "", 11)
         pdf.multi_cell(190, 8, obs)
         
-        # --- CORREÇÃO TÉCNICA PDF ---
-        pdf_out = pdf.output(dest='S')
-        pdf_bytes = pdf_out.encode('latin-1') if isinstance(pdf_out, str) else pdf_out
-        
-        st.download_button(label="📥 Baixar Relatório em PDF", data=pdf_bytes, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
+        # CORREÇÃO DEFINITIVA PARA STREAMLIT CLOUD (PYTHON 3.14+)
+        pdf_content = pdf.output(dest='S')
+        if isinstance(pdf_content, str):
+            pdf_bytes = pdf_content.encode('latin-1')
+        else:
+            pdf_bytes = bytes(pdf_content)
+
+        st.download_button(
+            label="📥 Baixar Relatório em PDF", 
+            data=pdf_bytes, 
+            file_name=f"Relatorio_{cliente}.pdf", 
+            mime="application/pdf"
+        )
