@@ -51,7 +51,7 @@ with tab_cad:
     tecnologia = d2.selectbox("Tecnologia", ["Inverter", "WindFree", "Scroll", "On-Off"])
     tipo_eq = d2.selectbox("Tipo de Sistema", ["Split Hi-Wall", "Cassete", "Piso-Teto", "VRF", "Chiller"])
     fluido = d3.selectbox("Gás Refrigerante", ["R-410A", "R-32", "R-22", "R-134a", "R-404A"])
-    cap_digitada = d3.text_input("Capacidade (Mil BTU´s)")
+    cap_digitada = d3.text_input("Capacidade (Mil BTU´s)", value="0")
     col_ev1, col_ev2 = st.columns(2)
     mod_evap = col_ev1.text_input("Modelo Unidade Evaporadora")
     serie_evap = col_ev2.text_input("Nº de Série Evaporadora")
@@ -124,11 +124,7 @@ with tab_diag:
         
         pdf.set_text_color(255, 255, 255)
         pdf.set_font("Arial", 'B', 18)
-        pdf.cell(0, 12, "RELATÓRIO TÉCNICO", ln=True, align='C')
-        pdf.set_font("Arial", 'B', 11)
-        pdf.cell(0, 6, "MARCOS ALEXANDRE ALMEIDA DO NASCIMENTO", ln=True, align='C')
-        pdf.set_font("Arial", '', 9)
-        pdf.cell(0, 5, "CNPJ: 45.451.272/0001-38 | Tel: 21985453763", ln=True, align='C')
+        pdf.cell(0, 20, "RELATÓRIO TÉCNICO", ln=True, align='C')
         pdf.ln(12)
 
         def draw_header(title):
@@ -147,43 +143,40 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "CPF/CNPJ:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(60, 6, f"{doc_cliente}", ln=1)
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Endereço:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{endereco}", ln=0)
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Bairro/CEP:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(60, 6, f"{bairro} / {cep}", ln=1)
-        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "WhatsApp:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{whatsapp}", ln=0)
-        pdf.set_fill_color(220, 220, 220); pdf.set_font("Arial", 'B', 9); pdf.cell(40, 6, " Data da Visita:", ln=0, fill=True)
-        pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f" {data_visita.strftime('%d/%m/%Y')}", ln=1, fill=True)
-        pdf.ln(5)
+        pdf.ln(3)
 
-        # --- 2. EQUIPAMENTO ---
-        draw_header("2. Dados Técnicos do Sistema")
+        # --- 2. DADOS DO EQUIPAMENTO ---
+        draw_header("2. Dados do Equipamento")
         pdf.set_font("Arial", 'B', 9)
-        pdf.cell(30, 6, "Fabricante:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{fabricante}", ln=0)
-        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Modelo/Fluido:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(60, 6, f"{linha} / {fluido}", ln=1)
-        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Sistema:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{tipo_eq} ({tecnologia})", ln=0)
-        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Capacidade:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(60, 6, f"{cap_digitada} BTU/h", ln=1)
-        pdf.set_font("Arial", 'B', 8); pdf.cell(95, 5, f"Série Evap: {serie_evap}", ln=0); pdf.cell(95, 5, f"Série Cond: {serie_cond}", ln=1)
-        pdf.ln(5)
+        pdf.cell(30, 6, "Marca/Linha:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{fabricante} / {linha}", ln=0)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Capacidade:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(60, 6, f"{cap_digitada} BTU's", ln=1)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Fluído:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{fluido}", ln=0)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Tecnologia:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(60, 6, f"{tecnologia}", ln=1)
+        pdf.ln(3)
 
-        # --- 3. OPERAÇÃO ---
-        draw_header("3. Análise Operacional")
-        pdf.set_font("Arial", 'B', 9); pdf.cell(95, 6, "Análise Elétrica", ln=0); pdf.cell(95, 6, "Análise Termodinâmica", ln=1)
-        pdf.set_font("Arial", '', 9)
-        pdf.cell(95, 5, f"Tensão (Rede/Med): {v_rede}V / {v_med}V", ln=0)
-        pdf.cell(95, 5, f"Pressão Sucção: {p_suc} PSIG (T-Sat: {tsat_suc} C)", ln=1)
-        pdf.cell(95, 5, f"Corrente LRA/RLA: {lra_comp}A / {rla_comp}A", ln=0)
-        pdf.cell(95, 5, f"Pressão Líquido: {p_liq} PSIG (T-Sat: {tsat_liq} C)", ln=1)
-        pdf.cell(95, 5, f"Corrente Medida: {a_med} A", ln=1); pdf.ln(4)
-        
-        pdf.set_line_width(0.5); pdf.set_fill_color(220, 220, 220); pdf.set_font("Arial", 'B', 11)
-        pdf.cell(190, 10, f"Delta T (Ar): {dt} K", ln=1, fill=True, align='C', border=1); pdf.ln(2)
-        pdf.cell(95, 12, f"Superaquecimento (SH): {sh} K", border=1, align='C', fill=True)
-        pdf.cell(95, 12, f"Sub-resfriamento (SC): {sc} K", border=1, align='C', fill=True, ln=1)
-        pdf.set_line_width(0.2); pdf.ln(8)
+        # --- 3. ANÁLISE TÉCNICA (ELÉTRICA E TERMO) ---
+        draw_header("3. Parâmetros de Performance")
+        pdf.set_font("Arial", 'B', 9)
+        pdf.cell(45, 6, "Tensão (Nom/Med):", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{v_rede}V / {v_med}V", ln=0)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Corrente (RLA/Med):", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{rla_comp}A / {a_med}A", ln=1)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Superaquecimento:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{sh} K", ln=0)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Sub-resfriamento:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{sc} K", ln=1)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Delta T (Ar):", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{dt} K", ln=1)
+        pdf.ln(3)
 
         # --- 4. CONCLUSÃO ---
-        draw_header("4. Conclusão Técnica")
-        pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Observações Técnicas:", ln=True)
-        pdf.set_font("Arial", '', 10); pdf.multi_cell(0, 6, obs_raw if obs_raw else "N/D"); pdf.ln(4)
-        pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Medidas Realizadas:", ln=True)
-        pdf.set_font("Arial", '', 10); pdf.multi_cell(0, 6, med_tomadas_raw if med_tomadas_raw else "N/D")
+        draw_header("4. Diagnóstico & Observações")
+        pdf.set_font("Arial", '', 9)
+        pdf.multi_cell(0, 5, f"OBSERVAÇÕES:\n{obs_raw}\n\nMEDIDAS TOMADAS:\n{med_tomadas_raw}\n\nRECOMENDAÇÕES:\n{ia_raw}")
+        
+        # --- RODAPÉ (NOME E CNPJ MOVIDOS PARA CÁ) ---
+        pdf.set_y(-30)
+        pdf.set_font("Arial", 'B', 9)
+        pdf.set_text_color(100, 100, 100)
+        pdf.cell(0, 5, "MARCOS ALEXANDRE ALMEIDA DO NASCIMENTO", ln=True, align='C')
+        pdf.set_font("Arial", '', 8)
+        pdf.cell(0, 5, "CNPJ: 45.451.272/0001-38 | Responsável Técnico", ln=True, align='C')
 
-        pdf_output = pdf.output()
-        st.download_button("⬇️ Baixar Relatório", data=bytes(pdf_output), file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
+        # Gerar Download
+        pdf_output = pdf.output(dest='S').encode('latin-1')
+        st.download_button(label="⬇️ Baixar PDF", data=pdf_output, file_name=f"Relatorio_{cliente}_{date.today()}.pdf", mime="application/pdf")
