@@ -139,17 +139,15 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(40, 6, "Comodo/Sala:", 0); pdf.set_font("Arial", '', 9); pdf.cell(0, 6, f"{comodo_sala}", 1, 1)
         pdf.set_font("Arial", 'B', 9); pdf.cell(40, 6, "Equipamento:", 0); pdf.set_font("Arial", '', 9); pdf.cell(0, 6, f"{fabricante} {tipo_eq} {cap_digitada} BTUs", 1, 1)
         
-        # --- CORREÇÃO AUTOMÁTICA DE BYTES (TESTADA PARA PYTHON 3.14 + STREAMLIT) ---
-        pdf_output = pdf.output()
-        if isinstance(pdf_output, str):
-            pdf_final_data = pdf_output.encode('latin-1')
-        else:
-            pdf_final_data = pdf_output
-            
+        # EXPORTAÇÃO ESTÁVEL DE BYTES PARA O DOWNLOAD
+        pdf_bytes = pdf.output()
+        if isinstance(pdf_bytes, str):
+            pdf_bytes = pdf_bytes.encode('latin-1')
+
         st.download_button(
             label="⬇️ Baixar Relatório PDF",
-            data=pdf_final_data,
+            data=pdf_bytes,
             file_name=f"Relatorio_{cliente}.pdf",
             mime="application/pdf",
-            key="btn_download_final_universal"
+            key="btn_relatorio_MPN_final_stable"
         )
