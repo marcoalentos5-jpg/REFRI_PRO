@@ -177,23 +177,30 @@ with tab_diag:
         pdf.set_fill_color(245, 245, 245)
         pdf.set_font("Arial", 'B', 8)
         for row in data_table:
-            pdf.cell(40, 7, row[0], 1, 0, 'C', fill=True)
-            pdf.cell(50, 7, row[1], 1, 0, 'C')
-            pdf.cell(50, 7, row[2], 1, 0, 'C')
-            pdf.cell(50, 7, row[3], 1, 1, 'C')
+            pdf.cell(40, 7, row, 1, 0, 'C', fill=True)
+            pdf.cell(50, 7, row, 1, 0, 'C')
+            pdf.cell(50, 7, row, 1, 0, 'C')
+            pdf.cell(50, 7, row, 1, 1, 'C')
         pdf.ln(5)
 
-        # --- 4. CONCLUSÃO (COM MOLDURAS NOS CAMPOS SOLICITADOS) ---
+        # --- 4. CONCLUSÃO (COLUNAS E ESPAÇAMENTO REDUZIDO) ---
         draw_header("4. Diagnostico Final")
         pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Observacoes Tecnicas:", ln=1)
         pdf.set_font("Arial", '', 9)
-        # Moldura aplicada com border=1
-        pdf.multi_cell(0, 8, f"{obs_raw if obs_raw else 'Nenhuma.'}", border=1)
-        pdf.ln(4)
+        
+        # Divisão em duas colunas para Observações com espaçamento 4
+        y_before = pdf.get_y()
+        pdf.multi_cell(95, 4, f"{obs_raw if obs_raw else 'Nenhuma.'}", border=1)
+        y_after_left = pdf.get_y()
+        
+        pdf.set_xy(105, y_before)
+        pdf.multi_cell(95, 4, " ", border=1) # Coluna B (Espaço reservado conforme instrução de duas colunas)
+        
+        # Retoma o fluxo abaixo do maior bloco
+        pdf.set_y(max(y_after_left, pdf.get_y()) + 4)
         
         pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Recomendacoes e Medidas Propostas:", ln=1)
         pdf.set_font("Arial", '', 9)
-        # Moldura aplicada com border=1
         pdf.multi_cell(0, 8, f"{ia_raw}", border=1)
 
         # --- RODAPÉ ---
