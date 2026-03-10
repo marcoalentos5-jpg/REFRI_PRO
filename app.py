@@ -186,6 +186,9 @@ with tab_diag:
         pdf.cell(95, 8, f"WhatsApp: {whatsapp}", border="B")
         pdf.cell(95, 8, f"E-mail: {email_cli}", border="B", ln=True)
 
-        # Finalização do PDF para download no Streamlit
-        pdf_output = pdf.output(dest='S').encode('latin-1')
+        # Download seguro para Streamlit Cloud/Local
+        pdf_output = pdf.output(dest='S')
+        if isinstance(pdf_output, str):
+            pdf_output = pdf_output.encode('latin-1')
+        
         st.download_button(label="📥 Baixar Relatório", data=pdf_output, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
