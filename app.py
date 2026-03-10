@@ -27,18 +27,25 @@ tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ El
 
 with tab_cad:
     st.subheader("👤 Dados do Cliente & Contato")
-    c1, c2, c3 = st.columns(3)
-    cliente = c1.text_input("Nome do Cliente / Empresa")
-    doc_cliente = c1.text_input("CPF / CNPJ")
     
-    # CAMPOS BAIRRO E CEP INSERIDOS
-    endereco = c2.text_input("Endereço (Rua e Número)")
-    bairro = c2.text_input("Bairro")
-    cep = c2.text_input("CEP", placeholder="00000-000")
+    # 1ª LINHA: Nome, Endereço, Bairro e CPF lado a lado
+    l1_c1, l1_c2, l1_c3, l1_c4 = st.columns([2, 2, 1.5, 1.5])
+    cliente = l1_c1.text_input("Nome do Cliente / Empresa")
+    endereco = l1_c2.text_input("Endereço (Rua e Número)")
+    bairro = l1_c3.text_input("Bairro")
+    doc_cliente = l1_c4.text_input("CPF / CNPJ")
     
-    whatsapp = c3.text_input("🟢 WhatsApp", value="21980264217")
-    data_visita = c3.date_input("Data da Visita", value=date.today())
-    email_cli = c3.text_input("✉️ E-mail")
+    # 2ª LINHA: WhatsApp, CEP, Data e E-mail
+    l2_c1, l2_c2, l2_c3, l2_c4 = st.columns(4)
+    # Reduzindo visualmente o campo WhatsApp e CEP
+    col_zap, _ = l2_c1.columns([0.8, 0.2])
+    whatsapp = col_zap.text_input("🟢 WhatsApp", value="21980264217")
+    
+    col_cep, _ = l2_c2.columns([0.8, 0.2])
+    cep = col_cep.text_input("CEP", placeholder="00000-000")
+    
+    data_visita = l2_c3.date_input("Data da Visita", value=date.today())
+    email_cli = l2_c4.text_input("✉️ E-mail")
     
     st.markdown("---")
     st.subheader("⚙️ Dados Técnicos")
@@ -80,7 +87,7 @@ with tab_termo:
     dt = round(t_ret - t_ins, 1)
     
     st.markdown("---")
-    # FONTE AUMENTADA E SIMBOLO DELTA (Δ) INSERIDO
+    # DESTAQUE COM FONTE GRANDE E SÍMBOLO Δ
     st.markdown(f"### Temperatura de Saturação (Sucção): {tsat_suc} °C")
     st.markdown(f"### Superaquecimento (SH): {sh} K")
     st.markdown(f"### Temperatura de Saturação (Líquido): {tsat_liq} °C")
@@ -94,6 +101,7 @@ with tab_diag:
         pdf = FPDF()
         pdf.add_page()
         
+        # Cabeçalho
         pdf.set_font("Helvetica", "B", 14)
         if os.path.exists("logo.png"):
             pdf.image("logo.png", 10, 8, 22)
@@ -103,6 +111,7 @@ with tab_diag:
         pdf.cell(190, 10, "RELATÓRIO TÉCNICO", ln=True, align="C")
         pdf.ln(5)
         
+        # 1. Identificação
         pdf.set_fill_color(245, 245, 245)
         pdf.set_font("Helvetica", "B", 10)
         pdf.set_text_color(60)
@@ -118,12 +127,12 @@ with tab_diag:
         pdf.cell(55, 7, f" DATA DA VISITA: {data_visita.strftime('%d/%m/%Y')} ", border=1, fill=True, align="C", ln=True)
         
         pdf.set_font("Helvetica", "", 8)
-        # RELATÓRIO PDF: ENDEREÇO, BAIRRO E CEP
         pdf.cell(190, 6, f"Endereço: {endereco} - Bairro: {bairro}", border="B", ln=True)
         pdf.cell(63, 6, f"CEP: {cep}", border="B")
         pdf.cell(63, 6, f"WhatsApp: {whatsapp}", border="B")
         pdf.cell(64, 6, f"E-mail: {email_cli}", border="B", ln=True)
 
+        # 2. Equipamento
         pdf.ln(4)
         pdf.set_font("Helvetica", "B", 10)
         pdf.cell(190, 7, " 2. DADOS DO EQUIPAMENTO", ln=True, fill=True)
@@ -141,6 +150,7 @@ with tab_diag:
         pdf.cell(63, 6, f"Tipo: {tipo_eq}", border="B")
         pdf.cell(64, 6, f"Gás: {fluido}", border="B", ln=True)
 
+        # 3. Medições
         pdf.ln(4)
         pdf.set_font("Helvetica", "B", 10)
         pdf.cell(190, 7, " 3. ANÁLISE TÉCNICA E MEDIÇÕES", ln=True, fill=True)
@@ -155,19 +165,22 @@ with tab_diag:
         pdf.cell(48, 6, f"Corrente: {a_med} A", border="B", ln=True)
         pdf.cell(47, 6, f"T. Ar Retorno: {t_ret} C", border="B")
         pdf.cell(47, 6, f"T. Ar Insufl.: {t_ins} C", border="B")
+        
+        # Linha de resultados (LAYOUT MANTIDO)
         pdf.set_font("Helvetica", "B", 8); pdf.set_fill_color(248, 248, 248)
         pdf.cell(32, 6, f" SH: {sh} K", border="B", fill=True)
         pdf.cell(32, 6, f" SC: {sc} K", border="B", fill=True)
-        # RELATÓRIO PDF: ALTERAÇÃO PARA ΔT
-        delta_label = " \xceT: ".encode('latin-1').decode('utf-8') # Fallback para Delta
-        pdf.cell(32, 6, f" DT: {dt} K", border="B", fill=True, ln=True)
+        # Escrita segura para evitar erro de Unicode e manter layout
+        pdf.cell(32, 6, f" Delta T: {dt} K", border="B", fill=True, ln=True)
 
+        # 4. Diagnóstico
         pdf.ln(4)
         pdf.set_font("Helvetica", "B", 10)
         pdf.cell(190, 7, " 4. DIAGNÓSTICO E OBSERVAÇÕES", ln=True, fill=True)
         pdf.set_font("Helvetica", "", 8)
         pdf.multi_cell(190, 5, obs if obs else "Equipamento operando conforme especificações.", border=1)
 
+        # Rodapé
         pdf.ln(12)
         pdf.line(60, pdf.get_y(), 150, pdf.get_y())
         pdf.set_font("Helvetica", "B", 8)
@@ -175,6 +188,7 @@ with tab_diag:
         pdf.set_font("Helvetica", "", 7)
         pdf.cell(190, 4, "CNPJ: 51.274.762/0001-17", ln=True, align="C")
 
+        # Conversão PDF
         pdf_bytes = pdf.output(dest='S')
         if isinstance(pdf_bytes, str): pdf_bytes = pdf_bytes.encode('latin-1')
         st.download_button(label="📥 Baixar Relatório", data=io.BytesIO(pdf_bytes), file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
