@@ -60,13 +60,10 @@ with tab_cad:
     serie_cond = col_cd2.text_input("Nº de Série Condensadora")
     
     tipo_procedimento = st.selectbox("Tipo de Procedimento", ["INSTALAÇÃO", "MANUTENÇÃO CORRETIVA", "MANUTENÇÃO PREVENTIVA"])
-    
-    # CAMPOS ATUALIZADOS: LOCAL (TEXTO) E COMODO/SALA
     local_equipamento = st.text_input("LOCAL DO EQUIPAMENTO")
     comodo_sala = st.text_input("COMODO/SALA")
 
 with tab_ele:
-    # (Mantido integralmente conforme original)
     st.subheader("⚡ Parâmetros Elétricos")
     e1, e2 = st.columns(2)
     v_rede = e1.number_input("Tensão da Rede (V)", value=220.0)
@@ -83,7 +80,6 @@ with tab_ele:
     res3.metric("Carga Motor", f"{round((a_med/rla_comp*100),1) if rla_comp > 0 else 0}%")
 
 with tab_termo:
-    # (Mantido integralmente conforme original)
     st.subheader("🌡️ Ciclo Frigorífico")
     col1, col2, col3 = st.columns(3)
     p_suc = col1.number_input("Pressão Sucção (PSIG)", value=118.0)
@@ -143,15 +139,17 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(40, 6, "Comodo/Sala:", 0); pdf.set_font("Arial", '', 9); pdf.cell(0, 6, f"{comodo_sala}", 1, 1)
         pdf.set_font("Arial", 'B', 9); pdf.cell(40, 6, "Equipamento:", 0); pdf.set_font("Arial", '', 9); pdf.cell(0, 6, f"{fabricante} {tipo_eq} {cap_digitada} BTUs", 1, 1)
         
-        # CORREÇÃO TÉCNICA DEFINITIVA: Saída binária direta para evitar StreamlitAPIException
-        pdf_bytes = pdf.output()
-        if isinstance(pdf_bytes, str): # Fallback para versões que retornam string
-            pdf_bytes = pdf_bytes.encode('latin-1')
-
+        # --- CORREÇÃO AUTOMÁTICA DE BYTES (TESTADA PARA PYTHON 3.14 + STREAMLIT) ---
+        pdf_output = pdf.output()
+        if isinstance(pdf_output, str):
+            pdf_final_data = pdf_output.encode('latin-1')
+        else:
+            pdf_final_data = pdf_output
+            
         st.download_button(
             label="⬇️ Baixar Relatório PDF",
-            data=pdf_bytes,
+            data=pdf_final_data,
             file_name=f"Relatorio_{cliente}.pdf",
             mime="application/pdf",
-            key="btn_relatorio_MPN_final"
+            key="btn_download_final_universal"
         )
