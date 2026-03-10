@@ -58,6 +58,8 @@ with tab_cad:
     col_cd1, col_cd2 = st.columns(2)
     mod_cond = col_cd1.text_input("Modelo Unidade Condensadora")
     serie_cond = col_cd2.text_input("Nº de Série Condensadora")
+    tipo_procedimento = st.selectbox("Tipo de Procedimento", ["INSTALAÇÃO", "MANUTENÇÃO CORRETIVA", "MANUTENÇÃO PREVENTIVA"])
+    local_equipamento = st.selectbox("LOCAL DO EQUIPAMENTO", ["RESIDÊNCIA", "COMÉRCIO", "INDÚSTRIA", "OUTROS"])
 
 with tab_ele:
     st.subheader("⚡ Parâmetros Elétricos")
@@ -152,7 +154,7 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "E-mail:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{email_cli}", ln=1)
         pdf.ln(5)
 
-        # --- 2. DADOS TÉCNICOS ---
+        # --- 2. DADOS TÉCNICOS (INCLUINDO LOCAL DO EQUIPAMENTO) ---
         draw_header("2. Especificacoes do Equipamento")
         pdf.set_font("Arial", 'B', 9)
         pdf.cell(30, 6, "Equipamento:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{fabricante} - {tipo_eq}", ln=0)
@@ -161,7 +163,10 @@ with tab_diag:
         pdf.set_x(110); pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Serie Evap.:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(45, 6, f"{serie_evap}", ln=1)
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Mod. Cond.:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{mod_cond}", ln=0)
         pdf.set_x(110); pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Serie Cond.:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(45, 6, f"{serie_cond}", ln=1)
-        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Fluido:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{fluido}", ln=1)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Fluido:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{fluido}", ln=0)
+        pdf.set_x(110); pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Tipo Procedimento:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(45, 6, f"{tipo_procedimento}", ln=1)
+        # LOCAL DO EQUIPAMENTO ENVIADO AO RELATÓRIO
+        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Local Equip.:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{local_equipamento}", ln=1)
         pdf.ln(5)
 
         # --- 3. PERFORMANCE ---
@@ -177,10 +182,10 @@ with tab_diag:
         pdf.set_fill_color(245, 245, 245)
         pdf.set_font("Arial", 'B', 8)
         for row in data_table:
-            pdf.cell(40, 7, row[0], 1, 0, 'C', fill=True)
-            pdf.cell(50, 7, row[1], 1, 0, 'C')
-            pdf.cell(50, 7, row[2], 1, 0, 'C')
-            pdf.cell(50, 7, row[3], 1, 1, 'C')
+            pdf.cell(40, 7, row, 1, 0, 'C', fill=True)
+            pdf.cell(50, 7, row, 1, 0, 'C')
+            pdf.cell(50, 7, row, 1, 0, 'C')
+            pdf.cell(50, 7, row, 1, 1, 'C')
         pdf.ln(5)
 
         # --- 4. CONCLUSÃO ---
@@ -188,11 +193,10 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Observacoes Tecnicas:", ln=1)
         pdf.set_font("Arial", '', 8)
         pdf.multi_cell(0, 4, f"{obs_raw if obs_raw else 'Nenhuma.'}", border=1)
-        pdf.ln(2) # Pequeno ajuste de respiro antes do próximo título
+        pdf.ln(2)
         
         pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Medidas Tecnicas Tomadas:", ln=1)
         pdf.set_font("Arial", '', 9)
-        # TABULAÇÃO CORRIGIDA: Altura de linha ajustada para 4.0 para evitar sobreposição
         pdf.multi_cell(0, 4.0, f"{med_tomadas_raw if med_tomadas_raw else 'Nenhuma.'}", border=1)
 
         # --- RODAPÉ ---
