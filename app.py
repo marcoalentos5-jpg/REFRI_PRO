@@ -9,7 +9,7 @@ import streamlit.components.v1 as components
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="MPN | Engenharia Pro", layout="wide", page_icon="❄️")
 
-# --- 2. SCRIPT NAVEGAÇÃO ENTER (LAYOUT ORIGINAL) ---
+# --- 2. SCRIPT NAVEGAÇÃO ENTER ---
 components.html(
     """<script>
     const doc = window.parent.document;
@@ -25,7 +25,7 @@ components.html(
     </script>""", height=0,
 )
 
-# --- 3. MOTOR TERMODINÂMICO RECALIBRADO (MATRIZ DE PRECISÃO MPN) ---
+# --- 3. MOTOR TERMODINÂMICO (MATRIZ DE PRECISÃO MPN) ---
 def get_tsat_global(psig, gas):
     ancoras = {
         "R-410A": {
@@ -39,14 +39,6 @@ def get_tsat_global(psig, gas):
         "R-22": {
             "p": [50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 500.0, 550.0, 600.0],
             "t": [-3.34, 15.80, 28.15, 38.56, 47.30, 54.89, 61.63, 67.72, 78.38, 83.12, 87.53]
-        },
-        "R-134a": {
-            "p": [0.0, 50.0, 100.0, 150.0, 200.0],
-            "t": [-26.08, 12.23, 30.92, 43.65, 53.74]
-        },
-        "R-404A": {
-            "p": [0.0, 50.0, 100.0, 150.0, 200.0],
-            "t": [-45.45, -9.41, 8.96, 22.23, 32.59]
         }
     }
     if gas not in ancoras: return 0.0
@@ -69,7 +61,7 @@ def get_style(val, tipo):
         return "#FFEBEE", "#F44336"
     return "#F8F9FA", "#BDBDBD"
 
-# --- 5. INTERFACE (LAYOUT ORIGINAL PRESERVADO) ---
+# --- 5. INTERFACE ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
 tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico"])
 
@@ -151,21 +143,18 @@ with tab_diag:
         pdf = FPDF()
         pdf.add_page()
         
-        # LOGOMARCA (OPCIONAL)
         if os.path.exists("logo.png"):
             pdf.image("logo.png", 10, 8, 33)
             pdf.set_x(45)
         
-        # CABEÇALHO PROFISSIONAL
         pdf.set_font("Arial", "B", 18)
-        pdf.set_text_color(0, 74, 153) # Azul MPN
+        pdf.set_text_color(0, 74, 153)
         pdf.cell(145, 10, "RELATÓRIO TÉCNICO DE ENGENHARIA", ln=True, align="R")
         pdf.set_font("Arial", "I", 10)
         pdf.set_text_color(100)
         pdf.cell(190, 5, f"Gerado em: {data_visita.strftime('%d/%m/%Y')}", ln=True, align="R")
         pdf.ln(10)
         
-        # SEÇÃO 1: IDENTIFICAÇÃO DO CLIENTE (TODOS OS DADOS)
         pdf.set_fill_color(240, 240, 240)
         pdf.set_font("Arial", "B", 12)
         pdf.set_text_color(0)
@@ -178,7 +167,6 @@ with tab_diag:
         pdf.cell(95, 8, f"E-mail: {email_cli}", border="B", ln=True)
         pdf.ln(5)
 
-        # SEÇÃO 2: DADOS DO EQUIPAMENTO
         pdf.set_font("Arial", "B", 12)
         pdf.cell(190, 8, " ESPECIFICAÇÕES TÉCNICAS DO SISTEMA", ln=True, fill=True)
         pdf.set_font("Arial", "", 10)
@@ -192,7 +180,6 @@ with tab_diag:
         pdf.cell(95, 8, f"Série Condensadora: {serie_cond}", border="B", ln=True)
         pdf.ln(5)
 
-        # SEÇÃO 3: PARÂMETROS ELÉTRICOS
         pdf.set_font("Arial", "B", 12)
         pdf.cell(190, 8, " PARÂMETROS ELÉTRICOS MEDIDOS", ln=True, fill=True)
         pdf.set_font("Arial", "", 10)
@@ -202,7 +189,6 @@ with tab_diag:
         pdf.cell(95, 8, f"Corrente Medida: {a_med} A", border="B", ln=True)
         pdf.ln(5)
 
-        # SEÇÃO 4: TERMODINÂMICA (PRECISÃO MPN)
         pdf.set_font("Arial", "B", 12)
         pdf.cell(190, 8, " ANÁLISE TERMODINÂMICA DO CICLO", ln=True, fill=True)
         pdf.set_font("Arial", "B", 10)
@@ -214,23 +200,26 @@ with tab_diag:
         pdf.cell(95, 8, f"P. Líquido: {p_liq} psig | T-Sat: {tsat_liq} C", border="B", ln=True)
         pdf.ln(5)
 
-        # SEÇÃO 5: CONCLUSÃO
         pdf.set_font("Arial", "B", 12)
         pdf.cell(190, 8, " PARECER TÉCNICO E OBSERVAÇÕES", ln=True, fill=True)
         pdf.set_font("Arial", "", 11)
         pdf.multi_cell(190, 8, obs if obs else "Nenhuma observação adicional relatada.", border=1)
         
-        pdf.ln(15)
+        pdf.ln(10)
         pdf.set_font("Arial", "I", 8)
-        pdf.cell(190, 5, "Este documento é um relatório técnico gerado pelo sistema MPN Engenharia Pro.", ln=True, align="C")
+        pdf.cell(190, 5, "Relatório gerado pelo sistema MPN Engenharia Pro.", ln=True, align="C")
 
-        # SAÍDA DE BYTES PARA DOWNLOAD
-        pdf_out = pdf.output(dest='S')
-        pdf_bytes = pdf_out.encode('latin-1') if isinstance(pdf_out, str) else pdf_out
-        
+        # --- CORREÇÃO DEFINITIVA DO DOWNLOAD ---
+        # Converte para string e depois encoda para bytes de forma explícita
+        pdf_str = pdf.output(dest='S')
+        if isinstance(pdf_str, bytes):
+            pdf_bytes = pdf_str
+        else:
+            pdf_bytes = pdf_str.encode('latin-1')
+
         st.download_button(
             label="📥 Baixar Relatório Profissional (PDF)", 
             data=pdf_bytes, 
-            file_name=f"Relatorio_{cliente}_{data_visita}.pdf", 
+            file_name=f"Relatorio_{cliente}.pdf", 
             mime="application/pdf"
         )
