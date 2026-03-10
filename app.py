@@ -8,7 +8,7 @@ import streamlit.components.v1 as components
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="MPN | Engenharia Pro", layout="wide", page_icon="❄️")
 
-# --- 2. SCRIPT NAVEGAÇÃO ENTER ---
+# --- 2. SCRIPT NAVEGAÇÃO ENTER (LAYOUT ORIGINAL) ---
 components.html(
     """<script>
     const doc = window.parent.document;
@@ -24,9 +24,9 @@ components.html(
     </script>""", height=0,
 )
 
-# --- 3. MOTOR TERMODINÂMICO (CALIBRADO - LAYOUT PRESERVADO) ---
+# --- 3. MOTOR TERMODINÂMICO RECALIBRADO (MATRIZ DE PRECISÃO MPN) ---
 def get_tsat_global(psig, gas):
-    # MATRIZ DE PRECISÃO MPN - VALIDADA PONTO A PONTO
+    # MATRIZ DE ANCORAGEM VALIDADA PONTO A PONTO (VÁCUO A 600 PSI)
     ancoras = {
         "R-410A": {
             "p": [50.0, 100.0, 133.1, 133.5, 134.0, 134.5, 150.0, 200.0, 221.0, 250.0, 300.0, 452.0, 455.0, 456.0, 460.0, 500.0, 501.0, 502.0, 503.0, 525.0, 550.0, 555.0, 560.0, 570.0, 600.0],
@@ -69,7 +69,7 @@ def get_style(val, tipo):
         return "#FFEBEE", "#F44336"
     return "#F8F9FA", "#BDBDBD"
 
-# --- 5. INTERFACE ---
+# --- 5. INTERFACE (LAYOUT ORIGINAL PRESERVADO) ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
 tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico"])
 
@@ -175,5 +175,8 @@ with tab_diag:
         pdf.set_font("Arial", "", 11)
         pdf.multi_cell(190, 8, obs)
         
-        html_pdf = pdf.output(dest="S").encode("latin-1")
-        st.download_button(label="📥 Baixar Relatório em PDF", data=html_pdf, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
+        # --- CORREÇÃO TÉCNICA PDF ---
+        pdf_out = pdf.output(dest='S')
+        pdf_bytes = pdf_out.encode('latin-1') if isinstance(pdf_out, str) else pdf_out
+        
+        st.download_button(label="📥 Baixar Relatório em PDF", data=pdf_bytes, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
