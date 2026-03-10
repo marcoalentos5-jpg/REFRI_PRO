@@ -138,18 +138,15 @@ with tab_diag:
             pdf.set_text_color(0, 0, 0)
             pdf.ln(3)
 
-        # --- 1. IDENTIFICAÇÃO (COLUNAS À DIREITA) ---
+        # --- 1. IDENTIFICAÇÃO ---
         draw_header("1. Identificacao do Cliente")
         pdf.set_font("Arial", 'B', 9)
-        # Linha 1
         pdf.cell(30, 6, "Cliente:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{cliente}", ln=0)
         pdf.set_x(120) 
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "CPF/CNPJ:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{doc_cliente}", ln=1)
-        # Linha 2
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Endereco:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{endereco}", ln=0)
         pdf.set_x(120) 
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Bairro/CEP:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{bairro} / {cep}", ln=1)
-        # Linha 3
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "WhatsApp:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{whatsapp}", ln=0)
         pdf.set_x(120) 
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "E-mail:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{email_cli}", ln=1)
@@ -160,11 +157,14 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9)
         pdf.cell(30, 6, "Equipamento:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{fabricante} - {tipo_eq}", ln=0)
         pdf.set_x(110); pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Capacidade:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(60, 6, f"{cap_digitada} BTUs", ln=1)
-        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Fluido:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{fluido}", ln=0)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Mod. Evap.:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{mod_evap}", ln=0)
+        pdf.set_x(110); pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Serie Evap.:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(60, 6, f"{serie_evap}", ln=1)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Mod. Cond.:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{mod_cond}", ln=0)
         pdf.set_x(110); pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Serie Cond.:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(60, 6, f"{serie_cond}", ln=1)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Fluido:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(70, 6, f"{fluido}", ln=1)
         pdf.ln(5)
 
-        # --- 3. TABELA DE PERFORMANCE ---
+        # --- 3. PARÂMETROS DE PERFORMANCE ---
         draw_header("3. Parametros de Performance")
         data_table = [
             ["PARAMETRO", "MEDIDO", "REFERENCIA", "STATUS"],
@@ -183,19 +183,25 @@ with tab_diag:
             pdf.cell(50, 7, row[3], 1, 1, 'C')
         pdf.ln(5)
 
+        # --- 4. CONCLUSÃO (COM MOLDURAS NOS CAMPOS SOLICITADOS) ---
         draw_header("4. Diagnostico Final")
         pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Observacoes Tecnicas:", ln=1)
-        pdf.set_font("Arial", '', 9); pdf.multi_cell(0, 5, f"{obs_raw}")
-        pdf.ln(2)
+        pdf.set_font("Arial", '', 9)
+        # Moldura aplicada com border=1
+        pdf.multi_cell(0, 8, f"{obs_raw if obs_raw else 'Nenhuma.'}", border=1)
+        pdf.ln(4)
+        
         pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Recomendacoes e Medidas Propostas:", ln=1)
-        pdf.set_font("Arial", '', 9); pdf.multi_cell(0, 5, f"{ia_raw}")
+        pdf.set_font("Arial", '', 9)
+        # Moldura aplicada com border=1
+        pdf.multi_cell(0, 8, f"{ia_raw}", border=1)
 
+        # --- RODAPÉ ---
         pdf.set_y(-30)
         pdf.line(10, 275, 90, 275); pdf.line(110, 275, 190, 275)
         pdf.set_font("Arial", 'I', 7)
         pdf.cell(90, 10, "Assinatura do Tecnico", 0, 0, 'C')
         pdf.cell(100, 10, "Assinatura do Cliente", 0, 1, 'C')
         
-        # Correção técnica para saída de bytes direta compatível com streamlit
         report_data = pdf.output()
         st.download_button(label="⬇️ Baixar Relatório em PDF", data=bytes(report_data), file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
