@@ -162,16 +162,18 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(35, 6, "Ser. Condensadora:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(55, 6, f"{serie_cond}", ln=1)
         pdf.ln(3)
 
-        # --- 3. ANÁLISE TÉCNICA ---
+        # --- 3. ANÁLISE TÉCNICA (DISTRIBUIÇÃO EM COLUNAS) ---
         draw_header("3. Parâmetros de Performance")
         pdf.set_font("Arial", 'B', 9)
-        pdf.cell(45, 6, "Tensão (Nom/Med):", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{v_rede}V / {v_med}V", ln=0)
-        # Ordem solicitada: RLA/Med primeiro, depois LRA abaixo
-        pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Corrente (RLA/Med):", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{rla_comp}A / {a_med}A", ln=1)
-        pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Corrente LRA:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{lra_comp} A", ln=1)
         
+        # Coluna Esquerda: Elétrica (Tensão -> RLA/Med -> LRA)
+        pdf.cell(45, 6, "Tensão (Nom/Med):", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{v_rede}V / {v_med}V", ln=0)
         pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Sub-resfriamento:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{sc} K", ln=1)
+        
+        pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Corrente (RLA/Med):", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{rla_comp}A / {a_med}A", ln=0)
         pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Superaquecimento:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{sh} K", ln=1)
+        
+        pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Corrente LRA:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{lra_comp} A", ln=0)
         pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Delta T (Ar):", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{dt} K", ln=1)
         pdf.ln(3)
 
