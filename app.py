@@ -167,19 +167,29 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(45, 6, "Delta T (Ar):", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{dt} K", ln=1)
         pdf.ln(3)
 
-        # --- 4. CONCLUSÃO (DESTAQUE REFORÇADO) ---
+        # --- 4. CONCLUSÃO (MOLDURA E ÍCONES) ---
         draw_header("4. Diagnóstico & Observações")
         
-        pdf.set_font("Arial", 'B', 10) # Tamanho 10 e negrito
-        pdf.cell(0, 5, "| OBSERVAÇÕES:", ln=True) # Símbolo pipe adicionado
+        # Início da moldura
+        y_start = pdf.get_y()
+        pdf.set_draw_color(200, 200, 200) # Moldura cinza claro
+        
+        # Bloco de Observações
+        pdf.set_font("Arial", 'B', 10)
+        pdf.cell(0, 6, chr(149) + " OBSERVAÇÕES:", ln=True) 
         pdf.set_font("Arial", '', 9)
         pdf.multi_cell(0, 5, f"{obs_raw}")
-        pdf.ln(2)
+        pdf.ln(4)
         
-        pdf.set_font("Arial", 'B', 10) # Tamanho 10 e negrito
-        pdf.cell(0, 5, "| MEDIDAS TOMADAS:", ln=True) # Símbolo pipe adicionado
+        # Bloco de Medidas
+        pdf.set_font("Arial", 'B', 10)
+        pdf.cell(0, 6, chr(149) + " MEDIDAS TOMADAS:", ln=True)
         pdf.set_font("Arial", '', 9)
         pdf.multi_cell(0, 5, f"{med_tomadas_raw}")
+        
+        y_end = pdf.get_y()
+        # Desenhar retângulo moldura (x, y, w, h)
+        pdf.rect(10, y_start - 2, 190, (y_end - y_start) + 4)
         
         # --- RODAPÉ ---
         pdf.set_y(-30)
@@ -187,7 +197,7 @@ with tab_diag:
         pdf.set_text_color(100, 100, 100)
         pdf.cell(0, 5, "MARCOS ALEXANDRE ALMEIDA DO NASCIMENTO", ln=True, align='C')
         pdf.set_font("Arial", '', 8)
-        pdf.cell(0, 5, "CNPJ: 45.451.272/0001-38 | Responsável Técnico", ln=True, align='C')
+        pdf.cell(0, 5, "CNPJ: 45.451.272/0001-00 | Tel: 21-98545-3763 | Responsável Técnico", ln=True, align='C')
 
         # --- EXPORTAÇÃO ---
         output_pdf = io.BytesIO()
