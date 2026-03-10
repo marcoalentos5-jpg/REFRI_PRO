@@ -221,10 +221,17 @@ with tab_diag:
         pdf.cell(0, 5, "Este relatório é um documento técnico para fins de diagnóstico e manutenção.", ln=True, align='C')
         pdf.cell(0, 5, f"Gerado em {date.today().strftime('%d/%m/%Y')} | MPN Engenharia", ln=True, align='C')
 
-        # Geração segura do PDF
-        try:
-            pdf_bytes = pdf.output(dest='S').encode('latin-1', 'ignore')
-        except:
-            pdf_bytes = pdf.output()
+        # Geração de PDF via Buffer de Memória (Método Robusto)
+        pdf_buffer = io.BytesIO()
+        pdf_bytes = pdf.output(dest='S')
+        if isinstance(pdf_bytes, str):
+            pdf_bytes = pdf_bytes.encode('latin-1', 'ignore')
+        pdf_buffer.write(pdf_bytes)
+        pdf_buffer.seek(0)
             
-        st.download_button(label="⬇️ Baixar Relatório PDF", data=pdf_bytes, file_name=f"Relatorio_{cliente}_{data_visita}.pdf", mime="application/pdf")
+        st.download_button(
+            label="⬇️ Baixar Relatório PDF", 
+            data=pdf_buffer, 
+            file_name=f"Relatorio_{cliente}_{data_visita}.pdf", 
+            mime="application/pdf"
+        )
