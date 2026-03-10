@@ -32,7 +32,7 @@ tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ El
 
 with tab_cad:
     st.subheader("👤 Dados do Cliente & Contato")
-    c1, c2 = st.columns() 
+    c1, c2 = st.columns([3, 1]) # CORREÇÃO TÉCNICA: Definida proporção para evitar erro
     cliente = c1.text_input("Nome do Cliente / Empresa")
     doc_cliente = c2.text_input("CPF / CNPJ")
     
@@ -42,7 +42,6 @@ with tab_cad:
     cep = l2_c3.text_input("CEP", placeholder="00000-000")
     
     l3_c1, l3_c2, l3_c3, l3_c4 = st.columns(4)
-    # ALTERAÇÃO: Nome do campo alterado conforme instrução
     comodo_sala = l3_c1.text_input("🏠 COMODO DO PROCEDIMENTO")
     whatsapp = l3_c2.text_input("🟢 WhatsApp", value="21980264217")
     email_cli = l3_c3.text_input("✉️ E-mail")
@@ -53,7 +52,7 @@ with tab_cad:
     d1, d2, d3 = st.columns(3)
     fabricante = d1.text_input("Fabricante (Marca)")
     linha = d1.text_input("Linha")
-    tecnologia = d2.selectbox("Technology", ["Inverter", "WindFree", "Scroll", "On-Off"])
+    tecnologia = d2.selectbox("Tecnologia", ["Inverter", "WindFree", "Scroll", "On-Off"])
     tipo_eq = d2.selectbox("Tipo de Sistema", ["Split Hi-Wall", "Cassete", "Piso-Teto", "VRF", "Chiller"])
     fluido = d3.selectbox("Gás Refrigerante", ["R-410A", "R-32", "R-22", "R-134a", "R-404A"])
     cap_digitada = d3.text_input("Capacidade (Mil BTU´s)", value="0")
@@ -153,7 +152,6 @@ with tab_diag:
         pdf.set_x(120) 
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Bairro/CEP:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{bairro} / {cep}", ln=1)
         
-        # ALTERAÇÃO: Nome do campo alterado no PDF conforme instrução
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Cômodo Proc.:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{comodo_sala}", ln=0)
         pdf.set_x(120) 
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Data Visita:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{data_visita}", ln=1)
