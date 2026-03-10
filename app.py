@@ -138,15 +138,15 @@ with tab_diag:
             pdf.set_text_color(0, 0, 0)
             pdf.ln(3)
 
-        # --- 1. IDENTIFICAÇÃO (AJUSTADO CONFORME SOLICITAÇÃO) ---
+        # --- 1. IDENTIFICAÇÃO (CAMPOS AJUSTADOS RIGOROSAMENTE) ---
         draw_header("1. Identificacao do Cliente")
         pdf.set_font("Arial", 'B', 9)
-        pdf.cell(15, 6, "Cliente:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(115, 6, f"{cliente}", ln=0)
-        pdf.set_x(140) 
-        pdf.set_font("Arial", 'B', 9); pdf.cell(20, 6, "CPF/CNPJ:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(30, 6, f"{doc_cliente}", ln=1)
-        pdf.set_font("Arial", 'B', 9); pdf.cell(18, 6, "Endereco:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(112, 6, f"{endereco}", ln=0)
-        pdf.set_x(140) 
-        pdf.set_font("Arial", 'B', 9); pdf.cell(20, 6, "Bairro/CEP:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(30, 6, f"{bairro} / {cep}", ln=1)
+        pdf.cell(15, 6, "Cliente:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(125, 6, f"{cliente}", ln=0)
+        pdf.set_x(150) 
+        pdf.set_font("Arial", 'B', 9); pdf.cell(20, 6, "CPF/CNPJ:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(20, 6, f"{doc_cliente}", ln=1)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(18, 6, "Endereco:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(122, 6, f"{endereco}", ln=0)
+        pdf.set_x(150) 
+        pdf.set_font("Arial", 'B', 9); pdf.cell(20, 6, "Bairro/CEP:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(20, 6, f"{bairro} / {cep}", ln=1)
         pdf.ln(4)
 
         # --- 2. DADOS DO EQUIPAMENTO ---
