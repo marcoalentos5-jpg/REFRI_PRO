@@ -94,66 +94,76 @@ with tab_termo:
 
 with tab_diag:
     st.subheader("🤖 Diagnóstico e Recomendações")
-    obs = st.text_area("Observações Técnicas Detalhadas", height=150)
-    medidas_tomadas = st.text_area("🔧 Medidas Técnicas Tomadas", height=150)
+    obs = st.text_area("Observações Técnicas Detalhadas", height=100)
+    medidas_tomadas = st.text_area("🔧 Medidas Técnicas Tomadas", height=100)
 
-    # --- MOTOR DE IA: DIAGNÓSTICO, CRUZAMENTO E CONSERTO (RIGOR TÉCNICO) ---
-    diag_resolutivo = []
+    st.markdown("### 🔧 Medidas Técnicas Propostas pela IA")
+    col_ia_1, col_ia_2 = st.columns(2)
+    
+    diag_termo = []
+    diag_eletr = []
     obs_low = obs.lower()
     
-    if any(x in obs_low for x in ["gelo", "congelando", "obstrução"]):
-        if sh > 12: diag_resolutivo.append("📌 [DEFEITO]: Baixa pressão/Falta de fluido. [CAUSA]: Vazamento ou carga insuficiente. [CONSERTO]: Pressurizar com N2, sanar vazamento, vácuo < 500μ e carga por massa.")
-        elif sh < 5: diag_resolutivo.append("📌 [DEFEITO]: Inundação de líquido. [CAUSA]: Obstrução de ar ou excesso de gás. [CONSERTO]: Higienização química, verificar motor evaporador e reduzir fluido.")
-    if any(x in obs_low for x in ["comunicação", "e1", "ch05", "led", "piscando"]):
-        diag_resolutivo.append(f"📌 [DEFEITO]: Erro de Comunicação Serial {fabricante}. [CAUSA]: Ruído elétrico ou placa avariada. [CONSERTO]: Testar cabo S, aterramento e capacitores da placa.")
-    if sh < 6: diag_resolutivo.append(f"🛠️ [CORRETIVA IA]: SH de {sh}K crítico. Revisar abertura da EEV ou reduzir carga de fluido refrigerante.")
-    elif sh > 9: diag_resolutivo.append(f"🛠️ [CORRETIVA IA]: SH de {sh}K elevado. Realizar teste de estanqueidade em flanges e brasagens.")
-    if sc < 3: diag_resolutivo.append(f"🛠️ [CORRETIVA IA]: SC Insuficiente ({sc}K). Higienização forçada da condensadora.")
-
-    proposta_final = "\n".join(diag_resolutivo) if diag_resolutivo else f"✅ [SISTEMA VALIDADO]: Parâmetros operacionais convergentes com manuais de engenharia {fabricante}."
-    medidas_ia = st.text_area("🔧 Medidas Técnicas Propostas pela IA", value=proposta_final, height=150)
+    # --- CRUZAMENTO RIGOROSO DE DADOS ---
     
+    # 1. Análise de Vazamento/Fluido (Obs + Termodinâmica)
+    if any(x in obs_low for x in ["óleo", "mancha", "vazamento", "fuga"]):
+        if sh > 12:
+            diag_termo.append("🚨 [REPARO]: Vazamento confirmado (Óleo + SH Alto). MEDIDA: Pressurizar com N2 (450 PSI), localizar fuga, refazer brasagem e vácuo < 500 microns.")
+        else:
+            diag_termo.append("⚠️ [MEDIDA]: Presença de óleo relatada. Realizar teste de estanqueidade em flanges e válvulas de serviço.")
+
+    # 2. Obstrução/Restrição (Obs + SC)
+    if any(x in obs_low for x in ["gelo", "congelando", "obstrução", "capilar"]):
+        if sc > 12:
+            diag_termo.append("⚙️ [MEDIDA]: Restrição na linha de líquido detectada (SC Alto). Substituir filtro secador e dispositivo de expansão.")
+        elif sh < 5:
+            diag_termo.append("❄️ [MEDIDA]: Gelo por baixa troca térmica. Realizar limpeza química de serpentinas e verificar capacitores dos ventiladores.")
+
+    # 3. Falha de Comunicação/Elétrica (Obs + Elétrica)
+    if any(x in obs_low for x in ["comunicação", "e1", "ch05", "erro", "serial"]):
+        diag_eletr.append("⚡ [MEDIDA]: Falha de Dados Serial. Verificar continuidade do cabo PP (Sinal) e testar tensão DC entre os bornes de comunicação.")
+    
+    if "odor" in obs_low or "queimado" in obs_low:
+        diag_eletr.append("🔥 [MEDIDA]: Sobrecarga térmica. Reapertar bornes da contatora e testar resistência de isolamento do compressor (Megômetro).")
+
+    # 4. Diagnóstico por Parâmetros Nominais
+    if sh < 6: diag_termo.append(f"⚠️ [ALERTA]: SH de {sh}K (Baixo). Risco de golpe de líquido no compressor. Reduzir carga ou aumentar fluxo de ar.")
+    if dt < 8: diag_termo.append(f"📉 [ALERTA]: Rendimento térmico de {dt}K insuficiente. Verificar eficiência de compressão.")
+    if diff_v > (v_rede * 0.05):
+        diag_eletr.append(f"❌ [ALERTA]: Queda de tensão de {diff_v}V acima do permitido (5%). Revisar cabeamento de alimentação.")
+
+    with col_ia_1:
+        st.info("**🌡️ Ciclo Frigorífico**")
+        txt_termo = "\n\n".join(diag_termo) if diag_termo else "✅ Ciclo operando dentro da normalidade técnica."
+        st.write(txt_termo)
+
+    with col_ia_2:
+        st.info("**⚡ Parte Elétrica**")
+        txt_eletr = "\n\n".join(diag_eletr) if diag_eletr else "✅ Parte elétrica estabilizada conforme medições."
+        st.write(txt_eletr)
+
+    # --- GERAÇÃO DE PDF ---
     if st.button("Gerar Relatório PDF"):
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Helvetica", "B", 14); pdf.set_text_color(0, 74, 153)
-        pdf.cell(190, 10, "RELATÓRIO TÉCNICO", ln=True, align="C"); pdf.ln(5)
+        pdf.cell(190, 10, "RELATORIO TECNICO DE ENGENHARIA", ln=True, align="C"); pdf.ln(5)
         
         pdf.set_fill_color(245, 245, 245); pdf.set_font("Helvetica", "B", 10); pdf.set_text_color(60)
-        pdf.cell(190, 7, " 1. IDENTIFICAÇÃO DO CLIENTE", ln=True, fill=True)
-        pdf.set_font("Helvetica", "", 8); pdf.cell(130, 8, f"Cliente: {cliente}", border="B")
-        pdf.set_font("Helvetica", "B", 9); pdf.set_fill_color(230, 230, 230)
-        pdf.cell(60, 8, f" DATA DA VISITA: {data_visita.strftime('%d/%m/%Y')} ", border=1, fill=True, align="C", ln=True)
+        pdf.cell(190, 7, " 1. IDENTIFICACAO", ln=True, fill=True)
+        pdf.set_font("Helvetica", "", 8)
+        pdf.cell(100, 8, f"Cliente: {cliente}")
+        pdf.cell(90, 8, f"Data: {data_visita}", ln=True)
+        pdf.cell(100, 8, f"Equipamento: {tipo_eq} - {fabricante}")
+        pdf.cell(90, 8, f"Fluido: {fluido}", ln=True); pdf.ln(3)
+
+        pdf.set_fill_color(245, 245, 245); pdf.set_font("Helvetica", "B", 10)
+        pdf.cell(190, 7, " 2. DIAGNOSTICO IA E MEDIDAS DE CONSERTO", ln=True, fill=True)
+        pdf.set_font("Helvetica", "", 9)
+        pdf.multi_cell(190, 6, f"{txt_termo}\n{txt_eletr}")
         
-        pdf.set_font("Helvetica", "", 8); pdf.cell(95, 6, f"CPF/CNPJ: {doc_cliente}", border="B")
-        pdf.cell(95, 6, f"WhatsApp: {whatsapp}", border="B", ln=True)
-        pdf.cell(190, 6, f"Endereço: {endereco}", border="B", ln=True)
-        pdf.cell(95, 6, f"Bairro: {bairro}", border="B")
-        pdf.cell(95, 6, f"CEP: {cep}", border="B", ln=True)
-        pdf.cell(190, 6, f"E-mail: {email_cli}", border="B", ln=True)
-
-        pdf.ln(4); pdf.set_font("Helvetica", "B", 10); pdf.cell(190, 7, " 2. ESPECIFICAÇÕES DO EQUIPAMENTO", ln=True, fill=True)
-        pdf.set_font("Helvetica", "", 8)
-        pdf.cell(95, 6, f"Modelo Evap: {mod_evap}", border="B"); pdf.cell(95, 6, f"N/S Evap: {serie_evap}", border="B", ln=True)
-        pdf.cell(95, 6, f"Modelo Cond: {mod_cond}", border="B"); pdf.cell(95, 6, f"N/S Cond: {serie_cond}", border="B", ln=True)
-
-        pdf.ln(4); pdf.set_font("Helvetica", "B", 10); pdf.cell(190, 7, " 3. ANÁLISE TÉCNICA E MEDIÇÕES", ln=True, fill=True)
-        pdf.set_font("Helvetica", "", 8)
-        pdf.cell(47, 6, f"V. Rede: {v_rede}V", border="B"); pdf.cell(47, 6, f"V. Med: {v_med}V", border="B")
-        pdf.cell(48, 6, f"RLA: {rla_comp}A", border="B"); pdf.cell(48, 6, f"Corrente Med: {a_med}A", border="B", ln=True)
-        pdf.cell(47, 6, f"LRA: {lra_comp}A", border="B"); pdf.cell(47, 6, f"P. Suc: {p_suc} PSI", border="B")
-        pdf.cell(48, 6, f"P. Liq: {p_liq} PSI", border="B"); pdf.cell(48, 6, f"T-Sat Suc: {tsat_suc}C", border="B", ln=True)
-        pdf.set_font("Helvetica", "B", 9); pdf.set_fill_color(248, 248, 248)
-        pdf.cell(47, 8, f" SH: {sh}K", border=1, fill=True); pdf.cell(47, 8, f" SC: {sc}K", border=1, fill=True)
-        pdf.cell(96, 8, f" Delta T: {dt}K", border=1, fill=True, ln=True)
-
-        pdf.ln(4); pdf.set_font("Helvetica", "B", 10); pdf.cell(190, 7, " 4. DIAGNÓSTICO E RECOMENDAÇÕES", ln=True, fill=True)
-        pdf.set_font("Helvetica", "", 8)
-        pdf.multi_cell(190, 5, f"Observações: {obs}", border="B")
-        pdf.ln(2); pdf.set_font("Helvetica", "B", 9); pdf.cell(190, 6, "MEDIDAS TÉCNICAS TOMADAS:", ln=True)
-        pdf.set_font("Helvetica", "", 8); pdf.multi_cell(190, 5, medidas_tomadas, border="B")
-        pdf.ln(2); pdf.set_font("Helvetica", "B", 9); pdf.cell(190, 6, "MEDIDAS TÉCNICAS PROPOSTAS PELA IA:", ln=True)
-        pdf.set_font("Helvetica", "", 8); pdf.multi_cell(190, 5, medidas_ia, border=1)
-
-        pdf_output = pdf.output(dest='S').encode('latin-1')
-        st.download_button(label="💾 Baixar Relatório PDF", data=pdf_output, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
+        pdf_output = io.BytesIO()
+        pdf_str = pdf.output(dest='S').encode('latin-1')
+        pdf_output.write(pdf_str)
+        st.download_button(label="📥 Baixar Relatório", data=pdf_output.getvalue(), file_name=f"MPN_Relatorio_{cliente}.pdf", mime="application/pdf")
