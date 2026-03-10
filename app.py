@@ -100,7 +100,7 @@ with tab_diag:
     st.subheader("🤖 Diagnóstico e Recomendações")
     obs_raw = st.text_area("✍️ Observações Técnicas Detalhadas", height=150)
     med_tomadas_raw = st.text_area("🔧 Medidas Técnicas Tomadas", height=150)
-
+    
     diag_termo = []
     diag_eletr = []
     if any(x in obs_raw.lower() for x in ["óleo", "vazamento"]): diag_termo.append("Vazamento detectado.")
@@ -131,5 +131,5 @@ with tab_diag:
         pdf.set_font("Arial", '', 12)
         pdf.multi_cell(0, 8, ia_raw)
         
-        pdf_bytes = pdf.output()
-        st.download_button("⬇️ Baixar PDF", data=bytes(pdf_bytes), file_name=f"Relatorio_{cliente}_{data_visita}.pdf", mime="application/pdf")
+        pdf_output = pdf.output()
+        st.download_button("⬇️ Baixar PDF", data=bytes(pdf_output), file_name=f"Relatorio_{cliente}_{data_visita}.pdf", mime="application/pdf")
