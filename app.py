@@ -202,13 +202,18 @@ with tab_diag:
         pdf.set_font("Arial", 'I', 8)
         pdf.cell(0, 5, "Responsavel Tecnico - MPN Engenharia", ln=1, align='C')
 
-        # --- SOLUÇÃO RIGOROSA PARA O ERRO (IO BYTES) ---
-        # Removendo emojis do nome do arquivo para evitar conflito no cabeçalho HTTP
-        safe_cliente = "".join([c for c in cliente if c.isalnum() or c in (' ', '_')]).strip()
-        filename = f"Relatorio_{safe_cliente}_{data_visita}.pdf"
+        # --- CORREÇÃO FINAL DE BUFFER ---
+        pdf_output = pdf.output(dest='S')
         
-        # Gerando o PDF como bytes reais
-        pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
+        # Se o output for string (versões antigas), converte. Se for bytes (fpdf2), usa direto.
+        if isinstance(pdf_output, str):
+            pdf_bytes = pdf_output.encode('latin-1', errors='replace')
+        else:
+            pdf_bytes = pdf_output
+        
+        # Limpeza rigorosa do nome do arquivo (sem emojis para evitar erro de cabeçalho)
+        safe_cliente = "".join([c for c in cliente if c.isalnum() or c in (' ', '_')]).strip()
+        filename = f"Relatorio_{safe_cliente}_{data_visita}.pdf" if safe_cliente else f"Relatorio_{data_visita}.pdf"
         
         st.download_button(
             label="⬇️ Baixar Relatório em PDF",
