@@ -188,12 +188,12 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Observacoes Tecnicas:", ln=1)
         pdf.set_font("Arial", '', 8)
         pdf.multi_cell(0, 4, f"{obs_raw if obs_raw else 'Nenhuma.'}", border=1)
-        pdf.ln(4)
+        pdf.ln(2) # Pequeno ajuste de respiro antes do próximo título
         
         pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Medidas Tecnicas Tomadas:", ln=1)
         pdf.set_font("Arial", '', 9)
-        # ESPAÇAMENTO ENTRE LINHAS REDUZIDO PARA 1.0 CONFORME SOLICITADO
-        pdf.multi_cell(0, 1.0, f"{med_tomadas_raw if med_tomadas_raw else 'Nenhuma.'}", border=1)
+        # TABULAÇÃO CORRIGIDA: Altura de linha ajustada para 4.0 para evitar sobreposição
+        pdf.multi_cell(0, 4.0, f"{med_tomadas_raw if med_tomadas_raw else 'Nenhuma.'}", border=1)
 
         # --- RODAPÉ ---
         pdf.set_y(-30)
