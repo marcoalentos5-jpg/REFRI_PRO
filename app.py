@@ -145,17 +145,15 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(40, 6, "Equipamento:", 0); pdf.set_font("Arial", '', 9); pdf.cell(0, 6, f"{fabricante} {tipo_eq} {cap_digitada} BTUs", 1, 1)
         pdf.set_font("Arial", 'B', 9); pdf.cell(40, 6, "Procedimento:", 0); pdf.set_font("Arial", '', 9); pdf.cell(0, 6, f"{tipo_procedimento}", 1, 1)
         
-        # --- CORREÇÃO DO ERRO DE ID DUPLICADO ---
-        pdf_output = pdf.output()
-        if isinstance(pdf_output, str):
-            pdf_data = pdf_output.encode('latin-1')
-        else:
-            pdf_data = pdf_output
+        # --- ATUALIZAÇÃO PARA EXTRAÇÃO CORRETA DE BYTES ---
+        pdf_bytes = pdf.output(dest='S')
+        if isinstance(pdf_bytes, str):
+            pdf_bytes = pdf_bytes.encode('latin-1')
             
         st.download_button(
             label="⬇️ Baixar Relatório PDF",
-            data=pdf_data,
+            data=pdf_bytes,
             file_name=f"Relatorio_{cliente}.pdf",
             mime="application/pdf",
-            key="btn_download_pdf" # Chave única para evitar DuplicateElementId
+            key="btn_download_pdf_final"
         )
