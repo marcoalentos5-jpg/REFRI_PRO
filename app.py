@@ -32,21 +32,18 @@ tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ El
 
 with tab_cad:
     st.subheader("👤 Dados do Cliente & Contato")
-    c1, c2 = st.columns([3, 1]) 
+    c1, c2 = st.columns([2.5, 1]) 
     cliente = c1.text_input("Nome do Cliente / Empresa")
     doc_cliente = c2.text_input("CPF / CNPJ")
-    
     l2_c1, l2_c2, l2_c3 = st.columns(3)
     endereco = l2_c1.text_input("Endereço (Rua e Número)")
     bairro = l2_c2.text_input("Bairro")
     cep = l2_c3.text_input("CEP", placeholder="00000-000")
-    
     l3_c1, l3_c2, l3_c3, l3_c4 = st.columns([1.2, 1, 1.5, 1])
     comodo_sala = l3_c1.text_input("🏠 COMODO DO PROCEDIMENTO")
     whatsapp = l3_c2.text_input("🟢 WhatsApp", value="21980264217")
     email_cli = l3_c3.text_input("✉️ E-mail")
     data_visita = l3_c4.date_input("Data da Visita", value=date.today())
-    
     st.markdown("---")
     st.subheader("⚙️ Dados Técnicos")
     d1, d2, d3 = st.columns(3)
@@ -105,26 +102,18 @@ with tab_diag:
     st.subheader("🤖 Diagnóstico e Recomendações")
     obs_raw = st.text_area("✍️ Observações Técnicas Detalhadas", height=150)
     med_tomadas_raw = st.text_area("🔧 Medidas Técnicas Tomadas", height=150)
-    
     diag_termo = []
-    diag_eletr = []
-    if any(x in obs_raw.lower() for x in ["óleo", "vazamento"]): diag_termo.append("Vazamento detectado.")
     if sh < 6: diag_termo.append(f"SH CRÍTICO ({sh}K).")
-    if diff_v > (v_rede * 0.05): diag_eletr.append(f"QUEDA TENSÃO ({diff_v}V).")
-    
-    propostas_sugestao = "\n".join(diag_termo + diag_eletr) if (diag_termo + diag_eletr) else "Sem anomalias detectadas."
+    if sc > 12: diag_termo.append(f"SC ELEVADO ({sc}K).")
+    propostas_sugestao = "\n".join(diag_termo) if diag_termo else "Sem anomalias detectadas."
     ia_raw = st.text_area("🤖 Medidas Técnicas Propostas pela IA", value=propostas_sugestao, height=150)
 
     st.markdown("---")
     if st.button("📄 Gerar Relatório Profissional"):
         pdf = FPDF()
         pdf.add_page()
-        
         pdf.set_fill_color(0, 74, 153)
         pdf.rect(0, 0, 210, 42, 'F')
-        if os.path.exists("logo.png"):
-            pdf.image("logo.png", x=10, y=8, h=25)
-        
         pdf.set_text_color(255, 255, 255)
         pdf.set_font("Arial", 'B', 18)
         pdf.cell(0, 15, "RELATORIO TECNICO", ln=True, align='C')
@@ -141,42 +130,26 @@ with tab_diag:
             pdf.set_text_color(0, 0, 0)
             pdf.ln(3)
 
+        # 1. IDENTIFICAÇÃO
         draw_header("1. Identificacao do Cliente")
         pdf.set_font("Arial", 'B', 9)
         pdf.cell(30, 6, "Cliente:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{cliente}", ln=0)
         pdf.set_x(120) 
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "CPF/CNPJ:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{doc_cliente}", ln=1)
-        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Endereco:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{endereco}", ln=0)
-        pdf.set_x(120) 
-        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Bairro/CEP:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{bairro} / {cep}", ln=1)
-        
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Cômodo Proc.:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{comodo_sala}", ln=0)
         pdf.set_x(120) 
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Data Visita:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{data_visita}", ln=1)
         pdf.ln(5)
 
+        # 2. DADOS EQUIPAMENTO
         draw_header("2. Dados Tecnicos do Equipamento")
         pdf.set_font("Arial", 'B', 9)
         pdf.cell(30, 6, "Marca/Linha:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{fabricante} / {linha}", ln=0)
         pdf.set_x(120) 
         pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Capacidade:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{cap_digitada} BTU's", ln=1)
-        
-        pdf.set_font("Arial", 'B', 9)
-        pdf.cell(30, 6, "Tecnologia:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{tecnologia} / {tipo_eq}", ln=0)
-        pdf.set_x(120) 
-        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Fluido:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{fluido}", ln=1)
-        
-        pdf.set_font("Arial", 'B', 9)
-        pdf.cell(30, 6, "Mod. Evap:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{mod_evap}", ln=0)
-        pdf.set_x(120) 
-        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Série Evap:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{serie_evap}", ln=1)
+        pdf.ln(2)
 
-        pdf.set_font("Arial", 'B', 9)
-        pdf.cell(30, 6, "Mod. Cond:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(80, 6, f"{mod_cond}", ln=0)
-        pdf.set_x(120) 
-        pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, "Série Cond:", ln=0); pdf.set_font("Arial", '', 9); pdf.cell(50, 6, f"{serie_cond}", ln=1)
-        pdf.ln(5)
-
+        # 3. MEDIÇÕES (A TABELA PERFEITA)
         draw_header("3. Parametros Operacionais (Medicoes)")
         pdf.set_font("Arial", 'B', 8)
         pdf.set_fill_color(245, 245, 245)
@@ -184,19 +157,16 @@ with tab_diag:
         pdf.cell(47, 7, "  SUPER-AQUECIMENTO", 1, 0, 'L', True)
         pdf.cell(47, 7, "  CORRENTE MEDIDA", 1, 0, 'L', True)
         pdf.cell(47, 7, "  TENSAO REDE", 1, 1, 'L', True)
-        
         pdf.set_font("Arial", '', 10)
         pdf.cell(47, 8, f"  {p_suc} PSIG", 1, 0, 'L')
         pdf.cell(47, 8, f"  {sh} K", 1, 0, 'L')
         pdf.cell(47, 8, f"  {a_med} A", 1, 0, 'L')
         pdf.cell(47, 8, f"  {v_med} V", 1, 1, 'L')
-        
         pdf.set_font("Arial", 'B', 8)
         pdf.cell(47, 7, "  PRESSAO DESCARGA", 1, 0, 'L', True)
         pdf.cell(47, 7, "  SUB-RESFRIAMENTO", 1, 0, 'L', True)
         pdf.cell(47, 7, "  DELTA T (AR)", 1, 0, 'L', True)
         pdf.cell(47, 7, "  CARGA MOTOR", 1, 1, 'L', True)
-        
         pdf.set_font("Arial", '', 10)
         pdf.cell(47, 8, f"  {p_liq} PSIG", 1, 0, 'L')
         pdf.cell(47, 8, f"  {sc} K", 1, 0, 'L')
@@ -205,33 +175,15 @@ with tab_diag:
         pdf.cell(47, 8, f"  {perc_carga} %", 1, 1, 'L')
         pdf.ln(5)
 
+        # 4. CONCLUSÕES
         draw_header("4. Diagnostico e Medidas Tecnicas")
         pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Observacoes Tecnicas:", ln=1)
         pdf.set_font("Arial", '', 9); pdf.multi_cell(0, 5, f"{obs_raw}"); pdf.ln(2)
-        
-        pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Medidas Tomadas no Local:", ln=1)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Medidas Tomadas:", ln=1)
         pdf.set_font("Arial", '', 9); pdf.multi_cell(0, 5, f"{med_tomadas_raw}"); pdf.ln(2)
-
-        pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Recomendacoes e Medidas Propostas:", ln=1)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Recomendacoes IA:", ln=1)
         pdf.set_font("Arial", '', 9); pdf.multi_cell(0, 5, f"{ia_raw}")
 
-        pdf.set_y(265)
-        pdf.set_font("Arial", 'I', 8)
-        pdf.set_text_color(120, 120, 120)
-        pdf.cell(0, 5, "Este relatório é um documento técnico para fins de diagnóstico e manutenção.", ln=True, align='C')
-        pdf.cell(0, 5, f"Gerado em {date.today().strftime('%d/%m/%Y')} | MPN Engenharia", ln=True, align='C')
-
-        # Geração de PDF via Buffer de Memória (Método Robusto)
-        pdf_buffer = io.BytesIO()
         pdf_bytes = pdf.output(dest='S')
-        if isinstance(pdf_bytes, str):
-            pdf_bytes = pdf_bytes.encode('latin-1', 'ignore')
-        pdf_buffer.write(pdf_bytes)
-        pdf_buffer.seek(0)
-            
-        st.download_button(
-            label="⬇️ Baixar Relatório PDF", 
-            data=pdf_buffer, 
-            file_name=f"Relatorio_{cliente}_{data_visita}.pdf", 
-            mime="application/pdf"
-        )
+        if isinstance(pdf_bytes, str): pdf_bytes = pdf_bytes.encode('latin-1', 'ignore')
+        st.download_button(label="⬇️ Baixar Relatório PDF", data=pdf_bytes, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
