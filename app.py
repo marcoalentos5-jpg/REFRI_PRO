@@ -155,5 +155,5 @@ with tab_diag:
         pdf.set_font("Arial", '', 9); pdf.cell(0, 6, f"Fabricante: {fabricante} | Linha: {linha} | Local: {local_eq}", ln=True)
         pdf.cell(0, 6, f"Modelo: {mod_evap} / {mod_cond} | Fluido: {fluido}", ln=True)
         
-        pdf_output = pdf.output(dest='S').encode('latin-1', 'replace')
+        pdf_output = pdf.output()
         st.download_button(label="⬇️ Baixar PDF", data=pdf_output, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
