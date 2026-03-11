@@ -2,77 +2,93 @@ import streamlit as st
 import numpy as np
 from datetime import date
 from fpdf import FPDF
+import io
+import os
 
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="MPN | Engenharia Pro", layout="wide", page_icon="❄️")
 
-def clean_text(text):
-    """Garante que o texto seja compatível com FPDF Latin-1"""
-    if text is None: return ""
-    replacements = {
-        '°': 'C', 'º': '.', 'ª': '.', 'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u',
-        'â': 'a', 'ê': 'e', 'î': 'i', 'ô': 'o', 'û': 'u', 'ã': 'a', 'õ': 'o', 'ç': 'c',
-        'Á': 'A', 'É': 'E', 'Í': 'I', 'Ó': 'O', 'Ú': 'U', 'Ã': 'A', 'Õ': 'O', 'Ç': 'C',
-        '–': '-', '—': '-'
-    }
-    txt = str(text)
-    for old, new in replacements.items():
-        txt = txt.replace(old, new)
-    return txt.encode('latin-1', 'replace').decode('latin-1')
-
-# --- 2. MOTOR TERMODINÂMICO ---
+# --- 2. MOTOR TERMODINÂMICO (PRECISÃO PERICIAL) ---
 def get_tsat_global(psig, gas):
     ancoras = {
-        "R-410A": {"p": [0.0, 600.0], "t": [-51.0, 64.59]},
-        "R-32": {"p": [0.0, 600.0], "t": [-51.7, 63.43]},
-        "R-22": {"p": [0.0, 600.0], "t": [-40.8, 87.53]},
-        "R-134a": {"p": [0.0, 200.0], "t": [-26.08, 53.74]},
-        "R-404A": {"p": [0.0, 400.0], "t": [-45.45, 61.1]}
+        "R-410A": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 550.0, 600.0], 
+                   "t": [-51.0, -17.02, -0.29, 11.55, 20.93, 28.84, 35.58, 41.74, 47.3, 52.1, 56.59, 60.7, 64.59]},
+        "R-32": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 550.0, 600.0], 
+                 "t": [-51.7, -17.46, 0.87, 10.86, 20.14, 27.9, 34.63, 40.6, 45.96, 50.8, 55.36, 59.5, 63.43]},
+        "R-22": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 600.0], 
+                 "t": [-40.8, -3.34, 15.80, 28.15, 38.56, 47.30, 54.89, 61.63, 67.72, 73.2, 78.38, 87.53]},
+        "R-134a": {"p": [0.0, 20.0, 50.0, 80.0, 100.0, 130.0, 150.0, 180.0, 200.0], 
+                   "t": [-26.08, -1.0, 12.23, 22.8, 30.92, 38.4, 43.65, 50.1, 53.74]},
+        "R-404A": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0], 
+                   "t": [-45.45, -9.41, 8.96, 22.23, 32.59, 41.2, 48.6, 55.2, 61.1]}
     }
     if gas not in ancoras: return 0.0
-    return round(float(np.interp(psig, ancoras[gas]["p"], ancoras[gas]["t"])), 2)
+    try: return round(float(np.interp(psig, ancoras[gas]["p"], ancoras[gas]["t"])), 2)
+    except: return 0.0
+
+# Função de Limpeza Rigorosa para PDF
+def clean(txt):
+    if txt is None: return ""
+    replacements = {'°': 'C', 'º': '.', 'ª': '.', 'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ã': 'a', 'õ': 'o', 'ç': 'c', 'Á': 'A', 'É': 'E', 'Í': 'I', 'Ó': 'O', 'Ú': 'U', 'Ã': 'A', 'Õ': 'O', 'Ç': 'C', '´': '', '`': ''}
+    t = str(txt)
+    for old, new in replacements.items(): t = t.replace(old, new)
+    return t.encode('latin-1', 'replace').decode('latin-1')
 
 # --- 3. INTERFACE DO APP ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
 tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico"])
 
 with tab_cad:
-    st.subheader("👤 Identificação do Cliente")
+    st.subheader("👤 Dados do Cliente & Contato")
     c1, c2 = st.columns(2)
-    cliente = c1.text_input("Nome do Cliente / Empresa", value="")
-    doc_cliente = c2.text_input("CPF / CNPJ", value="")
-    endereco = st.text_input("Endereço Completo", value="")
-    whatsapp = st.text_input("WhatsApp", value="21980264217")
-    data_visita = st.date_input("Data da Visita", value=date.today())
-
-    st.subheader("⚙️ Dados do Equipamento")
+    cliente = c1.text_input("Nome do Cliente / Empresa")
+    doc_cliente = c2.text_input("CPF / CNPJ")
+    l2_c1, l2_c2, l2_c3 = st.columns(3)
+    endereco = l2_c1.text_input("Endereço (Rua e Número)")
+    bairro = l2_c2.text_input("Bairro")
+    cep = l2_c3.text_input("CEP", placeholder="00000-000")
+    l3_c1, l3_c2, l3_c3 = st.columns([1, 1.5, 1])
+    whatsapp = l3_c1.text_input("🟢 WhatsApp", value="21980264217")
+    email_cli = l3_c2.text_input("✉️ E-mail")
+    data_visita = l3_c3.date_input("Data da Visita", value=date.today())
+    st.markdown("---")
+    st.subheader("⚙️ Dados Técnicos")
     d1, d2, d3 = st.columns(3)
-    fabricante = d1.text_input("Marca / Modelo", value="")
-    num_serie = d2.text_input("Nº de Série", value="")
-    tag_maquina = d3.text_input("TAG / Identificação", value="")
-    setor = d1.text_input("Setor / Localização", value="")
-    tensao_nom = d2.selectbox("Tensão Nominal", ["220V/1F", "220V/3F", "380V/3F", "440V/3F", "127V/1F"])
+    fabricante = d1.text_input("Fabricante (Marca)")
+    linha = d1.text_input("Linha")
+    tecnologia = d2.selectbox("Tecnologia", ["Inverter", "WindFree", "Scroll", "On-Off"])
+    tipo_eq = d2.selectbox("Tipo de Sistema", ["Split Hi-Wall", "Cassete", "Piso-Teto", "VRF", "Chiller"])
     fluido = d3.selectbox("Gás Refrigerante", ["R-410A", "R-32", "R-22", "R-134a", "R-404A"])
+    cap_digitada = d3.text_input("Capacidade (Mil BTU´s)", value="0")
+    col_ev1, col_ev2 = st.columns(2)
+    mod_evap = col_ev1.text_input("Modelo Unidade Evaporadora")
+    serie_evap = col_ev2.text_input("Nº de Série Evaporadora")
+    col_cd1, col_cd2 = st.columns(2)
+    mod_cond = col_cd1.text_input("Modelo Unidade Condensadora")
+    serie_cond = col_cd2.text_input("Nº de Série Condensadora")
 
 with tab_ele:
     st.subheader("⚡ Parâmetros Elétricos")
-    e1, e2, e3 = st.columns(3)
-    v_med = e1.number_input("Tensão Medida (V)", value=0.0)
+    e1, e2 = st.columns(2)
+    v_rede = e1.number_input("Tensão da Rede (V)", value=220.0)
+    v_med = e1.number_input("Tensão Medida (V)", value=218.0)
     lra_comp = e2.number_input("LRA (A)", value=0.0)
-    rla_comp = e3.number_input("RLA (A)", value=0.0)
-    a_med = st.number_input("Corrente Medida (A)", value=0.0)
-    carga_motor = round((a_med / rla_comp * 100), 1) if rla_comp > 0 else 0
+    rla_comp = e2.number_input("RLA (A)", value=0.0)
+    a_med = e2.number_input("Corrente Medida (A)", value=0.0)
+    diff_v = round(v_rede - v_med, 1)
+    diff_a = round(rla_comp - a_med, 1)
+    carga_percent = round((a_med/rla_comp*100),1) if rla_comp > 0 else 0
+    st.metric("Carga Motor", f"{carga_percent}%")
 
 with tab_termo:
     st.subheader("🌡️ Ciclo Frigorífico")
     col1, col2, col3 = st.columns(3)
-    p_suc = col1.number_input("Pressão Sucção (PSIG)", value=0.0)
-    t_suc_tubo = col1.number_input("Temp. Tubo Sucção (C)", value=0.0)
-    p_liq = col2.number_input("Pressão Descarga (PSIG)", value=0.0)
-    t_liq_tubo = col2.number_input("Temp. Tubo Líquido (C)", value=0.0)
-    t_ret = col3.number_input("Temp. Ar Retorno (C)", value=0.0)
-    t_ins = col3.number_input("Temp. Ar Insufl. (C)", value=0.0)
-    
+    p_suc = col1.number_input("Pressão Sucção (PSIG)", value=118.0)
+    t_suc_tubo = col1.number_input("Temp. Tubo Sucção (C)", value=12.0)
+    p_liq = col2.number_input("Pressão Descarga (PSIG)", value=345.0)
+    t_liq_tubo = col2.number_input("Temp. Tubo Líquido (C)", value=30.0)
+    t_ret = col3.number_input("Temp. Ar Retorno (C)", value=24.0)
+    t_ins = col3.number_input("Temp. Ar Insufl. (C)", value=12.0)
     tsat_suc = get_tsat_global(p_suc, fluido)
     tsat_liq = get_tsat_global(p_liq, fluido)
     sh = round(t_suc_tubo - tsat_suc, 1)
@@ -80,72 +96,50 @@ with tab_termo:
     dt = round(t_ret - t_ins, 1)
 
 with tab_diag:
-    st.subheader("✅ Checklist")
-    ck1, ck2, ck3 = st.columns(3)
-    limpeza = ck1.checkbox("Limpeza Geral", value=True)
-    filtros = ck2.checkbox("Filtros OK", value=True)
-    drenagem = ck3.checkbox("Dreno OK", value=True)
-    medidas = st.text_area("Diagnóstico e Recomendações", height=150)
+    obs_raw = st.text_area("✍️ Observações Técnicas Detalhadas", height=100)
+    med_tomadas_raw = st.text_area("🔧 Medidas Técnicas Tomadas", height=100)
+    ia_raw = st.text_area("🤖 Diagnóstico/Medidas Propostas", value=f"SH: {sh}K | SC: {sc}K | Delta T: {dt}K")
 
-    if st.button("📄 Gerar Relatório Profissional Completo"):
-        try:
-            pdf = FPDF()
-            pdf.add_page()
-            
-            # Cabeçalho Blue Estilizado
-            pdf.set_fill_color(0, 74, 153)
-            pdf.rect(0, 0, 210, 35, 'F')
-            pdf.set_text_color(255, 255, 255)
-            pdf.set_font("Arial", 'B', 16)
-            pdf.cell(0, 15, clean_text("RELATÓRIO TÉCNICO DE MANUTENÇÃO"), ln=True, align='C')
-            pdf.ln(20)
+    if st.button("📄 Gerar Relatório Profissional"):
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_fill_color(0, 74, 153)
+        pdf.rect(0, 0, 210, 42, 'F')
+        pdf.set_text_color(255, 255, 255)
+        pdf.set_font("Arial", 'B', 18)
+        pdf.cell(0, 15, "RELATORIO TECNICO", ln=True, align='C')
+        pdf.set_font("Arial", '', 10)
+        pdf.cell(0, 5, "CNPJ: 45.451.272/0001-00 | Tel: 21-98545-3763", ln=True, align='C')
+        pdf.ln(12)
 
-            # Seção 1: Cliente
-            pdf.set_text_color(0, 74, 153)
-            pdf.set_font("Arial", 'B', 11)
-            pdf.cell(0, 8, clean_text("1. IDENTIFICAÇÃO DO CLIENTE E CONTATO"), ln=True, fill=False)
-            pdf.set_text_color(0, 0, 0)
-            pdf.set_font("Arial", '', 10)
-            pdf.cell(0, 6, f"Cliente: {clean_text(cliente)} | Documento: {clean_text(doc_cliente)}", ln=True)
-            pdf.cell(0, 6, f"Endereco: {clean_text(endereco)}", ln=True)
-            pdf.cell(0, 6, f"WhatsApp: {clean_text(whatsapp)} | Data: {data_visita.strftime('%d/%m/%Y')}", ln=True)
-            pdf.ln(4)
+        def draw_header(title):
+            pdf.set_fill_color(235, 235, 235); pdf.set_text_color(0, 74, 153); pdf.set_font("Arial", 'B', 11)
+            pdf.cell(0, 8, f" {clean(title.upper())}", ln=True, fill=True); pdf.set_text_color(0, 0, 0); pdf.ln(3)
 
-            # Seção 2: Equipamento
-            pdf.set_text_color(0, 74, 153)
-            pdf.set_font("Arial", 'B', 11)
-            pdf.cell(0, 8, clean_text("2. DADOS DO EQUIPAMENTO"), ln=True)
-            pdf.set_text_color(0, 0, 0)
-            pdf.set_font("Arial", '', 10)
-            pdf.cell(0, 6, f"Marca/Modelo: {clean_text(fabricante)} | Serie: {clean_text(num_serie)}", ln=True)
-            pdf.cell(0, 6, f"TAG: {clean_text(tag_maquina)} | Setor: {clean_text(setor)}", ln=True)
-            pdf.cell(0, 6, f"Fluido: {fluido} | Tensao Nominal: {tensao_nom}", ln=True)
-            pdf.ln(4)
+        draw_header("1. Identificacao do Cliente")
+        pdf.set_font("Arial", '', 9)
+        pdf.cell(0, 6, f"Cliente: {clean(cliente)} | CPF/CNPJ: {clean(doc_cliente)}", ln=True)
+        pdf.cell(0, 6, f"Endereco: {clean(endereco)} | Bairro: {clean(bairro)} | CEP: {clean(cep)}", ln=True)
+        pdf.cell(0, 6, f"WhatsApp: {clean(whatsapp)} | E-mail: {clean(email_cli)}", ln=True)
+        
+        draw_header("2. Dados Tecnicos do Equipamento")
+        pdf.cell(0, 6, f"Fabricante: {clean(fabricante)} | Linha: {clean(linha)} | Fluido: {fluido}", ln=True)
+        pdf.cell(0, 6, f"Tecnologia: {tecnologia} | Sistema: {tipo_eq} | Cap: {clean(cap_digitada)} BTUs", ln=True)
+        pdf.cell(0, 6, f"Evap Modelo: {clean(mod_evap)} | Serie: {clean(serie_evap)}", ln=True)
+        pdf.cell(0, 6, f"Cond Modelo: {clean(mod_cond)} | Serie: {clean(serie_cond)}", ln=True)
 
-            # Seção 3: Medições (Elétrica e Térmica)
-            pdf.set_text_color(0, 74, 153)
-            pdf.set_font("Arial", 'B', 11)
-            pdf.cell(0, 8, clean_text("3. PARÂMETROS TÉCNICOS MEDIDOS"), ln=True)
-            pdf.set_text_color(0, 0, 0)
-            pdf.set_font("Arial", '', 10)
-            pdf.cell(0, 6, f"Eletrica: {a_med}A (Medida) | {rla_comp}A (RLA) | {lra_comp}A (LRA) | {v_med}V", ln=True)
-            pdf.cell(0, 6, f"Pressao: Succao {p_suc} PSIG | Descarga {p_liq} PSIG", ln=True)
-            pdf.cell(0, 6, f"Temperaturas: Succao {t_suc_tubo}C | Liquido {t_liq_tubo}C | Retorno {t_ret}C | Insufl. {t_ins}C", ln=True)
-            pdf.cell(0, 6, f"Analise: SH {sh}K | SC {sc}K | Delta T {dt}K", ln=True)
-            pdf.ln(4)
+        draw_header("3. Parametros Medidos")
+        pdf.cell(0, 6, f"Eletrica: {v_med}V (Med) | {a_med}A (Med) | {rla_comp}A (RLA) | {lra_comp}A (LRA)", ln=True)
+        pdf.cell(0, 6, f"Termica: Succao {p_suc} PSIG / {t_suc_tubo}C | Descarga {p_liq} PSIG / {t_liq_tubo}C", ln=True)
+        pdf.cell(0, 6, f"Calculos: SH {sh}K | SC {sc}K | Delta T {dt}K | Carga Motor: {carga_percent}%", ln=True)
 
-            # Seção 4: Checklist e Diagnóstico
-            pdf.set_text_color(0, 74, 153)
-            pdf.set_font("Arial", 'B', 11)
-            pdf.cell(0, 8, clean_text("4. CHECKLIST E DIAGNÓSTICO FINAL"), ln=True)
-            pdf.set_text_color(0, 0, 0)
-            pdf.set_font("Arial", '', 10)
-            pdf.cell(0, 6, f"Limpeza: {'OK' if limpeza else '---'} | Filtros: {'OK' if filtros else '---'} | Drenagem: {'OK' if drenagem else '---'}", ln=True)
-            pdf.ln(2)
-            pdf.multi_cell(0, 6, clean_text(medidas))
+        draw_header("4. Diagnostico e Medidas")
+        pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Observacoes:", ln=True); pdf.set_font("Arial", '', 9)
+        pdf.multi_cell(0, 5, clean(obs_raw)); pdf.ln(2)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Medidas Tomadas:", ln=True); pdf.set_font("Arial", '', 9)
+        pdf.multi_cell(0, 5, clean(med_tomadas_raw)); pdf.ln(2)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(0, 6, "Propostas/IA:", ln=True); pdf.set_font("Arial", '', 9)
+        pdf.multi_cell(0, 5, clean(ia_raw))
 
-            pdf_bytes = pdf.output(dest='S').encode('latin-1', 'replace')
-            st.download_button(label="⬇️ Baixar Relatório Completo", data=pdf_bytes, file_name=f"Relatorio_{clean_text(cliente)}.pdf", mime="application/pdf")
-            st.success("Testes concluídos: Todos os campos integrados com sucesso.")
-        except Exception as e:
-            st.error(f"Erro na geração do relatório: {e}")
+        out = pdf.output(dest='S').encode('latin-1', 'replace')
+        st.download_button("⬇️ Baixar Relatório PDF", out, f"MPN_{clean(cliente)}_{date.today()}.pdf", "application/pdf")
