@@ -26,7 +26,6 @@ def get_tsat_global(psig, gas):
     try: return round(float(np.interp(psig, ancoras[gas]["p"], ancoras[gas]["t"])), 2)
     except: return 0.0
 
-# Função de Limpeza Rigorosa para PDF
 def clean(txt):
     if txt is None: return ""
     replacements = {'°': 'C', 'º': '.', 'ª': '.', 'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ã': 'a', 'õ': 'o', 'ç': 'c', 'Á': 'A', 'É': 'E', 'Í': 'I', 'Ó': 'O', 'Ú': 'U', 'Ã': 'A', 'Õ': 'O', 'Ç': 'C', '´': '', '`': ''}
@@ -40,40 +39,42 @@ tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ El
 
 with tab_cad:
     st.subheader("👤 Dados do Cliente & Contato")
-    
-    # Linha 1: Nome aumentado e CPF/CNPJ diminuído
     c1, c2 = st.columns([3, 1])
     cliente = c1.text_input("Nome do Cliente / Empresa")
     doc_cliente = c2.text_input("CPF / CNPJ")
     
-    # Linha 2: Logradouro (combo), Nome, Nº e Complemento
     c3, c4, c5, c6 = st.columns([1, 2, 0.5, 1])
     tipo_logr = c3.selectbox("Logradouro", ["Rua", "Avenida", "Travessa", "Alameda", "Estrada", "Rodovia", "Praça", "Loteamento"])
     nome_logr = c4.text_input("Nome do Logradouro")
     numero = c5.text_input("Nº")
     complemento = c6.text_input("Complemento")
     
-    # Linha 3: Bairro e CEP (diminuídos) + E-mail
     c7, c8, c9 = st.columns([1, 1, 2])
     bairro = c7.text_input("Bairro")
     cep = c8.text_input("CEP", placeholder="00000-000")
     email_cli = c9.text_input("✉️ E-mail")
 
-    # Linha 4: WhatsApp e Data
     c10, c11 = st.columns(2)
     whatsapp = c10.text_input("🟢 WhatsApp", value="21980264217")
     data_visita = c11.date_input("Data da Visita", value=date.today())
 
     st.markdown("---")
     st.subheader("⚙️ Dados Técnicos")
-    d1, d2, d3 = st.columns(3)
+    d1, d2, d3, d4 = st.columns(4)
     fabricante = d1.text_input("Fabricante (Marca)")
-    linha = d1.text_input("Linha")
-    local_eq = d1.text_input("Localização / Setor")
-    tecnologia = d2.selectbox("Tecnologia", ["Inverter", "WindFree", "Scroll", "On-Off"])
-    tipo_eq = d2.selectbox("Tipo de Sistema", ["Split Hi-Wall", "Cassete", "Piso-Teto", "VRF", "Chiller"])
-    fluido = d3.selectbox("Gás Refrigerante", ["R-410A", "R-32", "R-22", "R-134a", "R-404A"])
-    cap_digitada = d3.text_input("Capacidade (Mil BTU´s)", value="0")
+    linha = d2.text_input("Linha")
+    modelo_eq = d3.text_input("Modelo")
+    cap_digitada = d4.text_input("Capacidade (Mil BTU´s)", value="0")
+    
+    d5, d6, d7, d8 = st.columns(4)
+    tecnologia = d5.selectbox("Tecnologia", ["Inverter", "WindFree", "Scroll", "On-Off"])
+    tipo_eq = d6.selectbox("Tipo de Sistema", ["Split Hi-Wall", "Cassete", "Piso-Teto", "VRF", "Chiller"])
+    fluido = d7.selectbox("Gás Refrigerante", ["R-410A", "R-32", "R-22", "R-134a", "R-404A"])
+    loc_evap = d8.text_input("Localização Evaporadora")
+
+    d9 = st.columns(4)
+    loc_cond = d9[0].text_input("Localização Condensadora") # CORREÇÃO TÉCNICA: Adicionado índice [0]
+
     col_ev1, col_ev2 = st.columns(2)
     mod_evap = col_ev1.text_input("Modelo Unidade Evaporadora")
     serie_evap = col_ev2.text_input("Nº de Série Evaporadora")
@@ -87,15 +88,15 @@ with tab_ele:
     v_rede = e1.number_input("Tensão da Rede (V)", value=220.0)
     v_med = e1.number_input("Tensão Medida (V)", value=218.0)
     lra_comp = e2.number_input("LRA (A)", value=0.0)
-    rla_comp = e2.number_input("RLA (A)", value=0.0)
+    rla_comp = e2.number_input("RLA (A)", value=1.0) # Valor padrão 1 para evitar div por zero
     a_med = e2.number_input("Corrente Medida (A)", value=0.0)
     diff_v = round(v_rede - v_med, 1)
-    carga_percent = round((a_med/rla_comp*100),1) if rla_comp > 0 else 0
+    carga_final = round((a_med/rla_comp*100),1) if rla_comp > 0 else 0
     st.markdown("---")
     res1, res2, res3 = st.columns(3)
     res1.metric("Queda de Tensão", f"{diff_v} V", delta=f"-{diff_v}V", delta_color="inverse")
     res2.metric("Folga Corrente", f"{round(rla_comp - a_med, 1)} A")
-    res3.metric("Carga Motor", f"{carga_percent}%")
+    res3.metric("Carga Motor", f"{carga_final}%")
 
 with tab_termo:
     st.subheader("🌡️ Ciclo Frigorífico")
@@ -140,16 +141,17 @@ with tab_diag:
 
         draw_header("1. Identificacao do Cliente")
         pdf.set_font("Arial", '', 9)
-        pdf.cell(0, 6, f"Cliente: {clean(cliente)} | CPF/CNPJ: {clean(doc_cliente)}", ln=True)
+        pdf.cell(0, 6, f"Cliente: {clean(cliente)} | Doc: {clean(doc_cliente)}", ln=True)
         pdf.cell(0, 6, f"Endereco: {clean(tipo_logr)} {clean(nome_logr)}, No {clean(numero)} {clean(complemento)}", ln=True)
         pdf.cell(0, 6, f"Bairro: {clean(bairro)} | CEP: {clean(cep)} | WhatsApp: {clean(whatsapp)}", ln=True)
         
         draw_header("2. Dados Tecnicos")
-        pdf.cell(0, 6, f"Equipamento: {clean(fabricante)} | Tecnologia: {tecnologia} | Fluido: {fluido}", ln=True)
+        pdf.cell(0, 6, f"Equipamento: {clean(fabricante)} | Modelo: {clean(modelo_eq)} | Tecnologia: {tecnologia}", ln=True)
+        pdf.cell(0, 6, f"Loc. Evap: {clean(loc_evap)} | Loc. Cond: {clean(loc_cond)}", ln=True)
         pdf.cell(0, 6, f"Evaporadora Serie: {clean(serie_evap)} | Condensadora Serie: {clean(serie_cond)}", ln=True)
 
         draw_header("3. Parametros Medidos")
-        pdf.cell(0, 6, f"Eletrica: {v_med}V | {a_med}A | Carga: {carga_percent}%", ln=True)
+        pdf.cell(0, 6, f"Eletrica: {v_med}V | {a_med}A | Carga: {carga_final}%", ln=True)
         pdf.cell(0, 6, f"Termica: Succao {p_suc} PSIG | SH: {sh}K | SC: {sc}K | Delta T: {dt}K", ln=True)
 
         draw_header("4. Diagnostico Final")
