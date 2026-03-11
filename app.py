@@ -26,7 +26,7 @@ def get_tsat_global(psig, gas):
     try: return round(float(np.interp(psig, ancoras[gas]["p"], ancoras[gas]["t"])), 2)
     except: return 0.0
 
-# Função de Limpeza de Símbolos e Acentos (Rigorosa)
+# Função de Limpeza de Símbolos e Acentos (Rigorosa para PDF)
 def clean(txt):
     if txt is None: return ""
     replacements = {
@@ -45,9 +45,11 @@ tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ El
 
 with tab_cad:
     st.subheader("👤 Dados do Cliente & Contato")
-    c1, c2 = st.columns(2)
+    # Instrução seguida: Diminuir CPF/CNPJ e aumentar Nome
+    c1, c2 = st.columns([3, 1])
     cliente = c1.text_input("Nome do Cliente / Empresa")
     doc_cliente = c2.text_input("CPF / CNPJ")
+    
     l2_c1, l2_c2, l2_c3 = st.columns(3)
     endereco = l2_c1.text_input("Endereço (Rua e Número)")
     bairro = l2_c2.text_input("Bairro")
@@ -130,7 +132,7 @@ with tab_diag:
         pdf = FPDF()
         pdf.add_page()
         
-        # --- CABEÇALHO ---
+        # --- CABEÇALHO (LAYOUT PRESERVADO) ---
         pdf.set_fill_color(0, 74, 153)
         pdf.rect(0, 0, 210, 42, 'F')
         pdf.set_text_color(255, 255, 255)
@@ -144,27 +146,28 @@ with tab_diag:
             pdf.set_fill_color(235, 235, 235); pdf.set_text_color(0, 74, 153); pdf.set_font("Arial", 'B', 11)
             pdf.cell(0, 8, f" {clean(title.upper())}", ln=True, fill=True); pdf.set_text_color(0, 0, 0); pdf.ln(3)
 
-        # 1. IDENTIFICAÇÃO
+        # 1. IDENTIFICAÇÃO (CAMPOS PRESERVADOS)
         draw_header("1. Identificacao do Cliente")
         pdf.set_font("Arial", '', 9)
         pdf.cell(0, 6, f"Cliente: {clean(cliente)} | Doc: {clean(doc_cliente)}", ln=True)
         pdf.cell(0, 6, f"Endereco: {clean(endereco)} | Bairro: {clean(bairro)} | CEP: {clean(cep)}", ln=True)
         pdf.cell(0, 6, f"WhatsApp: {clean(whatsapp)} | Data: {data_visita}", ln=True)
 
-        # 2. DADOS TÉCNICOS
+        # 2. DADOS TÉCNICOS (CAMPOS PRESERVADOS)
         draw_header("2. Dados Tecnicos")
         pdf.cell(0, 6, f"Fabricante: {clean(fabricante)} | Tecnologia: {tecnologia} | Fluido: {fluido}", ln=True)
         pdf.cell(0, 6, f"Modelo Evap: {clean(mod_evap)} | Serie: {clean(serie_evap)}", ln=True)
         pdf.cell(0, 6, f"Modelo Cond: {clean(mod_cond)} | Serie: {clean(serie_cond)}", ln=True)
 
-        # 3. PARÂMETROS
+        # 3. PARÂMETROS (CAMPOS PRESERVADOS)
         draw_header("3. Parametros Medidos")
         pdf.cell(0, 6, f"Eletrica: {v_med}V | {a_med}A | RLA: {rla_comp}A", ln=True)
         pdf.cell(0, 6, f"Termica: Succao {p_suc} PSIG | SH: {sh}K | SC: {sc}K | Delta T: {dt}K", ln=True)
 
-        # 4. DIAGNÓSTICO
+        # 4. DIAGNÓSTICO (CAMPOS PRESERVADOS)
         draw_header("4. Diagnostico e Medidas")
         pdf.multi_cell(0, 6, clean(ia_raw))
 
+        # Saída segura para PDF
         out = pdf.output(dest='S').encode('latin-1', 'replace')
         st.download_button("⬇️ Baixar Relatório PDF", out, f"Relatorio_{clean(cliente)}.pdf", "application/pdf")
