@@ -4,7 +4,7 @@ from datetime import date
 from fpdf import FPDF
 import io
 
-# --- 1. CONFIGURAÇÃO DA PÁGINA (PRESERVADA) ---
+# --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="MPN | Engenharia Pro", layout="wide", page_icon="❄️")
 
 # --- 2. MOTOR TERMODINÂMICO ---
@@ -32,7 +32,7 @@ def clean(txt):
     for old, new in replacements.items(): t = t.replace(old, new)
     return t.encode('ascii', 'ignore').decode('ascii')
 
-# --- 3. INTERFACE DO APP (BLOQUEADA) ---
+# --- 3. INTERFACE DO APP ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
 tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico"])
 
@@ -119,104 +119,116 @@ with tab_diag:
         
         # --- 1. CABEÇALHO ---
         try:
-            pdf.image("logo.png", 10, 8, 75) 
-            pdf.set_xy(90, 15)
+            pdf.image("logo.png", 10, 8, 55) 
+            pdf.set_xy(70, 15)
             pdf.set_font("Arial", 'B', 16); pdf.set_text_color(0, 51, 102)
-            pdf.cell(0, 10, "Relatorio Tecnico", 0, 1, 'L')
+            pdf.cell(0, 10, "Relatorio Tecnico de Manutencao", 0, 1, 'L')
         except:
             pdf.set_font("Arial", 'B', 15); pdf.set_text_color(0, 74, 153)
             pdf.cell(0, 10, "MPN SOLUCOES - Relatorio Tecnico", 0, 1, 'C')
 
-        # --- DATA DA VISITA (CANTO DIREITO SUPERIOR / FUNDO CINZA) ---
-        pdf.set_xy(145, 12)
-        pdf.set_fill_color(240, 240, 240); pdf.set_text_color(0); pdf.set_font("Arial", 'B', 9)
-        pdf.cell(55, 8, f" DATA DA VISITA: {data_visita.strftime('%d/%m/%Y')} ", 1, 1, 'C', True)
+        pdf.set_y(35)
 
-        pdf.set_y(38)
-
-        # --- 2. DADOS DO CLIENTE (FORMATO TABELA SEM GRADES) ---
-        pdf.set_font("Arial", 'B', 9.5); pdf.set_fill_color(240, 240, 240); pdf.set_text_color(0, 51, 102); pdf.set_line_width(0.4)
+        # --- 2. DADOS DO CLIENTE (TABELA SEM GRADES) ---
+        pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(240, 240, 240); pdf.set_text_color(0, 51, 102); pdf.set_line_width(0.4)
         pdf.cell(0, 6, " Dados do Cliente", 1, 1, 'L', True)
         
+        y_tab = pdf.get_y()
         pdf.set_text_color(0); pdf.set_font("Arial", '', 8); pdf.set_line_width(0.2)
-        y_cli_start = pdf.get_y()
-        pdf.rect(10, y_cli_start, 190, 25) # Moldura externa fina preservada
+        pdf.rect(10, y_tab, 190, 32) # Moldura externa apenas
         
-        # Estrutura de Tabela Sem Grades (Colunas)
-        y_row = y_cli_start + 2
-        pdf.set_xy(13, y_row)
-        pdf.cell(95, 5, f"Cliente: {clean(cliente)}", 0)
-        pdf.cell(85, 5, f"Documento: {clean(doc_cliente)}", 0, 1)
+        # Data no canto superior direito interno
+        pdf.set_xy(168, y_tab + 1.5)
+        pdf.set_font("Arial", 'B', 7); pdf.set_fill_color(225, 225, 225)
+        pdf.cell(30, 5, f"DATA: {data_visita.strftime('%d/%m/%Y')}", 1, 0, 'C', True)
+
+        # Colunas alinhadas sem grades
+        col1, col2, col3 = 13, 85, 145
+        pdf.set_font("Arial", '', 8)
+        
+        pdf.set_xy(col1, y_tab + 3)
+        pdf.cell(70, 5, f"CLIENTE: {clean(cliente)}", 0)
+        pdf.set_x(col2)
+        pdf.cell(60, 5, f"CPF/CNPJ: {clean(doc_cliente)}", 0)
+        
+        pdf.set_xy(col1, y_tab + 10)
+        end_full = f"{tipo_logr} {nome_logr}, {numero} {f'({complemento})' if complemento else ''}"
+        pdf.cell(130, 5, f"ENDERECO: {clean(end_full)}", 0)
+        pdf.set_x(col3)
+        pdf.cell(50, 5, f"BAIRRO: {clean(bairro)}", 0)
+
+        pdf.set_xy(col1, y_tab + 17)
+        pdf.cell(70, 5, f"CEP: {clean(cep)}", 0)
+        pdf.set_x(col2)
+        pdf.cell(110, 5, f"E-MAIL: {clean(email_cli)}", 0)
+
+        pdf.set_xy(col1, y_tab + 24)
+        pdf.cell(70, 5, f"WHATSAPP: {clean(whatsapp)}", 0)
+        pdf.set_x(col2)
+        pdf.cell(60, 5, f"CELULAR: {clean(celular)}", 0)
+        pdf.set_x(col3)
+        pdf.cell(50, 5, f"FIXO: {clean(tel_residencial)}", 0)
+
+        # --- 3. DADOS DO EQUIPAMENTO ---
+        pdf.set_y(y_tab + 35)
+        pdf.ln(5)
+        pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(240, 240, 240); pdf.set_text_color(0, 51, 102)
+        pdf.cell(0, 6, " Dados do Equipamento", 1, 1, 'L', True)
+        
+        y_eq = pdf.get_y()
+        pdf.rect(10, y_eq, 190, 30)
+        pdf.set_xy(13, y_eq + 2)
+        pdf.set_text_color(0); pdf.set_font("Arial", '', 8)
+        pdf.cell(65, 5, f"Marca/Linha: {clean(fabricante)} / {clean(linha)}", 0)
+        pdf.cell(65, 5, f"Modelo: {clean(modelo_eq)}", 0)
+        pdf.cell(50, 5, f"Capac.: {clean(cap_digitada)} BTU/h", 0, 1)
         
         pdf.set_x(13)
-        pdf.cell(95, 5, f"Endereco: {clean(tipo_logr)} {clean(nome_logr)}, {clean(numero)}", 0)
-        pdf.cell(85, 5, f"Bairro: {clean(bairro)}", 0, 1)
-        
+        pdf.cell(65, 5, f"Tecnologia: {clean(tecnologia)}", 0)
+        pdf.cell(65, 5, f"Fluido: {clean(fluido)}", 0)
+        pdf.cell(50, 5, f"Sistema: {clean(tipo_eq)}", 0, 1)
+
         pdf.set_x(13)
-        pdf.cell(50, 5, f"WhatsApp: {clean(whatsapp)}", 0)
-        pdf.cell(50, 5, f"Celular: {clean(celular)}", 0)
-        pdf.cell(80, 5, f"E-mail: {clean(email_cli)}", 0, 1)
+        pdf.cell(95, 5, f"Mod/Serie Evap: {clean(mod_evap)} / {clean(serie_evap)}", 0)
+        pdf.cell(95, 5, f"Local: {clean(loc_evap)}", 0, 1)
 
-        # --- 3. ESPECIFICAÇÕES DO EQUIPAMENTO E ELÉTRICA ---
-        pdf.ln(9)
-        pdf.set_font("Arial", 'B', 9.5); pdf.set_fill_color(240, 240, 240); pdf.set_text_color(0, 51, 102)
-        pdf.cell(0, 6, " Especificacoes do Equipamento e Eletrica", 1, 1, 'L', True)
-        pdf.set_font("Arial", '', 8); pdf.set_line_width(0.2); pdf.set_text_color(0)
-        pdf.cell(47.5, 6, f" Marca: {clean(fabricante)}", 1)
-        pdf.cell(47.5, 6, f" Modelo: {clean(modelo_eq)}", 1)
-        pdf.cell(47.5, 6, f" Capacidade: {clean(cap_digitada)}", 1)
-        pdf.cell(47.5, 6, f" Gás: {clean(fluido)}", 1, 1)
-        pdf.cell(47.5, 6, f" Tecnologia: {clean(tecnologia)}", 1)
-        pdf.cell(47.5, 6, f" Sistema: {clean(tipo_eq)}", 1)
-        pdf.cell(47.5, 6, f" Local evap: {clean(loc_evap)}", 1)
-        pdf.cell(47.5, 6, f" Local cond: {clean(loc_cond)}", 1, 1)
-        pdf.cell(47.5, 6, f" Tensao rede: {v_rede}V", 1)
-        pdf.cell(47.5, 6, f" Tensao med: {v_med}V", 1)
-        pdf.cell(47.5, 6, f" Corrente rla: {rla_comp}A", 1)
-        pdf.cell(47.5, 6, f" Corrente med: {a_med}A", 1, 1)
+        pdf.set_x(13)
+        pdf.cell(95, 5, f"Mod/Serie Cond: {clean(mod_cond)} / {clean(serie_cond)}", 0)
+        pdf.cell(95, 5, f"Local: {clean(loc_cond)}", 0, 1)
 
-        # --- 4. ANALISE TERMODINAMICA MEDIDA (TABELA) ---
-        pdf.ln(3)
-        pdf.set_font("Arial", 'B', 9.5); pdf.set_fill_color(240, 240, 240); pdf.set_text_color(0, 51, 102)
-        pdf.cell(0, 6, " Analise Termodinamica Medida", 1, 1, 'L', True)
-        
-        pdf.set_font("Arial", 'B', 8); pdf.set_fill_color(250, 250, 250); pdf.set_text_color(0)
-        pdf.cell(63.3, 6, "Parametros de Baixa (Succao)", 1, 0, 'C', True)
-        pdf.cell(63.3, 6, "Parametros de Alta (Descarga)", 1, 0, 'C', True)
-        pdf.cell(63.4, 6, "Resultados de Performance", 1, 1, 'C', True)
-        
-        pdf.set_font("Arial", '', 8)
-        pdf.cell(63.3, 6, f"Pressao: {p_suc} PSIG", 1, 0, 'L')
-        pdf.cell(63.3, 6, f"Pressao: {p_liq} PSIG", 1, 0, 'L')
-        pdf.set_fill_color(255, 215, 215); pdf.set_font("Arial", 'B', 8)
-        pdf.cell(63.4, 6, f" SUPERAQUECIMENTO: {sh_val} K ", 1, 1, 'C', True)
-        
-        pdf.set_font("Arial", 'B', 8)
-        pdf.cell(63.3, 6, f"Temp. Saturacao: {ts_suc} C", 1, 0, 'L')
-        pdf.cell(63.3, 6, f"Temp. Saturacao: {ts_liq} C", 1, 0, 'L')
-        pdf.set_fill_color(225, 235, 255)
-        pdf.cell(63.4, 6, f" SUBRESFRIAMENTO: {sc_val} K ", 1, 1, 'C', True)
-        
-        pdf.set_font("Arial", '', 8)
-        pdf.cell(63.3, 6, f"Temp. Tubo: {t_suc_tubo} C", 1, 0, 'L')
-        pdf.cell(63.3, 6, f"Temp. Tubo: {t_liq_tubo} C", 1, 0, 'L')
-        pdf.cell(63.4, 6, "---", 1, 1, 'C')
+        # --- 4. PARÂMETROS OPERACIONAIS ---
+        pdf.ln(8)
+        pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(240, 240, 240); pdf.set_text_color(0, 51, 102)
+        pdf.cell(0, 6, " Analise de Parametros Operacionais", 1, 1, 'L', True)
+        y_an = pdf.get_y()
+        pdf.rect(10, y_an, 190, 32)
+        pdf.set_xy(13, y_an + 2)
+        pdf.set_font("Arial", 'B', 8); pdf.cell(90, 5, "PARTE ELETRICA", 0, 1); pdf.set_font("Arial", '', 8)
+        pdf.set_x(13); pdf.cell(90, 4.5, f"Tensao Rede/Medida: {v_rede}V / {v_med}V", 0, 1)
+        pdf.set_x(13); pdf.cell(90, 4.5, f"Corrente (RLA/Medida): {rla_comp}A / {a_med}A", 0, 1)
+        pdf.set_x(13); pdf.cell(90, 4.5, f"Carga Estimada: {carga_f}%", 0, 1)
+        pdf.set_xy(105, y_an + 2)
+        pdf.set_font("Arial", 'B', 8); pdf.cell(90, 5, "CICLO FRIGORIFICO", 0, 1); pdf.set_font("Arial", '', 8)
+        pdf.set_x(105); pdf.cell(90, 4.5, f"Pressao Sucçao: {p_suc} PSIG (T-Sat: {ts_suc} C)", 0, 1)
+        pdf.set_x(105); pdf.cell(90, 4.5, f"Superaquecimento: {sh_val} K", 0, 1)
+        pdf.set_x(105); pdf.cell(90, 4.5, f"Sub-resfriamento: {sc_val} K", 0, 1)
 
-        # --- 5. PARECER TECNICO E DIAGNOSTICO ---
-        pdf.ln(3)
-        pdf.set_font("Arial", 'B', 9.5); pdf.set_fill_color(240, 240, 240); pdf.set_text_color(0, 51, 102)
-        pdf.cell(0, 6, " Parecer Tecnico e Diagnostico", 1, 1, 'L', True)
-        pdf.set_font("Arial", '', 8.5); pdf.set_text_color(0)
-        pdf.multi_cell(0, 5, clean(medidas), 1)
+        # --- 5. DIAGNÓSTICO ---
+        pdf.ln(10)
+        pdf.set_font("Arial", 'B', 10); pdf.set_fill_color(0, 51, 102); pdf.set_text_color(255, 255, 255)
+        pdf.cell(0, 7, " PARECER TECNICO E RECOMENDACOES", 1, 1, 'C', True)
+        pdf.set_text_color(0); pdf.set_font("Arial", '', 9); pdf.ln(2)
+        pdf.multi_cell(0, 6, clean(medidas), 1, 'L')
 
-        # --- 6. ASSINATURAS (REBAIXADAS) ---
-        pdf.ln(25)
-        y_sig = pdf.get_y()
-        pdf.line(20, y_sig, 90, y_sig); pdf.set_xy(20, y_sig + 2); pdf.set_font("Arial", 'B', 8)
-        pdf.cell(70, 4, "MARCIO PAULO DO NASCIMENTO", 0, 1, 'C'); pdf.set_x(20); pdf.cell(70, 4, "CNPJ: 51.274.762/0001-17", 0, 1, 'C')
-        pdf.line(120, y_sig, 190, y_sig); pdf.set_xy(120, y_sig + 2); pdf.cell(70, 4, clean(cliente), 0, 1, 'C'); pdf.set_x(120); pdf.cell(70, 4, "CLIENTE / RESPONSAVEL", 0, 1, 'C')
+        # --- 6. ASSINATURA ---
+        pdf.set_y(-35)
+        pdf.set_font("Arial", 'I', 8)
+        pdf.cell(0, 5, "_______________________________________________________", 0, 1, 'C')
+        pdf.cell(0, 5, "Responsavel Tecnico: MPN Engenharia & Diagnostico", 0, 1, 'C')
 
-        # DOWNLOAD
-        pdf_output = io.BytesIO()
-        pdf_output.write(pdf.output(dest='S').encode('latin1'))
-        st.download_button("📥 Baixar Laudo Tecnico Profissional", data=pdf_output.getvalue(), file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
+        # --- DOWNLOAD ---
+        pdf_output = pdf.output(dest='S').encode('latin-1', errors='replace')
+        st.download_button(label="⬇️ Baixar Relatório PDF", data=pdf_output, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
+
+st.markdown("---")
+st.caption("MPN Engenharia Pro | v1.2")
