@@ -21,7 +21,7 @@ def get_tsat_global(psig, gas):
         "R-404A": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0], 
                    "t": [-45.45, -9.41, 8.96, 22.23, 32.59, 41.2, 48.6, 55.2, 61.1]}
     }
-    if gas not in ancoras_completas: return 0.0
+    if gas not in ancoras_completas or psig is None: return 0.0
     try: return round(float(np.interp(psig, ancoras_completas[gas]["p"], ancoras_completas[gas]["t"])), 2)
     except: return 0.0
 
@@ -38,7 +38,7 @@ tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ El
 
 with tab_cad:
     st.subheader("👤 Identificação e Contato")
-    # LINHA 1: Dados Pessoais e Data da Visita (Atualizado)
+    # LINHA 1: Dados Pessoais e Data da Visita (Rótulo atualizado)
     l1 = st.columns([2.5, 1.2, 1.4, 1.0, 1.0, 1.0])
     cliente = l1.text_input("Cliente/Empresa", key="cli_name")
     doc_cliente = l1.text_input("CPF/CNPJ", key="cli_doc")
@@ -70,16 +70,16 @@ with tab_cad:
     fluido = t1.selectbox("Gás", ["R-410A", "R-32", "R-22", "R-134a", "R-404A"], key="eq_gas")
 
     # LINHA 2 TÉCNICA: Localizações
-    t2 = st.columns()
-    loc_evap = t2.text_input("Localização Evaporadora", key="loc_evap")
-    loc_cond = t2.text_input("Localização Condensadora", key="loc_cond")
+    t2 = st.columns(2)
+    loc_evap = t2[0].text_input("Localização Evaporadora", key="loc_evap")
+    loc_cond = t2[1].text_input("Localização Condensadora", key="loc_cond")
 
     # LINHA 3 TÉCNICA: Séries e Modelos Unid.
-    t3 = st.columns()
-    mod_evap = t3.text_input("Mod. Evap.", key="mod_evap")
-    serie_evap = t3.text_input("Série Evap.", key="ser_evap")
-    mod_cond = t3.text_input("Mod. Cond.", key="mod_cond")
-    serie_cond = t3.text_input("Série Cond.", key="ser_cond")
+    t3 = st.columns(4)
+    mod_evap = t3[0].text_input("Mod. Evap.", key="mod_evap")
+    serie_evap = t3[1].text_input("Série Evap.", key="ser_evap")
+    mod_cond = t3[2].text_input("Mod. Cond.", key="mod_cond")
+    serie_cond = t3[3].text_input("Série Cond.", key="ser_cond")
 
 with tab_ele:
     st.subheader("⚡ Parâmetros Elétricos")
