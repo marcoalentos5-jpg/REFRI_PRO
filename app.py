@@ -3,14 +3,13 @@ import numpy as np
 from datetime import date
 from fpdf import FPDF
 import io
-import os
 
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="MPN | Engenharia Pro", layout="wide", page_icon="❄️")
 
 # --- 2. MOTOR TERMODINÂMICO (PRECISÃO PERICIAL) ---
 def get_tsat_global(psig, gas):
-    ancoras = {
+    ancoras_completas = {
         "R-410A": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 550.0, 600.0], 
                    "t": [-51.0, -17.02, -0.29, 11.55, 20.93, 28.84, 35.58, 41.74, 47.3, 52.1, 56.59, 60.7, 64.59]},
         "R-32": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 550.0, 600.0], 
@@ -22,16 +21,16 @@ def get_tsat_global(psig, gas):
         "R-404A": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0], 
                    "t": [-45.45, -9.41, 8.96, 22.23, 32.59, 41.2, 48.6, 55.2, 61.1]}
     }
-    if gas not in ancoras: return 0.0
-    try: return round(float(np.interp(psig, ancoras[gas]["p"], ancoras[gas]["t"])), 2)
+    if gas not in ancoras_completas: return 0.0
+    try: return round(float(np.interp(psig, ancoras_completas[gas]["p"], ancoras_completas[gas]["t"])), 2)
     except: return 0.0
 
 def clean(txt):
-    if txt is None: return ""
-    replacements = {'°': 'C', 'º': '.', 'ª': '.', 'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ã': 'a', 'õ': 'o', 'ç': 'c', 'Á': 'A', 'É': 'E', 'Í': 'I', 'Ó': 'O', 'Ú': 'U', 'Ã': 'A', 'Õ': 'O', 'Ç': 'C', '´': '', '`': ''}
+    if not txt: return ""
+    replacements = {'°': 'C', 'º': '.', 'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ã': 'a', 'õ': 'o', 'ç': 'c', 'Á': 'A', 'É': 'E', 'Í': 'I', 'Ó': 'O', 'Ú': 'U', 'Ã': 'A', 'Õ': 'O', 'Ç': 'C'}
     t = str(txt)
     for old, new in replacements.items(): t = t.replace(old, new)
-    return t.encode('latin-1', 'replace').decode('latin-1')
+    return t.encode('ascii', 'ignore').decode('ascii')
 
 # --- 3. INTERFACE DO APP ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
@@ -49,14 +48,18 @@ with tab_cad:
     numero = c5.text_input("Nº")
     complemento = c6.text_input("Complemento")
     
-    c7, c8, c9 = st.columns([1.5, 1, 1.5])
+    # LINHA OTIMIZADA: Bairro, CEP, E-mail, WhatsApp e Data (Destaque na Data)
+    c7, c8, c9, c10, c11 = st.columns([1, 0.8, 1.2, 1, 1.5])
     bairro = c7.text_input("Bairro")
     cep = c8.text_input("CEP", placeholder="00000-000")
     email_cli = c9.text_input("✉️ E-mail")
-
-    c10, c11 = st.columns(2)
     whatsapp = c10.text_input("🟢 WhatsApp", value="21980264217")
-    data_visita = c11.date_input("Data da Visita", value=date.today())
+    data_visita = c11.date_input("📅 DATA DA VISITA", value=date.today())
+
+    # Linha para Telefones Adicionais
+    c12, c13 = st.columns(2)
+    celular = c12.text_input("📱 Celular")
+    tel_residencial = c13.text_input("📞 Tel. Residencial")
 
     st.markdown("---")
     st.subheader("⚙️ Dados Técnicos")
@@ -66,16 +69,17 @@ with tab_cad:
     modelo_eq = d3.text_input("Modelo")
     cap_digitada = d4.text_input("Capacidade (Mil BTU´s)", value="0")
     
-    d5, d6, d7, d8 = st.columns(4)
+    # Gás e Tipo Sistema (Reduzidos)
+    d5, d6, d7 = st.columns([1.5, 0.8, 0.7]) 
     tecnologia = d5.selectbox("Tecnologia", ["Inverter", "WindFree", "Scroll", "On-Off"])
-    tipo_eq = d6.selectbox("Tipo de Sistema", ["Split Hi-Wall", "Cassete", "Piso-Teto", "VRF", "Chiller"])
+    tipo_eq = d6.selectbox("Tipo de Sistema", ["Split", "Cassete", "Piso-Teto", "VRF", "Chiller"])
     fluido = d7.selectbox("Gás Refrigerante", ["R-410A", "R-32", "R-22", "R-134a", "R-404A"])
-    loc_evap = d8.text_input("Localização Evaporadora")
 
-    d9, d10 = st.columns([1, 3])
+    # Localizações (Uma única linha)
+    d8, d9 = st.columns(2)
+    loc_evap = d8.text_input("Localização Evaporadora")
     loc_cond = d9.text_input("Localização Condensadora")
 
-    # Instrução: Diminuir campos de Modelo/Série Evap/Cond e colocar em uma única linha
     col_tec1, col_tec2, col_tec3, col_tec4 = st.columns(4)
     mod_evap = col_tec1.text_input("Modelo Unid. Evaporadora")
     serie_evap = col_tec2.text_input("Nº Série Evaporadora")
@@ -138,7 +142,7 @@ with tab_diag:
         pdf.set_font("Arial", '', 9)
         pdf.cell(0, 6, f"Cliente: {clean(cliente)} | Doc: {clean(doc_cliente)}", ln=True)
         pdf.cell(0, 6, f"Endereco: {clean(tipo_logr)} {clean(nome_logr)}, No {clean(numero)} {clean(complemento)}", ln=True)
-        pdf.cell(0, 6, f"Bairro: {clean(bairro)} | CEP: {clean(cep)} | WhatsApp: {clean(whatsapp)}", ln=True)
+        pdf.cell(0, 6, f"Bairro: {clean(bairro)} | CEP: {clean(cep)} | WhatsApp: {clean(whatsapp)} | Data: {data_visita}", ln=True)
         
         draw_header("2. Dados Tecnicos")
         pdf.cell(0, 6, f"Equipamento: {clean(fabricante)} | Modelo: {clean(modelo_eq)} | Tecnologia: {tecnologia}", ln=True)
@@ -152,5 +156,5 @@ with tab_diag:
         draw_header("4. Diagnostico Final")
         pdf.multi_cell(0, 6, clean(medidas))
 
-        out = pdf.output(dest='S').encode('latin-1', 'replace')
-        st.download_button("⬇️ Baixar Relatório PDF", out, f"Relatorio_{clean(cliente)}.pdf", "application/pdf")
+        pdf_output = pdf.output(dest='S').encode('latin-1', errors='replace')
+        st.download_button("📥 Baixar PDF", pdf_output, f"Relatorio_{clean(cliente)}.pdf", "application/pdf")
