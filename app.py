@@ -39,52 +39,46 @@ tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ El
 with tab_cad:
     st.subheader("👤 Dados do Cliente & Contato")
     
-    # Linha 1: Redução 30% aplicada
+    # Linha Cliente/Doc/Data
     c1, c2, c3, sp1 = st.columns([1.75, 0.84, 0.7, 1.5])
     cliente = c1.text_input("Nome do Cliente / Empresa", key="cli_name")
     doc_cliente = c2.text_input("CPF / CNPJ", key="cli_doc")
     data_visita = c3.date_input("📅 DATA VISITA", value=date.today(), key="cli_date")
     
-    # Linha 2: Endereço
-    c4, c5, c6, c7, sp2 = st.columns([0.56, 1.4, 0.35, 0.7, 1.7])
-    tipo_logr = c4.selectbox("Tipo", ["Rua", "Avenida", "Travessa", "Alameda", "Estrada", "Rodovia", "Praça", "Loteamento"], key="cli_logr_t")
-    nome_logr = c5.text_input("Logradouro", key="cli_logr_n")
-    numero = c6.text_input("Nº", key="cli_num")
-    complemento = c7.text_input("Comp.", key="cli_comp")
+    # AJUSTE SOLICITADO: Tipo, Logradouro, Nº, Comp., Bairro, CEP em uma linha apenas
+    l_end = st.columns([0.6, 2.0, 0.4, 0.8, 1.2, 0.8])
+    tipo_logr = l_end[0].selectbox("Tipo", ["Rua", "Avenida", "Travessa", "Alameda", "Estrada", "Rodovia", "Praça", "Loteamento"], key="cli_logr_t")
+    nome_logr = l_end[1].text_input("Logradouro", key="cli_logr_n")
+    numero = l_end[2].text_input("Nº", key="cli_num")
+    complemento = l_end[3].text_input("Comp.", key="cli_comp")
+    bairro = l_end[4].text_input("Bairro", key="cli_bairro")
+    cep = l_end[5].text_input("CEP", key="cli_cep")
     
-    # Linha 3: Contatos e Localidade
-    c8, c9, c10, sp3 = st.columns([0.7, 0.56, 1.05, 2.4])
-    bairro = c8.text_input("Bairro", key="cli_bairro")
-    cep = c9.text_input("CEP", key="cli_cep")
-    email_cli = c10.text_input("✉️ E-mail", key="cli_mail")
-
-    c11, c12, c13, sp4 = st.columns([0.7, 0.7, 0.7, 2.6])
-    whatsapp = c11.text_input("🟢 WhatsApp", value="21980264217", key="cli_wpp")
-    celular = c12.text_input("📱 Celular", key="cli_cel")
-    tel_residencial = c13.text_input("📞 Tel. Residencial", key="cli_tel")
+    # AJUSTE SOLICITADO: E-MAIL, WATSSAP, CELULAR E TELEFONE RESIDENCIAL em uma linha apenas
+    l_cont = st.columns([1.5, 1.0, 1.0, 1.0])
+    email_cli = l_cont[0].text_input("✉️ E-mail", key="cli_mail")
+    whatsapp = l_cont[1].text_input("🟢 WhatsApp", value="21980264217", key="cli_wpp")
+    celular = l_cont[2].text_input("📱 Celular", key="cli_cel")
+    tel_residencial = l_cont[3].text_input("📞 Tel. Residencial", key="cli_tel")
 
     st.markdown("---")
     st.subheader("⚙️ Dados Técnicos")
     
-    # Dados Máquina: Redução 30%
     d1, d2, d3, d4, sp5 = st.columns([0.7, 0.7, 0.7, 0.7, 1.9])
     fabricante = d1.text_input("Fabricante (Marca)", key="eq_fab")
     linha = d2.text_input("Linha", key="eq_lin")
     modelo_eq = d3.text_input("Modelo", key="eq_mod")
     cap_digitada = d4.text_input("Capacidade (BTU´s)", value="0", key="eq_cap")
     
-    # Tecnologia e Fluido
     d5, d6, d7, sp6 = st.columns([1.05, 0.56, 0.49, 2.6]) 
     tecnologia = d5.selectbox("Tecnologia", ["Inverter", "WindFree", "Scroll", "On-Off"], key="eq_tec")
     tipo_eq = d6.selectbox("Tipo de Sistema", ["Split", "Cassete", "Piso-Teto", "VRF", "Chiller"], key="eq_tipo")
     fluido = d7.selectbox("Gás Refrigerante", ["R-410A", "R-32", "R-22", "R-134a", "R-404A"], key="eq_gas")
 
-    # Localizações unificadas
     d8, d9, sp7 = st.columns([0.7, 0.7, 3.3])
     loc_evap = d8.text_input("Localização Evaporadora", key="loc_evap")
     loc_cond = d9.text_input("Localização Condensadora", key="loc_cond")
 
-    # Modelos e Séries
     col_tec1, col_tec2, col_tec3, col_tec4, sp8 = st.columns([0.7, 0.7, 0.7, 0.7, 1.9])
     mod_evap = col_tec1.text_input("Modelo Unid. Evap.", key="mod_evap")
     serie_evap = col_tec2.text_input("Nº Série Evap.", key="ser_evap")
