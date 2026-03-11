@@ -38,57 +38,57 @@ tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ El
 
 with tab_cad:
     st.subheader("👤 Identificação e Contato")
-    # LINHA 1: Dados Pessoais e Data da Visita (Rótulo atualizado)
-    l1 = st.columns([2.5, 1.2, 1.4, 1.0, 1.0, 1.0])
-    cliente = l1.text_input("Cliente/Empresa", key="cli_name")
-    doc_cliente = l1.text_input("CPF/CNPJ", key="cli_doc")
-    data_visita = l1.date_input("📅 DATA DA VISITA", value=date.today(), key="cli_date")
-    whatsapp = l1.text_input("🟢 WhatsApp", value="21980264217", key="cli_wpp")
-    celular = l1.text_input("📱 Celular", key="cli_cel")
-    tel_residencial = l1.text_input("📞 Fixo", key="cli_tel")
+    # Linha 1: Dados Principais
+    c1, c2, c3, c4, c5, c6 = st.columns([2.5, 1.2, 1.4, 1.0, 1.0, 1.0])
+    cliente = c1.text_input("Cliente/Empresa", key="cli_name")
+    doc_cliente = c2.text_input("CPF/CNPJ", key="cli_doc")
+    data_visita = c3.date_input("📅 DATA DA VISITA", value=date.today(), key="cli_date")
+    whatsapp = c4.text_input("🟢 WhatsApp", value="21980264217", key="cli_wpp")
+    celular = c5.text_input("📱 Celular", key="cli_cel")
+    tel_residencial = c6.text_input("📞 Fixo", key="cli_tel")
 
-    # LINHA 2: Endereço Completo e E-mail
-    l2 = st.columns([0.6, 1.5, 0.4, 0.6, 1.0, 0.8, 1.5])
-    tipo_logr = l2.selectbox("Tipo", ["Rua", "Av.", "Trav.", "Alam.", "Estr.", "Rod.", "Pça."], key="cli_logr_t")
-    nome_logr = l2.text_input("Logradouro", key="cli_logr_n")
-    numero = l2.text_input("Nº", key="cli_num")
-    complemento = l2.text_input("Comp.", key="cli_comp")
-    bairro = l2.text_input("Bairro", key="cli_bairro")
-    cep = l2.text_input("CEP", key="cli_cep")
-    email_cli = l2.text_input("✉️ E-mail", key="cli_mail")
+    # Linha 2: Endereço e E-mail
+    e1, e2, e3, e4, e5, e6, e7 = st.columns([0.6, 1.5, 0.4, 0.6, 1.0, 0.8, 1.5])
+    tipo_logr = e1.selectbox("Tipo", ["Rua", "Av.", "Trav.", "Alam.", "Estr.", "Rod.", "Pça."], key="cli_logr_t")
+    nome_logr = e2.text_input("Logradouro", key="cli_logr_n")
+    numero = e3.text_input("Nº", key="cli_num")
+    complemento = e4.text_input("Comp.", key="cli_comp")
+    bairro = e5.text_input("Bairro", key="cli_bairro")
+    cep = e6.text_input("CEP", key="cli_cep")
+    email_cli = e7.text_input("✉️ E-mail", key="cli_mail")
 
     st.markdown("---")
     st.subheader("⚙️ Dados Técnicos")
-    # LINHA 1 TÉCNICA: Informações Gerais
-    t1 = st.columns([1, 1, 1, 0.8, 1, 0.8, 0.8])
-    fabricante = t1.text_input("Marca", key="eq_fab")
-    linha = t1.text_input("Linha", key="eq_lin")
-    modelo_eq = t1.text_input("Modelo", key="eq_mod")
-    cap_digitada = t1.text_input("BTU´s", value="0", key="eq_cap")
-    tecnologia = t1.selectbox("Tecnologia", ["Inverter", "WindFree", "Scroll", "On-Off"], key="eq_tec")
-    tipo_eq = t1.selectbox("Sistema", ["Split", "Cassete", "Piso", "VRF", "Chiller"], key="eq_tipo")
-    fluido = t1.selectbox("Gás", ["R-410A", "R-32", "R-22", "R-134a", "R-404A"], key="eq_gas")
+    # Linha 1 Técnica
+    t1_1, t1_2, t1_3, t1_4, t1_5, t1_6, t1_7 = st.columns([1, 1, 1, 0.8, 1, 0.8, 0.8])
+    fabricante = t1_1.text_input("Marca", key="eq_fab")
+    linha = t1_2.text_input("Linha", key="eq_lin")
+    modelo_eq = t1_3.text_input("Modelo", key="eq_mod")
+    cap_digitada = t1_4.text_input("BTU´s", value="0", key="eq_cap")
+    tecnologia = t1_5.selectbox("Tecnologia", ["Inverter", "WindFree", "Scroll", "On-Off"], key="eq_tec")
+    tipo_eq = t1_6.selectbox("Sistema", ["Split", "Cassete", "Piso", "VRF", "Chiller"], key="eq_tipo")
+    fluido = t1_7.selectbox("Gás", ["R-410A", "R-32", "R-22", "R-134a", "R-404A"], key="eq_gas")
 
-    # LINHA 2 TÉCNICA: Localizações
-    t2 = st.columns(2)
-    loc_evap = t2[0].text_input("Localização Evaporadora", key="loc_evap")
-    loc_cond = t2[1].text_input("Localização Condensadora", key="loc_cond")
+    # Linha 2 Técnica: Localizações
+    t2_1, t2_2 = st.columns(2)
+    loc_evap = t2_1.text_input("Localização Evaporadora", key="loc_evap")
+    loc_cond = t2_2.text_input("Localização Condensadora", key="loc_cond")
 
-    # LINHA 3 TÉCNICA: Séries e Modelos Unid.
-    t3 = st.columns(4)
-    mod_evap = t3[0].text_input("Mod. Evap.", key="mod_evap")
-    serie_evap = t3[1].text_input("Série Evap.", key="ser_evap")
-    mod_cond = t3[2].text_input("Mod. Cond.", key="mod_cond")
-    serie_cond = t3[3].text_input("Série Cond.", key="ser_cond")
+    # Linha 3 Técnica: Séries
+    t3_1, t3_2, t3_3, t3_4 = st.columns(4)
+    mod_evap = t3_1.text_input("Mod. Evap.", key="mod_evap")
+    serie_evap = t3_2.text_input("Série Evap.", key="ser_evap")
+    mod_cond = t3_3.text_input("Mod. Cond.", key="mod_cond")
+    serie_cond = t3_4.text_input("Série Cond.", key="ser_cond")
 
 with tab_ele:
     st.subheader("⚡ Parâmetros Elétricos")
-    e1, e2 = st.columns(2)
-    v_rede = e1.number_input("Tensão da Rede (V)", value=220.0, key="v_rede")
-    v_med = e1.number_input("Tensão Medida (V)", value=218.0, key="v_med")
-    lra_comp = e2.number_input("LRA (A)", value=0.0, key="lra")
-    rla_comp = e2.number_input("RLA (A)", value=1.0, key="rla")
-    a_med = e2.number_input("Corrente Medida (A)", value=0.0, key="a_med")
+    ele_c1, ele_c2 = st.columns(2)
+    v_rede = ele_c1.number_input("Tensão da Rede (V)", value=220.0, key="v_rede")
+    v_med = ele_c1.number_input("Tensão Medida (V)", value=218.0, key="v_med")
+    lra_comp = ele_c2.number_input("LRA (A)", value=0.0, key="lra")
+    rla_comp = ele_c2.number_input("RLA (A)", value=1.0, key="rla")
+    a_med = ele_c2.number_input("Corrente Medida (A)", value=0.0, key="a_med")
     diff_v = round(v_rede - v_med, 1)
     carga_final = round((a_med/rla_comp*100),1) if rla_comp > 0 else 0.0
     st.markdown("---")
@@ -99,20 +99,20 @@ with tab_ele:
 
 with tab_termo:
     st.subheader("🌡️ Ciclo Frigorífico")
-    col1, col2, col3 = st.columns(3)
-    p_suc = col1.number_input("Pressão Sucção (PSIG)", value=118.0, key="p_suc")
-    t_suc_tubo = col1.number_input("Temp. Tubo Sucção (°C)", value=12.0, key="t_suc")
-    p_liq = col2.number_input("Pressão Descarga (PSIG)", value=345.0, key="p_liq")
-    t_liq_tubo = col2.number_input("Temp. Tubo Líquido (°C)", value=30.0, key="t_liq")
+    col_t1, col_t2, col_t3 = st.columns(3)
+    p_suc = col_t1.number_input("Pressão Sucção (PSIG)", value=118.0, key="p_suc")
+    t_suc_tubo = col_t1.number_input("Temp. Tubo Sucção (°C)", value=12.0, key="t_suc")
+    p_liq = col_t2.number_input("Pressão Descarga (PSIG)", value=345.0, key="p_liq")
+    t_liq_tubo = col_t2.number_input("Temp. Tubo Líquido (°C)", value=30.0, key="t_liq")
     tsat_suc = get_tsat_global(p_suc, fluido)
     tsat_liq = get_tsat_global(p_liq, fluido)
     sh = round(t_suc_tubo - tsat_suc, 1)
     sc = round(tsat_liq - t_liq_tubo, 1)
     st.markdown("---")
-    ct1, ct2 = st.columns(2)
-    with ct1:
+    res_t1, res_t2 = st.columns(2)
+    with res_t1:
         st.markdown(f"""<div style='background-color:#004a99;padding:15px;border-radius:10px;border-left:5px solid #ffcc00;color:white;'><b>🌡️ T-Sat Sucção:</b><h2 style='margin:0;color:white;'>{tsat_suc} °C</h2><b>🔥 Superaquecimento (SH):</b><h2 style='margin:0;color:white;'>{sh} K</h2></div>""", unsafe_allow_html=True)
-    with ct2:
+    with res_t2:
         st.markdown(f"""<div style='background-color:#004a99;padding:15px;border-radius:10px;border-left:5px solid #00d2ff;color:white;'><b>❄️ T-Sat Líquido:</b><h2 style='margin:0;color:white;'>{tsat_liq} °C</h2><b>💧 Sub-resfriamento (SC):</b><h2 style='margin:0;color:white;'>{sc} K</h2></div>""", unsafe_allow_html=True)
 
 with tab_diag:
