@@ -49,7 +49,7 @@ with tab_cad:
     numero = c5.text_input("Nº")
     complemento = c6.text_input("Complemento")
     
-    c7, c8, c9 = st.columns([1, 1, 2])
+    c7, c8, c9 = st.columns([1.5, 1, 1.5])
     bairro = c7.text_input("Bairro")
     cep = c8.text_input("CEP", placeholder="00000-000")
     email_cli = c9.text_input("✉️ E-mail")
@@ -72,15 +72,15 @@ with tab_cad:
     fluido = d7.selectbox("Gás Refrigerante", ["R-410A", "R-32", "R-22", "R-134a", "R-404A"])
     loc_evap = d8.text_input("Localização Evaporadora")
 
-    d9 = st.columns(4)
-    loc_cond = d9[0].text_input("Localização Condensadora") # CORREÇÃO TÉCNICA: Adicionado índice [0]
+    d9, d10 = st.columns([1, 3])
+    loc_cond = d9.text_input("Localização Condensadora")
 
-    col_ev1, col_ev2 = st.columns(2)
-    mod_evap = col_ev1.text_input("Modelo Unidade Evaporadora")
-    serie_evap = col_ev2.text_input("Nº de Série Evaporadora")
-    col_cd1, col_cd2 = st.columns(2)
-    mod_cond = col_cd1.text_input("Modelo Unidade Condensadora")
-    serie_cond = col_cd2.text_input("Nº de Série Condensadora")
+    # Instrução: Diminuir campos de Modelo/Série Evap/Cond e colocar em uma única linha
+    col_tec1, col_tec2, col_tec3, col_tec4 = st.columns(4)
+    mod_evap = col_tec1.text_input("Modelo Unid. Evaporadora")
+    serie_evap = col_tec2.text_input("Nº Série Evaporadora")
+    mod_cond = col_tec3.text_input("Modelo Unid. Condensadora")
+    serie_cond = col_tec4.text_input("Nº Série Condensadora")
 
 with tab_ele:
     st.subheader("⚡ Parâmetros Elétricos")
@@ -88,7 +88,7 @@ with tab_ele:
     v_rede = e1.number_input("Tensão da Rede (V)", value=220.0)
     v_med = e1.number_input("Tensão Medida (V)", value=218.0)
     lra_comp = e2.number_input("LRA (A)", value=0.0)
-    rla_comp = e2.number_input("RLA (A)", value=1.0) # Valor padrão 1 para evitar div por zero
+    rla_comp = e2.number_input("RLA (A)", value=1.0)
     a_med = e2.number_input("Corrente Medida (A)", value=0.0)
     diff_v = round(v_rede - v_med, 1)
     carga_final = round((a_med/rla_comp*100),1) if rla_comp > 0 else 0
@@ -105,24 +105,19 @@ with tab_termo:
     t_suc_tubo = col1.number_input("Temp. Tubo Sucção (°C)", value=12.0)
     p_liq = col2.number_input("Pressão Descarga (PSIG)", value=345.0)
     t_liq_tubo = col2.number_input("Temp. Tubo Líquido (°C)", value=30.0)
-    t_ret = col3.number_input("Temp. Ar Retorno (°C)", value=24.0)
-    t_ins = col3.number_input("Temp. Ar Insufl. (°C)", value=12.0)
     tsat_suc = get_tsat_global(p_suc, fluido)
     tsat_liq = get_tsat_global(p_liq, fluido)
     sh = round(t_suc_tubo - tsat_suc, 1)
     sc = round(tsat_liq - t_liq_tubo, 1)
-    dt = round(t_ret - t_ins, 1)
     st.markdown("---")
     ct1, ct2 = st.columns(2)
     with ct1:
         st.markdown(f"""<div style='background-color:#004a99;padding:15px;border-radius:10px;border-left:5px solid #ffcc00;color:white;'><b>🌡️ T-Sat Sucção:</b><h2 style='margin:0;color:white;'>{tsat_suc} °C</h2><b>🔥 Superaquecimento (SH):</b><h2 style='margin:0;color:white;'>{sh} K</h2></div>""", unsafe_allow_html=True)
     with ct2:
         st.markdown(f"""<div style='background-color:#004a99;padding:15px;border-radius:10px;border-left:5px solid #00d2ff;color:white;'><b>❄️ T-Sat Líquido:</b><h2 style='margin:0;color:white;'>{tsat_liq} °C</h2><b>💧 Sub-resfriamento (SC):</b><h2 style='margin:0;color:white;'>{sc} K</h2></div>""", unsafe_allow_html=True)
-    st.markdown(f"""<div style='background-color:#004a99;padding:20px;border-radius:15px;text-align:center;margin-top:10px;border:2px solid #ffcc00;'><span style='color:white;font-weight:bold;'>📈 Diferencial de Temperatura (ΔT)</span><h1 style='margin:0;color:white;font-size:45px;'>{dt} K</h1></div>""", unsafe_allow_html=True)
 
 with tab_diag:
-    st.subheader("🤖 Diagnóstico e Recomendações")
-    ia_raw = st.text_area("🤖 Diagnóstico Final / IA", value=f"SH: {sh}K | SC: {sc}K | DT: {dt}K", height=150)
+    medidas = st.text_area("🤖 Diagnóstico Final / IA", value=f"SH: {sh}K | SC: {sc}K", height=150)
     if st.button("📄 Gerar Relatório Profissional"):
         pdf = FPDF()
         pdf.add_page()
@@ -152,10 +147,10 @@ with tab_diag:
 
         draw_header("3. Parametros Medidos")
         pdf.cell(0, 6, f"Eletrica: {v_med}V | {a_med}A | Carga: {carga_final}%", ln=True)
-        pdf.cell(0, 6, f"Termica: Succao {p_suc} PSIG | SH: {sh}K | SC: {sc}K | Delta T: {dt}K", ln=True)
+        pdf.cell(0, 6, f"Termica: Succao {p_suc} PSIG | SH: {sh}K | SC: {sc}K", ln=True)
 
         draw_header("4. Diagnostico Final")
-        pdf.multi_cell(0, 6, clean(ia_raw))
+        pdf.multi_cell(0, 6, clean(medidas))
 
         out = pdf.output(dest='S').encode('latin-1', 'replace')
         st.download_button("⬇️ Baixar Relatório PDF", out, f"Relatorio_{clean(cliente)}.pdf", "application/pdf")
