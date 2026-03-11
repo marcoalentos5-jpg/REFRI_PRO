@@ -32,7 +32,7 @@ def clean(txt):
     for old, new in replacements.items(): t = t.replace(old, new)
     return t.encode('ascii', 'ignore').decode('ascii')
 
-# --- 3. INTERFACE DO APP ---
+# --- 3. INTERFACE DO APP (BLOQUEADA) ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
 tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico"])
 
@@ -117,29 +117,34 @@ with tab_diag:
         pdf = FPDF()
         pdf.add_page()
         
-        # --- 1. CABEÇALHO (LOGO LARGA + FRASE) ---
+        # --- 1. CABEÇALHO ---
         try:
             pdf.image("logo.png", 10, 8, 75) 
-            pdf.set_xy(90, 18)
+            pdf.set_xy(90, 15)
             pdf.set_font("Arial", 'B', 16); pdf.set_text_color(0, 51, 102)
             pdf.cell(0, 10, "Relatorio Tecnico", 0, 1, 'L')
         except:
             pdf.set_font("Arial", 'B', 15); pdf.set_text_color(0, 74, 153)
             pdf.cell(0, 10, "MPN SOLUCOES - Relatorio Tecnico", 0, 1, 'C')
 
-        pdf.ln(12)
+        # --- DATA DA VISITA (CANTO DIREITO SUPERIOR / FUNDO CINZA) ---
+        pdf.set_xy(145, 12)
+        pdf.set_fill_color(240, 240, 240); pdf.set_text_color(0); pdf.set_font("Arial", 'B', 9)
+        pdf.cell(55, 8, f" DATA DA VISITA: {data_visita.strftime('%d/%m/%Y')} ", 1, 1, 'C', True)
 
-        # --- 2. DADOS DO CLIENTE (MOLDURA FINA 0.4mm + TÍTULO PADRONIZADO) ---
-        pdf.set_line_width(0.4)
-        y_id = pdf.get_y()
-        pdf.set_font("Arial", 'B', 9.5); pdf.set_fill_color(240, 240, 240); pdf.set_text_color(0, 51, 102)
+        pdf.set_y(38)
+
+        # --- 2. DADOS DO CLIENTE (FORMATO TABELA SEM GRADES) ---
+        pdf.set_font("Arial", 'B', 9.5); pdf.set_fill_color(240, 240, 240); pdf.set_text_color(0, 51, 102); pdf.set_line_width(0.4)
         pdf.cell(0, 6, " Dados do Cliente", 1, 1, 'L', True)
         
         pdf.set_text_color(0); pdf.set_font("Arial", '', 8); pdf.set_line_width(0.2)
-        pdf.rect(10, pdf.get_y(), 190, 25) # Moldura interna para os dados
+        y_cli_start = pdf.get_y()
+        pdf.rect(10, y_cli_start, 190, 25) # Moldura externa fina preservada
         
-        y_data = pdf.get_y() + 2
-        pdf.set_xy(13, y_data)
+        # Estrutura de Tabela Sem Grades (Colunas)
+        y_row = y_cli_start + 2
+        pdf.set_xy(13, y_row)
         pdf.cell(95, 5, f"Cliente: {clean(cliente)}", 0)
         pdf.cell(85, 5, f"Documento: {clean(doc_cliente)}", 0, 1)
         
@@ -148,17 +153,12 @@ with tab_diag:
         pdf.cell(85, 5, f"Bairro: {clean(bairro)}", 0, 1)
         
         pdf.set_x(13)
-        pdf.cell(95, 5, f"WhatsApp: {clean(whatsapp)}", 0)
-        pdf.cell(85, 5, f"E-mail: {clean(email_cli)}", 0, 1)
+        pdf.cell(50, 5, f"WhatsApp: {clean(whatsapp)}", 0)
+        pdf.cell(50, 5, f"Celular: {clean(celular)}", 0)
+        pdf.cell(80, 5, f"E-mail: {clean(email_cli)}", 0, 1)
 
-        # Data em Destaque Amarelo
-        pdf.ln(6); pdf.set_x(13)
-        pdf.set_fill_color(255, 255, 0)
-        pdf.set_font("Arial", 'B', 10)
-        pdf.cell(60, 7, f" DATA DA VISITA: {data_visita.strftime('%d/%m/%Y')} ", 1, 1, 'C', True)
-        
         # --- 3. ESPECIFICAÇÕES DO EQUIPAMENTO E ELÉTRICA ---
-        pdf.ln(2)
+        pdf.ln(9)
         pdf.set_font("Arial", 'B', 9.5); pdf.set_fill_color(240, 240, 240); pdf.set_text_color(0, 51, 102)
         pdf.cell(0, 6, " Especificacoes do Equipamento e Eletrica", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 8); pdf.set_line_width(0.2); pdf.set_text_color(0)
@@ -179,9 +179,8 @@ with tab_diag:
         pdf.ln(3)
         pdf.set_font("Arial", 'B', 9.5); pdf.set_fill_color(240, 240, 240); pdf.set_text_color(0, 51, 102)
         pdf.cell(0, 6, " Analise Termodinamica Medida", 1, 1, 'L', True)
-        pdf.set_line_width(0.2); pdf.set_text_color(0)
         
-        pdf.set_font("Arial", 'B', 8); pdf.set_fill_color(250, 250, 250)
+        pdf.set_font("Arial", 'B', 8); pdf.set_fill_color(250, 250, 250); pdf.set_text_color(0)
         pdf.cell(63.3, 6, "Parametros de Baixa (Succao)", 1, 0, 'C', True)
         pdf.cell(63.3, 6, "Parametros de Alta (Descarga)", 1, 0, 'C', True)
         pdf.cell(63.4, 6, "Resultados de Performance", 1, 1, 'C', True)
@@ -192,7 +191,7 @@ with tab_diag:
         pdf.set_fill_color(255, 215, 215); pdf.set_font("Arial", 'B', 8)
         pdf.cell(63.4, 6, f" SUPERAQUECIMENTO: {sh_val} K ", 1, 1, 'C', True)
         
-        pdf.set_font("Arial", 'B', 8) # Negrito em Temp. Saturacao
+        pdf.set_font("Arial", 'B', 8)
         pdf.cell(63.3, 6, f"Temp. Saturacao: {ts_suc} C", 1, 0, 'L')
         pdf.cell(63.3, 6, f"Temp. Saturacao: {ts_liq} C", 1, 0, 'L')
         pdf.set_fill_color(225, 235, 255)
