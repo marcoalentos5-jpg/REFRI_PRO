@@ -38,64 +38,69 @@ tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ El
 
 with tab_cad:
     st.subheader("👤 Dados do Cliente & Contato")
-    c1, c2 = st.columns([3, 1])
-    cliente = c1.text_input("Nome do Cliente / Empresa")
-    doc_cliente = c2.text_input("CPF / CNPJ")
     
-    c3, c4, c5, c6 = st.columns([1, 2, 0.5, 1])
-    tipo_logr = c3.selectbox("Logradouro", ["Rua", "Avenida", "Travessa", "Alameda", "Estrada", "Rodovia", "Praça", "Loteamento"])
-    nome_logr = c4.text_input("Nome do Logradouro")
-    numero = c5.text_input("Nº")
-    complemento = c6.text_input("Complemento")
+    # Linha 1: Redução 30% aplicada
+    c1, c2, c3, sp1 = st.columns([1.75, 0.84, 0.7, 1.5])
+    cliente = c1.text_input("Nome do Cliente / Empresa", key="cli_name")
+    doc_cliente = c2.text_input("CPF / CNPJ", key="cli_doc")
+    data_visita = c3.date_input("📅 DATA VISITA", value=date.today(), key="cli_date")
     
-    # LINHA OTIMIZADA: Bairro, CEP, E-mail, WhatsApp e Data (Destaque na Data)
-    c7, c8, c9, c10, c11 = st.columns([1, 0.8, 1.2, 1, 1.5])
-    bairro = c7.text_input("Bairro")
-    cep = c8.text_input("CEP", placeholder="00000-000")
-    email_cli = c9.text_input("✉️ E-mail")
-    whatsapp = c10.text_input("🟢 WhatsApp", value="21980264217")
-    data_visita = c11.date_input("📅 DATA DA VISITA", value=date.today())
+    # Linha 2: Endereço
+    c4, c5, c6, c7, sp2 = st.columns([0.56, 1.4, 0.35, 0.7, 1.7])
+    tipo_logr = c4.selectbox("Tipo", ["Rua", "Avenida", "Travessa", "Alameda", "Estrada", "Rodovia", "Praça", "Loteamento"], key="cli_logr_t")
+    nome_logr = c5.text_input("Logradouro", key="cli_logr_n")
+    numero = c6.text_input("Nº", key="cli_num")
+    complemento = c7.text_input("Comp.", key="cli_comp")
+    
+    # Linha 3: Contatos e Localidade
+    c8, c9, c10, sp3 = st.columns([0.7, 0.56, 1.05, 2.4])
+    bairro = c8.text_input("Bairro", key="cli_bairro")
+    cep = c9.text_input("CEP", key="cli_cep")
+    email_cli = c10.text_input("✉️ E-mail", key="cli_mail")
 
-    # Linha para Telefones Adicionais
-    c12, c13 = st.columns(2)
-    celular = c12.text_input("📱 Celular")
-    tel_residencial = c13.text_input("📞 Tel. Residencial")
+    c11, c12, c13, sp4 = st.columns([0.7, 0.7, 0.7, 2.6])
+    whatsapp = c11.text_input("🟢 WhatsApp", value="21980264217", key="cli_wpp")
+    celular = c12.text_input("📱 Celular", key="cli_cel")
+    tel_residencial = c13.text_input("📞 Tel. Residencial", key="cli_tel")
 
     st.markdown("---")
     st.subheader("⚙️ Dados Técnicos")
-    d1, d2, d3, d4 = st.columns(4)
-    fabricante = d1.text_input("Fabricante (Marca)")
-    linha = d2.text_input("Linha")
-    modelo_eq = d3.text_input("Modelo")
-    cap_digitada = d4.text_input("Capacidade (Mil BTU´s)", value="0")
     
-    # Gás e Tipo Sistema (Reduzidos)
-    d5, d6, d7 = st.columns([1.5, 0.8, 0.7]) 
-    tecnologia = d5.selectbox("Tecnologia", ["Inverter", "WindFree", "Scroll", "On-Off"])
-    tipo_eq = d6.selectbox("Tipo de Sistema", ["Split", "Cassete", "Piso-Teto", "VRF", "Chiller"])
-    fluido = d7.selectbox("Gás Refrigerante", ["R-410A", "R-32", "R-22", "R-134a", "R-404A"])
+    # Dados Máquina: Redução 30%
+    d1, d2, d3, d4, sp5 = st.columns([0.7, 0.7, 0.7, 0.7, 1.9])
+    fabricante = d1.text_input("Fabricante (Marca)", key="eq_fab")
+    linha = d2.text_input("Linha", key="eq_lin")
+    modelo_eq = d3.text_input("Modelo", key="eq_mod")
+    cap_digitada = d4.text_input("Capacidade (BTU´s)", value="0", key="eq_cap")
+    
+    # Tecnologia e Fluido
+    d5, d6, d7, sp6 = st.columns([1.05, 0.56, 0.49, 2.6]) 
+    tecnologia = d5.selectbox("Tecnologia", ["Inverter", "WindFree", "Scroll", "On-Off"], key="eq_tec")
+    tipo_eq = d6.selectbox("Tipo de Sistema", ["Split", "Cassete", "Piso-Teto", "VRF", "Chiller"], key="eq_tipo")
+    fluido = d7.selectbox("Gás Refrigerante", ["R-410A", "R-32", "R-22", "R-134a", "R-404A"], key="eq_gas")
 
-    # Localizações (Uma única linha)
-    d8, d9 = st.columns(2)
-    loc_evap = d8.text_input("Localização Evaporadora")
-    loc_cond = d9.text_input("Localização Condensadora")
+    # Localizações unificadas
+    d8, d9, sp7 = st.columns([0.7, 0.7, 3.3])
+    loc_evap = d8.text_input("Localização Evaporadora", key="loc_evap")
+    loc_cond = d9.text_input("Localização Condensadora", key="loc_cond")
 
-    col_tec1, col_tec2, col_tec3, col_tec4 = st.columns(4)
-    mod_evap = col_tec1.text_input("Modelo Unid. Evaporadora")
-    serie_evap = col_tec2.text_input("Nº Série Evaporadora")
-    mod_cond = col_tec3.text_input("Modelo Unid. Condensadora")
-    serie_cond = col_tec4.text_input("Nº Série Condensadora")
+    # Modelos e Séries
+    col_tec1, col_tec2, col_tec3, col_tec4, sp8 = st.columns([0.7, 0.7, 0.7, 0.7, 1.9])
+    mod_evap = col_tec1.text_input("Modelo Unid. Evap.", key="mod_evap")
+    serie_evap = col_tec2.text_input("Nº Série Evap.", key="ser_evap")
+    mod_cond = col_tec3.text_input("Modelo Unid. Cond.", key="mod_cond")
+    serie_cond = col_tec4.text_input("Nº Série Cond.", key="ser_cond")
 
 with tab_ele:
     st.subheader("⚡ Parâmetros Elétricos")
     e1, e2 = st.columns(2)
-    v_rede = e1.number_input("Tensão da Rede (V)", value=220.0)
-    v_med = e1.number_input("Tensão Medida (V)", value=218.0)
-    lra_comp = e2.number_input("LRA (A)", value=0.0)
-    rla_comp = e2.number_input("RLA (A)", value=1.0)
-    a_med = e2.number_input("Corrente Medida (A)", value=0.0)
+    v_rede = e1.number_input("Tensão da Rede (V)", value=220.0, key="v_rede")
+    v_med = e1.number_input("Tensão Medida (V)", value=218.0, key="v_med")
+    lra_comp = e2.number_input("LRA (A)", value=0.0, key="lra")
+    rla_comp = e2.number_input("RLA (A)", value=1.0, key="rla")
+    a_med = e2.number_input("Corrente Medida (A)", value=0.0, key="a_med")
     diff_v = round(v_rede - v_med, 1)
-    carga_final = round((a_med/rla_comp*100),1) if rla_comp > 0 else 0
+    carga_final = round((a_med/rla_comp*100),1) if rla_comp > 0 else 0.0
     st.markdown("---")
     res1, res2, res3 = st.columns(3)
     res1.metric("Queda de Tensão", f"{diff_v} V", delta=f"-{diff_v}V", delta_color="inverse")
@@ -105,10 +110,10 @@ with tab_ele:
 with tab_termo:
     st.subheader("🌡️ Ciclo Frigorífico")
     col1, col2, col3 = st.columns(3)
-    p_suc = col1.number_input("Pressão Sucção (PSIG)", value=118.0)
-    t_suc_tubo = col1.number_input("Temp. Tubo Sucção (°C)", value=12.0)
-    p_liq = col2.number_input("Pressão Descarga (PSIG)", value=345.0)
-    t_liq_tubo = col2.number_input("Temp. Tubo Líquido (°C)", value=30.0)
+    p_suc = col1.number_input("Pressão Sucção (PSIG)", value=118.0, key="p_suc")
+    t_suc_tubo = col1.number_input("Temp. Tubo Sucção (°C)", value=12.0, key="t_suc")
+    p_liq = col2.number_input("Pressão Descarga (PSIG)", value=345.0, key="p_liq")
+    t_liq_tubo = col2.number_input("Temp. Tubo Líquido (°C)", value=30.0, key="t_liq")
     tsat_suc = get_tsat_global(p_suc, fluido)
     tsat_liq = get_tsat_global(p_liq, fluido)
     sh = round(t_suc_tubo - tsat_suc, 1)
@@ -121,7 +126,7 @@ with tab_termo:
         st.markdown(f"""<div style='background-color:#004a99;padding:15px;border-radius:10px;border-left:5px solid #00d2ff;color:white;'><b>❄️ T-Sat Líquido:</b><h2 style='margin:0;color:white;'>{tsat_liq} °C</h2><b>💧 Sub-resfriamento (SC):</b><h2 style='margin:0;color:white;'>{sc} K</h2></div>""", unsafe_allow_html=True)
 
 with tab_diag:
-    medidas = st.text_area("🤖 Diagnóstico Final / IA", value=f"SH: {sh}K | SC: {sc}K", height=150)
+    medidas = st.text_area("🤖 Diagnóstico Final / IA", value=f"SH: {sh}K | SC: {sc}K", height=150, key="diag_txt")
     if st.button("📄 Gerar Relatório Profissional"):
         pdf = FPDF()
         pdf.add_page()
