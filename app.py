@@ -38,7 +38,6 @@ tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ El
 
 with tab_cad:
     st.subheader("👤 Identificação e Contato")
-    # Linha 1: Dados Pessoais
     c1, c2, c3, c4, c5, c6 = st.columns([2.5, 1.2, 1.4, 1.0, 1.0, 1.0])
     cliente = c1.text_input("Cliente/Empresa", key="f_cli")
     doc_cliente = c2.text_input("CPF/CNPJ", key="f_doc")
@@ -47,7 +46,6 @@ with tab_cad:
     celular = c5.text_input("📱 Celular", key="f_cel")
     tel_residencial = c6.text_input("📞 Fixo", key="f_fix")
 
-    # Linha 2: Localização e E-mail
     e1, e2, e3, e4, e5, e6, e7 = st.columns([0.6, 1.5, 0.4, 0.6, 1.0, 0.8, 1.5])
     tipo_logr = e1.selectbox("Tipo", ["Rua", "Av.", "Trav.", "Alam.", "Estr.", "Rod.", "Pça."], key="f_tlog")
     nome_logr = e2.text_input("Logradouro", key="f_nlog")
@@ -59,7 +57,6 @@ with tab_cad:
 
     st.markdown("---")
     st.subheader("⚙️ Dados Técnicos")
-    # Linha Técnica 1
     t1, t2, t3, t4, t5, t6, t7 = st.columns([1, 1, 1, 0.8, 1, 0.8, 0.8])
     fabricante = t1.text_input("Marca", key="f_fab")
     linha = t2.text_input("Linha", key="f_lin")
@@ -69,12 +66,10 @@ with tab_cad:
     tipo_eq = t6.selectbox("Sistema", ["Split", "Cassete", "Piso", "VRF", "Chiller"], key="f_sis")
     fluido = t7.selectbox("Gás", ["R-410A", "R-32", "R-22", "R-134a", "R-404A"], key="f_gas")
 
-    # Linha Técnica 2: Localizações
     l1_ev, l1_co = st.columns(2)
     loc_evap = l1_ev.text_input("Localização Evaporadora", key="f_le")
     loc_cond = l1_co.text_input("Localização Condensadora", key="f_lc")
 
-    # Linha Técnica 3: Séries
     s1, s2, s3, s4 = st.columns(4)
     mod_evap = s1.text_input("Mod. Evap.", key="f_me")
     serie_evap = s2.text_input("Série Evap.", key="f_se")
@@ -109,7 +104,7 @@ with tab_termo:
     ts_suc = get_tsat_global(p_suc, fluido)
     ts_liq = get_tsat_global(p_liq, fluido)
     sh_val = round(t_suc_tubo - ts_suc, 1)
-    sc_val = round(tsat_liq - t_liq_tubo, 1) # Correção lógica aplicada na varredura
+    sc_val = round(ts_liq - t_liq_tubo, 1) # CORREÇÃO APLICADA AQUI (ts_liq -> ts_liq)
     
     st.markdown("---")
     ct1, ct2 = st.columns(2)
