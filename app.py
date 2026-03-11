@@ -16,7 +16,7 @@ def get_tsat_global(psig, gas):
         "R-32": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 550.0, 600.0], 
                  "t": [-51.7, -17.46, 0.87, 10.86, 20.14, 27.9, 34.63, 40.6, 45.96, 50.8, 55.36, 59.5, 63.43]},
         "R-22": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 600.0], 
-                 "t": [-40.8, -3.34, 15.80, 28.15, 38.56, 47.30, 54.89, 61.63, 67.72, 73.2, 78.38, 87.53]},
+                 "t": [-40.8, -3.34, 15.80, 28.15, 38.56, 47.30, 54.89, 61.63, 73.2, 78.38, 87.53]},
         "R-134a": {"p": [0.0, 20.0, 50.0, 80.0, 100.0, 130.0, 150.0, 180.0, 200.0], 
                    "t": [-26.08, -1.0, 12.23, 22.8, 30.92, 38.4, 43.65, 50.1, 53.74]},
         "R-404A": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0], 
@@ -26,38 +26,39 @@ def get_tsat_global(psig, gas):
     try: return round(float(np.interp(psig, ancoras[gas]["p"], ancoras[gas]["t"])), 2)
     except: return 0.0
 
-# Função de Limpeza de Símbolos e Acentos (Rigorosa para PDF)
+# Função de Limpeza Rigorosa para PDF
 def clean(txt):
     if txt is None: return ""
-    replacements = {
-        '°': 'C', 'º': '.', 'ª': '.', 'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u',
-        'â': 'a', 'ê': 'e', 'î': 'i', 'ô': 'o', 'û': 'u', 'ã': 'a', 'õ': 'o', 'ç': 'c',
-        'Á': 'A', 'É': 'E', 'Í': 'I', 'Ó': 'O', 'Ú': 'U', 'Ã': 'A', 'Õ': 'O', 'Ç': 'C',
-        '´': '', '`': '', '^': '', '~': ''
-    }
+    replacements = {'°': 'C', 'º': '.', 'ª': '.', 'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ã': 'a', 'õ': 'o', 'ç': 'c', 'Á': 'A', 'É': 'E', 'Í': 'I', 'Ó': 'O', 'Ú': 'U', 'Ã': 'A', 'Õ': 'O', 'Ç': 'C', '´': '', '`': ''}
     t = str(txt)
     for old, new in replacements.items(): t = t.replace(old, new)
     return t.encode('latin-1', 'replace').decode('latin-1')
 
-# --- 3. INTERFACE DO APP (PRESERVADA) ---
+# --- 3. INTERFACE DO APP ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
 tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico"])
 
 with tab_cad:
     st.subheader("👤 Dados do Cliente & Contato")
-    # Instrução seguida: Diminuir CPF/CNPJ e aumentar Nome
-    c1, c2 = st.columns([3, 1])
+    c1, c2 = st.columns()
     cliente = c1.text_input("Nome do Cliente / Empresa")
     doc_cliente = c2.text_input("CPF / CNPJ")
     
-    l2_c1, l2_c2, l2_c3 = st.columns(3)
-    endereco = l2_c1.text_input("Endereço (Rua e Número)")
-    bairro = l2_c2.text_input("Bairro")
-    cep = l2_c3.text_input("CEP", placeholder="00000-000")
-    l3_c1, l3_c2, l3_c3 = st.columns([1, 1.5, 1])
-    whatsapp = l3_c1.text_input("🟢 WhatsApp", value="21980264217")
-    email_cli = l3_c2.text_input("✉️ E-mail")
-    data_visita = l3_c3.date_input("Data da Visita", value=date.today())
+    c3, c4, c5, c6 = st.columns([1, 2, 0.5, 1])
+    tipo_logr = c3.selectbox("Logradouro", ["Rua", "Avenida", "Travessa", "Alameda", "Estrada", "Rodovia", "Praça", "Loteamento"])
+    nome_logr = c4.text_input("Nome do Logradouro")
+    numero = c5.text_input("Nº")
+    complemento = c6.text_input("Complemento")
+    
+    c7, c8, c9 = st.columns()
+    bairro = c7.text_input("Bairro")
+    cep = c8.text_input("CEP", placeholder="00000-000")
+    email_cli = c9.text_input("✉️ E-mail")
+
+    c10, c11 = st.columns(2)
+    whatsapp = c10.text_input("🟢 WhatsApp", value="21980264217")
+    data_visita = c11.date_input("Data da Visita", value=date.today())
+
     st.markdown("---")
     st.subheader("⚙️ Dados Técnicos")
     d1, d2, d3 = st.columns(3)
@@ -84,12 +85,12 @@ with tab_ele:
     rla_comp = e2.number_input("RLA (A)", value=0.0)
     a_med = e2.number_input("Corrente Medida (A)", value=0.0)
     diff_v = round(v_rede - v_med, 1)
-    diff_a = round(rla_comp - a_med, 1)
+    carga_percent = round((a_med/rla_comp*100),1) if rla_comp > 0 else 0
     st.markdown("---")
     res1, res2, res3 = st.columns(3)
     res1.metric("Queda de Tensão", f"{diff_v} V", delta=f"-{diff_v}V", delta_color="inverse")
-    res2.metric("Folga Corrente (RLA-Med)", f"{diff_a} A")
-    res3.metric("Carga Motor", f"{round((a_med/rla_comp*100),1) if rla_comp > 0 else 0}%")
+    res2.metric("Folga Corrente", f"{round(rla_comp - a_med, 1)} A")
+    res3.metric("Carga Motor", f"{carga_percent}%")
 
 with tab_termo:
     st.subheader("🌡️ Ciclo Frigorífico")
@@ -115,24 +116,10 @@ with tab_termo:
 
 with tab_diag:
     st.subheader("🤖 Diagnóstico e Recomendações")
-    obs_raw = st.text_area("✍️ Observações Técnicas Detalhadas", height=150)
-    med_tomadas_raw = st.text_area("🔧 Medidas Técnicas Tomadas", height=150)
-    
-    diag_termo = []
-    diag_eletr = []
-    if any(x in obs_raw.lower() for x in ["óleo", "vazamento"]): diag_termo.append("Vazamento detectado.")
-    if sh < 6: diag_termo.append(f"SH CRÍTICO ({sh}K).")
-    if diff_v > (v_rede * 0.05): diag_eletr.append(f"QUEDA TENSÃO ({diff_v}V).")
-    
-    propostas_sugestao = "\n".join(diag_termo + diag_eletr) if (diag_termo + diag_eletr) else "Sem anomalias detectadas."
-    ia_raw = st.text_area("🤖 Medidas Técnicas Propostas pela IA", value=propostas_sugestao, height=150)
-
-    st.markdown("---")
+    ia_raw = st.text_area("🤖 Diagnóstico Final / IA", value=f"SH: {sh}K | SC: {sc}K | DT: {dt}K", height=150)
     if st.button("📄 Gerar Relatório Profissional"):
         pdf = FPDF()
         pdf.add_page()
-        
-        # --- CABEÇALHO (LAYOUT PRESERVADO) ---
         pdf.set_fill_color(0, 74, 153)
         pdf.rect(0, 0, 210, 42, 'F')
         pdf.set_text_color(255, 255, 255)
@@ -146,28 +133,22 @@ with tab_diag:
             pdf.set_fill_color(235, 235, 235); pdf.set_text_color(0, 74, 153); pdf.set_font("Arial", 'B', 11)
             pdf.cell(0, 8, f" {clean(title.upper())}", ln=True, fill=True); pdf.set_text_color(0, 0, 0); pdf.ln(3)
 
-        # 1. IDENTIFICAÇÃO (CAMPOS PRESERVADOS)
         draw_header("1. Identificacao do Cliente")
         pdf.set_font("Arial", '', 9)
         pdf.cell(0, 6, f"Cliente: {clean(cliente)} | Doc: {clean(doc_cliente)}", ln=True)
-        pdf.cell(0, 6, f"Endereco: {clean(endereco)} | Bairro: {clean(bairro)} | CEP: {clean(cep)}", ln=True)
-        pdf.cell(0, 6, f"WhatsApp: {clean(whatsapp)} | Data: {data_visita}", ln=True)
-
-        # 2. DADOS TÉCNICOS (CAMPOS PRESERVADOS)
+        pdf.cell(0, 6, f"Endereco: {clean(tipo_logr)} {clean(nome_logr)}, No {clean(numero)} {clean(complemento)}", ln=True)
+        pdf.cell(0, 6, f"Bairro: {clean(bairro)} | CEP: {clean(cep)} | WhatsApp: {clean(whatsapp)}", ln=True)
+        
         draw_header("2. Dados Tecnicos")
-        pdf.cell(0, 6, f"Fabricante: {clean(fabricante)} | Tecnologia: {tecnologia} | Fluido: {fluido}", ln=True)
-        pdf.cell(0, 6, f"Modelo Evap: {clean(mod_evap)} | Serie: {clean(serie_evap)}", ln=True)
-        pdf.cell(0, 6, f"Modelo Cond: {clean(mod_cond)} | Serie: {clean(serie_cond)}", ln=True)
+        pdf.cell(0, 6, f"Equipamento: {clean(fabricante)} | Tecnologia: {tecnologia} | Fluido: {fluido}", ln=True)
+        pdf.cell(0, 6, f"Evaporadora Serie: {clean(serie_evap)} | Condensadora Serie: {clean(serie_cond)}", ln=True)
 
-        # 3. PARÂMETROS (CAMPOS PRESERVADOS)
         draw_header("3. Parametros Medidos")
-        pdf.cell(0, 6, f"Eletrica: {v_med}V | {a_med}A | RLA: {rla_comp}A", ln=True)
+        pdf.cell(0, 6, f"Eletrica: {v_med}V | {a_med}A | Carga: {carga_percent}%", ln=True)
         pdf.cell(0, 6, f"Termica: Succao {p_suc} PSIG | SH: {sh}K | SC: {sc}K | Delta T: {dt}K", ln=True)
 
-        # 4. DIAGNÓSTICO (CAMPOS PRESERVADOS)
-        draw_header("4. Diagnostico e Medidas")
+        draw_header("4. Diagnostico Final")
         pdf.multi_cell(0, 6, clean(ia_raw))
 
-        # Saída segura para PDF
         out = pdf.output(dest='S').encode('latin-1', 'replace')
         st.download_button("⬇️ Baixar Relatório PDF", out, f"Relatorio_{clean(cliente)}.pdf", "application/pdf")
