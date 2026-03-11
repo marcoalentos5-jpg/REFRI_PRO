@@ -213,3 +213,4 @@ with tab_diag:
         pdf_output = io.BytesIO()
         pdf_output.write(pdf.output(dest='S').encode('latin1'))
         st.download_button("📥 Baixar Laudo Profissional", data=pdf_output.getvalue(), file_name=f"Laudo_{cliente}.pdf", mime="application/pdf")
+        
