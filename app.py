@@ -4,7 +4,7 @@ from datetime import date
 from fpdf import FPDF
 import io
 
-# --- 1. CONFIGURAÇÃO DA PÁGINA (PRESERVADA) ---
+# --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="MPN | Engenharia Pro", layout="wide", page_icon="❄️")
 
 # --- 2. MOTOR TERMODINÂMICO E UTILITÁRIOS ---
@@ -34,7 +34,7 @@ def clean(txt):
 
 def format_title(text):
     if not text or text == "N/A": return text
-    preposicoes = ['de', 'da', 'do', 'das', 'dos', 'e', 'em', 'com', 'para', 'ou']
+    preposicoes = ['de', 'da', 'do', 'das', 'dos', 'e', 'em', 'com', 'para', 'ou', 'ao', 'aos', 'à', 'as']
     palavras = text.lower().split()
     if not palavras: return ""
     resultado = [palavras[0].capitalize()]
@@ -125,7 +125,6 @@ with tab_diag:
     medidas = st.text_area("🤖 Diagnóstico / Parecer", value=f"SH: {sh_val}K | SC: {sc_val}K", height=150, key="f_diag")
     
     if st.button("📄 Gerar Relatório Profissional"):
-        # Validação rigorosa
         erros = []
         if not cliente: erros.append("Nome do Cliente")
         if not fabricante: erros.append("Marca do Equipamento")
@@ -142,16 +141,16 @@ with tab_diag:
                 pdf.image("logo.png", 10, 8, 55) 
                 pdf.set_xy(70, 15)
                 pdf.set_font("Arial", 'B', 16); pdf.set_text_color(0, 51, 102)
-                pdf.cell(0, 10, clean("Relatorio Tecnico de Manutencao"), 0, 1, 'L')
+                pdf.cell(0, 10, format_title(clean("Relatorio Tecnico de Manutencao")), 0, 1, 'L')
             except:
                 pdf.set_font("Arial", 'B', 15); pdf.set_text_color(0, 74, 153)
-                pdf.cell(0, 10, clean("MPN SOLUCOES - Relatorio Tecnico"), 0, 1, 'C')
+                pdf.cell(0, 10, format_title(clean("MPN SOLUCOES - Relatorio Tecnico")), 0, 1, 'C')
 
             pdf.set_y(35)
 
-            # --- 2. DADOS DO CLIENTE ---
+            # --- 2. DADOS DO CLIENTE (INDIVIDUALIZADO EM TABELA SEM GRADES) ---
             pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(240, 240, 240); pdf.set_text_color(0, 51, 102); pdf.set_line_width(0.4)
-            pdf.cell(0, 6, clean(" Dados do Cliente"), 1, 1, 'L', True)
+            pdf.cell(0, 6, format_title(clean(" Dados do Cliente")), 1, 1, 'L', True)
             
             y_tab = pdf.get_y()
             pdf.set_text_color(0); pdf.set_font("Arial", '', 8); pdf.set_line_width(0.2)
@@ -161,70 +160,89 @@ with tab_diag:
             pdf.set_font("Arial", 'B', 7); pdf.set_fill_color(225, 225, 225)
             pdf.cell(30, 5, f"DATA: {data_visita.strftime('%d/%m/%Y')}", 1, 0, 'C', True)
 
-            col1, col2, col3 = 13, 85, 145
+            c_cli1, c_cli2, c_cli3 = 13, 85, 145
             pdf.set_font("Arial", '', 8)
             
-            pdf.set_xy(col1, y_tab + 3)
+            pdf.set_xy(c_cli1, y_tab + 3)
             pdf.cell(70, 5, f"Cliente: {format_title(clean(cliente))}", 0)
-            pdf.set_x(col2)
+            pdf.set_x(c_cli2)
             pdf.cell(60, 5, f"CPF/CNPJ: {clean(doc_cliente)}", 0)
             
-            pdf.set_xy(col1, y_tab + 10)
-            end_raw = f"{tipo_logr} {nome_logr}, {numero} {f'({complemento})' if complemento else ''}"
-            pdf.cell(130, 5, f"Endereco: {format_title(clean(end_raw))}", 0)
-            pdf.set_x(col3)
+            pdf.set_xy(c_cli1, y_tab + 10)
+            end_full = f"{tipo_logr} {nome_logr}, {numero} {f'({complemento})' if complemento else ''}"
+            pdf.cell(130, 5, f"Endereco: {format_title(clean(end_full))}", 0)
+            pdf.set_x(c_cli3)
             pdf.cell(50, 5, f"Bairro: {format_title(clean(bairro))}", 0)
 
-            pdf.set_xy(col1, y_tab + 17)
+            pdf.set_xy(c_cli1, y_tab + 17)
             pdf.cell(70, 5, f"CEP: {clean(cep)}", 0)
-            pdf.set_x(col2)
+            pdf.set_x(c_cli2)
             pdf.cell(110, 5, f"E-mail: {clean(email_cli).lower()}", 0)
 
-            pdf.set_xy(col1, y_tab + 24)
+            pdf.set_xy(c_cli1, y_tab + 24)
             pdf.cell(70, 5, f"WhatsApp: {clean(whatsapp)}", 0)
-            pdf.set_x(col2)
+            pdf.set_x(c_cli2)
             pdf.cell(60, 5, f"Celular: {clean(celular)}", 0)
-            pdf.set_x(col3)
+            pdf.set_x(c_cli3)
             pdf.cell(50, 5, f"Fixo: {clean(tel_residencial)}", 0)
 
-            # --- 3. DADOS DO EQUIPAMENTO ---
+            # --- 3. DADOS DO EQUIPAMENTO (INDIVIDUALIZADO EM TABELA SEM GRADES) ---
             pdf.set_y(y_tab + 35)
             pdf.ln(5)
-            pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(240, 240, 240); pdf.set_text_color(0, 51, 102)
-            pdf.cell(0, 6, clean(" Dados do Equipamento"), 1, 1, 'L', True)
+            pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(240, 240, 240); pdf.set_text_color(0, 51, 102); pdf.set_line_width(0.4)
+            pdf.cell(0, 6, format_title(clean(" Dados do Equipamento")), 1, 1, 'L', True)
             
             y_eq = pdf.get_y()
-            pdf.rect(10, y_eq, 190, 30)
-            pdf.set_xy(13, y_eq + 2)
-            pdf.set_text_color(0); pdf.set_font("Arial", '', 8)
-            pdf.cell(65, 5, f"Marca/Linha: {format_title(clean(fabricante))} / {format_title(clean(linha))}", 0)
-            pdf.cell(65, 5, f"Modelo: {clean(modelo_eq).upper()}", 0)
-            pdf.cell(50, 5, f"Capac.: {clean(cap_digitada)} BTU/h", 0, 1)
+            pdf.set_text_color(0); pdf.set_font("Arial", '', 8); pdf.set_line_width(0.2)
+            pdf.rect(10, y_eq, 190, 38)
             
-            pdf.set_x(13)
-            pdf.cell(65, 5, f"Tecnologia: {format_title(clean(tecnologia))}", 0)
-            pdf.cell(65, 5, f"Fluido: {clean(fluido)}", 0)
-            pdf.cell(50, 5, f"Sistema: {format_title(clean(tipo_eq))}", 0, 1)
+            c_eq1, c_eq2, c_eq3 = 13, 75, 140
+            
+            pdf.set_xy(c_eq1, y_eq + 3)
+            pdf.cell(60, 5, f"Marca: {format_title(clean(fabricante))}", 0)
+            pdf.set_x(c_eq2)
+            pdf.cell(60, 5, f"Linha: {format_title(clean(linha))}", 0)
+            pdf.set_x(c_eq3)
+            pdf.cell(60, 5, f"Modelo: {clean(modelo_eq).upper()}", 0)
 
-            pdf.set_x(13)
-            pdf.cell(95, 5, f"Local Evap: {format_title(clean(loc_evap))}", 0)
-            pdf.set_y(pdf.get_y() + 5)
-            pdf.set_x(13)
-            pdf.cell(95, 5, f"Local Cond: {format_title(clean(loc_cond))}", 0, 1)
+            pdf.set_xy(c_eq1, y_eq + 10)
+            pdf.cell(60, 5, f"Capacidade: {clean(cap_digitada)} BTU/h", 0)
+            pdf.set_x(c_eq2)
+            pdf.cell(60, 5, f"Tecnologia: {format_title(clean(tecnologia))}", 0)
+            pdf.set_x(c_eq3)
+            pdf.cell(60, 5, f"Fluido: {clean(fluido)}", 0)
+
+            pdf.set_xy(c_eq1, y_eq + 17)
+            pdf.cell(60, 5, f"Sistema: {format_title(clean(tipo_eq))}", 0)
+            pdf.set_x(c_eq2)
+            pdf.cell(60, 5, f"Mod. Evap: {clean(mod_evap).upper()}", 0)
+            pdf.set_x(c_eq3)
+            pdf.cell(60, 5, f"Serie Evap: {clean(serie_evap).upper()}", 0)
+
+            pdf.set_xy(c_eq1, y_eq + 24)
+            pdf.cell(60, 5, f"Mod. Cond: {clean(mod_cond).upper()}", 0)
+            pdf.set_x(c_eq2)
+            pdf.cell(60, 5, f"Serie Cond: {clean(serie_cond).upper()}", 0)
+            pdf.set_x(c_eq3)
+            pdf.cell(60, 5, f"Local Evap: {format_title(clean(loc_evap))}", 0)
+
+            pdf.set_xy(c_eq1, y_eq + 31)
+            pdf.cell(180, 5, f"Local Cond: {format_title(clean(loc_cond))}", 0)
 
             # --- 4. PARÂMETROS OPERACIONAIS ---
-            pdf.ln(8)
+            pdf.set_y(y_eq + 43)
+            pdf.ln(5)
             pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(240, 240, 240); pdf.set_text_color(0, 51, 102)
-            pdf.cell(0, 6, clean(" Analise de Parametros Operacionais"), 1, 1, 'L', True)
+            pdf.cell(0, 6, format_title(clean(" Analise de Parametros Operacionais")), 1, 1, 'L', True)
             y_an = pdf.get_y()
             pdf.rect(10, y_an, 190, 32)
             pdf.set_xy(13, y_an + 2)
-            pdf.set_font("Arial", 'B', 8); pdf.cell(90, 5, "PARTE ELETRICA", 0, 1); pdf.set_font("Arial", '', 8)
+            pdf.set_font("Arial", 'B', 8); pdf.cell(90, 5, "PARTE ELETRICA", 0, 1); pdf.set_font("Arial", '', 8); pdf.set_text_color(0)
             pdf.set_x(13); pdf.cell(90, 4.5, f"Tensao Rede/Medida: {v_rede}V / {v_med}V", 0, 1)
             pdf.set_x(13); pdf.cell(90, 4.5, f"Corrente (RLA/Medida): {rla_comp}A / {a_med}A", 0, 1)
             pdf.set_x(13); pdf.cell(90, 4.5, f"Carga Estimada: {carga_f}%", 0, 1)
             pdf.set_xy(105, y_an + 2)
-            pdf.set_font("Arial", 'B', 8); pdf.cell(90, 5, "CICLO FRIGORIFICO", 0, 1); pdf.set_font("Arial", '', 8)
+            pdf.set_font("Arial", 'B', 8); pdf.set_text_color(0, 51, 102); pdf.cell(90, 5, "CICLO FRIGORIFICO", 0, 1); pdf.set_font("Arial", '', 8); pdf.set_text_color(0)
             pdf.set_x(105); pdf.cell(90, 4.5, f"Pressao Sucçao: {p_suc} PSIG (T-Sat: {ts_suc} C)", 0, 1)
             pdf.set_x(105); pdf.cell(90, 4.5, f"Superaquecimento: {sh_val} K", 0, 1)
             pdf.set_x(105); pdf.cell(90, 4.5, f"Sub-resfriamento: {sc_val} K", 0, 1)
@@ -232,7 +250,7 @@ with tab_diag:
             # --- 5. DIAGNÓSTICO ---
             pdf.ln(10)
             pdf.set_font("Arial", 'B', 10); pdf.set_fill_color(0, 51, 102); pdf.set_text_color(255, 255, 255)
-            pdf.cell(0, 7, clean(" PARECER TECNICO E RECOMENDACOES"), 1, 1, 'C', True)
+            pdf.cell(0, 7, format_title(clean(" Parecer Tecnico e Recomendacoes")), 1, 1, 'C', True)
             pdf.set_text_color(0); pdf.set_font("Arial", '', 9); pdf.ln(2)
             pdf.multi_cell(0, 6, clean(medidas), 1, 'L')
 
@@ -240,7 +258,7 @@ with tab_diag:
             pdf.set_y(-35)
             pdf.set_font("Arial", 'I', 8)
             pdf.cell(0, 5, "_______________________________________________________", 0, 1, 'C')
-            pdf.cell(0, 5, clean("Responsavel Tecnico: MPN Engenharia & Diagnostico"), 0, 1, 'C')
+            pdf.cell(0, 5, format_title(clean("Responsavel Tecnico: MPN Engenharia & Diagnostico")), 0, 1, 'C')
 
             pdf_output = pdf.output(dest='S').encode('latin-1', errors='replace')
             st.download_button(label="⬇️ Baixar Relatório PDF", data=pdf_output, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
