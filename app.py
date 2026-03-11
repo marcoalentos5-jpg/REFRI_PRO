@@ -4,7 +4,7 @@ from datetime import date
 from fpdf import FPDF
 import io
 
-# --- 1. CONFIGURAÇÃO DA PÁGINA (PRESERVADA) ---
+# --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="MPN | Engenharia Pro", layout="wide", page_icon="❄️")
 
 # --- 2. MOTOR TERMODINÂMICO ---
@@ -32,7 +32,7 @@ def clean(txt):
     for old, new in replacements.items(): t = t.replace(old, new)
     return t.encode('ascii', 'ignore').decode('ascii')
 
-# --- 3. INTERFACE DO APP (BLOQUEADA PARA ALTERAÇÕES) ---
+# --- 3. INTERFACE DO APP ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
 tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico"])
 
@@ -113,106 +113,97 @@ with tab_termo:
 
 with tab_diag:
     medidas = st.text_area("🤖 Diagnóstico / Parecer", value=f"SH: {sh_val}K | SC: {sc_val}K", height=150, key="f_diag")
-    if st.button("📄 Gerar Relatório Profissional"):
+    if st.button("📄 Gerar Relatório Final"):
         pdf = FPDF()
         pdf.add_page()
         
-        # 1. CABEÇALHO COM LOGOMARCA
-        try:
-            pdf.image("logo.png", 10, 8, 33) # Tenta carregar logo.png
-        except:
-            pdf.set_font("Arial", 'B', 12)
-            pdf.cell(40, 10, "[ LOGOMARCA ]", 1, 0, 'C')
-
+        # --- CABEÇALHO ---
+        try: pdf.image("logo.png", 10, 8, 35)
+        except: pass
         pdf.set_font("Arial", 'B', 15); pdf.set_text_color(0, 74, 153)
         pdf.cell(0, 10, "LAUDO TECNICO DE PERFORMANCE TERMICA", ln=True, align='R')
-        pdf.set_font("Arial", '', 10); pdf.cell(0, 5, "MPN SOLUCOES EM CLIMATIZACAO E REFRIGERACAO", ln=True, align='R')
+        pdf.set_font("Arial", 'B', 10); pdf.cell(0, 5, "MPN SOLUCOES EM CLIMATIZACAO E REFRIGERACAO", ln=True, align='R')
         pdf.ln(8)
 
-        # 2. IDENTIFICAÇÃO E CONTATO (CAMPOS INDIVIDUAIS + MOLDURA GROSSA)
+        # --- SEÇÃO 1: IDENTIFICAÇÃO (MOLDURA GROSSA E INDIVIDUALIZAÇÃO) ---
         pdf.set_line_width(1.0)
         y_id = pdf.get_y()
-        pdf.rect(10, y_id, 190, 48) 
+        pdf.rect(10, y_id, 190, 45) # Moldura grossa
         
         pdf.set_font("Arial", 'B', 9); pdf.set_text_color(0)
         pdf.set_xy(13, y_id + 5)
         pdf.cell(100, 5, f"CLIENTE: {clean(cliente)}", 0)
-        pdf.cell(80, 5, f"DOC: {clean(doc_cliente)}", 0, 1)
+        pdf.cell(80, 5, f"DOCUMENTO: {clean(doc_cliente)}", 0, 1)
         
         pdf.set_x(13)
-        pdf.cell(100, 5, f"LOGRADOURO: {clean(tipo_logr)} {clean(nome_logr)}, {clean(numero)}", 0)
+        pdf.cell(100, 5, f"ENDERECO: {clean(tipo_logr)} {clean(nome_logr)}, {clean(numero)}", 0)
         pdf.cell(80, 5, f"BAIRRO: {clean(bairro)}", 0, 1)
         
         pdf.set_x(13)
-        pdf.cell(100, 5, f"CIDADE/CEP: {clean(cep)}", 0)
+        pdf.cell(100, 5, f"CONTATO: {clean(whatsapp)}", 0)
         pdf.cell(80, 5, f"E-MAIL: {clean(email_cli)}", 0, 1)
 
-        pdf.set_x(13)
-        pdf.cell(50, 5, f"WHATSAPP: {clean(whatsapp)}", 0)
-        pdf.cell(50, 5, f"TEL: {clean(celular)}", 0, 1)
-
-        # DATA DA VISITA (FORMATO BR + DESTAQUE AMARELO)
+        # Data em Destaque Amarelo (BR)
         pdf.ln(3); pdf.set_x(13)
         pdf.set_fill_color(255, 255, 0)
         pdf.set_font("Arial", 'B', 11)
-        pdf.cell(75, 8, f" DATA DA VISITA: {data_visita.strftime('%d/%m/%Y')} ", 1, 1, 'C', True)
+        pdf.cell(65, 8, f" DATA DA VISITA: {data_visita.strftime('%d/%m/%Y')} ", 1, 1, 'C', True)
         
-        # 3. TABELA DE DADOS TÉCNICOS (COMPLETA)
-        pdf.set_y(y_id + 55)
+        # --- SEÇÃO 2: TABELA DE DADOS TÉCNICOS ---
+        pdf.set_y(y_id + 52)
         pdf.set_font("Arial", 'B', 10); pdf.set_fill_color(230, 230, 230)
         pdf.cell(0, 7, " ESPECIFICACOES TECNICAS DO EQUIPAMENTO", 1, 1, 'L', True)
-        
         pdf.set_font("Arial", '', 8.5)
+        # Linha 1
         pdf.cell(47.5, 7, f" MARCA: {clean(fabricante)}", 1)
-        pdf.cell(47.5, 7, f" LINHA: {clean(linha)}", 1)
         pdf.cell(47.5, 7, f" MODELO: {clean(modelo_eq)}", 1)
-        pdf.cell(47.5, 7, f" CAP: {clean(cap_digitada)} BTU", 1, 1)
-        
-        pdf.cell(47.5, 7, f" FLUIDO: {clean(fluido)}", 1)
+        pdf.cell(47.5, 7, f" CAPACIDADE: {clean(cap_digitada)}", 1)
+        pdf.cell(47.5, 7, f" FLUIDO: {clean(fluido)}", 1, 1)
+        # Linha 2
         pdf.cell(47.5, 7, f" TECNOLOGIA: {clean(tecnologia)}", 1)
         pdf.cell(47.5, 7, f" SISTEMA: {clean(tipo_eq)}", 1)
-        pdf.cell(47.5, 7, f" EVAP: {clean(loc_evap)}", 1, 1)
+        pdf.cell(47.5, 7, f" LOCAL EVAP: {clean(loc_evap)}", 1)
+        pdf.cell(47.5, 7, f" LOCAL COND: {clean(loc_cond)}", 1, 1)
 
-        # 4. PARAMETROS TERMODINAMICOS (3 COLUNAS)
+        # --- SEÇÃO 3: PARÂMETROS MEDIDOS (3 COLUNAS) ---
         pdf.ln(3)
-        pdf.set_font("Arial", 'B', 10); pdf.cell(0, 7, " ANALISE FRIGORIFICA MEDIDA", 1, 1, 'L', True)
+        pdf.set_font("Arial", 'B', 10); pdf.cell(0, 7, " ANALISE FRIGORIFICA (PARAMETROS MEDIDOS)", 1, 1, 'L', True)
         y_p = pdf.get_y(); cw = 63.3
         
-        # Col 1: Baixa
+        # Col 1: Sucção
         pdf.rect(10, y_p, cw, 25); pdf.set_xy(12, y_p+2); pdf.set_font("Arial", 'B', 8)
-        pdf.cell(cw, 4, "CICLO SUCCAO", 0, 1); pdf.set_font("Arial", '', 8); pdf.set_x(12)
+        pdf.cell(cw, 4, "CICLO DE SUCCAO", 0, 1); pdf.set_font("Arial", '', 8); pdf.set_x(12)
         pdf.cell(cw, 4, f"Pressao: {p_suc} PSIG", 0, 1); pdf.set_x(12)
         pdf.cell(cw, 4, f"T-Sat: {ts_suc} C", 0, 1)
         
-        # Col 2: Alta
+        # Col 2: Descarga
         pdf.rect(10+cw, y_p, cw, 25); pdf.set_xy(12+cw, y_p+2); pdf.set_font("Arial", 'B', 8)
-        pdf.cell(cw, 4, "CICLO DESCARGA", 0, 1); pdf.set_font("Arial", '', 8); pdf.set_x(12+cw)
+        pdf.cell(cw, 4, "CICLO DE DESCARGA", 0, 1); pdf.set_font("Arial", '', 8); pdf.set_x(12+cw)
         pdf.cell(cw, 4, f"Pressao: {p_liq} PSIG", 0, 1); pdf.set_x(12+cw)
         pdf.cell(cw, 4, f"T-Sat: {ts_liq} C", 0, 1)
         
-        # Col 3: Eficiência (CORES)
+        # Col 3: Eficiência (Destaque Colorido)
         pdf.rect(10+(cw*2), y_p, cw, 25); pdf.set_xy(11+(cw*2), y_p+2)
-        pdf.set_fill_color(255, 204, 204); pdf.set_font("Arial", 'B', 8.5)
-        pdf.cell(cw-2, 9, f" S.H.: {sh_val} K ", 1, 1, 'C', True)
+        pdf.set_fill_color(255, 204, 204); pdf.set_font("Arial", 'B', 9) # SH
+        pdf.cell(cw-2, 10, f" S.H.: {sh_val} K ", 1, 1, 'C', True)
         pdf.set_x(11+(cw*2)); pdf.ln(1); pdf.set_x(11+(cw*2))
-        pdf.set_fill_color(204, 229, 255)
-        pdf.cell(cw-2, 9, f" S.C.: {sc_val} K ", 1, 1, 'C', True)
+        pdf.set_fill_color(204, 229, 255); # SC
+        pdf.cell(cw-2, 10, f" S.C.: {sc_val} K ", 1, 1, 'C', True)
 
-        # 5. DIAGNÓSTICO
+        # --- SEÇÃO 4: DIAGNÓSTICO ---
         pdf.set_y(y_p + 30)
-        pdf.set_font("Arial", 'B', 10); pdf.cell(0, 7, " PARECER TECNICO", 1, 1, 'L', True)
+        pdf.set_font("Arial", 'B', 10); pdf.cell(0, 7, " PARECER TECNICO E DIAGNOSTICO", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9); pdf.multi_cell(0, 5, clean(medidas), 1)
 
-        # 6. ASSINATURAS (FIM DO RELATÓRIO)
+        # --- SEÇÃO 5: ASSINATURAS ---
         pdf.ln(15)
         y_sig = pdf.get_y()
-        # Assinatura Técnico
+        # Técnico
         pdf.line(20, y_sig, 90, y_sig)
         pdf.set_xy(20, y_sig + 2); pdf.set_font("Arial", 'B', 8)
         pdf.cell(70, 4, "MARCIO PAULO DO NASCIMENTO", 0, 1, 'C')
         pdf.set_x(20); pdf.cell(70, 4, "CNPJ: 51.274.762/0001-17", 0, 1, 'C')
-        
-        # Assinatura Cliente
+        # Cliente
         pdf.line(120, y_sig, 190, y_sig)
         pdf.set_xy(120, y_sig + 2)
         pdf.cell(70, 4, clean(cliente), 0, 1, 'C')
@@ -221,4 +212,4 @@ with tab_diag:
         # DOWNLOAD
         pdf_output = io.BytesIO()
         pdf_output.write(pdf.output(dest='S').encode('latin1'))
-        st.download_button("📥 Baixar Laudo Tecnico", data=pdf_output.getvalue(), file_name=f"Laudo_{cliente}.pdf", mime="application/pdf")
+        st.download_button("📥 Baixar Laudo Profissional", data=pdf_output.getvalue(), file_name=f"Laudo_{cliente}.pdf", mime="application/pdf")
