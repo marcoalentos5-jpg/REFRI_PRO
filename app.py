@@ -136,14 +136,15 @@ with tab_diag:
             pdf = FPDF()
             pdf.add_page()
             
-            # --- 1. CABEÇALHO ---
+            # --- 1. CABEÇALHO (LOGO À ESQUERDA) ---
             try:
-                pdf.image("logo.png", 10, 8, 55) 
-                pdf.set_xy(70, 15)
-                pdf.set_font("Arial", 'B', 16); pdf.set_text_color(0, 51, 102)
+                # Logo inserida no canto esquerdo superior (Margem 10, Topo 8)
+                pdf.image("logo.png", 10, 8, 45) 
+                pdf.set_xy(60, 15)
+                pdf.set_font("Arial", 'B', 15); pdf.set_text_color(0, 51, 102)
                 pdf.cell(0, 10, format_title(clean("Relatorio Tecnico de Manutencao")), 0, 1, 'L')
             except:
-                pdf.set_font("Arial", 'B', 15); pdf.set_text_color(0, 74, 153)
+                pdf.set_font("Arial", 'B', 14); pdf.set_text_color(0, 74, 153)
                 pdf.cell(0, 10, format_title(clean("MPN SOLUCOES - Relatorio Tecnico")), 0, 1, 'C')
 
             pdf.set_y(35)
@@ -151,10 +152,8 @@ with tab_diag:
             # --- 2. DADOS DO CLIENTE (TABELA SEM GRADES) ---
             pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(240, 240, 240); pdf.set_text_color(0, 51, 102); pdf.set_line_width(0.4)
             pdf.cell(0, 6, format_title(clean(" Dados do Cliente")), 1, 1, 'L', True)
-            y_tab = pdf.get_y()
-            pdf.set_text_color(0); pdf.set_font("Arial", '', 8); pdf.set_line_width(0.2)
-            pdf.rect(10, y_tab, 190, 32)
-            pdf.set_xy(168, y_tab + 1.5)
+            y_tab = pdf.get_y(); pdf.set_text_color(0); pdf.set_font("Arial", '', 8); pdf.set_line_width(0.2)
+            pdf.rect(10, y_tab, 190, 32); pdf.set_xy(168, y_tab + 1.5)
             pdf.set_font("Arial", 'B', 7); pdf.set_fill_color(225, 225, 225)
             pdf.cell(30, 5, f"DATA: {data_visita.strftime('%d/%m/%Y')}", 1, 0, 'C', True)
             c_cli1, c_cli2, c_cli3 = 13, 85, 145
@@ -199,24 +198,19 @@ with tab_diag:
             pdf.cell(0, 6, format_title(clean(" Analise de Parametros Operacionais")), 1, 1, 'L', True)
             y_an = pdf.get_y(); pdf.set_text_color(0); pdf.set_font("Arial", '', 8); pdf.set_line_width(0.2)
             pdf.rect(10, y_an, 190, 35) 
-            
             pdf.set_font("Arial", 'B', 8); pdf.set_fill_color(245, 245, 245)
-            pdf.set_xy(10, y_an)
-            pdf.cell(95, 6, "  PARTE ELETRICA", "R", 0, 'L', True)
+            pdf.set_xy(10, y_an); pdf.cell(95, 6, "  PARTE ELETRICA", "R", 0, 'L', True)
             pdf.cell(95, 6, "  CICLO FRIGORIFICO", 0, 1, 'L', True)
-            
             pdf.set_font("Arial", '', 8); pdf.set_x(10)
             pdf.cell(47.5, 7, f"  Tensao Rede: {v_rede} V", 0)
             pdf.cell(47.5, 7, f"  Tensao Medida: {v_med} V", "R", 0)
             pdf.cell(47.5, 7, f"  Pres. Succao: {p_suc} PSI", 0)
             pdf.set_font("Arial", 'B', 8.5); pdf.cell(47.5, 7, f"  T-Sat Succao: {ts_suc} C", 0, 1)
-            
             pdf.set_font("Arial", '', 8); pdf.set_x(10)
             pdf.cell(47.5, 7, f"  Corrente RLA: {rla_comp} A", 0)
             pdf.cell(47.5, 7, f"  Corrente Medida: {a_med} A", "R", 0)
             pdf.cell(47.5, 7, f"  Pres. Descarga: {p_liq} PSI", 0)
             pdf.set_font("Arial", 'B', 8.5); pdf.cell(47.5, 7, f"  T-Sat Liquido: {ts_liq} C", 0, 1)
-
             pdf.set_font("Arial", '', 8); pdf.set_x(10)
             pdf.cell(95, 8, f"  Carga Estimada do Motor: {carga_f} %", "R", 0)
             pdf.set_font("Arial", 'B', 9); pdf.set_text_color(0, 51, 102)
