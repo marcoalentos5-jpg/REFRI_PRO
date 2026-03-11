@@ -40,17 +40,21 @@ tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ El
 
 with tab_cad:
     st.subheader("👤 Dados do Cliente & Contato")
-    c1, c2 = st.columns()
+    
+    # CORREÇÃO: Adicionado o argumento 2 para c1, c2
+    c1, c2 = st.columns(2)
     cliente = c1.text_input("Nome do Cliente / Empresa")
     doc_cliente = c2.text_input("CPF / CNPJ")
     
+    # Linha 2: Logradouro, Nome, Nº e Complemento
     c3, c4, c5, c6 = st.columns([1, 2, 0.5, 1])
     tipo_logr = c3.selectbox("Logradouro", ["Rua", "Avenida", "Travessa", "Alameda", "Estrada", "Rodovia", "Praça", "Loteamento"])
     nome_logr = c4.text_input("Nome do Logradouro")
     numero = c5.text_input("Nº")
     complemento = c6.text_input("Complemento")
     
-    c7, c8, c9 = st.columns()
+    # CORREÇÃO: Adicionado o argumento 3 para c7, c8, c9
+    c7, c8, c9 = st.columns(3)
     bairro = c7.text_input("Bairro")
     cep = c8.text_input("CEP", placeholder="00000-000")
     email_cli = c9.text_input("✉️ E-mail")
