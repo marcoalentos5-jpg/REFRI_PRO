@@ -26,7 +26,20 @@ def get_tsat_global(psig, gas):
     try: return round(float(np.interp(psig, ancoras[gas]["p"], ancoras[gas]["t"])), 2)
     except: return 0.0
 
-# --- 3. INTERFACE DO APP (PRESERVADA INTEGRALMENTE) ---
+# Função de Limpeza de Símbolos e Acentos (Rigorosa)
+def clean(txt):
+    if txt is None: return ""
+    replacements = {
+        '°': 'C', 'º': '.', 'ª': '.', 'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u',
+        'â': 'a', 'ê': 'e', 'î': 'i', 'ô': 'o', 'û': 'u', 'ã': 'a', 'õ': 'o', 'ç': 'c',
+        'Á': 'A', 'É': 'E', 'Í': 'I', 'Ó': 'O', 'Ú': 'U', 'Ã': 'A', 'Õ': 'O', 'Ç': 'C',
+        '´': '', '`': '', '^': '', '~': ''
+    }
+    t = str(txt)
+    for old, new in replacements.items(): t = t.replace(old, new)
+    return t.encode('latin-1', 'replace').decode('latin-1')
+
+# --- 3. INTERFACE DO APP (PRESERVADA) ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
 tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico"])
 
@@ -117,13 +130,6 @@ with tab_diag:
         pdf = FPDF()
         pdf.add_page()
         
-        def clean(txt):
-            if txt is None: return ""
-            rep = {'°': 'C', 'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ã': 'a', 'õ': 'o', 'ç': 'c', 'Á': 'A', 'É': 'E', 'Í': 'I', 'Ó': 'O', 'Ú': 'U', 'Ã': 'A', 'Õ': 'O', 'Ç': 'C'}
-            t = str(txt)
-            for k, v in rep.items(): t = t.replace(k, v)
-            return t.encode('latin-1', 'replace').decode('latin-1')
-
         # --- CABEÇALHO ---
         pdf.set_fill_color(0, 74, 153)
         pdf.rect(0, 0, 210, 42, 'F')
@@ -136,12 +142,12 @@ with tab_diag:
 
         def draw_header(title):
             pdf.set_fill_color(235, 235, 235); pdf.set_text_color(0, 74, 153); pdf.set_font("Arial", 'B', 11)
-            pdf.cell(0, 8, f" {clean(title).upper()}", ln=True, fill=True); pdf.set_text_color(0, 0, 0); pdf.ln(3)
+            pdf.cell(0, 8, f" {clean(title.upper())}", ln=True, fill=True); pdf.set_text_color(0, 0, 0); pdf.ln(3)
 
         # 1. IDENTIFICAÇÃO
         draw_header("1. Identificacao do Cliente")
         pdf.set_font("Arial", '', 9)
-        pdf.cell(0, 6, f"Cliente: {clean(cliente)} | CPF/CNPJ: {clean(doc_cliente)}", ln=True)
+        pdf.cell(0, 6, f"Cliente: {clean(cliente)} | Doc: {clean(doc_cliente)}", ln=True)
         pdf.cell(0, 6, f"Endereco: {clean(endereco)} | Bairro: {clean(bairro)} | CEP: {clean(cep)}", ln=True)
         pdf.cell(0, 6, f"WhatsApp: {clean(whatsapp)} | Data: {data_visita}", ln=True)
 
@@ -161,4 +167,4 @@ with tab_diag:
         pdf.multi_cell(0, 6, clean(ia_raw))
 
         out = pdf.output(dest='S').encode('latin-1', 'replace')
-        st.download_button("⬇️ Baixar Relatório", out, f"MPN_{clean(cliente)}.pdf", "application/pdf")
+        st.download_button("⬇️ Baixar Relatório PDF", out, f"Relatorio_{clean(cliente)}.pdf", "application/pdf")
