@@ -142,10 +142,13 @@ with tab_diag:
         # 1. DADOS DO CLIENTE
         pdf.set_y(32)
         pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(220, 230, 241); pdf.set_text_color(0, 51, 102)
-        pdf.cell(155, 6, " Dados do Cliente", 1, 0, 'L', True)
-        # AJUSTE DE DATA: FORMATO dd/mm/aaaa e rótulo "Data da visita"
+        # Ajuste de largura para mover o campo Data para a esquerda
+        pdf.cell(145, 6, " Dados do Cliente", 1, 0, 'L', True)
+        
+        # AJUSTE DE DATA: FORMATO dd/mm/aaaa, RÓTULO "Data da visita" e FONTE REDUZIDA para caber mais à esquerda
+        pdf.set_font("Arial", 'B', 8)
         data_formatada = data_visita.strftime("%d/%m/%Y")
-        pdf.cell(35, 6, f"Data da visita: {data_formatada}", 1, 1, 'C', True)
+        pdf.cell(45, 6, f"Data da visita: {data_formatada}", 1, 1, 'C', True)
         
         pdf.set_font("Arial", '', 8); pdf.set_text_color(0)
         y_c = pdf.get_y(); pdf.rect(10, y_c, 190, 28)
