@@ -181,16 +181,13 @@ with tab_diag:
         pdf.cell(64, 6, clean(f"T-Tubo Liq: {t_liq_tubo}C"), 1, 1)
         pdf.set_font("Arial", 'B', 9); pdf.cell(95, 7, clean(f"SUPERAQUECIMENTO (SH): {sh_val} K"), 1, 0); pdf.cell(95, 7, clean(f"SUBRESFRIAMENTO (SC): {sc_val} K"), 1, 1); pdf.ln(4)
 
-        # 4. DIAGNÓSTICO E PARECER FINAL (REORGANIZADO)
+        # 4. DIAGNÓSTICO E PARECER FINAL
         pdf.set_font("Arial", 'B', 10); pdf.cell(190, 7, " 4. DIAGNOSTICO E PARECER FINAL", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9)
         # Problemas Encontrados
         pdf.set_font("Arial", 'B', 9); pdf.cell(190, 6, clean("Problemas Encontrados:"), "LTR", 1); pdf.set_font("Arial", '', 9)
         prob_txt = ', '.join(p_sel) if p_sel else 'Nenhum problema detectado'
         pdf.multi_cell(190, 6, clean(prob_txt), "LRB")
-        # Análise IA
-        pdf.set_font("Arial", 'B', 9); pdf.cell(190, 6, clean("Analise IA e Sugestoes:"), "LTR", 1); pdf.set_font("Arial", '', 9)
-        pdf.multi_cell(190, 6, clean(f"{diag_ia}\nMedidas Propostas: Verificar estanqueidade conforme manual."), "LRB")
         # Medidas Executadas
         pdf.set_font("Arial", 'B', 9); pdf.cell(190, 6, clean("Medidas Executadas pelo Tecnico:"), "LTR", 1); pdf.set_font("Arial", '', 9)
         pdf.multi_cell(190, 6, clean(executadas_input if executadas_input else "Nenhuma medida descrita"), "LRB")
