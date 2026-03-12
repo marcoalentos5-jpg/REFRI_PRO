@@ -4,7 +4,7 @@ from datetime import date
 from fpdf import FPDF
 import io
 
-# --- 1. CONFIGURAÇÃO DA PÁGINA (ESTRUTURA BLOQUEADA) ---
+# --- 1. CONFIGURAÇÃO DA PÁGINA (BLOQUEADA) ---
 st.set_page_config(page_title="MPN | Engenharia Pro", layout="wide", page_icon="❄️")
 
 # --- 2. MOTOR TERMODINÂMICO E UTILITÁRIOS ---
@@ -32,7 +32,7 @@ def clean(txt):
     for old, new in replacements.items(): t = t.replace(old, new)
     return t.encode('ascii', 'ignore').decode('ascii')
 
-# --- 3. INTERFACE DO APP (LAYOUT ORIGINAL RESTAURADO) ---
+# --- 3. INTERFACE DO APP (LAYOUT ORIGINAL BLOQUEADO) ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
 tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico"])
 
@@ -78,13 +78,21 @@ with tab_cad:
 
 with tab_ele:
     st.subheader("⚡ Parâmetros Elétricos")
-    el1, el2 = st.columns(2)
-    v_rede = el1.number_input("Tensão Rede (V)", value=220.0)
-    v_med = el1.number_input("Tensão Medida (V)", value=218.0)
-    lra_comp = el2.number_input("LRA (A)", value=0.0)
-    rla_comp = el2.number_input("RLA (A)", value=1.0)
-    a_med = el2.number_input("Corrente Medida (A)", value=0.0)
-    carga_f = round((a_med/rla_comp*100), 1) if rla_comp > 0 else 0.0
+    el1, el2, el3 = st.columns([1, 1, 1])
+    with el1:
+        v_rede = st.number_input("Tensão Rede (V)", value=220.0)
+        v_med = st.number_input("Tensão Medida (V)", value=218.0)
+        diff_v = round(v_rede - v_med, 1)
+        st.info(f"Queda de Tensão: {diff_v} V")
+        
+    with el2:
+        rla_comp = st.number_input("Corrente RLA (A)", value=1.0)
+        a_med = st.number_input("Corrente Medida (A)", value=0.0)
+        carga_f = round((a_med/rla_comp*100), 1) if rla_comp > 0 else 0.0
+        st.info(f"Carga do Motor: {carga_f}%")
+        
+    with el3:
+        lra_comp = st.number_input("LRA (A)", value=0.0)
 
 with tab_termo:
     st.subheader("🌡️ Ciclo Frigorífico")
@@ -112,9 +120,9 @@ with tab_diag:
         pdf.set_xy(80, 10)
         pdf.set_font("Arial", 'B', 22); pdf.set_text_color(0, 51, 102)
         pdf.cell(50, 10, "MPN", 0, 1, 'C')
-        pdf.set_x(80); pdf.set_font("Arial", 'B', 14); pdf.cell(50, 8, "Relatorio Tecnico", 0, 1, 'C')
+        pdf.set_x(80); pdf.set_font("Arial", 'B', 14); pdf.cell(50, 8, "Relatório Técnico", 0, 1, 'C')
 
-        # 1. DADOS DO CLIENTE (TODOS OS CAMPOS MAPEADOS)
+        # 1. DADOS DO CLIENTE
         pdf.set_y(32)
         pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(220, 230, 241); pdf.set_text_color(0, 51, 102)
         pdf.cell(0, 6, " Dados do Cliente", 1, 1, 'L', True)
@@ -122,7 +130,7 @@ with tab_diag:
         pdf.set_font("Arial", '', 8); pdf.set_text_color(0); pdf.set_xy(12, pdf.get_y()+2)
         pdf.cell(90, 4, f"Cliente: {clean(cliente)}", 0, 0); pdf.cell(60, 4, f"CPF/CNPJ: {doc_cliente}", 0, 0)
         pdf.set_xy(170, pdf.get_y()-7); pdf.set_font("Arial", 'B', 7); pdf.cell(28, 4, f"DATA: {data_visita}", 1, 0, 'C'); pdf.set_font("Arial", '', 8)
-        pdf.set_xy(12, pdf.get_y()+11); pdf.cell(110, 4, f"Endereco: {tipo_logr} {clean(nome_logr)}, {numero} ({clean(complemento)})", 0, 0); pdf.cell(60, 4, f"Bairro: {clean(bairro)}", 0, 1)
+        pdf.set_xy(12, pdf.get_y()+11); pdf.cell(110, 4, f"Endereço: {tipo_logr} {clean(nome_logr)}, {numero} ({clean(complemento)})", 0, 0); pdf.cell(60, 4, f"Bairro: {clean(bairro)}", 0, 1)
         pdf.set_x(12); pdf.cell(60, 4, f"CEP: {cep}", 0, 0); pdf.cell(90, 4, f"E-mail: {email_cli}", 0, 1)
         pdf.set_x(12); pdf.cell(50, 4, f"Whats: {whatsapp}", 0, 0); pdf.cell(50, 4, f"Cel: {celular}", 0, 0); pdf.cell(50, 4, f"Fixo: {tel_residencial}", 0, 1)
 
@@ -134,32 +142,32 @@ with tab_diag:
         pdf.set_font("Arial", '', 8); pdf.set_text_color(0); pdf.set_xy(12, pdf.get_y()+2)
         pdf.cell(60, 4, f"Marca: {clean(fabricante)}", 0, 0); pdf.cell(60, 4, f"Linha: {clean(linha)}", 0, 0); pdf.cell(60, 4, f"Modelo: {modelo_eq}", 0, 1)
         pdf.set_x(12); pdf.cell(60, 4, f"Capacidade: {cap_digitada} BTU/h", 0, 0); pdf.cell(60, 4, f"Tecnologia: {tecnologia}", 0, 0); pdf.cell(60, 4, f"Fluido: {fluido}", 0, 1)
-        pdf.set_x(12); pdf.cell(60, 4, f"Sistema: {tipo_eq}", 0, 0); pdf.cell(60, 4, f"Mod. Evap: {mod_evap}", 0, 0); pdf.cell(60, 4, f"Serie Evap: {serie_evap}", 0, 1)
-        pdf.set_x(12); pdf.cell(60, 4, f"Mod. Cond: {mod_cond}", 0, 0); pdf.cell(60, 4, f"Serie Cond: {serie_cond}", 0, 0); pdf.cell(60, 4, f"Local Evap: {loc_evap}", 0, 1)
+        pdf.set_x(12); pdf.cell(60, 4, f"Sistema: {tipo_eq}", 0, 0); pdf.cell(60, 4, f"Mod. Evap: {mod_evap}", 0, 0); pdf.cell(60, 4, f"Série Evap: {serie_evap}", 0, 1)
+        pdf.set_x(12); pdf.cell(60, 4, f"Mod. Cond: {mod_cond}", 0, 0); pdf.cell(60, 4, f"Série Cond: {serie_cond}", 0, 0); pdf.cell(60, 4, f"Local Evap: {loc_evap}", 0, 1)
         pdf.set_x(12); pdf.cell(60, 4, f"Local Cond: {loc_cond}", 0, 1)
 
         # 3. ANALISE DE PARAMETROS (TABELA TRIPARTIDA)
         pdf.set_y(pdf.get_y() + 6)
         pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(220, 230, 241); pdf.set_text_color(0, 51, 102)
-        pdf.cell(0, 6, " Analise de Parametros Operacionais", 1, 1, 'L', True)
+        pdf.cell(0, 6, " Análise de Parâmetros Operacionais", 1, 1, 'L', True)
         y_p = pdf.get_y(); pdf.rect(10, y_p, 190, 32)
-        pdf.set_xy(12, y_p+2); pdf.set_font("Arial", 'B', 8); pdf.cell(90, 4, "PARTE ELETRICA", 0, 0); pdf.cell(90, 4, "CICLO FRIGORIFICO", 0, 1)
+        pdf.set_xy(12, y_p+2); pdf.set_font("Arial", 'B', 8); pdf.cell(90, 4, "PARTE ELÉTRICA", 0, 0); pdf.cell(90, 4, "CICLO FRIGORÍFICO", 0, 1)
         pdf.set_font("Arial", '', 8); pdf.set_text_color(0)
-        pdf.set_x(12); pdf.cell(45, 4, f"Tensao Rede: {v_rede} V", 0, 0); pdf.cell(45, 4, f"Tensao Medida: {v_med} V", 0, 0); pdf.cell(45, 4, f"Pres. Succao: {p_suc} PSI", 0, 0); pdf.cell(45, 4, f"T-Sat Succao: {ts_suc} C", 0, 1)
-        pdf.set_x(12); pdf.cell(45, 4, f"Corrente RLA: {rla_comp} A", 0, 0); pdf.cell(45, 4, f"Corrente Medida: {a_med} A", 0, 0); pdf.cell(45, 4, f"Pres. Descarga: {p_liq} PSI", 0, 0); pdf.cell(45, 4, f"T-Sat Liquido: {ts_liq} C", 0, 1)
+        pdf.set_x(12); pdf.cell(45, 4, f"Tensão Rede: {v_rede} V", 0, 0); pdf.cell(45, 4, f"Tensão Medida: {v_med} V", 0, 0); pdf.cell(45, 4, f"Pres. Sucção: {p_suc} PSI", 0, 0); pdf.cell(45, 4, f"T-Sat Sucção: {ts_suc} C", 0, 1)
+        pdf.set_x(12); pdf.cell(45, 4, f"Corrente RLA: {rla_comp} A", 0, 0); pdf.cell(45, 4, f"Corrente Medida: {a_med} A", 0, 0); pdf.cell(45, 4, f"Pres. Descarga: {p_liq} PSI", 0, 0); pdf.cell(45, 4, f"T-Sat Líquido: {ts_liq} C", 0, 1)
         pdf.set_x(12); pdf.cell(45, 4, f"LRA: {lra_comp} A", 0, 0); pdf.cell(45, 4, f"Carga Motor: {carga_f} %", 0, 0); pdf.cell(45, 4, f"SH: {sh_val} K", 0, 0); pdf.cell(45, 4, f"SC: {sc_val} K", 0, 1)
 
         # 4. PARECER (AZUL ESCURO)
         pdf.set_y(pdf.get_y() + 8)
         pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(0, 51, 102); pdf.set_text_color(255, 255, 255)
-        pdf.cell(0, 7, " Parecer Tecnico e Recomendacoes", 1, 1, 'C', True)
+        pdf.cell(0, 7, " Parecer Técnico e Recomendações", 1, 1, 'C', True)
         pdf.set_text_color(0); pdf.set_font("Arial", '', 8); pdf.multi_cell(0, 5, clean(medidas), 1)
 
-        # RODAPÉ (ASSINATURAS E CNPJ)
+        # RODAPÉ
         pdf.set_y(260); pdf.line(20, 260, 95, 260); pdf.line(115, 260, 190, 260)
         pdf.set_font("Arial", 'B', 7); pdf.set_xy(20, 261); pdf.cell(75, 4, "Marcos Alexandre Almeida do Nascimento", 0, 0, 'C')
         pdf.set_xy(115, 261); pdf.cell(75, 4, clean(cliente), 0, 1, 'C')
         pdf.set_xy(20, 265); pdf.set_font("Arial", '', 7); pdf.cell(75, 4, "CNPJ: 51.274.762/0001-17", 0, 0, 'C')
         pdf.set_xy(115, 265); pdf.cell(75, 4, "Assinatura do Cliente", 0, 1, 'C')
 
-        st.download_button("⬇️ Baixar Relatorio Lacrado", data=pdf.output(dest="S").encode('latin-1'), file_name=f"MPN_{cliente}.pdf")
+        st.download_button("⬇️ Baixar Relatório Lacrado", data=pdf.output(dest="S").encode('latin-1'), file_name=f"MPN_{cliente}.pdf")
