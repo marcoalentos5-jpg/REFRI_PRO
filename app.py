@@ -41,7 +41,8 @@ with tab_cad:
     c1, c2, c3, c4, c5, c6 = st.columns([2.5, 1.2, 1.4, 1.0, 1.0, 1.0])
     cliente = c1.text_input("Cliente/Empresa", key="f_cli")
     doc_cliente = c2.text_input("CPF/CNPJ", key="f_doc")
-    data_visita = c3.date_input("📅 DATA DA VISITA", value=date.today(), key="f_date")
+    # ALTERAÇÃO: Formato dd/mm/aaaa aplicado no date_input
+    data_visita = c3.date_input("📅 DATA DA VISITA", value=date.today(), format="DD/MM/YYYY", key="f_date")
     whatsapp = c4.text_input("🟢 WhatsApp", value="21980264217", key="f_wpp")
     celular = c5.text_input("📱 Celular", key="f_cel")
     tel_residencial = c6.text_input("📞 Fixo", key="f_fix")
@@ -87,14 +88,14 @@ with tab_ele:
         v_rede = st.number_input("Tensão Rede (V)", value=220.0)
         v_med = st.number_input("Tensão Medida (V)", value=218.0)
         diff_v = round(v_rede - v_med, 1)
-        st.write("Queda de Tensão")
+        st.write("Diferença entre Tensões")
         st.success(f"{diff_v} V")
     with el2:
         rla_comp = st.number_input("Corrente RLA (A)", value=1.0)
         a_med = st.number_input("Corrente Medida (A)", value=0.0)
-        carga_f = round((a_med/rla_comp*100), 1) if rla_comp > 0 else 0.0
-        st.write("Carga do Motor")
-        st.success(f"{carga_f}%")
+        diff_a = round(a_med - rla_comp, 1)
+        st.write("Diferença entre Correntes")
+        st.success(f"{diff_a} A")
     with el3:
         lra_comp = st.number_input("LRA (A)", value=0.0)
 
@@ -132,20 +133,19 @@ with tab_diag:
         pdf = FPDF()
         pdf.add_page()
         
-        # CABEÇALHO
         pdf.image("logo.png", 10, 8, 35)
         pdf.set_font("Arial", 'B', 22); pdf.set_text_color(0, 51, 102)
         pdf.set_xy(0, 10); pdf.cell(210, 10, "MPN", 0, 1, 'C')
         pdf.set_font("Arial", 'B', 16)
         pdf.cell(210, 8, "Relatório Técnico".encode('latin-1', 'replace').decode('latin-1'), 0, 1, 'C')
 
-        # 1. DADOS DO CLIENTE
         pdf.set_y(32)
         pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(220, 230, 241); pdf.set_text_color(0, 51, 102)
         pdf.cell(145, 6, " Dados do Cliente", 1, 0, 'L', True)
         pdf.set_font("Arial", 'B', 8)
         data_formatada = data_visita.strftime("%d/%m/%Y")
         pdf.cell(45, 6, f"Data da visita: {data_formatada}", 1, 1, 'C', True)
+        
         pdf.set_font("Arial", '', 8); pdf.set_text_color(0)
         y_c = pdf.get_y(); pdf.rect(10, y_c, 190, 28)
         pdf.set_xy(12, y_c+2); pdf.cell(90, 4, f"Cliente: {clean(cliente)}", 0, 0); pdf.cell(90, 4, f"CPF/CNPJ: {doc_cliente}", 0, 1)
@@ -153,7 +153,6 @@ with tab_diag:
         pdf.set_x(12); pdf.cell(60, 4, f"CEP: {cep}", 0, 0); pdf.cell(90, 4, f"E-mail: {email_cli}", 0, 1)
         pdf.set_x(12); pdf.cell(60, 4, f"Whats: {whatsapp}", 0, 0); pdf.cell(60, 4, f"Cel: {celular}", 0, 0); pdf.cell(60, 4, f"Fixo: {tel_residencial}", 0, 1)
 
-        # 2. DADOS DO EQUIPAMENTO
         pdf.set_y(y_c + 32)
         pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(220, 230, 241); pdf.set_text_color(0, 51, 102)
         pdf.cell(0, 6, " Dados do Equipamento", 1, 1, 'L', True)
@@ -166,28 +165,24 @@ with tab_diag:
         pdf.set_x(12); pdf.cell(65, 4, f"Mod. Cond: {mod_cond}", 0, 0); pdf.cell(65, 4, f"Serie Cond: {serie_cond}", 0, 0); pdf.cell(60, 4, f"Local Evap: {clean(loc_evap)}", 0, 1)
         pdf.set_x(12); pdf.cell(130, 4, f"Local Cond: {clean(loc_cond)}", 0, 1)
 
-        # 3. ANÁLISE DE PARÂMETROS OPERACIONAIS (HARMONIZADO)
         pdf.set_y(y_e + 36)
         pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(220, 230, 241); pdf.set_text_color(0, 51, 102)
         pdf.cell(0, 6, " Analise de Parametros Operacionais", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 8); pdf.set_text_color(0)
         y_o = pdf.get_y(); pdf.rect(10, y_o, 190, 26)
         
-        # PARTE ELÉTRICA (LADO ESQUERDO)
         pdf.set_xy(12, y_o+2); pdf.set_font("Arial", 'B', 8); pdf.cell(90, 4, "PARTE ELETRICA", 0, 1)
         pdf.set_font("Arial", '', 8)
         pdf.set_x(12); pdf.cell(45, 4, f"Tensao Rede: {v_rede} V", 0, 0); pdf.cell(45, 4, f"Tensao Medida: {v_med} V", 0, 1)
-        pdf.set_x(12); pdf.cell(45, 4, f"Corrente RLA: {rla_comp} A", 0, 0); pdf.cell(45, 4, f"Corrente Medida: {a_med} A", 0, 1)
-        pdf.set_x(12); pdf.cell(45, 4, f"LRA: {lra_comp} A", 0, 0); pdf.cell(45, 4, f"Carga Motor: {carga_f} %", 0, 0)
+        pdf.set_x(12); pdf.cell(45, 4, f"Dif. Tensoes: {diff_v} V", 0, 0); pdf.cell(45, 4, f"Corrente RLA: {rla_comp} A", 0, 1)
+        pdf.set_x(12); pdf.cell(45, 4, f"Corrente Medida: {a_med} A", 0, 0); pdf.cell(45, 4, f"Dif. Correntes: {diff_a} A", 0, 1)
         
-        # CICLO FRIGORÍFICO (LADO DIREITO - ALINHADO)
         pdf.set_xy(105, y_o+2); pdf.set_font("Arial", 'B', 8); pdf.cell(90, 4, "CICLO FRIGORIFICO", 0, 1)
         pdf.set_font("Arial", '', 8)
         pdf.set_xy(105, pdf.get_y()); pdf.cell(45, 4, f"Pres. Succao: {p_suc} PSI", 0, 0); pdf.cell(45, 4, f"T-Sat Succao: {ts_suc} C", 0, 1)
         pdf.set_xy(105, pdf.get_y()); pdf.cell(45, 4, f"Pres. Descarga: {p_liq} PSI", 0, 0); pdf.cell(45, 4, f"T-Sat Liquido: {ts_liq} C", 0, 1)
         pdf.set_xy(105, pdf.get_y()); pdf.cell(45, 4, f"SH: {sh_val} K", 0, 0); pdf.cell(45, 4, f"SC: {sc_val} K", 0, 1)
 
-        # 4. PARECER TÉCNICO E RECOMENDAÇÕES
         pdf.set_y(y_o + 30)
         pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(0, 51, 102); pdf.set_text_color(255, 255, 255)
         pdf.cell(0, 6, " Parecer Tecnico e Recomendacoes", 1, 1, 'C', True)
