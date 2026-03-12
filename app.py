@@ -78,7 +78,7 @@ with tab_cad:
 
 with tab_ele:
     st.subheader("⚡ Parâmetros Elétricos")
-    el1, el2, el3 = st.columns([1, 1, 1])
+    el1, el2, el3 = st.columns(3)
     with el1:
         v_rede = st.number_input("Tensão Rede (V)", value=220.0)
         v_med = st.number_input("Tensão Medida (V)", value=218.0)
@@ -113,8 +113,8 @@ with tab_termo:
     with tr3:
         sh_val = round(t_suc_tubo - ts_suc, 1)
         sc_val = round(ts_liq - t_liq_tubo, 1)
-        st.metric("Superaquecimento (SH)", f"{sh_val} K")
-        st.metric("Subresfriamento (SC)", f"{sc_val} K")
+        st.number_input("Superaquecimento (SH) (K)", value=sh_val, disabled=True)
+        st.number_input("Subresfriamento (SC) (K)", value=sc_val, disabled=True)
 
 with tab_diag:
     resumo_pre = f"SH: {sh_val}K | SC: {sc_val}K\n\nParecer: "
@@ -124,15 +124,13 @@ with tab_diag:
         pdf = FPDF()
         pdf.add_page()
         
-        # CABEÇALHO
         pdf.image("logo.png", 10, 10, 40)
         pdf.set_xy(80, 10)
         pdf.set_font("Arial", 'B', 22); pdf.set_text_color(0, 51, 102)
         pdf.cell(50, 10, "MPN", 0, 1, 'C')
         pdf.set_x(80); pdf.set_font("Arial", 'B', 14)
-        pdf.cell(50, 8, "Relatorio Tecnico".replace("Relatorio Tecnico", "Relatório Técnico").encode('latin-1', 'replace').decode('latin-1'), 0, 1, 'C')
+        pdf.cell(50, 8, "Relatório Técnico".encode('latin-1', 'replace').decode('latin-1'), 0, 1, 'C')
 
-        # 1. DADOS DO CLIENTE
         pdf.set_y(32)
         pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(220, 230, 241); pdf.set_text_color(0, 51, 102)
         pdf.cell(0, 6, " Dados do Cliente".encode('latin-1', 'replace').decode('latin-1'), 1, 1, 'L', True)
@@ -144,7 +142,6 @@ with tab_diag:
         pdf.set_x(12); pdf.cell(60, 4, f"CEP: {cep}", 0, 0); pdf.cell(90, 4, f"E-mail: {email_cli}", 0, 1)
         pdf.set_x(12); pdf.cell(50, 4, f"Whats: {whatsapp}", 0, 0); pdf.cell(50, 4, f"Cel: {celular}", 0, 0); pdf.cell(50, 4, f"Fixo: {tel_residencial}", 0, 1)
 
-        # 2. DADOS DO EQUIPAMENTO
         pdf.set_y(pdf.get_y() + 6)
         pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(220, 230, 241); pdf.set_text_color(0, 51, 102)
         pdf.cell(0, 6, " Dados do Equipamento", 1, 1, 'L', True)
@@ -155,7 +152,5 @@ with tab_diag:
         pdf.set_x(12); pdf.cell(60, 4, f"Sistema: {tipo_eq}", 0, 0); pdf.cell(60, 4, f"Mod. Evap: {mod_evap}", 0, 0); pdf.cell(60, 4, f"Série Evap: {serie_evap}", 0, 1)
         pdf.set_x(12); pdf.cell(60, 4, f"Mod. Cond: {mod_cond}", 0, 0); pdf.cell(60, 4, f"Série Cond: {serie_cond}", 0, 1)
         
-        # Encerramento do script para download do PDF
-        buffer = io.BytesIO()
-        pdf.output(buffer)
-        st.download_button(label="⬇️ Baixar Relatório PDF", data=buffer.getvalue(), file_name=f"Relatorio_{clean(cliente)}.pdf", mime="application/pdf")
+        pdf_content = pdf.output(dest='S').encode('latin-1')
+        st.download_button(label="⬇️ Baixar Relatório PDF", data=pdf_content, file_name=f"Relatorio_{clean(cliente)}.pdf", mime="application/pdf")
