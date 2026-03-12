@@ -7,7 +7,6 @@ import io
 # --- 1. CONFIGURAÇÃO DA PÁGINA (BLOQUEADA) ---
 st.set_page_config(page_title="MPN | Engenharia Pro", layout="wide", page_icon="❄️")
 
-# ESTILO DAS ABAS (20PX E NEGRITO)
 st.markdown("""
     <style>
     .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
@@ -17,7 +16,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. MOTOR TERMODINÂMICO E UTILITÁRIOS ---
+# --- 2. MOTOR TERMODINÂMICO ---
 def get_tsat_global(psig, gas):
     ancoras = {
         "R-410A": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 550.0, 600.0], 
@@ -27,13 +26,10 @@ def get_tsat_global(psig, gas):
         "R-22": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 600.0], 
                  "t": [-40.8, -3.34, 15.80, 28.15, 38.56, 47.30, 54.89, 61.63, 73.2, 78.38, 87.53]},
         "R-134a": {"p": [0.0, 20.0, 50.0, 80.0, 100.0, 130.0, 150.0, 180.0, 200.0], 
-                   "t": [-26.08, -1.0, 12.23, 22.8, 30.92, 38.4, 43.65, 50.1, 53.74]},
-        "R-404A": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0], 
-                   "t": [-45.45, -9.41, 8.96, 22.23, 32.59, 41.2, 48.6, 55.2, 61.1]}
+                   "t": [-26.08, -1.0, 12.23, 22.8, 30.92, 38.4, 43.65, 50.1, 53.74]}
     }
     if gas not in ancoras or psig is None: return 0.0
-    try: return round(float(np.interp(psig, ancoras[gas]["p"], ancoras[gas]["t"])), 2)
-    except: return 0.0
+    return round(float(np.interp(psig, ancoras[gas]["p"], ancoras[gas]["t"])), 2)
 
 def clean(txt):
     if not txt: return "N/A"
@@ -42,136 +38,170 @@ def clean(txt):
     for old, new in replacements.items(): res = res.replace(old, new)
     return res.encode('ascii', 'ignore').decode('ascii')
 
-# --- 3. INTERFACE DO APP ---
+# --- 3. INTERFACE ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
 tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico"])
 
 with tab_cad:
     st.subheader("👤 Identificação e Contato")
     c1, c2, c3, c4, c5, c6 = st.columns([2.5, 1.2, 1.4, 1.0, 1.0, 1.0])
-    cliente, doc_cliente = c1.text_input("Cliente/Empresa", key="f_cli"), c2.text_input("CPF/CNPJ", key="f_doc")
-    data_visita = c3.date_input("📅 DATA DA VISITA", value=date.today(), format="DD/MM/YYYY", key="f_date")
-    whatsapp, celular, tel_residencial = c4.text_input("🟢 WhatsApp", value="21980264217", key="f_wpp"), c5.text_input("📱 Celular", key="f_cel"), c6.text_input("📞 Fixo", key="f_fix")
+    cliente = c1.text_input("Cliente/Empresa", key="f_cli")
+    doc_cli = c2.text_input("CPF/CNPJ", key="f_doc")
+    data_v = c3.date_input("Data Visita", value=date.today(), key="f_date")
+    whatsapp = c4.text_input("Whats", value="21980264217", key="f_wpp")
+    celular = c5.text_input("Cel", key="f_cel")
+    fixo = c6.text_input("Fixo", key="f_fix")
+    
     e1, e2, e3, e4, e5, e6, e7 = st.columns([0.6, 1.5, 0.4, 0.6, 1.0, 0.8, 1.5])
-    tipo_logr, nome_logr, numero, complemento, bairro, cep, email_cli = e1.selectbox("Tipo", ["Rua", "Av.", "Trav.", "Alam.", "Estr.", "Rod.", "Pça."], key="f_tlog"), e2.text_input("Logradouro", key="f_nlog"), e3.text_input("Nº", key="f_num"), e4.text_input("Comp.", key="f_comp"), e5.text_input("Bairro", key="f_bai"), e6.text_input("CEP", key="f_cep"), e7.text_input("✉️ E-mail", key="f_mail")
-    st.markdown("---")
+    tipo_l = e1.selectbox("Tipo", ["Rua", "Av.", "Trav.", "Estr."], key="f_tlog")
+    logr = e2.text_input("Logradouro", key="f_nlog")
+    num = e3.text_input("N", key="f_num")
+    bairro = e5.text_input("Bairro", key="f_bai")
+    cep = e6.text_input("CEP", key="f_cep")
+    email = e7.text_input("E-mail", key="f_mail")
+
     st.subheader("⚙️ Dados do Equipamento")
     g1, g2, g3 = st.columns(3)
-    with g1: fabricante, modelo_eq, cap_digitada = st.text_input("Marca", key="f_fab"), st.text_input("Modelo Geral", key="f_mod"), st.text_input("Capacidade (BTU/h)", value="0", key="f_cap")
-    with g2: linha, tecnologia, fluido = st.text_input("Linha", key="f_lin"), st.selectbox("Tecnologia", ["Inverter", "WindFree", "Scroll", "On-Off", "VRF", "Multisplit"], key="f_tec"), st.selectbox("Gás Refrigerante", ["R-410A", "R-32", "R-22", "R-134a", "R-404A"], key="f_gas")
-    with g3: tipo_eq, loc_evap, loc_cond = st.selectbox("Sistema", ["Split", "Cassete", "Piso Teto", "VRF", "Chiller"], key="f_sis"), st.text_input("Local Evaporadora", key="f_le"), st.text_input("Local Condensadora", key="f_lc")
-    s1, s2 = st.columns(2)
-    with s1: mod_evap, serie_evap = st.text_input("Modelo Evap.", key="f_me"), st.text_input("Nº Série Evap.", key="f_se")
-    with s2: mod_cond, serie_cond = st.text_input("Modelo Cond.", key="f_mc"), st.text_input("Nº Série Cond.", key="f_sc")
+    marca = g1.text_input("Marca", key="f_fab")
+    linha = g2.text_input("Linha", key="f_lin")
+    modelo = g3.text_input("Modelo", key="f_mod")
+    capacidade = g1.text_input("Capacidade (BTU/h)", value="0", key="f_cap")
+    tecnologia = g2.selectbox("Tecnologia", ["Inverter", "WindFree", "Scroll", "On-Off", "VRF", "Multisplit"], key="f_tec")
+    fluido = g3.selectbox("Fluido", ["R-410A", "R-32", "R-22"], key="f_gas")
+    sistema = g1.selectbox("Sistema", ["Split", "Cassete", "Piso Teto"], key="f_sis")
+    mod_evap = g2.text_input("Mod. Evap", key="f_me")
+    serie_evap = g3.text_input("Serie Evap", key="f_se")
+    mod_cond = g1.text_input("Mod. Cond", key="f_mc")
+    serie_cond = g2.text_input("Serie Cond", key="f_sc")
+    loc_evap = g3.text_input("Local Evap", key="f_le")
+    loc_cond = g1.text_input("Local Cond", key="f_lc")
 
 with tab_ele:
-    st.subheader("⚡ Parâmetros Elétricos")
     el1, el2, el3 = st.columns(3)
-    with el1:
-        v_rede = st.number_input("Tensão Rede (V)", value=220.0)
-        v_med = st.number_input("Tensão Medida (V)", value=218.0)
-        diff_v = round(v_rede - v_med, 1)
-        st.write("Diferença entre Tensões"); st.success(f"{diff_v} V")
-    with el2:
-        rla_comp = st.number_input("Corrente RLA (A)", value=1.0)
-        a_med = st.number_input("Corrente Medida (A)", value=0.0)
-        diff_a = round(a_med - rla_comp, 1)
-        st.write("Diferença entre Correntes"); st.success(f"{diff_a} A")
-    with el3:
-        lra_comp = st.number_input("LRA (A)", value=0.0)
+    v_rede = el1.number_input("Tensao Rede (V)", value=220.0)
+    v_med = el1.number_input("Tensao Medida (V)", value=218.0)
+    diff_v = round(v_rede - v_med, 1)
+    rla = el2.number_input("Corrente RLA (A)", value=1.0)
+    a_med = el2.number_input("Corrente Medida (A)", value=0.0)
+    diff_a = round(a_med - rla, 1)
+    lra = el3.number_input("Corrente LRA (A)", value=0.0)
 
 with tab_termo:
-    st.subheader("🌡️ Ciclo Frigorífico")
-    tr1, tr2, tr3 = st.columns(3)
-    with tr1:
-        st.markdown("**Sucção (Baixa)**")
-        p_suc = st.number_input("Pressão (PSI)", value=118.0, key="ps")
-        t_suc_tubo = st.number_input("Temp. Tubo (°C)", value=12.0, key="ts")
-        ts_suc = get_tsat_global(p_suc, fluido)
-        st.write("T-Sat Sucção"); st.info(f"{ts_suc} °C")
-    with tr2:
-        st.markdown("**Líquido (Alta)**")
-        p_liq = st.number_input("Pressão (PSI)", value=345.0, key="pl")
-        t_liq_tubo = st.number_input("Temp. Tubo (°C)", value=30.0, key="tl")
-        ts_liq = get_tsat_global(p_liq, fluido)
-        st.write("T-Sat Líquido"); st.info(f"{ts_liq} °C")
-    with tr3:
-        st.markdown("**Performance**")
-        sh_val = round(t_suc_tubo - ts_suc, 1)
-        sc_val = round(ts_liq - t_liq_tubo, 1)
-        st.write("Superaquecimento (SH)"); st.success(f"**{sh_val} K**")
-        st.write("Subresfriamento (SC)"); st.success(f"**{sc_val} K**")
+    tr1, tr2 = st.columns(2)
+    p_suc = tr1.number_input("P. Succao (PSI)", value=118.0)
+    t_suc_tubo = tr1.number_input("T. Tubo Suc. (C)", value=12.0)
+    p_liq = tr2.number_input("P. Liquido (PSI)", value=345.0)
+    t_liq_tubo = tr2.number_input("T. Tubo Liq. (C)", value=30.0)
+    
+    ts_suc = get_tsat_global(p_suc, fluido)
+    ts_liq = get_tsat_global(p_liq, fluido)
+    sh_val = round(t_suc_tubo - ts_suc, 1)
+    sc_val = round(ts_liq - t_liq_tubo, 1)
 
 with tab_diag:
     col_prob, col_obs = st.columns(2)
     with col_prob:
         st.subheader("⚠️ Problemas Encontrados")
-        pi1, pi2 = st.columns(2)
-        problemas_selecionados = []
-        with pi1:
-            if st.checkbox("Vazamento de Fluido"): problemas_selecionados.append("Vazamento de Fluido")
-            if st.checkbox("Baixa Carga de Fluido"): problemas_selecionados.append("Baixa Carga de Fluido")
-            if st.checkbox("Excesso de Fluido"): problemas_selecionados.append("Excesso de Fluido")
-            if st.checkbox("Ar/Incondensáveis no Ciclo"): problemas_selecionados.append("Ar/Incondensáveis no Ciclo")
-            if st.checkbox("Obstrução Dispositivo Expansão"): problemas_selecionados.append("Obstrução Dispositivo Expansão")
-            if st.checkbox("Linha de Líquido Congelando"): problemas_selecionados.append("Linha de Líquido Congelando")
-            if st.checkbox("Colmeia Congelando"): problemas_selecionados.append("Colmeia Congelando")
-        with pi2:
-            if st.checkbox("Filtro Secador Obstruído"): problemas_selecionados.append("Filtro Secador Obstruído")
-            if st.checkbox("Compressor Sem Compressão"): problemas_selecionados.append("Compressor Sem Compressão")
-            if st.checkbox("Falha na Ventilação"): problemas_selecionados.append("Falha na Ventilação")
-            if st.checkbox("Falha na Placa Inverter"): problemas_selecionados.append("Falha na Placa Inverter")
-            if st.checkbox("Instabilidade na Rede Elétrica"): problemas_selecionados.append("Instabilidade na Rede Elétrica")
-            if st.checkbox("Evaporadora Pingando"): problemas_selecionados.append("Evaporadora Pingando")
-            if st.checkbox("Linha de Descarga Congelando"): problemas_selecionados.append("Linha de Descarga Congelando")
+        p_sel = []
+        c_p1, c_p2 = st.columns(2)
+        opts = ["Vazamento de Fluido", "Baixa Carga de Fluido", "Excesso de Fluido", "Linha de Liquido Congelando", "Colmeia Congelando", "Evaporadora Pingando", "Linha de Descarga Congelando", "Filtro Secador Obstruido", "Compressor Sem Compressao", "Falha na Ventilacao", "Falha na Placa Inverter", "Instabilidade na Rede Eletrica"]
+        for i, opt in enumerate(opts):
+            if i < 6:
+                if c_p1.checkbox(opt): p_sel.append(opt)
+            else:
+                if c_p2.checkbox(opt): p_sel.append(opt)
 
-    with col_obs:
-        st.subheader("📝 Observações do Técnico")
-        obs_tecnico = st.text_area("", placeholder="Parecer exclusivo do técnico...", height=215, label_visibility="collapsed", key="obs_tec_diag")
-
-    st.markdown("---")
+    obs_tec = col_obs.text_area("📝 Observacoes do Tecnico", height=150)
     
-    # MOTOR IA (SIMULAÇÃO DE BUSCA E CRUZAMENTO)
-    analise_ia = []
-    medidas_ia = []
-    if tecnologia in ["Inverter", "VRF"] and (sh_val < 3 or sh_val > 15):
-        analise_ia.append(f"🔍 [PERÍCIA] Sistema {tecnologia}: SH fora da modulação nominal. Risco de golpe de líquido ou superaquecimento do enrolamento.")
-        medidas_ia.append("1. Validar curva de resistência dos sensores NTC conforme manual do fabricante.")
-    if "Congelando" in str(problemas_selecionados):
-        analise_ia.append("🔍 [ENGENHARIA] Detecção de restrição de fluxo ou baixa troca térmica. Cruzamento com base de dados indica obstrução ou falha de vazão.")
-        medidas_ia.append("2. Realizar limpeza química completa e verificar motor ventilador.")
-    if not analise_ia:
-        analise_ia.append("✅ Sistema operando dentro dos logs de normalidade técnica.")
-        medidas_ia.append("1. Manutenção preventiva de rotina conforme PMOC.")
-
-    col_prop_ia, col_exec = st.columns(2)
-    with col_prop_ia:
-        st.subheader("🤖 Diagnóstico IA")
-        for diag in analise_ia: st.info(diag)
+    st.markdown("---")
+    c_ia1, c_ia2 = st.columns(2)
+    with c_ia1:
+        st.subheader("🤖 Diagnostico IA")
+        analise_ia = [f"SH: {sh_val}K | SC: {sc_val}K. Sistema {tecnologia}."]
+        if sh_val > 12: analise_ia.append("Falta de fluido detectada.")
+        for d in analise_ia: st.info(d)
         st.subheader("🔧 Medidas Propostas IA")
-        for med in medidas_ia: st.warning(med)
-    with col_exec:
-        st.subheader("📋 Medidas Executadas")
-        executadas_input = st.text_area("", placeholder="Descreva as medidas executadas...", key="exec_diag", height=200, label_visibility="collapsed")
+        propostas_ia = ["1. Verificar estanqueidade.", "2. Ajustar carga."]
+        for p in propostas_ia: st.warning(p)
+    
+    exec_med = c_ia2.text_area("📋 Medidas Executadas", height=230)
 
     if st.button("📄 Gerar Relatório Profissional"):
         pdf = FPDF()
         pdf.add_page()
-        # CABEÇALHO E CORPO (REPLICAÇÃO DO LAYOUT DA IMAGEM)
-        pdf.set_font("Arial", 'B', 18); pdf.cell(190, 10, "MPN - RELATORIO TECNICO", 0, 1, 'C')
+        
+        # --- CABEÇALHO (LOGO E TÍTULOS) ---
+        pdf.set_font("Arial", 'B', 22); pdf.set_text_color(0, 51, 102)
+        pdf.cell(190, 10, "MPN", 0, 1, 'C')
+        pdf.set_font("Arial", 'B', 16)
+        pdf.cell(190, 8, "Relatorio Tecnico", 0, 1, 'C')
         pdf.ln(5)
-        pdf.set_fill_color(230, 240, 255); pdf.set_font("Arial", 'B', 10)
-        pdf.cell(140, 7, " Dados do Cliente", 1, 0, 'L', True); pdf.cell(50, 7, f" Visita: {data_visita}", 1, 1, 'L', True)
-        pdf.set_font("Arial", '', 9); pdf.multi_cell(190, 6, clean(f"Cliente: {cliente}\nEmail: {email_cli}\nProblemas: {', '.join(problemas_selecionados)}"), 1)
-        pdf.set_font("Arial", 'B', 10); pdf.cell(190, 7, " Medidas Executadas", 1, 1, 'L', True)
-        pdf.set_font("Arial", '', 9); pdf.multi_cell(190, 6, clean(executadas_input), 1)
 
-        # ASSINATURAS REQUERIDAS
-        pdf.set_y(-40)
+        # --- DADOS DO CLIENTE ---
+        pdf.set_fill_color(220, 230, 241)
+        pdf.set_font("Arial", 'B', 9)
+        pdf.cell(140, 6, " Dados do Cliente", 1, 0, 'L', True)
+        pdf.cell(50, 6, f" Data da visita: {data_v.strftime('%d/%m/%Y')}", 1, 1, 'L', True)
+        pdf.set_font("Arial", '', 8); pdf.set_text_color(0)
+        pdf.cell(190, 20, "", 1)
+        pdf.set_xy(12, 43)
+        pdf.cell(90, 4, clean(f"Cliente: {cliente}"), 0); pdf.cell(90, 4, clean(f"CPF/CNPJ: {doc_cli}"), 0, 1)
+        pdf.cell(90, 4, clean(f"Endereco: {logr}, {num}"), 0); pdf.cell(90, 4, clean(f"Bairro: {bairro}"), 0, 1)
+        pdf.cell(90, 4, clean(f"CEP: {cep}"), 0); pdf.cell(90, 4, clean(f"E-mail: {email}"), 0, 1)
+        pdf.cell(90, 4, clean(f"Whats: {whatsapp}"), 0); pdf.cell(45, 4, clean(f"Cel: {celular}"), 0); pdf.cell(45, 4, clean(f"Fixo: {fixo}"), 0, 1)
+
+        # --- DADOS DO EQUIPAMENTO ---
+        pdf.set_xy(10, 66)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(190, 6, " Dados do Equipamento", 1, 1, 'L', True)
+        pdf.set_font("Arial", '', 8); pdf.cell(190, 25, "", 1)
+        pdf.set_xy(12, 73)
+        pdf.cell(63, 4, clean(f"Marca: {marca}"), 0); pdf.cell(63, 4, clean(f"Linha: {linha}"), 0); pdf.cell(64, 4, clean(f"Modelo: {modelo}"), 0, 1)
+        pdf.cell(63, 4, clean(f"Capacidade: {capacidade}"), 0); pdf.cell(63, 4, clean(f"Tecnologia: {tecnologia}"), 0); pdf.cell(64, 4, clean(f"Fluido: {fluido}"), 0, 1)
+        pdf.cell(63, 4, clean(f"Sistema: {sistema}"), 0); pdf.cell(63, 4, clean(f"Mod. Evap: {mod_evap}"), 0); pdf.cell(64, 4, clean(f"Serie Evap: {serie_evap}"), 0, 1)
+        pdf.cell(63, 4, clean(f"Mod. Cond: {mod_cond}"), 0); pdf.cell(63, 4, clean(f"Serie Cond: {serie_cond}"), 0); pdf.cell(64, 4, clean(f"Local Evap: {loc_evap}"), 0, 1)
+        pdf.cell(63, 4, clean(f"Local Cond: {loc_cond}"), 0, 1)
+
+        # --- PARÂMETROS OPERACIONAIS ---
+        pdf.set_xy(10, 95)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(190, 6, " Analise de Parametros Operacionais", 1, 1, 'L', True)
+        pdf.set_font("Arial", '', 8); pdf.cell(190, 45, "", 1)
+        pdf.set_xy(12, 103)
+        pdf.set_font("Arial", 'B', 8); pdf.cell(0, 4, "[ ELETRICA ]", 0, 1)
+        pdf.set_font("Arial", '', 8)
+        pdf.cell(60, 4, f"Tensao Rede: {v_rede} V", 0); pdf.cell(60, 4, f"Corrente RLA: {rla} A", 0); pdf.cell(60, 4, f"Corrente LRA: {lra} A", 0, 1)
+        pdf.cell(60, 4, f"Tensao Medida: {v_med} V", 0); pdf.cell(60, 4, f"Corrente Medida: {a_med} A", 0, 1)
+        pdf.cell(60, 4, f"Dif. Tensoes: {diff_v} V", 0); pdf.cell(60, 4, f"Dif. Correntes: {diff_a} A", 0, 1)
+        pdf.ln(2)
+        pdf.set_font("Arial", 'B', 8); pdf.cell(0, 4, "[ TERMODINAMICA ]", 0, 1)
+        pdf.set_font("Arial", '', 8)
+        pdf.cell(50, 4, f"P. Succao: {p_suc} PSI", 0); pdf.cell(50, 4, f"T. Tubo: {t_suc_tubo} C", 0); pdf.cell(50, 4, f"T-Sat: {ts_suc} C", 0, 1)
+        pdf.cell(50, 4, f"P. Liquido: {p_liq} PSI", 0); pdf.cell(50, 4, f"T. Tubo: {t_liq_tubo} C", 0); pdf.cell(50, 4, f"T-Sat: {ts_liq} C", 0, 1)
+        pdf.set_xy(160, 115); pdf.set_font("Arial", 'B', 9); pdf.cell(30, 6, f"SH: {sh_val} K", 1, 1, 'C')
+        pdf.set_xy(160, 122); pdf.cell(30, 6, f"SC: {sc_val} K", 1, 1, 'C')
+
+        # --- BLOCOS ADICIONAIS ---
+        pdf.set_xy(10, 145)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(190, 6, " Parecer Tecnico / Problemas e Medidas", 1, 1, 'L', True)
+        pdf.set_font("Arial", '', 8); pdf.cell(190, 80, "", 1)
+        pdf.set_xy(12, 153)
+        pdf.set_font("Arial", 'B', 8); pdf.cell(0, 4, "Problemas Encontrados:", 0, 1); pdf.set_font("Arial", '', 8)
+        pdf.multi_cell(185, 4, clean(", ".join(p_sel)))
+        pdf.ln(2)
+        pdf.set_font("Arial", 'B', 8); pdf.cell(0, 4, "Diagnostico IA:", 0, 1); pdf.set_font("Arial", '', 8)
+        pdf.multi_cell(185, 4, clean(". ".join(analise_ia)))
+        pdf.ln(2)
+        pdf.set_font("Arial", 'B', 8); pdf.cell(0, 4, "Medidas Propostas:", 0, 1); pdf.set_font("Arial", '', 8)
+        pdf.multi_cell(185, 4, clean(". ".join(propostas_ia)))
+        pdf.ln(2)
+        pdf.set_font("Arial", 'B', 8); pdf.cell(0, 4, "Medidas Executadas:", 0, 1); pdf.set_font("Arial", '', 8)
+        pdf.multi_cell(185, 4, clean(exec_med))
+
+        # --- ASSINATURAS ---
+        pdf.set_y(-35)
         pdf.line(20, pdf.get_y(), 95, pdf.get_y()); pdf.line(115, pdf.get_y(), 190, pdf.get_y())
         pdf.set_font("Arial", 'B', 8)
-        pdf.set_xy(20, -38); pdf.multi_cell(75, 4, "Marcos Alexandre Almeida do Nascimento\nCNPJ: 51.274.762/0001-17", 0, 'C')
-        pdf.set_xy(115, -38); pdf.multi_cell(75, 4, clean(cliente), 0, 'C')
+        pdf.set_xy(20, -33); pdf.multi_cell(75, 4, "Marcos Alexandre Almeida do Nascimento\nCNPJ: 51.274.762/0001-17", 0, 'C')
+        pdf.set_xy(115, -33); pdf.multi_cell(75, 4, clean(cliente), 0, 'C')
 
-        pdf_bytes = pdf.output(dest='S').encode('latin-1')
-        st.download_button("⬇️ BAIXAR PDF", data=pdf_bytes, file_name="relatorio_final.pdf", mime="application/pdf")
+        pdf_b = pdf.output(dest='S').encode('latin-1')
+        st.download_button("⬇️ BAIXAR RELATORIO PDF", data=pdf_b, file_name="relatorio_final.pdf", mime="application/pdf")
