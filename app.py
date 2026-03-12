@@ -129,19 +129,55 @@ with tab_diag:
     if st.button("📄 Gerar Relatório Profissional"):
         pdf = FPDF()
         pdf.add_page()
-        # CABEÇALHO 
-        pdf.set_font("Arial", 'B', 22); pdf.set_text_color(0, 51, 102); pdf.cell(190, 10, "MPN", 0, 1, 'C')
-        pdf.set_font("Arial", 'B', 16); pdf.cell(190, 8, "Relatório Técnico", 0, 1, 'C')
-        pdf.ln(5)
-        # TABELAS DE DADOS
-        pdf.set_fill_color(220, 230, 241); pdf.set_font("Arial", 'B', 9)
-        pdf.cell(140, 7, " Dados do Cliente", 1, 0, 'L', True); pdf.cell(50, 7, f" Visita: {data_visita.strftime('%d/%m/%Y')}", 1, 1, 'L', True)
-        pdf.set_font("Arial", '', 8); pdf.set_text_color(0); pdf.multi_cell(190, 6, clean(f"Cliente: {cliente}\nEndereço: {nome_logr}, {numero} - {bairro}"), 1)
-        pdf.set_font("Arial", 'B', 9); pdf.cell(190, 7, " Parecer Técnico", 1, 1, 'L', True)
-        pdf.set_font("Arial", '', 8); pdf.multi_cell(190, 6, clean(f"Problemas: {', '.join(p_sel)}\nIA: {diag_ia}\nExecutado: {executadas_input}"), 1)
+        
+        # LOGO E TITULO CENTRALIZADO
+        try:
+            pdf.image("logo.png", 10, 8, 30)
+        except:
+            pass
+        
+        pdf.set_font("Arial", 'B', 20)
+        pdf.set_text_color(0, 51, 102)
+        pdf.cell(190, 15, "Relatorio Tecnico", 0, 1, 'C')
+        pdf.ln(10)
+
+        # BLOCO 1: CLIENTE
+        pdf.set_fill_color(230, 230, 230)
+        pdf.set_font("Arial", 'B', 10)
+        pdf.cell(190, 7, " 1. IDENTIFICACAO DO CLIENTE", 1, 1, 'L', True)
+        pdf.set_font("Arial", '', 9)
+        pdf.set_text_color(0)
+        pdf.multi_cell(190, 6, clean(f"Cliente: {cliente} | Doc: {doc_cliente}\nEndereco: {tipo_logr} {nome_logr}, {numero} - {bairro}\nData: {data_visita.strftime('%d/%m/%Y')} | Contato: {whatsapp}"), 1)
+        pdf.ln(4)
+
+        # BLOCO 2: EQUIPAMENTO
+        pdf.set_font("Arial", 'B', 10)
+        pdf.cell(190, 7, " 2. DADOS DO EQUIPAMENTO", 1, 1, 'L', True)
+        pdf.set_font("Arial", '', 9)
+        pdf.multi_cell(190, 6, clean(f"Marca: {fabricante} | Modelo: {modelo_eq} | Cap: {cap_digitada} BTU/h\nTecnologia: {tecnologia} | Fluido: {fluido} | Sistema: {tipo_eq}"), 1)
+        pdf.ln(4)
+
+        # BLOCO 3: DADOS TECNICOS
+        pdf.set_font("Arial", 'B', 10)
+        pdf.cell(190, 7, " 3. PARAMETROS TECNICOS", 1, 1, 'L', True)
+        pdf.set_font("Arial", '', 9)
+        pdf.multi_cell(190, 6, clean(f"Eletrica: {v_med}V / {a_med}A\nSuccao: {p_suc} PSI | T-Sat: {ts_suc}C | Tubo: {t_suc_tubo}C\nLiquido: {p_liq} PSI | T-Sat: {ts_liq}C | Tubo: {t_liq_tubo}C\nSH: {sh_val} K | SC: {sc_val} K"), 1)
+        pdf.ln(4)
+
+        # BLOCO 4: DIAGNOSTICO
+        pdf.set_font("Arial", 'B', 10)
+        pdf.cell(190, 7, " 4. DIAGNOSTICO E PROVIDENCIAS", 1, 1, 'L', True)
+        pdf.set_font("Arial", '', 9)
+        pdf.multi_cell(190, 6, clean(f"Problemas: {', '.join(p_sel)}\nIA: {diag_ia}\nExecutado: {executadas_input}\nObs: {obs_tecnico}"), 1)
+
         # ASSINATURAS
-        pdf.set_y(-35); pdf.line(20, pdf.get_y(), 95, pdf.get_y()); pdf.line(115, pdf.get_y(), 190, pdf.get_y())
-        pdf.set_font("Arial", 'B', 8); pdf.set_xy(20, -33); pdf.multi_cell(75, 4, "Marcos Alexandre Almeida do Nascimento\nCNPJ: 51.274.762/0001-17", 0, 'C')
-        pdf.set_xy(115, -33); pdf.multi_cell(75, 4, clean(cliente), 0, 'C')
-        pdf_bytes = pdf.output(dest='S').encode('latin-1')
-        st.download_button("⬇️ BAIXAR PDF", data=pdf_bytes, file_name="relatorio_mpn.pdf", mime="application/pdf")
+        pdf.ln(25)
+        pdf.line(20, pdf.get_y(), 90, pdf.get_y())
+        pdf.line(120, pdf.get_y(), 190, pdf.get_y())
+        pdf.set_font("Arial", 'B', 9)
+        pdf.text(40, pdf.get_y() + 5, "Responsavel Tecnico")
+        pdf.text(140, pdf.get_y() + 5, clean(f"Cliente: {cliente}"))
+
+        # DOWNLOAD
+        pdf_bytes = pdf.output(dest='S').encode('latin-1', 'ignore')
+        st.download_button("📥 Baixar Relatorio PDF", data=pdf_bytes, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
