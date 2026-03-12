@@ -7,7 +7,6 @@ import io
 # --- 1. CONFIGURAÇÃO DA PÁGINA (BLOQUEADA) ---
 st.set_page_config(page_title="MPN | Engenharia Pro", layout="wide", page_icon="❄️")
 
-# ESTILO DAS ABAS (20PX E NEGRITO)
 st.markdown("""
     <style>
     .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
@@ -17,7 +16,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. MOTOR TERMODINÂMICO E UTILITÁRIOS ---
+# --- 2. MOTOR TERMODINÂMICO ---
 def get_tsat_global(psig, gas):
     ancoras = {
         "R-410A": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 550.0, 600.0], 
@@ -107,73 +106,60 @@ with tab_diag:
     with col_prob:
         st.subheader("⚠️ Problemas Encontrados")
         pi1, pi2 = st.columns(2)
-        problemas_selecionados = []
-        with pi1:
-            if st.checkbox("Vazamento de Fluido"): problemas_selecionados.append("Vazamento de Fluido")
-            if st.checkbox("Baixa Carga de Fluido"): problemas_selecionados.append("Baixa Carga de Fluido")
-            if st.checkbox("Excesso de Fluido"): problemas_selecionados.append("Excesso de Fluido")
-            if st.checkbox("Ar/Incondensáveis no Ciclo"): problemas_selecionados.append("Ar/Incondensáveis no Ciclo")
-            if st.checkbox("Obstrução Dispositivo Expansão"): problemas_selecionados.append("Obstrução Dispositivo Expansão")
-            if st.checkbox("Linha de Líquido Congelando"): problemas_selecionados.append("Linha de Líquido Congelando")
-            if st.checkbox("Colmeia Congelando"): problemas_selecionados.append("Colmeia Congelando")
-        with pi2:
-            if st.checkbox("Filtro Secador Obstruído"): problemas_selecionados.append("Filtro Secador Obstruído")
-            if st.checkbox("Compressor Sem Compressão"): problemas_selecionados.append("Compressor Sem Compressão")
-            if st.checkbox("Falha na Ventilação"): problemas_selecionados.append("Falha na Ventilação")
-            if st.checkbox("Falha na Placa Inverter"): problemas_selecionados.append("Falha na Placa Inverter")
-            if st.checkbox("Instabilidade na Rede Elétrica"): problemas_selecionados.append("Instabilidade na Rede Elétrica")
-            if st.checkbox("Evaporadora Pingando"): problemas_selecionados.append("Evaporadora Pingando")
-            if st.checkbox("Linha de Descarga Congelando"): problemas_selecionados.append("Linha de Descarga Congelando")
+        problemas_escolhidos = []
+        opcoes = ["Vazamento de Fluido", "Baixa Carga de Fluido", "Excesso de Fluido", "Ar/Incondensaveis no Ciclo", "Obstrucao Dispositivo Expansao", "Linha de Liquido Congelando", "Colmeia Congelando", "Filtro Secador Obstruido", "Compressor Sem Compressao", "Falha na Ventilacao", "Falha na Placa Inverter", "Instabilidade na Rede Eletrica", "Evaporadora Pingando", "Linha de Descarga Congelando"]
+        for i, opt in enumerate(opcoes):
+            if i < 7:
+                with pi1: 
+                    if st.checkbox(opt): problemas_escolhidos.append(opt)
+            else:
+                with pi2:
+                    if st.checkbox(opt): problemas_escolhidos.append(opt)
 
     with col_obs:
         st.subheader("📝 Observações do Técnico")
-        obs_tecnico = st.text_area("", placeholder="Parecer exclusivo do técnico...", height=215, label_visibility="collapsed")
+        obs_tecnico = st.text_area("", placeholder="Parecer exclusivo do técnico...", height=215, label_visibility="collapsed", key="obs_tec_diag")
 
     st.markdown("---")
     
-    # MOTOR DE INTELIGÊNCIA - ANÁLISE PROFUNDA
-    diagnosticos_ia = []
-    medidas_ia = []
+    # MOTOR IA (NÃO ALTERA LAYOUT)
+    analise_ia = [f"🔍 [IA] Analisando {tecnologia} | {tipo_eq}"]
+    if sh_val > 12: analise_ia.append("⚠️ Alerta: SH Elevado sugere baixa carga.")
     
-    # Lógica de Cruzamento VRF/Inverter/Tecnologia vs Elétrica/Termo
-    if tecnologia in ["Inverter", "VRF", "Multisplit"] and (sh_val < 3 or sh_val > 15):
-        diagnosticos_ia.append(f"🔍 [PERÍCIA] Desvio Crítico em sistema {tecnologia}. SH fora da curva de modulação eletrônica.")
-        medidas_ia.append("1. Verificar sensores NTC de descarga e sucção (curva kOhm).")
-    
-    if "Congelando" in str(problemas_selecionados) or sc_val < 3:
-        diagnosticos_ia.append("🔍 [ENGENHARIA] Evidência de restrição de fluxo ou baixa troca térmica (Manual do Fabricante).")
-        medidas_ia.append("2. Realizar limpeza química de serpentinas e verificar dreno.")
-
-    if not diagnosticos_ia:
-        diagnosticos_ia.append("✅ Parâmetros em conformidade com manuais técnicos.")
-        medidas_ia.append("1. Manutenção preventiva de rotina.")
-
     col_prop_ia, col_exec = st.columns(2)
     with col_prop_ia:
         st.subheader("🤖 Diagnóstico IA")
-        for d in diagnosticos_ia: st.info(d)
+        for diag in analise_ia: st.info(diag)
         st.subheader("🔧 Medidas Propostas IA")
-        for m in medidas_ia: st.warning(m)
-        
+        st.warning("1. Realizar pressurização de sistema.")
     with col_exec:
         st.subheader("📋 Medidas Executadas")
-        executadas_input = st.text_area("", placeholder="Descreva as medidas executadas...", key="exec_diag", height=230, label_visibility="collapsed")
+        executadas_input = st.text_area("", placeholder="Descreva as medidas executadas...", key="exec_diag", height=200, label_visibility="collapsed")
 
     if st.button("📄 Gerar Relatório Profissional"):
         pdf = FPDF()
         pdf.add_page()
-        pdf.set_font("Arial", 'B', 16)
-        pdf.cell(190, 10, clean(f"RELATORIO TECNICO - {cliente}"), 0, 1, 'C')
+        # --- CABEÇALHO ---
+        pdf.set_font("Arial", 'B', 16); pdf.cell(190, 10, "MPN - RELATORIO TECNICO", 0, 1, 'C')
+        pdf.ln(5)
         
-        pdf.set_font("Arial", 'B', 12)
-        pdf.cell(190, 10, "DIAGNOSTICO IA:", 0, 1)
-        pdf.set_font("Arial", '', 10)
-        for d in diagnosticos_ia: pdf.multi_cell(190, 7, clean(d))
+        # --- NOVOS CAMPOS NO CORPO DO PDF ---
+        pdf.set_font("Arial", 'B', 11); pdf.cell(190, 8, "PROBLEMAS ENCONTRADOS:", 1, 1, 'L')
+        pdf.set_font("Arial", '', 10); pdf.multi_cell(190, 6, clean(", ".join(problemas_escolhidos) if problemas_escolhidos else "Nenhum problema selecionado."), 1)
         
-        pdf.set_font("Arial", 'B', 12)
-        pdf.cell(190, 10, "MEDIDAS PROPOSTAS:", 0, 1)
-        pdf.set_font("Arial", '', 10)
-        for m in medidas_ia: pdf.multi_cell(190, 7, clean(m))
+        pdf.set_font("Arial", 'B', 11); pdf.cell(190, 8, "OBSERVACOES DO TECNICO:", 1, 1, 'L')
+        pdf.set_font("Arial", '', 10); pdf.multi_cell(190, 6, clean(obs_tecnico if obs_tecnico else "N/A"), 1)
 
-        pdf_out = pdf.output(dest='S').encode('latin-1')
-        st.download_button("⬇️ BAIXAR RELATORIO PDF", data=pdf_out, file_name="relatorio.pdf", mime="application/pdf")
+        pdf.set_font("Arial", 'B', 11); pdf.cell(190, 8, "MEDIDAS EXECUTADAS:", 1, 1, 'L')
+        pdf.set_font("Arial", '', 10); pdf.multi_cell(190, 6, clean(executadas_input if executadas_input else "N/A"), 1)
+
+        # --- ASSINATURAS AO FIM DA PÁGINA ---
+        pdf.set_y(-40)
+        pdf.line(20, pdf.get_y(), 95, pdf.get_y())
+        pdf.line(115, pdf.get_y(), 190, pdf.get_y())
+        pdf.set_font("Arial", 'B', 8)
+        pdf.set_xy(20, -38); pdf.multi_cell(75, 4, f"Marcos Alexandre Almeida do Nascimento\nCNPJ: 51.274.762/0001-17", 0, 'C')
+        pdf.set_xy(115, -38); pdf.multi_cell(75, 4, clean(cliente if cliente else "CLIENTE"), 0, 'C')
+
+        pdf_bytes = pdf.output(dest='S').encode('latin-1')
+        st.download_button("⬇️ BAIXAR PDF", data=pdf_bytes, file_name="relatorio_final.pdf", mime="application/pdf")
