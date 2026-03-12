@@ -175,37 +175,33 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 10)
         pdf.cell(190, 7, " 3. ANALISE TECNICA E PERFORMANCE", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9)
+        pdf.set_fill_color(240, 240, 240)
         
-        pdf.set_fill_color(240, 240, 240) # CINZA CLARO
-        
-        # Elétrica
         pdf.cell(38, 6, clean(f"Rede: {v_rede}V"), 1, 0)
-        pdf.set_font("Arial", 'B', 9) # NEGRITO INICIO
+        pdf.set_font("Arial", 'B', 9)
         pdf.cell(38, 6, clean(f"Med: {v_med}V"), 1, 0, True)
-        pdf.set_font("Arial", '', 9) # NEGRITO FIM
+        pdf.set_font("Arial", '', 9)
         pdf.cell(38, 6, clean(f"Dif: {diff_v}V"), 1, 0)
         pdf.cell(38, 6, clean(f"RLA: {rla_comp}A"), 1, 0)
         pdf.cell(38, 6, clean(f"LRA: {lra_comp}A"), 1, 1)
         
-        pdf.set_font("Arial", 'B', 9) # NEGRITO INICIO
+        pdf.set_font("Arial", 'B', 9)
         pdf.cell(95, 6, clean(f"Corrente Medida: {a_med} A"), 1, 0, True)
-        pdf.set_font("Arial", '', 9) # NEGRITO FIM
+        pdf.set_font("Arial", '', 9)
         pdf.cell(95, 6, clean(f"Diferenca Corrente: {diff_a} A"), 1, 1)
         
-        # Sucção / Líquido
         pdf.cell(63, 6, clean(f"P-Suc: {p_suc} PSI"), 1, 0)
-        pdf.set_font("Arial", 'B', 9) # NEGRITO INICIO
+        pdf.set_font("Arial", 'B', 9)
         pdf.cell(63, 6, clean(f"T-Sat Suc: {ts_suc}C"), 1, 0, True)
-        pdf.set_font("Arial", '', 9) # NEGRITO FIM
+        pdf.set_font("Arial", '', 9)
         pdf.cell(64, 6, clean(f"T-Tubo Suc: {t_suc_tubo}C"), 1, 1)
         
         pdf.cell(63, 6, clean(f"P-Liq: {p_liq} PSI"), 1, 0)
-        pdf.set_font("Arial", 'B', 9) # NEGRITO INICIO
+        pdf.set_font("Arial", 'B', 9)
         pdf.cell(63, 6, clean(f"T-Sat Liq: {ts_liq}C"), 1, 0, True)
-        pdf.set_font("Arial", '', 9) # NEGRITO FIM
+        pdf.set_font("Arial", '', 9)
         pdf.cell(64, 6, clean(f"T-Tubo Liq: {t_liq_tubo}C"), 1, 1)
         
-        # Performance final
         pdf.set_font("Arial", 'B', 9)
         pdf.cell(95, 7, clean(f"SUPERAQUECIMENTO (SH): {sh_val} K"), 1, 0)
         pdf.cell(95, 7, clean(f"SUBRESFRIAMENTO (SC): {sc_val} K"), 1, 1)
@@ -224,11 +220,19 @@ with tab_diag:
 
         # ASSINATURAS
         pdf.ln(25)
-        pdf.line(20, pdf.get_y(), 90, pdf.get_y())
-        pdf.line(120, pdf.get_y(), 190, pdf.get_y())
-        pdf.set_font("Arial", 'B', 9)
-        pdf.text(35, pdf.get_y() + 5, "Responsavel Tecnico")
-        pdf.text(140, pdf.get_y() + 5, clean(f"Cliente: {cliente}"))
+        y_pos = pdf.get_y()
+        pdf.line(20, y_pos, 90, y_pos)
+        pdf.line(120, y_pos, 190, y_pos)
+        pdf.set_font("Arial", 'B', 8)
+        # Assinatura Marcos Nascimento
+        pdf.text(25, y_pos + 4, "Marcos Alexandre Almeida do Nascimento")
+        pdf.set_font("Arial", '', 8)
+        pdf.text(38, y_pos + 8, "CNPJ 1.274.762/0001-17")
+        # Assinatura Cliente
+        pdf.set_font("Arial", 'B', 8)
+        pdf.text(145, y_pos + 4, clean(f"{cliente}"))
+        pdf.set_font("Arial", '', 8)
+        pdf.text(152, y_pos + 8, "Cliente")
 
         pdf_bytes = pdf.output(dest='S').encode('latin-1', 'ignore')
         st.download_button("📥 Baixar Relatorio PDF", data=pdf_bytes, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
