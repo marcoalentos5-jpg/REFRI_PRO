@@ -146,13 +146,13 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 20); pdf.set_text_color(0, 51, 102)
         pdf.cell(190, 15, "Relatorio Tecnico", 0, 1, 'C'); pdf.ln(10)
 
-        # 1. IDENTIFICAÇÃO E CONTATO
+        # 1. IDENTIFICAÇÃO E CONTATO (LARGURAS AJUSTADAS)
         pdf.set_fill_color(230, 230, 230); pdf.set_font("Arial", 'B', 10)
         pdf.cell(190, 7, " 1. IDENTIFICACAO DO CLIENTE E CONTATO", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9); pdf.set_text_color(0)
-        pdf.cell(63, 6, clean(f"Data da Visita: {data_visita.strftime('%d/%m/%Y')}"), 1, 0)
-        pdf.cell(63, 6, clean(f"Cliente: {cliente}"), 1, 0)
-        pdf.cell(64, 6, clean(f"CPF/CNPJ: {doc_cliente}"), 1, 1)
+        pdf.cell(45, 6, clean(f"Data: {data_visita.strftime('%d/%m/%Y')}"), 1, 0) # CAMPO DIMINUÍDO
+        pdf.cell(100, 6, clean(f"Cliente: {cliente}"), 1, 0)
+        pdf.cell(45, 6, clean(f"CPF/CNPJ: {doc_cliente}"), 1, 1) # CAMPO DIMINUÍDO
         pdf.cell(190, 6, clean(f"Endereco: {tipo_logr} {nome_logr}, {numero} {complemento} - {bairro} | CEP: {cep}"), 1, 1)
         pdf.cell(63, 6, clean(f"Wpp: {whatsapp}"), 1, 0); pdf.cell(63, 6, clean(f"Cel: {celular}"), 1, 0); pdf.cell(64, 6, clean(f"Fixo: {tel_residencial}"), 1, 1)
         pdf.cell(190, 6, clean(f"E-mail: {email_cli}"), 1, 1); pdf.ln(4)
@@ -184,14 +184,11 @@ with tab_diag:
         # 4. DIAGNÓSTICO E PARECER FINAL
         pdf.set_font("Arial", 'B', 10); pdf.cell(190, 7, " 4. DIAGNOSTICO E PARECER FINAL", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9)
-        # Problemas Encontrados
         pdf.set_font("Arial", 'B', 9); pdf.cell(190, 6, clean("Problemas Encontrados:"), "LTR", 1); pdf.set_font("Arial", '', 9)
         prob_txt = ', '.join(p_sel) if p_sel else 'Nenhum problema detectado'
         pdf.multi_cell(190, 6, clean(prob_txt), "LRB")
-        # Medidas Executadas
         pdf.set_font("Arial", 'B', 9); pdf.cell(190, 6, clean("Medidas Executadas pelo Tecnico:"), "LTR", 1); pdf.set_font("Arial", '', 9)
         pdf.multi_cell(190, 6, clean(executadas_input if executadas_input else "Nenhuma medida descrita"), "LRB")
-        # Observações do Técnico
         pdf.set_font("Arial", 'B', 9); pdf.cell(190, 6, clean("Parecer Tecnico e Observacoes:"), "LTR", 1); pdf.set_font("Arial", '', 9)
         pdf.multi_cell(190, 6, clean(obs_tecnico if obs_tecnico else "Sem observacoes adicionais"), "LRB")
 
