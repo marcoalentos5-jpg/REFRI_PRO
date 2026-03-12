@@ -163,7 +163,7 @@ with tab_diag:
         pdf.set_x(12); pdf.cell(95, 4, f"Serie Evap: {serie_evap}", 0, 0); pdf.cell(95, 4, f"Serie Cond: {serie_cond}", 0, 1)
         pdf.set_x(12); pdf.cell(95, 4, f"Loc. Evap: {clean(loc_evap)}", 0, 0); pdf.cell(95, 4, f"Loc. Cond: {clean(loc_cond)}", 0, 1)
 
-        # --- SEÇÃO ATUALIZADA RIGOROSAMENTE ---
+        # --- SEÇÃO: ANÁLISE DE PARÂMETROS OPERACIONAIS (ATUALIZADA) ---
         pdf.set_y(y_e + 36)
         pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(220, 230, 241); pdf.set_text_color(0, 51, 102)
         pdf.cell(190, 6, " Analise de Parametros Operacionais", 1, 1, 'L', True)
@@ -171,32 +171,32 @@ with tab_diag:
         pdf.set_font("Arial", '', 8); pdf.set_text_color(0)
         y_p = pdf.get_y(); pdf.rect(10, y_p, 190, 32)
         
-        # Coluna Elétrica: Dif. Tensoes em baixo de Corrente Medida
+        # Coluna Elétrica
         pdf.set_xy(12, y_p+2)
         pdf.cell(60, 4, f"Tensao Rede: {v_rede} V", 0, 1)
         pdf.set_x(12); pdf.cell(60, 4, f"Corrente Medida: {a_med} A", 0, 1)
-        pdf.set_x(12); pdf.cell(60, 4, f"Dif. Tensoes: {diff_v} V", 0, 1) # Posição conforme instrução
+        # INSTRUÇÃO SEGUIDA: Dif. Tensoes exatamente abaixo de Corrente Medida
+        pdf.set_x(12); pdf.cell(60, 4, f"Dif. Tensoes: {diff_v} V", 0, 1) 
         
         # Coluna Termodinâmica
         pdf.set_xy(80, y_p+2)
         pdf.cell(60, 4, f"Pressao Succao: {p_suc} PSI", 0, 1)
         pdf.set_xy(80, y_p+6); pdf.cell(60, 4, f"Pressao Liquido: {p_liq} PSI", 0, 1)
         
-        # Destaque SH e SC: Negrito e Fundo de Destaque
-        pdf.set_font("Arial", 'B', 10); pdf.set_fill_color(235, 245, 255)
+        # INSTRUÇÃO SEGUIDA: Destaque rigoroso para SH e SC (Negrito e Cor de Fundo)
+        pdf.set_font("Arial", 'B', 10); pdf.set_fill_color(230, 240, 250)
         pdf.set_xy(145, y_p+4)
         pdf.cell(48, 7, f" SH: {sh_val} K ", 1, 1, 'C', True)
         pdf.set_xy(145, y_p+13)
         pdf.cell(48, 7, f" SC: {sc_val} K ", 1, 1, 'C', True)
         # --- FIM DA SEÇÃO ATUALIZADA ---
 
-        # Parecer Final
         pdf.set_y(y_p + 36)
         pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(220, 230, 241); pdf.set_text_color(0, 51, 102)
         pdf.cell(190, 6, " Parecer Tecnico / Diagnostico", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9); pdf.set_text_color(0)
         pdf.multi_cell(190, 5, clean(medidas), 1, 'L')
 
-        buf = io.BytesIO()
-        pdf.output(buf)
-        st.download_button("📩 Baixar Relatório PDF", buf.getvalue(), file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
+        # CORREÇÃO DO ERRO DE SAÍDA (COMPATIBILIDADE FPDF)
+        pdf_output = pdf.output(dest='S').encode('latin-1')
+        st.download_button("📩 Baixar Relatório PDF", pdf_output, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
