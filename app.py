@@ -54,10 +54,22 @@ with tab_cad:
     tipo_logr, nome_logr, numero, complemento, bairro, cep, email_cli = e1.selectbox("Tipo", ["Rua", "Av.", "Trav.", "Alam.", "Estr.", "Rod.", "Pça."], key="f_tlog"), e2.text_input("Logradouro", key="f_nlog"), e3.text_input("Nº", key="f_num"), e4.text_input("Comp.", key="f_comp"), e5.text_input("Bairro", key="f_bai"), e6.text_input("CEP", key="f_cep"), e7.text_input("✉️ E-mail", key="f_mail")
     st.markdown("---")
     st.subheader("⚙️ Dados do Equipamento")
-    g1, g2, g3 = st.columns(3)
-    with g1: fabricante, modelo_eq, cap_digitada = st.text_input("Marca", key="f_fab"), st.text_input("Modelo Geral", key="f_mod"), st.text_input("Capacidade (BTU/h)", value="0", key="f_cap")
-    with g2: linha, tecnologia, fluido = st.text_input("Linha", key="f_lin"), st.selectbox("Tecnologia", ["Inverter", "WindFree", "Scroll", "On-Off", "VRF", "Multisplit"], key="f_tec"), st.selectbox("Gás Refrigerante", ["R-410A", "R-32", "R-22", "R-134a"], key="f_gas")
-    with g3: tipo_eq, loc_evap, loc_cond = st.selectbox("Sistema", ["Split", "Cassete", "Piso Teto", "VRF", "Chiller"], key="f_sis"), st.text_input("Local Evaporadora", key="f_le"), st.text_input("Local Condensadora", key="f_lc")
+    g1, g2, g3, g4 = st.columns([1, 1, 1, 1])
+    with g1: 
+        fabricante = st.text_input("Marca", key="f_fab")
+        modelo_eq = st.text_input("Modelo Geral", key="f_mod")
+        serie_evap = st.text_input("Série Evaporadora", key="f_sevap")
+    with g2:
+        linha = st.text_input("Linha", key="f_lin")
+        cap_digitada = st.text_input("Capacidade (BTU/h)", value="0", key="f_cap")
+        serie_cond = st.text_input("Série Condensadora", key="f_scond")
+    with g3:
+        tecnologia = st.selectbox("Tecnologia", ["Inverter", "WindFree", "Scroll", "On-Off", "VRF", "Multisplit"], key="f_tec")
+        fluido = st.selectbox("Gás Refrigerante", ["R-410A", "R-32", "R-22", "R-134a"], key="f_gas")
+        loc_evap = st.text_input("Local Evaporadora", key="f_le")
+    with g4:
+        tipo_eq = st.selectbox("Sistema", ["Split", "Cassete", "Piso Teto", "VRF", "Chiller"], key="f_sis")
+        loc_cond = st.text_input("Local Condensadora", key="f_lc")
 
 with tab_ele:
     st.subheader("⚡ Parâmetros Elétricos")
@@ -156,54 +168,42 @@ with tab_diag:
         pdf.cell(60, 6, clean(f"Data: {data_visita.strftime('%d/%m/%Y')}"), 1, 1)
         pdf.ln(4)
 
-        # 2. EQUIPAMENTO
+        # 2. EQUIPAMENTO (REORGANIZADO)
         pdf.set_font("Arial", 'B', 10)
         pdf.cell(190, 7, " 2. ESPECIFICACOES DO EQUIPAMENTO", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9)
-        pdf.cell(95, 6, clean(f"Marca: {fabricante}"), 1, 0)
-        pdf.cell(95, 6, clean(f"Modelo: {modelo_eq}"), 1, 1)
-        pdf.cell(63, 6, clean(f"Linha: {linha}"), 1, 0)
-        pdf.cell(63, 6, clean(f"Capacidade: {cap_digitada} BTU/h"), 1, 0)
-        pdf.cell(64, 6, clean(f"Gás: {fluido}"), 1, 1)
-        pdf.cell(95, 6, clean(f"Tecnologia: {tecnologia}"), 1, 0)
-        pdf.cell(95, 6, clean(f"Sistema: {tipo_eq}"), 1, 1)
-        pdf.cell(95, 6, clean(f"Local Evap: {loc_evap}"), 1, 0)
+        pdf.cell(63, 6, clean(f"Marca: {fabricante}"), 1, 0)
+        pdf.cell(63, 6, clean(f"Modelo: {modelo_eq}"), 1, 0)
+        pdf.cell(64, 6, clean(f"Linha: {linha}"), 1, 1)
+        pdf.cell(63, 6, clean(f"Cap: {cap_digitada} BTU/h"), 1, 0)
+        pdf.cell(63, 6, clean(f"Tec: {tecnologia}"), 1, 0)
+        pdf.cell(64, 6, clean(f"Gas: {fluido}"), 1, 1)
+        pdf.cell(95, 6, clean(f"Sistema: {tipo_eq}"), 1, 0)
+        pdf.cell(95, 6, clean(f"Local Evap: {loc_evap}"), 1, 1)
+        pdf.cell(95, 6, clean(f"Serie Evap: {serie_evap}"), 1, 0)
         pdf.cell(95, 6, clean(f"Local Cond: {loc_cond}"), 1, 1)
+        pdf.cell(190, 6, clean(f"Serie Cond: {serie_cond}"), 1, 1)
         pdf.ln(4)
 
-        # 3. ANALISE TECNICA E PERFORMANCE
+        # 3. ANÁLISE TÉCNICA E PERFORMANCE
         pdf.set_font("Arial", 'B', 10)
         pdf.cell(190, 7, " 3. ANALISE TECNICA E PERFORMANCE", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9)
         pdf.set_fill_color(240, 240, 240)
-        
         pdf.cell(38, 6, clean(f"Rede: {v_rede}V"), 1, 0)
-        pdf.set_font("Arial", 'B', 9)
-        pdf.cell(38, 6, clean(f"Med: {v_med}V"), 1, 0, True)
-        pdf.set_font("Arial", '', 9)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(38, 6, clean(f"Med: {v_med}V"), 1, 0, True); pdf.set_font("Arial", '', 9)
         pdf.cell(38, 6, clean(f"Dif: {diff_v}V"), 1, 0)
         pdf.cell(38, 6, clean(f"RLA: {rla_comp}A"), 1, 0)
         pdf.cell(38, 6, clean(f"LRA: {lra_comp}A"), 1, 1)
-        
-        pdf.set_font("Arial", 'B', 9)
-        pdf.cell(95, 6, clean(f"Corrente Medida: {a_med} A"), 1, 0, True)
-        pdf.set_font("Arial", '', 9)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(95, 6, clean(f"Corrente Medida: {a_med} A"), 1, 0, True); pdf.set_font("Arial", '', 9)
         pdf.cell(95, 6, clean(f"Diferenca Corrente: {diff_a} A"), 1, 1)
-        
         pdf.cell(63, 6, clean(f"P-Suc: {p_suc} PSI"), 1, 0)
-        pdf.set_font("Arial", 'B', 9)
-        pdf.cell(63, 6, clean(f"T-Sat Suc: {ts_suc}C"), 1, 0, True)
-        pdf.set_font("Arial", '', 9)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(63, 6, clean(f"T-Sat Suc: {ts_suc}C"), 1, 0, True); pdf.set_font("Arial", '', 9)
         pdf.cell(64, 6, clean(f"T-Tubo Suc: {t_suc_tubo}C"), 1, 1)
-        
         pdf.cell(63, 6, clean(f"P-Liq: {p_liq} PSI"), 1, 0)
-        pdf.set_font("Arial", 'B', 9)
-        pdf.cell(63, 6, clean(f"T-Sat Liq: {ts_liq}C"), 1, 0, True)
-        pdf.set_font("Arial", '', 9)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(63, 6, clean(f"T-Sat Liq: {ts_liq}C"), 1, 0, True); pdf.set_font("Arial", '', 9)
         pdf.cell(64, 6, clean(f"T-Tubo Liq: {t_liq_tubo}C"), 1, 1)
-        
-        pdf.set_font("Arial", 'B', 9)
-        pdf.cell(95, 7, clean(f"SUPERAQUECIMENTO (SH): {sh_val} K"), 1, 0)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(95, 7, clean(f"SUPERAQUECIMENTO (SH): {sh_val} K"), 1, 0)
         pdf.cell(95, 7, clean(f"SUBRESFRIAMENTO (SC): {sc_val} K"), 1, 1)
         pdf.ln(4)
 
@@ -224,15 +224,10 @@ with tab_diag:
         pdf.line(20, y_pos, 90, y_pos)
         pdf.line(120, y_pos, 190, y_pos)
         pdf.set_font("Arial", 'B', 8)
-        # Assinatura Marcos Nascimento
         pdf.text(25, y_pos + 4, "Marcos Alexandre Almeida do Nascimento")
-        pdf.set_font("Arial", '', 8)
-        pdf.text(38, y_pos + 8, "CNPJ 1.274.762/0001-17")
-        # Assinatura Cliente
-        pdf.set_font("Arial", 'B', 8)
-        pdf.text(145, y_pos + 4, clean(f"{cliente}"))
-        pdf.set_font("Arial", '', 8)
-        pdf.text(152, y_pos + 8, "Cliente")
+        pdf.set_font("Arial", '', 8); pdf.text(38, y_pos + 8, "CNPJ 1.274.762/0001-17")
+        pdf.set_font("Arial", 'B', 8); pdf.text(145, y_pos + 4, clean(f"{cliente}"))
+        pdf.set_font("Arial", '', 8); pdf.text(152, y_pos + 8, "Cliente")
 
         pdf_bytes = pdf.output(dest='S').encode('latin-1', 'ignore')
         st.download_button("📥 Baixar Relatorio PDF", data=pdf_bytes, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
