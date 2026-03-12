@@ -54,7 +54,7 @@ with tab_cad:
     tipo_logr, nome_logr, numero, complemento, bairro, cep, email_cli = e1.selectbox("Tipo", ["Rua", "Av.", "Trav.", "Alam.", "Estr.", "Rod.", "Pça."], key="f_tlog"), e2.text_input("Logradouro", key="f_nlog"), e3.text_input("Nº", key="f_num"), e4.text_input("Comp.", key="f_comp"), e5.text_input("Bairro", key="f_bai"), e6.text_input("CEP", key="f_cep"), e7.text_input("✉️ E-mail", key="f_mail")
     st.markdown("---")
     st.subheader("⚙️ Dados do Equipamento")
-    g1, g2, g3, g4 = st.columns([1, 1, 1, 1])
+    g1, g2, g3, g4 = st.columns(4)
     with g1: 
         fabricante = st.text_input("Marca", key="f_fab")
         modelo_eq = st.text_input("Modelo Geral", key="f_mod")
@@ -152,23 +152,23 @@ with tab_diag:
         pdf.cell(190, 15, "Relatorio Tecnico", 0, 1, 'C')
         pdf.ln(10)
 
-        # 1. IDENTIFICAÇÃO
+        # 1. IDENTIFICAÇÃO (DATA INCLUÍDA NO BLOCO)
         pdf.set_fill_color(230, 230, 230)
         pdf.set_font("Arial", 'B', 10)
         pdf.cell(190, 7, " 1. IDENTIFICACAO DO CLIENTE E CONTATO", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9)
         pdf.set_text_color(0)
-        pdf.cell(130, 6, clean(f"Cliente: {cliente}"), 1, 0)
-        pdf.cell(60, 6, clean(f"CPF/CNPJ: {doc_cliente}"), 1, 1)
+        pdf.cell(63, 6, clean(f"Data da Visita: {data_visita.strftime('%d/%m/%Y')}"), 1, 0)
+        pdf.cell(63, 6, clean(f"Cliente: {cliente}"), 1, 0)
+        pdf.cell(64, 6, clean(f"CPF/CNPJ: {doc_cliente}"), 1, 1)
         pdf.cell(190, 6, clean(f"Endereco: {tipo_logr} {nome_logr}, {numero} {complemento} - {bairro} | CEP: {cep}"), 1, 1)
         pdf.cell(63, 6, clean(f"Wpp: {whatsapp}"), 1, 0)
         pdf.cell(63, 6, clean(f"Cel: {celular}"), 1, 0)
         pdf.cell(64, 6, clean(f"Fixo: {tel_residencial}"), 1, 1)
-        pdf.cell(130, 6, clean(f"E-mail: {email_cli}"), 1, 0)
-        pdf.cell(60, 6, clean(f"Data: {data_visita.strftime('%d/%m/%Y')}"), 1, 1)
+        pdf.cell(190, 6, clean(f"E-mail: {email_cli}"), 1, 1)
         pdf.ln(4)
 
-        # 2. EQUIPAMENTO (REORGANIZADO)
+        # 2. EQUIPAMENTO
         pdf.set_font("Arial", 'B', 10)
         pdf.cell(190, 7, " 2. ESPECIFICACOES DO EQUIPAMENTO", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9)
@@ -218,16 +218,28 @@ with tab_diag:
                                      f"Medidas Executadas: {executadas_input}\n"
                                      f"Parecer Tecnico: {obs_tecnico}"), 1)
 
-        # ASSINATURAS
+        # ASSINATURAS (CENTRALIZADAS)
         pdf.ln(25)
         y_pos = pdf.get_y()
+        # Linhas de assinatura
         pdf.line(20, y_pos, 90, y_pos)
         pdf.line(120, y_pos, 190, y_pos)
+        
+        # Assinatura Marcos Nascimento
+        pdf.set_xy(20, y_pos + 1)
         pdf.set_font("Arial", 'B', 8)
-        pdf.text(25, y_pos + 4, "Marcos Alexandre Almeida do Nascimento")
-        pdf.set_font("Arial", '', 8); pdf.text(38, y_pos + 8, "CNPJ 1.274.762/0001-17")
-        pdf.set_font("Arial", 'B', 8); pdf.text(145, y_pos + 4, clean(f"{cliente}"))
-        pdf.set_font("Arial", '', 8); pdf.text(152, y_pos + 8, "Cliente")
+        pdf.cell(70, 4, "Marcos Alexandre Almeida do Nascimento", 0, 1, 'C')
+        pdf.set_x(20)
+        pdf.set_font("Arial", '', 8)
+        pdf.cell(70, 4, "CNPJ 1.274.762/0001-17", 0, 1, 'C')
+        
+        # Assinatura Cliente (NOME CENTRALIZADO NA LINHA)
+        pdf.set_xy(120, y_pos + 1)
+        pdf.set_font("Arial", 'B', 8)
+        pdf.cell(70, 4, clean(f"{cliente}"), 0, 1, 'C')
+        pdf.set_x(120)
+        pdf.set_font("Arial", '', 8)
+        pdf.cell(70, 4, "Cliente", 0, 1, 'C')
 
         pdf_bytes = pdf.output(dest='S').encode('latin-1', 'ignore')
         st.download_button("📥 Baixar Relatorio PDF", data=pdf_bytes, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
