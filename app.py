@@ -56,25 +56,29 @@ with tab_cad:
     email_cli = e7.text_input("✉️ E-mail", key="f_mail")
 
     st.markdown("---")
-    st.subheader("⚙️ Dados Técnicos")
-    t1, t2, t3, t4, t5, t6, t7 = st.columns([1, 1, 1, 0.8, 1, 0.8, 0.8])
-    fabricante = t1.text_input("Marca", key="f_fab")
-    linha = t2.text_input("Linha", key="f_lin")
-    modelo_eq = t3.text_input("Modelo", key="f_mod")
-    cap_digitada = t4.text_input("BTU´s", value="0", key="f_cap")
-    tecnologia = t5.selectbox("Tecnologia", ["Inverter", "WindFree", "Scroll", "On-Off"], key="f_tec")
-    tipo_eq = t6.selectbox("Sistema", ["Split", "Cassete", "Piso", "VRF", "Chiller"], key="f_sis")
-    fluido = t7.selectbox("Gás", ["R-410A", "R-32", "R-22", "R-134a", "R-404A"], key="f_gas")
+    st.subheader("⚙️ Dados do Equipamento")
+    g1, g2, g3 = st.columns(3)
+    with g1:
+        fabricante = st.text_input("Marca", key="f_fab")
+        modelo_eq = st.text_input("Modelo Geral", key="f_mod")
+        cap_digitada = st.text_input("Capacidade (BTU/h)", value="0", key="f_cap")
+    with g2:
+        linha = st.text_input("Linha", key="f_lin")
+        tecnologia = st.selectbox("Tecnologia", ["Inverter", "WindFree", "Scroll", "On-Off"], key="f_tec")
+        fluido = st.selectbox("Gás Refrigerante", ["R-410A", "R-32", "R-22", "R-134a", "R-404A"], key="f_gas")
+    with g3:
+        tipo_eq = st.selectbox("Sistema", ["Split", "Cassete", "Piso", "VRF", "Chiller"], key="f_sis")
+        loc_evap = st.text_input("Local Evaporadora", key="f_le")
+        loc_cond = st.text_input("Local Condensadora", key="f_lc")
 
-    l1_ev, l1_co = st.columns(2)
-    loc_evap = l1_ev.text_input("Localização Evaporadora", key="f_le")
-    loc_cond = l1_co.text_input("Localização Condensadora", key="f_lc")
-
-    s1, s2, s3, s4 = st.columns(4)
-    mod_evap = s1.text_input("Mod. Evap.", key="f_me")
-    serie_evap = s2.text_input("Série Evap.", key="f_se")
-    mod_cond = s3.text_input("Mod. Cond.", key="f_mc")
-    serie_cond = s4.text_input("Série Cond.", key="f_sc")
+    st.markdown("##### Detalhes de Série")
+    s1, s2 = st.columns(2)
+    with s1:
+        mod_evap = st.text_input("Modelo Evap.", key="f_me")
+        serie_evap = st.text_input("Nº Série Evap.", key="f_se")
+    with s2:
+        mod_cond = st.text_input("Modelo Cond.", key="f_mc")
+        serie_cond = st.text_input("Nº Série Cond.", key="f_sc")
 
 with tab_ele:
     st.subheader("⚡ Parâmetros Elétricos")
@@ -98,22 +102,27 @@ with tab_termo:
     st.subheader("🌡️ Ciclo Frigorífico")
     tr1, tr2, tr3 = st.columns(3)
     with tr1:
-        p_suc = st.number_input("Pressão Sucção (PSI)", value=118.0)
-        t_suc_tubo = st.number_input("Temp. Tubo Sucção (°C)", value=12.0)
+        st.markdown("**Sucção (Baixa)**")
+        p_suc = st.number_input("Pressão (PSI)", value=118.0, key="ps")
+        t_suc_tubo = st.number_input("Temp. Tubo (°C)", value=12.0, key="ts")
         ts_suc = get_tsat_global(p_suc, fluido)
-        st.number_input("Temp. Saturação (Sucção) (°C)", value=ts_suc, disabled=True)
+        st.write("T-Sat Sucção")
+        st.info(f"{ts_suc} °C")
     with tr2:
-        p_liq = st.number_input("Pressão Descarga (PSI)", value=345.0)
-        t_liq_tubo = st.number_input("Temp. Tubo Líquido (°C)", value=30.0)
+        st.markdown("**Líquido (Alta)**")
+        p_liq = st.number_input("Pressão (PSI)", value=345.0, key="pl")
+        t_liq_tubo = st.number_input("Temp. Tubo (°C)", value=30.0, key="tl")
         ts_liq = get_tsat_global(p_liq, fluido)
-        st.number_input("Temp. Saturação (Líquido) (°C)", value=ts_liq, disabled=True)
+        st.write("T-Sat Líquido")
+        st.info(f"{ts_liq} °C")
     with tr3:
+        st.markdown("**Performance**")
         sh_val = round(t_suc_tubo - ts_suc, 1)
         sc_val = round(ts_liq - t_liq_tubo, 1)
         st.write("Superaquecimento (SH)")
-        st.success(f"{sh_val} K")
+        st.success(f"**{sh_val} K**")
         st.write("Subresfriamento (SC)")
-        st.success(f"{sc_val} K")
+        st.success(f"**{sc_val} K**")
 
 with tab_diag:
     resumo_pre = f"SH: {sh_val}K | SC: {sc_val}K\n\nParecer: "
@@ -133,12 +142,15 @@ with tab_diag:
         # 1. DADOS DO CLIENTE
         pdf.set_y(32)
         pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(220, 230, 241); pdf.set_text_color(0, 51, 102)
-        pdf.cell(160, 6, " Dados do Cliente", 1, 0, 'L', True)
-        pdf.cell(30, 6, f"DATA: {data_visita}", 1, 1, 'C', True)
+        pdf.cell(155, 6, " Dados do Cliente", 1, 0, 'L', True)
+        # AJUSTE DE DATA: FORMATO dd/mm/aaaa e rótulo "Data da visita"
+        data_formatada = data_visita.strftime("%d/%m/%Y")
+        pdf.cell(35, 6, f"Data da visita: {data_formatada}", 1, 1, 'C', True)
+        
         pdf.set_font("Arial", '', 8); pdf.set_text_color(0)
         y_c = pdf.get_y(); pdf.rect(10, y_c, 190, 28)
         pdf.set_xy(12, y_c+2); pdf.cell(90, 4, f"Cliente: {clean(cliente)}", 0, 0); pdf.cell(90, 4, f"CPF/CNPJ: {doc_cliente}", 0, 1)
-        pdf.set_x(12); pdf.cell(110, 4, f"Endereco: {tipo_logr} {clean(nome_logr)}, {numero} ({clean(complemento)})", 0, 0); pdf.cell(60, 4, f"Bairro: {clean(bairro)}", 0, 1)
+        pdf.set_x(12); pdf.cell(110, 4, f"Endereco: {tipo_logr} {clean(nome_logr)}, {numero}", 0, 0); pdf.cell(60, 4, f"Bairro: {clean(bairro)}", 0, 1)
         pdf.set_x(12); pdf.cell(60, 4, f"CEP: {cep}", 0, 0); pdf.cell(90, 4, f"E-mail: {email_cli}", 0, 1)
         pdf.set_x(12); pdf.cell(60, 4, f"Whats: {whatsapp}", 0, 0); pdf.cell(60, 4, f"Cel: {celular}", 0, 0); pdf.cell(60, 4, f"Fixo: {tel_residencial}", 0, 1)
 
