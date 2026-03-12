@@ -176,23 +176,33 @@ with tab_diag:
         pdf.cell(190, 7, " 3. ANALISE TECNICA E PERFORMANCE", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9)
         
-        pdf.set_fill_color(240, 240, 240) # Cor Cinza definida para o preenchimento
+        pdf.set_fill_color(240, 240, 240) # CINZA CLARO
         
         # Elétrica
         pdf.cell(38, 6, clean(f"Rede: {v_rede}V"), 1, 0)
-        pdf.cell(38, 6, clean(f"Med: {v_med}V"), 1, 0, True) # CINZA
+        pdf.set_font("Arial", 'B', 9) # NEGRITO INICIO
+        pdf.cell(38, 6, clean(f"Med: {v_med}V"), 1, 0, True)
+        pdf.set_font("Arial", '', 9) # NEGRITO FIM
         pdf.cell(38, 6, clean(f"Dif: {diff_v}V"), 1, 0)
         pdf.cell(38, 6, clean(f"RLA: {rla_comp}A"), 1, 0)
         pdf.cell(38, 6, clean(f"LRA: {lra_comp}A"), 1, 1)
-        pdf.cell(95, 6, clean(f"Corrente Medida: {a_med} A"), 1, 0, True) # CINZA
+        
+        pdf.set_font("Arial", 'B', 9) # NEGRITO INICIO
+        pdf.cell(95, 6, clean(f"Corrente Medida: {a_med} A"), 1, 0, True)
+        pdf.set_font("Arial", '', 9) # NEGRITO FIM
         pdf.cell(95, 6, clean(f"Diferenca Corrente: {diff_a} A"), 1, 1)
         
-        # Termodinâmica
+        # Sucção / Líquido
         pdf.cell(63, 6, clean(f"P-Suc: {p_suc} PSI"), 1, 0)
-        pdf.cell(63, 6, clean(f"T-Sat Suc: {ts_suc}C"), 1, 0, True) # CINZA
+        pdf.set_font("Arial", 'B', 9) # NEGRITO INICIO
+        pdf.cell(63, 6, clean(f"T-Sat Suc: {ts_suc}C"), 1, 0, True)
+        pdf.set_font("Arial", '', 9) # NEGRITO FIM
         pdf.cell(64, 6, clean(f"T-Tubo Suc: {t_suc_tubo}C"), 1, 1)
+        
         pdf.cell(63, 6, clean(f"P-Liq: {p_liq} PSI"), 1, 0)
-        pdf.cell(63, 6, clean(f"T-Sat Liq: {ts_liq}C"), 1, 0, True) # CINZA
+        pdf.set_font("Arial", 'B', 9) # NEGRITO INICIO
+        pdf.cell(63, 6, clean(f"T-Sat Liq: {ts_liq}C"), 1, 0, True)
+        pdf.set_font("Arial", '', 9) # NEGRITO FIM
         pdf.cell(64, 6, clean(f"T-Tubo Liq: {t_liq_tubo}C"), 1, 1)
         
         # Performance final
@@ -205,8 +215,8 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 10)
         pdf.cell(190, 7, " 4. DIAGNOSTICO E PARECER FINAL", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9)
-        prob_lista = ', '.join(p_sel) if p_sel else 'Nenhum'
-        pdf.multi_cell(190, 6, clean(f"Problemas: {prob_lista}\n"
+        prob_txt = ', '.join(p_sel) if p_sel else 'Nenhum'
+        pdf.multi_cell(190, 6, clean(f"Problemas: {prob_txt}\n"
                                      f"Analise IA: {diag_ia}\n"
                                      f"Medidas Propostas IA: Verificar estanqueidade e parametros nominais conforme manual.\n"
                                      f"Medidas Executadas: {executadas_input}\n"
