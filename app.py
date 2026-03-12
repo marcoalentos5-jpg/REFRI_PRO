@@ -132,7 +132,7 @@ with tab_diag:
         
         # LOGO E TITULO CENTRALIZADO
         try:
-            pdf.image("logo.png", 10, 8, 30)
+            pdf.image("logo.png", 10, 8, 50)
         except:
             pass
         
@@ -141,34 +141,46 @@ with tab_diag:
         pdf.cell(190, 15, "Relatorio Tecnico", 0, 1, 'C')
         pdf.ln(10)
 
-        # BLOCO 1: CLIENTE
+        # BLOCO 1: TODAS AS INFORMAÇÕES DO CLIENTE
         pdf.set_fill_color(230, 230, 230)
         pdf.set_font("Arial", 'B', 10)
         pdf.cell(190, 7, " 1. IDENTIFICACAO DO CLIENTE", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9)
         pdf.set_text_color(0)
-        pdf.multi_cell(190, 6, clean(f"Cliente: {cliente} | Doc: {doc_cliente}\nEndereco: {tipo_logr} {nome_logr}, {numero} - {bairro}\nData: {data_visita.strftime('%d/%m/%Y')} | Contato: {whatsapp}"), 1)
+        pdf.multi_cell(190, 6, clean(f"Cliente: {cliente} | CPF/CNPJ: {doc_cliente}\n"
+                                     f"Endereco: {tipo_logr} {nome_logr}, {numero} {complemento} - {bairro} | CEP: {cep}\n"
+                                     f"WhatsApp: {whatsapp} | Celular: {celular} | Fixo: {tel_residencial}\n"
+                                     f"E-mail: {email_cli} | Data da Visita: {data_visita.strftime('%d/%m/%Y')}"), 1)
         pdf.ln(4)
 
-        # BLOCO 2: EQUIPAMENTO
+        # BLOCO 2: TODOS OS DADOS DO EQUIPAMENTO
         pdf.set_font("Arial", 'B', 10)
         pdf.cell(190, 7, " 2. DADOS DO EQUIPAMENTO", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9)
-        pdf.multi_cell(190, 6, clean(f"Marca: {fabricante} | Modelo: {modelo_eq} | Cap: {cap_digitada} BTU/h\nTecnologia: {tecnologia} | Fluido: {fluido} | Sistema: {tipo_eq}"), 1)
+        pdf.multi_cell(190, 6, clean(f"Marca: {fabricante} | Modelo: {modelo_eq} | Linha: {linha}\n"
+                                     f"Capacidade: {cap_digitada} BTU/h | Tecnologia: {tecnologia}\n"
+                                     f"Fluido: {fluido} | Sistema: {tipo_eq}\n"
+                                     f"Local Evap: {loc_evap} | Local Cond: {loc_cond}"), 1)
         pdf.ln(4)
 
-        # BLOCO 3: DADOS TECNICOS
+        # BLOCO 3: TODOS OS PARAMETROS TECNICOS
         pdf.set_font("Arial", 'B', 10)
         pdf.cell(190, 7, " 3. PARAMETROS TECNICOS", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9)
-        pdf.multi_cell(190, 6, clean(f"Eletrica: {v_med}V / {a_med}A\nSuccao: {p_suc} PSI | T-Sat: {ts_suc}C | Tubo: {t_suc_tubo}C\nLiquido: {p_liq} PSI | T-Sat: {ts_liq}C | Tubo: {t_liq_tubo}C\nSH: {sh_val} K | SC: {sc_val} K"), 1)
+        pdf.multi_cell(190, 6, clean(f"ELETRICA: Rede: {v_rede}V | Medida: {v_med}V | Corrente: {a_med}A | RLA: {rla_comp}A | LRA: {lra_comp}A\n"
+                                     f"SUCCAO: Pressao: {p_suc} PSI | T-Sat: {ts_suc}C | Tubo: {t_suc_tubo}C\n"
+                                     f"LIQUIDO: Pressao: {p_liq} PSI | T-Sat: {ts_liq}C | Tubo: {t_liq_tubo}C\n"
+                                     f"PERFORMANCE: Superaquecimento (SH): {sh_val} K | Subresfriamento (SC): {sc_val} K"), 1)
         pdf.ln(4)
 
-        # BLOCO 4: DIAGNOSTICO
+        # BLOCO 4: DIAGNOSTICO E PROVIDENCIAS
         pdf.set_font("Arial", 'B', 10)
         pdf.cell(190, 7, " 4. DIAGNOSTICO E PROVIDENCIAS", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9)
-        pdf.multi_cell(190, 6, clean(f"Problemas: {', '.join(p_sel)}\nIA: {diag_ia}\nExecutado: {executadas_input}\nObs: {obs_tecnico}"), 1)
+        pdf.multi_cell(190, 6, clean(f"Problemas: {', '.join(p_sel)}\n"
+                                     f"Analise IA: {diag_ia}\n"
+                                     f"Medidas Executadas: {executadas_input}\n"
+                                     f"Parecer do Tecnico: {obs_tecnico}"), 1)
 
         # ASSINATURAS
         pdf.ln(25)
