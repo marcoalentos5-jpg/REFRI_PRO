@@ -130,7 +130,6 @@ with tab_diag:
         pdf = FPDF()
         pdf.add_page()
         
-        # LOGO E TÍTULO
         try:
             pdf.image("logo.png", 10, 8, 50)
         except:
@@ -141,7 +140,7 @@ with tab_diag:
         pdf.cell(190, 15, "Relatorio Tecnico", 0, 1, 'C')
         pdf.ln(10)
 
-        # SEÇÃO 1: CLIENTE E CONTATO
+        # 1. IDENTIFICAÇÃO COMPLETA
         pdf.set_fill_color(230, 230, 230)
         pdf.set_font("Arial", 'B', 10)
         pdf.cell(190, 7, " 1. IDENTIFICACAO DO CLIENTE E CONTATO", 1, 1, 'L', True)
@@ -157,7 +156,7 @@ with tab_diag:
         pdf.cell(60, 6, clean(f"Data: {data_visita.strftime('%d/%m/%Y')}"), 1, 1)
         pdf.ln(4)
 
-        # SEÇÃO 2: EQUIPAMENTO E LOCALIZAÇÃO
+        # 2. EQUIPAMENTO COMPLETO
         pdf.set_font("Arial", 'B', 10)
         pdf.cell(190, 7, " 2. ESPECIFICACOES DO EQUIPAMENTO", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9)
@@ -172,36 +171,39 @@ with tab_diag:
         pdf.cell(95, 6, clean(f"Local Cond: {loc_cond}"), 1, 1)
         pdf.ln(4)
 
-        # SEÇÃO 3: ANALISE TECNICA E PERFORMANCE (REARRUMADO COMO O CAMPO 2)
+        # 3. ANÁLISE TÉCNICA E PERFORMANCE COMPLETA
         pdf.set_font("Arial", 'B', 10)
         pdf.cell(190, 7, " 3. ANALISE TECNICA E PERFORMANCE", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9)
-        # Linha Elétrica
-        pdf.cell(47, 6, clean(f"Rede: {v_rede} V"), 1, 0)
-        pdf.cell(47, 6, clean(f"Medida: {v_med} V"), 1, 0)
-        pdf.cell(32, 6, clean(f"Amp: {a_med} A"), 1, 0)
-        pdf.cell(32, 6, clean(f"RLA: {rla_comp} A"), 1, 0)
-        pdf.cell(32, 6, clean(f"LRA: {lra_comp} A"), 1, 1)
-        # Linha Sucção
+        # Elétrica detalhada
+        pdf.cell(38, 6, clean(f"Rede: {v_rede}V"), 1, 0)
+        pdf.cell(38, 6, clean(f"Med: {v_med}V"), 1, 0)
+        pdf.cell(38, 6, clean(f"Dif: {diff_v}V"), 1, 0)
+        pdf.cell(38, 6, clean(f"RLA: {rla_comp}A"), 1, 0)
+        pdf.cell(38, 6, clean(f"LRA: {lra_comp}A"), 1, 1)
+        pdf.cell(95, 6, clean(f"Corrente Medida: {a_med} A"), 1, 0)
+        pdf.cell(95, 6, clean(f"Diferenca Corrente: {diff_a} A"), 1, 1)
+        # Termodinâmica detalhada
         pdf.cell(63, 6, clean(f"P-Suc: {p_suc} PSI"), 1, 0)
-        pdf.cell(63, 6, clean(f"T-Sat Suc: {ts_suc} C"), 1, 0)
-        pdf.cell(64, 6, clean(f"T-Tubo Suc: {t_suc_tubo} C"), 1, 1)
-        # Linha Líquido
+        pdf.cell(63, 6, clean(f"T-Sat Suc: {ts_suc}C"), 1, 0)
+        pdf.cell(64, 6, clean(f"T-Tubo Suc: {t_suc_tubo}C"), 1, 1)
         pdf.cell(63, 6, clean(f"P-Liq: {p_liq} PSI"), 1, 0)
-        pdf.cell(63, 6, clean(f"T-Sat Liq: {ts_liq} C"), 1, 0)
-        pdf.cell(64, 6, clean(f"T-Tubo Liq: {t_liq_tubo} C"), 1, 1)
-        # Linha Performance Final
+        pdf.cell(63, 6, clean(f"T-Sat Liq: {ts_liq}C"), 1, 0)
+        pdf.cell(64, 6, clean(f"T-Tubo Liq: {t_liq_tubo}C"), 1, 1)
+        # Performance
         pdf.set_font("Arial", 'B', 9)
         pdf.cell(95, 7, clean(f"SUPERAQUECIMENTO (SH): {sh_val} K"), 1, 0)
         pdf.cell(95, 7, clean(f"SUBRESFRIAMENTO (SC): {sc_val} K"), 1, 1)
         pdf.ln(4)
 
-        # SEÇÃO 4: DIAGNÓSTICO E PROVIDÊNCIAS
+        # 4. DIAGNÓSTICO E PROVIDÊNCIAS COMPLETO
         pdf.set_font("Arial", 'B', 10)
         pdf.cell(190, 7, " 4. DIAGNOSTICO E PARECER FINAL", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9)
-        pdf.multi_cell(190, 6, clean(f"Problemas Encontrados: {', '.join(p_sel) if p_sel else 'Nenhum'}\n"
+        prob_lista = ', '.join(p_sel) if p_sel else 'Nenhum'
+        pdf.multi_cell(190, 6, clean(f"Problemas: {prob_lista}\n"
                                      f"Analise IA: {diag_ia}\n"
+                                     f"Medidas Propostas IA: Verificar estanqueidade e parametros nominais conforme manual.\n"
                                      f"Medidas Executadas: {executadas_input}\n"
                                      f"Parecer Tecnico: {obs_tecnico}"), 1)
 
@@ -213,6 +215,5 @@ with tab_diag:
         pdf.text(35, pdf.get_y() + 5, "Responsavel Tecnico")
         pdf.text(140, pdf.get_y() + 5, clean(f"Cliente: {cliente}"))
 
-        # DOWNLOAD
         pdf_bytes = pdf.output(dest='S').encode('latin-1', 'ignore')
         st.download_button("📥 Baixar Relatorio PDF", data=pdf_bytes, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
