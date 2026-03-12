@@ -140,14 +140,14 @@ with tab_diag:
         pdf.cell(190, 15, "Relatorio Tecnico", 0, 1, 'C')
         pdf.ln(10)
 
-        # 1. IDENTIFICAÇÃO COMPLETA
+        # 1. IDENTIFICAÇÃO
         pdf.set_fill_color(230, 230, 230)
         pdf.set_font("Arial", 'B', 10)
         pdf.cell(190, 7, " 1. IDENTIFICACAO DO CLIENTE E CONTATO", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9)
         pdf.set_text_color(0)
         pdf.cell(130, 6, clean(f"Cliente: {cliente}"), 1, 0)
-        pdf.cell(60, 6, clean(f"Doc: {doc_cliente}"), 1, 1)
+        pdf.cell(60, 6, clean(f"CPF/CNPJ: {doc_cliente}"), 1, 1) # Troca efetuada
         pdf.cell(190, 6, clean(f"Endereco: {tipo_logr} {nome_logr}, {numero} {complemento} - {bairro} | CEP: {cep}"), 1, 1)
         pdf.cell(63, 6, clean(f"Wpp: {whatsapp}"), 1, 0)
         pdf.cell(63, 6, clean(f"Cel: {celular}"), 1, 0)
@@ -156,7 +156,7 @@ with tab_diag:
         pdf.cell(60, 6, clean(f"Data: {data_visita.strftime('%d/%m/%Y')}"), 1, 1)
         pdf.ln(4)
 
-        # 2. EQUIPAMENTO COMPLETO
+        # 2. EQUIPAMENTO
         pdf.set_font("Arial", 'B', 10)
         pdf.cell(190, 7, " 2. ESPECIFICACOES DO EQUIPAMENTO", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9)
@@ -171,32 +171,38 @@ with tab_diag:
         pdf.cell(95, 6, clean(f"Local Cond: {loc_cond}"), 1, 1)
         pdf.ln(4)
 
-        # 3. ANÁLISE TÉCNICA E PERFORMANCE COMPLETA
+        # 3. ANÁLISE TÉCNICA E PERFORMANCE
         pdf.set_font("Arial", 'B', 10)
         pdf.cell(190, 7, " 3. ANALISE TECNICA E PERFORMANCE", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9)
-        # Elétrica detalhada
+        
+        # Cor de fundo para campos destacados
+        pdf.set_fill_color(245, 245, 245) 
+        
+        # Elétrica
         pdf.cell(38, 6, clean(f"Rede: {v_rede}V"), 1, 0)
-        pdf.cell(38, 6, clean(f"Med: {v_med}V"), 1, 0)
+        pdf.cell(38, 6, clean(f"Med: {v_med}V"), 1, 0, True) # Fundo cinza
         pdf.cell(38, 6, clean(f"Dif: {diff_v}V"), 1, 0)
         pdf.cell(38, 6, clean(f"RLA: {rla_comp}A"), 1, 0)
         pdf.cell(38, 6, clean(f"LRA: {lra_comp}A"), 1, 1)
-        pdf.cell(95, 6, clean(f"Corrente Medida: {a_med} A"), 1, 0)
+        pdf.cell(95, 6, clean(f"Corrente Medida: {a_med} A"), 1, 0, True) # Fundo cinza
         pdf.cell(95, 6, clean(f"Diferenca Corrente: {diff_a} A"), 1, 1)
-        # Termodinâmica detalhada
+        
+        # Termodinâmica
         pdf.cell(63, 6, clean(f"P-Suc: {p_suc} PSI"), 1, 0)
-        pdf.cell(63, 6, clean(f"T-Sat Suc: {ts_suc}C"), 1, 0)
+        pdf.cell(63, 6, clean(f"T-Sat Suc: {ts_suc}C"), 1, 0, True) # Fundo cinza
         pdf.cell(64, 6, clean(f"T-Tubo Suc: {t_suc_tubo}C"), 1, 1)
         pdf.cell(63, 6, clean(f"P-Liq: {p_liq} PSI"), 1, 0)
-        pdf.cell(63, 6, clean(f"T-Sat Liq: {ts_liq}C"), 1, 0)
+        pdf.cell(63, 6, clean(f"T-Sat Liq: {ts_liq}C"), 1, 0, True) # Fundo cinza
         pdf.cell(64, 6, clean(f"T-Tubo Liq: {t_liq_tubo}C"), 1, 1)
-        # Performance
+        
+        # Performance final
         pdf.set_font("Arial", 'B', 9)
         pdf.cell(95, 7, clean(f"SUPERAQUECIMENTO (SH): {sh_val} K"), 1, 0)
         pdf.cell(95, 7, clean(f"SUBRESFRIAMENTO (SC): {sc_val} K"), 1, 1)
         pdf.ln(4)
 
-        # 4. DIAGNÓSTICO E PROVIDÊNCIAS COMPLETO
+        # 4. DIAGNÓSTICO
         pdf.set_font("Arial", 'B', 10)
         pdf.cell(190, 7, " 4. DIAGNOSTICO E PARECER FINAL", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9)
