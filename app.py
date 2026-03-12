@@ -132,9 +132,13 @@ with tab_diag:
         pdf = FPDF()
         pdf.add_page()
         
-        pdf.image("logo.png", 10, 8, 35)
+        # INSTRUÇÃO: Aumentar logomarca
+        pdf.image("logo.png", 10, 8, 42)
+        
         pdf.set_font("Arial", 'B', 22); pdf.set_text_color(0, 51, 102)
         pdf.set_xy(0, 10); pdf.cell(210, 10, "MPN", 0, 1, 'C')
+        
+        # INSTRUÇÃO: Centralizar Relatório Técnico abaixo de MPN
         pdf.set_font("Arial", 'B', 16)
         pdf.cell(210, 8, "Relatório Técnico".encode('latin-1', 'replace').decode('latin-1'), 0, 1, 'C')
 
@@ -165,7 +169,7 @@ with tab_diag:
         pdf.set_x(12); pdf.cell(60, 4, f"Mod. Cond: {clean(mod_cond)}", 0, 0); pdf.cell(60, 4, f"Serie Cond: {serie_cond}", 0, 0); pdf.cell(60, 4, f"Local Evap: {clean(loc_evap)}", 0, 1)
         pdf.set_x(12); pdf.cell(60, 4, f"Local Cond: {clean(loc_cond)}", 0, 1)
 
-        # --- SEÇÃO: ANÁLISE DE PARÂMETROS OPERACIONAIS (ATUALIZADA RIGOROSAMENTE) ---
+        # --- SEÇÃO: ANÁLISE DE PARÂMETROS OPERACIONAIS ---
         pdf.set_y(y_e + 40)
         pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(220, 230, 241); pdf.set_text_color(0, 51, 102)
         pdf.cell(190, 6, " Analise de Parametros Operacionais", 1, 1, 'L', True)
@@ -173,22 +177,21 @@ with tab_diag:
         pdf.set_font("Arial", '', 8); pdf.set_text_color(0)
         y_p = pdf.get_y(); pdf.rect(10, y_p, 190, 45)
         
-        # SUB-SEÇÃO: ELÉTRICA (INSTRUÇÕES DE POSICIONAMENTO SEGUIDAS)
+        # INSTRUÇÃO: ABA ELÉTRICA (COM ACENTUAÇÃO E POSIÇÃO LRA)
         pdf.set_xy(12, y_p+2)
-        pdf.set_font("Arial", 'B', 8); pdf.cell(60, 4, "[ ABA ELETRICA ]", 0, 1)
+        pdf.set_font("Arial", 'B', 8); pdf.cell(60, 4, "[ ELÉTRICA ]".encode('latin-1').decode('latin-1'), 0, 1)
         pdf.set_font("Arial", '', 8)
-        pdf.set_x(12); pdf.cell(60, 4, f"Tensao Rede: {v_rede} V", 0, 0); pdf.cell(60, 4, f"Corrente RLA: {rla_comp} A", 0, 1) # RLA ao lado da rede
-        pdf.set_x(12); pdf.cell(60, 4, f"Tensao Medida: {v_med} V", 0, 0); pdf.cell(60, 4, f"Corrente Medida: {a_med} A", 0, 1) # Tensao Medida sob Rede, Corrente Medida sob RLA
-        pdf.set_x(12); pdf.cell(60, 4, f"Dif. Tensoes: {diff_v} V", 0, 0); pdf.cell(60, 4, f"LRA: {lra_comp} A", 0, 1)
+        pdf.set_x(12); pdf.cell(60, 4, f"Tensao Rede: {v_rede} V", 0, 0); pdf.cell(50, 4, f"Corrente RLA: {rla_comp} A", 0, 0); pdf.cell(50, 4, f"Corrente LRA: {lra_comp} A", 0, 1)
+        pdf.set_x(12); pdf.cell(60, 4, f"Tensao Medida: {v_med} V", 0, 0); pdf.cell(50, 4, f"Corrente Medida: {a_med} A", 0, 1)
+        pdf.set_x(12); pdf.cell(60, 4, f"Dif. Tensoes: {diff_v} V", 0, 1)
         
-        # SUB-SEÇÃO: TERMODINÂMICA (MANTIDA)
+        # INSTRUÇÃO: ABA TERMODINÂMICA (COM ACENTUAÇÃO)
         pdf.set_xy(12, y_p+28)
-        pdf.set_font("Arial", 'B', 8); pdf.cell(60, 4, "[ ABA TERMODINAMICA ]", 0, 1)
+        pdf.set_font("Arial", 'B', 8); pdf.cell(60, 4, "[ TERMODINÂMICA ]".encode('latin-1').decode('latin-1'), 0, 1)
         pdf.set_font("Arial", '', 8)
         pdf.set_x(12); pdf.cell(45, 4, f"P. Succao: {p_suc} PSI", 0, 0); pdf.cell(45, 4, f"T. Tubo: {t_suc_tubo} C", 0, 0); pdf.cell(45, 4, f"T-Sat: {ts_suc} C", 0, 1)
         pdf.set_x(12); pdf.cell(45, 4, f"P. Liquido: {p_liq} PSI", 0, 0); pdf.cell(45, 4, f"T. Tubo: {t_liq_tubo} C", 0, 0); pdf.cell(45, 4, f"T-Sat: {ts_liq} C", 0, 1)
         
-        # DESTAQUES SH E SC (MANTIDOS)
         pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(235, 245, 255)
         pdf.set_xy(155, y_p+5)
         pdf.cell(38, 6, f" SH: {sh_val} K ", 1, 1, 'C', True)
