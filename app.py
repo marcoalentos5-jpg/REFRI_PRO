@@ -136,25 +136,26 @@ with tab_diag:
             pdf = FPDF()
             pdf.add_page()
             
-            # --- 1. CABEÇALHO (LOGO À ESQUERDA E TÍTULO) ---
+            # --- 1. CABEÇALHO (LOGO À ESQUERDA E TÍTULOS CENTRALIZADOS) ---
             try:
                 pdf.image("logo.png", 10, 8, 45) 
-                pdf.set_xy(60, 12)
-                pdf.set_font("Arial", 'B', 20); pdf.set_text_color(0, 51, 102)
-                pdf.cell(0, 10, "MPN", 0, 1, 'L')
-                pdf.set_x(60)
-                pdf.set_font("Arial", 'B', 14)
-                # "Relatório Técnico" com tratamento de acento para Latin-1
-                pdf.cell(0, 8, clean("Relatorio Tecnico").replace("Relatorio", "Relat" + chr(243) + "rio"), 0, 1, 'L')
             except:
-                pdf.set_font("Arial", 'B', 14); pdf.set_text_color(0, 74, 153)
-                pdf.cell(0, 10, clean("MPN - Relatorio Tecnico"), 0, 1, 'C')
+                pass
+            
+            pdf.set_y(12)
+            pdf.set_font("Arial", 'B', 20); pdf.set_text_color(0, 51, 102)
+            pdf.cell(0, 10, "MPN", 0, 1, 'C')
+            
+            pdf.set_font("Arial", 'B', 14)
+            # "Relatório Técnico" com codificação Latin-1 correta
+            txt_relatorio = "Relat" + chr(243) + "rio T" + chr(233) + "cnico"
+            pdf.cell(0, 8, txt_relatorio, 0, 1, 'C')
 
             pdf.set_y(35)
 
             # --- 2. DADOS DO CLIENTE ---
             pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(240, 240, 240); pdf.set_text_color(0, 51, 102); pdf.set_line_width(0.4)
-            pdf.cell(0, 6, clean(" Dados do Cliente"), 1, 1, 'L', True)
+            pdf.cell(0, 6, " Dados do Cliente", 1, 1, 'L', True)
             y_tab = pdf.get_y(); pdf.set_text_color(0); pdf.set_font("Arial", '', 8); pdf.set_line_width(0.2)
             pdf.rect(10, y_tab, 190, 32); pdf.set_xy(168, y_tab + 1.5)
             pdf.set_font("Arial", 'B', 7); pdf.set_fill_color(225, 225, 225)
@@ -178,7 +179,7 @@ with tab_diag:
             # --- 3. DADOS DO EQUIPAMENTO ---
             pdf.set_y(y_tab + 35); pdf.ln(5)
             pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(240, 240, 240); pdf.set_text_color(0, 51, 102); pdf.set_line_width(0.4)
-            pdf.cell(0, 6, clean(" Dados do Equipamento"), 1, 1, 'L', True)
+            pdf.cell(0, 6, " Dados do Equipamento", 1, 1, 'L', True)
             y_eq = pdf.get_y(); pdf.set_text_color(0); pdf.set_font("Arial", '', 8); pdf.set_line_width(0.2)
             pdf.rect(10, y_eq, 190, 38); c_eq1, c_eq2, c_eq3 = 13, 75, 140
             pdf.set_xy(c_eq1, y_eq + 3); pdf.cell(60, 5, f"Marca: {format_title(clean(fabricante))}", 0)
@@ -198,7 +199,7 @@ with tab_diag:
             # --- 4. ANALISE DE PARAMETROS OPERACIONAIS ---
             pdf.set_y(y_eq + 43); pdf.ln(5)
             pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(240, 240, 240); pdf.set_text_color(0, 51, 102); pdf.set_line_width(0.4)
-            pdf.cell(0, 6, clean(" Analise de Parametros Operacionais"), 1, 1, 'L', True)
+            pdf.cell(0, 6, " Analise de Parametros Operacionais", 1, 1, 'L', True)
             y_an = pdf.get_y(); pdf.set_text_color(0); pdf.set_font("Arial", '', 8); pdf.set_line_width(0.2)
             pdf.rect(10, y_an, 190, 35) 
             pdf.set_font("Arial", 'B', 8); pdf.set_fill_color(245, 245, 245)
@@ -223,16 +224,16 @@ with tab_diag:
             # --- 5. DIAGNÓSTICO ---
             pdf.set_y(y_an + 36); pdf.set_text_color(0); pdf.ln(5)
             pdf.set_font("Arial", 'B', 10); pdf.set_fill_color(0, 51, 102); pdf.set_text_color(255, 255, 255)
-            pdf.cell(0, 7, clean(" Parecer Tecnico e Recomendacoes"), 1, 1, 'C', True)
+            pdf.cell(0, 7, " Parecer Tecnico e Recomendacoes", 1, 1, 'C', True)
             pdf.set_text_color(0); pdf.set_font("Arial", '', 9); pdf.ln(2)
             pdf.multi_cell(0, 6, clean(medidas), 1, 'L')
 
             # --- 6. ASSINATURA ---
             pdf.set_y(-35); pdf.set_font("Arial", 'I', 8)
             pdf.cell(0, 5, "_______________________________________________________", 0, 1, 'C')
-            pdf.cell(0, 5, format_title(clean("Responsavel Tecnico: MPN Engenharia & Diagnostico")), 0, 1, 'C')
+            pdf.cell(0, 5, "Responsavel Tecnico: MPN Engenharia & Diagnostico", 0, 1, 'C')
 
-            pdf_output = pdf.output(dest='S').encode('latin-1', errors='replace')
+            pdf_output = pdf.output(dest='S').encode('latin-1', errors='ignore')
             st.download_button(label="⬇️ Baixar Relatório PDF", data=pdf_output, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
 
 st.markdown("---")
