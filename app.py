@@ -4,10 +4,10 @@ from datetime import date
 from fpdf import FPDF
 import io
 
-# --- 1. CONFIGURAÇÃO DA PÁGINA (ESTRUTURA BLOQUEADA) ---
+# --- 1. CONFIGURAÇÃO DA PÁGINA (ESTRUTURA ORIGINAL REESTABELECIDA) ---
 st.set_page_config(page_title="MPN | Engenharia Pro", layout="wide", page_icon="❄️")
 
-# --- 2. MOTOR TERMODINÂMICO E UTILITÁRIOS (LÓGICA BLOQUEADA) ---
+# --- 2. MOTOR TERMODINÂMICO E UTILITÁRIOS ---
 def get_tsat_global(psig, gas):
     ancoras = {
         "R-410A": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 550.0, 600.0], 
@@ -17,7 +17,7 @@ def get_tsat_global(psig, gas):
         "R-22": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 600.0], 
                  "t": [-40.8, -3.34, 15.80, 28.15, 38.56, 47.30, 54.89, 61.63, 73.2, 78.38, 87.53]},
         "R-134a": {"p": [0.0, 20.0, 50.0, 80.0, 100.0, 130.0, 150.0, 180.0, 200.0], 
-                   "t": [-26.08, -1.0, 12.23, 22.8, 30.92, 30.92, 43.65, 50.1, 53.74]},
+                   "t": [-26.08, -1.0, 12.23, 22.8, 30.92, 38.4, 43.65, 50.1, 53.74]},
         "R-404A": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0], 
                    "t": [-45.45, -9.41, 8.96, 22.23, 32.59, 41.2, 48.6, 55.2, 61.1]}
     }
@@ -112,53 +112,65 @@ with tab_termo:
     ct2.markdown(f"<div style='background-color:#004a99;padding:15px;border-radius:10px;color:white;'><b>❄️ T-Sat Líquido:</b><h2>{ts_liq} °C</h2><b>💧 Sub-resfriamento:</b><h2>{sc_val} K</h2></div>", unsafe_allow_html=True)
 
 with tab_diag:
-    st.subheader("🤖 Diagnóstico")
-    
-    # --- MATRIZ TÉCNICA DE DIAGNÓSTICO (LÓGICA INTERNA) ---
-    res_diag = "Operação Normal"
-    if sh_val > 12 and sc_val < 3: res_diag = "CARGA INSUFICIENTE (POSSÍVEL VAZAMENTO)"
-    elif sh_val < 5 and sc_val > 8: res_diag = "EXCESSO DE CARGA DE FLUIDO"
-    elif sh_val > 12 and sc_val > 8: res_diag = "RESTRIÇÃO / ENTUPIMENTO NO SISTEMA"
-    elif sh_val < 5 and sc_val < 3: res_diag = "BAIXA EFICIÊNCIA DO COMPRESSOR / EVAP. SUJA"
+    # --- LOGICA TÉCNICA (SINTOMAS + MATRIZ) ---
+    diag_status = "Normal"
+    if sh_val > 12 and sc_val < 3: diag_status = "Carga Insuficiente (Vazamento)"
+    elif sh_val < 5 and sc_val > 8: diag_status = "Excesso de Carga"
+    elif sh_val > 12 and sc_val > 8: diag_status = "Restrição no Fluxo (Filtro/Expansão)"
+    elif sh_val < 5 and sc_val < 3: diag_status = "Compressor Ineficiente / Evap. Suja"
 
-    # Banco de Sintomas Checklist
-    sintomas_campo = st.multiselect("Banco de Sintomas:", 
-        ["Congelamento Evap.", "Congelamento Linha Líquido", "Ruído no Compressor", "Erro no Display", "Ventilador Externo Parado"], key="f_sint_final")
+    sintomas_list = st.multiselect("Banco de Sintomas:", 
+        ["Congelamento Evap.", "Congelamento Linha Líquido", "Ruído", "Erro Display", "Venti. Parado"], key="f_chk")
     
-    # Composição automática do Parecer sem alterar o layout do text_area
-    diag_pre_preenchido = f"ANÁLISE TERMODINÂMICA: {res_diag}\nSH: {sh_val}K | SC: {sc_val}K\nSINTOMAS: {', '.join(sintomas_campo)}\n\nPARECER TÉCNICO: "
-    medidas = st.text_area("Diagnóstico Final / Parecer", value=diag_pre_preenchido, height=150, key="f_diag")
+    resumo_pre = f"Analise: {diag_status} | Sintomas: {', '.join(sintomas_list)}\nSH: {sh_val}K | SC: {sc_val}K\n\nParecer: "
+    medidas = st.text_area("🤖 Diagnóstico / Parecer", value=resumo_pre, height=150, key="f_diag")
     
     if st.button("📄 Gerar Relatório Profissional"):
         if not cliente or not fabricante:
-            st.error("Campos obrigatórios ausentes (Cliente e Marca).")
+            st.error("Preencha os campos obrigatórios.")
         else:
             pdf = FPDF()
             pdf.add_page()
             
-            # --- ESTRUTURA DO PDF (BLOQUEADA) ---
+            # --- 1. CABEÇALHO ORIGINAL ---
+            pdf.set_y(12)
             pdf.set_font("Arial", 'B', 22); pdf.set_text_color(0, 51, 102)
             pdf.cell(0, 10, "MPN", 0, 1, 'C')
-            pdf.set_font("Arial", 'B', 14); pdf.cell(0, 8, "Relatorio Tecnico", 0, 1, 'C'); pdf.ln(10)
+            pdf.set_font("Arial", 'B', 14)
+            pdf.cell(0, 8, "Relatorio Tecnico", 0, 1, 'C')
+            pdf.set_y(35)
 
-            pdf.set_fill_color(240, 240, 240); pdf.set_font("Arial", 'B', 10)
-            pdf.cell(0, 7, " 1. IDENTIFICACAO", 1, 1, 'L', True)
-            pdf.set_font("Arial", '', 9); pdf.cell(0, 7, f"Cliente: {clean(cliente)}", 1, 1)
-            pdf.cell(95, 7, f"Data: {data_visita}", 1, 0); pdf.cell(95, 7, f"Whats: {whatsapp}", 1, 1)
+            # --- 2. DADOS DO CLIENTE (LAYOUT ORIGINAL BLOQUEADO) ---
+            pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(240, 240, 240); pdf.set_text_color(0, 51, 102); pdf.set_line_width(0.4)
+            pdf.cell(0, 6, " Dados do Cliente", 1, 1, 'L', True)
+            y_tab = pdf.get_y(); pdf.set_text_color(0); pdf.set_font("Arial", '', 8); pdf.set_line_width(0.2)
+            pdf.rect(10, y_tab, 190, 32)
+            pdf.set_xy(168, y_tab + 1.5)
+            pdf.set_font("Arial", 'B', 7); pdf.set_fill_color(225, 225, 225)
+            pdf.cell(30, 5, f"DATA: {data_visita.strftime('%d/%m/%Y')}", 1, 0, 'C', True)
             
-            pdf.set_fill_color(240, 240, 240); pdf.set_font("Arial", 'B', 10)
-            pdf.cell(0, 7, " 2. EQUIPAMENTO", 1, 1, 'L', True)
-            pdf.set_font("Arial", '', 9)
-            pdf.cell(95, 7, f"Marca: {clean(fabricante)}", 1, 0); pdf.cell(95, 7, f"Gas: {fluido}", 1, 1)
+            pdf.set_xy(12, y_tab + 2)
+            pdf.set_font("Arial", 'B', 8); pdf.cell(20, 5, "Cliente:", 0, 0)
+            pdf.set_font("Arial", '', 8); pdf.cell(100, 5, clean(cliente), 0, 1)
+            pdf.set_x(12); pdf.set_font("Arial", 'B', 8); pdf.cell(20, 5, "Endereço:", 0, 0)
+            pdf.set_font("Arial", '', 8); pdf.cell(100, 5, f"{tipo_logr} {clean(nome_logr)}, {numero} - {clean(bairro)}", 0, 1)
+            pdf.set_x(12); pdf.set_font("Arial", 'B', 8); pdf.cell(20, 5, "Contato:", 0, 0)
+            pdf.set_font("Arial", '', 8); pdf.cell(100, 5, f"WhatsApp: {whatsapp} | E-mail: {email_cli}", 0, 1)
             
-            pdf.set_fill_color(240, 240, 240); pdf.set_font("Arial", 'B', 10)
-            pdf.cell(0, 7, " 3. PARAMETROS OPERACIONAIS", 1, 1, 'L', True)
-            pdf.set_font("Arial", '', 9)
-            pdf.cell(95, 7, f"SH: {sh_val} K", 1, 0); pdf.cell(95, 7, f"SC: {sc_val} K", 1, 1)
+            pdf.set_y(y_tab + 35)
+            # --- 3. DADOS TÉCNICOS (LAYOUT ORIGINAL BLOQUEADO) ---
+            pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(240, 240, 240); pdf.set_text_color(0, 51, 102); pdf.set_line_width(0.4)
+            pdf.cell(0, 6, " Dados do Equipamento", 1, 1, 'L', True)
+            pdf.set_text_color(0); pdf.set_font("Arial", '', 8); pdf.set_line_width(0.2)
+            pdf.cell(95, 6, f"Marca: {clean(fabricante)} | Modelo: {clean(modelo_eq)}", 1, 0)
+            pdf.cell(95, 6, f"Fluido: {fluido} | Capacidade: {cap_digitada} BTUs", 1, 1)
+            
+            # --- 4. PARÂMETROS E PARECER (LAYOUT ORIGINAL BLOQUEADO) ---
+            pdf.ln(2)
+            pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(240, 240, 240); pdf.set_text_color(0, 51, 102)
+            pdf.cell(0, 6, " Parecer Tecnico e Medicoes", 1, 1, 'L', True)
+            pdf.set_text_color(0); pdf.set_font("Arial", '', 8)
+            pdf.multi_cell(0, 5, clean(medidas), 1)
 
-            pdf.ln(5); pdf.set_fill_color(240, 240, 240); pdf.set_font("Arial", 'B', 10)
-            pdf.cell(0, 7, " 4. PARECER TECNICO", 1, 1, 'L', True)
-            pdf.set_font("Arial", '', 9); pdf.multi_cell(0, 7, clean(medidas), 1)
-
-            output_pdf = pdf.output(dest="S").encode('latin-1')
-            st.download_button("⬇️ Baixar PDF", data=output_pdf, file_name=f"MPN_{cliente}.pdf", mime="application/pdf")
+            html = pdf.output(dest="S").encode('latin-1')
+            st.download_button("⬇️ Baixar PDF", data=html, file_name=f"MPN_{cliente}.pdf", mime="application/pdf")
