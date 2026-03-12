@@ -156,47 +156,47 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(220, 230, 241); pdf.set_text_color(0, 51, 102)
         pdf.cell(0, 6, " Dados do Equipamento", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 8); pdf.set_text_color(0)
-        y_e = pdf.get_y(); pdf.rect(10, y_e, 190, 32)
+        y_e = pdf.get_y(); pdf.rect(10, y_e, 190, 36) # Altura ajustada para nova distribuição
+        
+        # --- INSTRUÇÃO SEGUIDA: DISTRIBUIÇÃO RIGOROSA ---
         pdf.set_xy(12, y_e+2)
-        pdf.cell(65, 4, f"Marca: {clean(fabricante)}", 0, 0); pdf.cell(65, 4, f"Modelo: {clean(modelo_eq)}", 0, 0); pdf.cell(60, 4, f"Capacidade: {cap_digitada} BTU/h", 0, 1)
-        pdf.set_x(12); pdf.cell(65, 4, f"Tecnologia: {tecnologia}", 0, 0); pdf.cell(65, 4, f"Gas: {fluido}", 0, 0); pdf.cell(60, 4, f"Sistema: {tipo_eq}", 0, 1)
-        pdf.set_x(12); pdf.cell(95, 4, f"Serie Evap: {serie_evap}", 0, 0); pdf.cell(95, 4, f"Serie Cond: {serie_cond}", 0, 1)
-        pdf.set_x(12); pdf.cell(95, 4, f"Loc. Evap: {clean(loc_evap)}", 0, 0); pdf.cell(95, 4, f"Loc. Cond: {clean(loc_cond)}", 0, 1)
+        pdf.cell(60, 4, f"Marca: {clean(fabricante)}", 0, 0); pdf.cell(60, 4, f"Linha: {clean(linha)}", 0, 0); pdf.cell(60, 4, f"Modelo: {clean(modelo_eq)}", 0, 1)
+        pdf.set_x(12); pdf.cell(60, 4, f"Capacidade: {cap_digitada} BTU/h", 0, 0); pdf.cell(60, 4, f"Tecnologia: {tecnologia}", 0, 0); pdf.cell(60, 4, f"Fluido: {fluido}", 0, 1)
+        pdf.set_x(12); pdf.cell(60, 4, f"Sistema: {tipo_eq}", 0, 0); pdf.cell(60, 4, f"Mod. Evap: {clean(mod_evap)}", 0, 0); pdf.cell(60, 4, f"Serie Evap: {serie_evap}", 0, 1)
+        pdf.set_x(12); pdf.cell(60, 4, f"Mod. Cond: {clean(mod_cond)}", 0, 0); pdf.cell(60, 4, f"Serie Cond: {serie_cond}", 0, 0); pdf.cell(60, 4, f"Local Evap: {clean(loc_evap)}", 0, 1)
+        pdf.set_x(12); pdf.cell(60, 4, f"Local Cond: {clean(loc_cond)}", 0, 1)
 
-        # --- SEÇÃO: ANÁLISE DE PARÂMETROS OPERACIONAIS (ATUALIZADA) ---
-        pdf.set_y(y_e + 36)
+        # SEÇÃO: ANÁLISE DE PARÂMETROS OPERACIONAIS
+        pdf.set_y(y_e + 40)
         pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(220, 230, 241); pdf.set_text_color(0, 51, 102)
         pdf.cell(190, 6, " Analise de Parametros Operacionais", 1, 1, 'L', True)
-        
         pdf.set_font("Arial", '', 8); pdf.set_text_color(0)
-        y_p = pdf.get_y(); pdf.rect(10, y_p, 190, 32)
+        y_p = pdf.get_y(); pdf.rect(10, y_p, 190, 45)
         
-        # Coluna Elétrica
         pdf.set_xy(12, y_p+2)
-        pdf.cell(60, 4, f"Tensao Rede: {v_rede} V", 0, 1)
-        pdf.set_x(12); pdf.cell(60, 4, f"Corrente Medida: {a_med} A", 0, 1)
-        # INSTRUÇÃO SEGUIDA: Dif. Tensoes exatamente abaixo de Corrente Medida
-        pdf.set_x(12); pdf.cell(60, 4, f"Dif. Tensoes: {diff_v} V", 0, 1) 
+        pdf.set_font("Arial", 'B', 8); pdf.cell(60, 4, "[ ABA ELETRICA ]", 0, 1)
+        pdf.set_font("Arial", '', 8)
+        pdf.set_x(12); pdf.cell(60, 4, f"Tensao Rede: {v_rede} V", 0, 0); pdf.cell(60, 4, f"Tensao Medida: {v_med} V", 0, 1)
+        pdf.set_x(12); pdf.cell(60, 4, f"Corrente RLA: {rla_comp} A", 0, 0); pdf.cell(60, 4, f"Corrente Medida: {a_med} A", 0, 1)
+        pdf.set_x(12); pdf.cell(60, 4, f"Dif. Tensoes: {diff_v} V", 0, 0); pdf.cell(60, 4, f"LRA: {lra_comp} A", 0, 1)
         
-        # Coluna Termodinâmica
-        pdf.set_xy(80, y_p+2)
-        pdf.cell(60, 4, f"Pressao Succao: {p_suc} PSI", 0, 1)
-        pdf.set_xy(80, y_p+6); pdf.cell(60, 4, f"Pressao Liquido: {p_liq} PSI", 0, 1)
+        pdf.set_xy(12, y_p+28)
+        pdf.set_font("Arial", 'B', 8); pdf.cell(60, 4, "[ ABA TERMODINAMICA ]", 0, 1)
+        pdf.set_font("Arial", '', 8)
+        pdf.set_x(12); pdf.cell(45, 4, f"P. Succao: {p_suc} PSI", 0, 0); pdf.cell(45, 4, f"T. Tubo: {t_suc_tubo} C", 0, 0); pdf.cell(45, 4, f"T-Sat: {ts_suc} C", 0, 1)
+        pdf.set_x(12); pdf.cell(45, 4, f"P. Liquido: {p_liq} PSI", 0, 0); pdf.cell(45, 4, f"T. Tubo: {t_liq_tubo} C", 0, 0); pdf.cell(45, 4, f"T-Sat: {ts_liq} C", 0, 1)
         
-        # INSTRUÇÃO SEGUIDA: Destaque rigoroso para SH e SC (Negrito e Cor de Fundo)
-        pdf.set_font("Arial", 'B', 10); pdf.set_fill_color(230, 240, 250)
-        pdf.set_xy(145, y_p+4)
-        pdf.cell(48, 7, f" SH: {sh_val} K ", 1, 1, 'C', True)
-        pdf.set_xy(145, y_p+13)
-        pdf.cell(48, 7, f" SC: {sc_val} K ", 1, 1, 'C', True)
-        # --- FIM DA SEÇÃO ATUALIZADA ---
+        pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(235, 245, 255)
+        pdf.set_xy(155, y_p+5)
+        pdf.cell(38, 6, f" SH: {sh_val} K ", 1, 1, 'C', True)
+        pdf.set_xy(155, y_p+13)
+        pdf.cell(38, 6, f" SC: {sc_val} K ", 1, 1, 'C', True)
 
-        pdf.set_y(y_p + 36)
+        pdf.set_y(y_p + 48)
         pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(220, 230, 241); pdf.set_text_color(0, 51, 102)
         pdf.cell(190, 6, " Parecer Tecnico / Diagnostico", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9); pdf.set_text_color(0)
         pdf.multi_cell(190, 5, clean(medidas), 1, 'L')
 
-        # CORREÇÃO DO ERRO DE SAÍDA (COMPATIBILIDADE FPDF)
         pdf_output = pdf.output(dest='S').encode('latin-1')
         st.download_button("📩 Baixar Relatório PDF", pdf_output, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
