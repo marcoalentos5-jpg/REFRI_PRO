@@ -141,7 +141,7 @@ with tab_diag:
         pdf.cell(190, 15, "Relatorio Tecnico", 0, 1, 'C')
         pdf.ln(10)
 
-        # REARRANJO 1: CLIENTE E CONTATO
+        # SEÇÃO 1: CLIENTE E CONTATO
         pdf.set_fill_color(230, 230, 230)
         pdf.set_font("Arial", 'B', 10)
         pdf.cell(190, 7, " 1. IDENTIFICACAO DO CLIENTE E CONTATO", 1, 1, 'L', True)
@@ -157,7 +157,7 @@ with tab_diag:
         pdf.cell(60, 6, clean(f"Data: {data_visita.strftime('%d/%m/%Y')}"), 1, 1)
         pdf.ln(4)
 
-        # REARRANJO 2: EQUIPAMENTO E LOCALIZAÇÃO
+        # SEÇÃO 2: EQUIPAMENTO E LOCALIZAÇÃO
         pdf.set_font("Arial", 'B', 10)
         pdf.cell(190, 7, " 2. ESPECIFICACOES DO EQUIPAMENTO", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9)
@@ -172,19 +172,31 @@ with tab_diag:
         pdf.cell(95, 6, clean(f"Local Cond: {loc_cond}"), 1, 1)
         pdf.ln(4)
 
-        # REARRANJO 3: PARÂMETROS E PERFORMANCE
+        # SEÇÃO 3: ANALISE TECNICA E PERFORMANCE (REARRUMADO COMO O CAMPO 2)
         pdf.set_font("Arial", 'B', 10)
         pdf.cell(190, 7, " 3. ANALISE TECNICA E PERFORMANCE", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9)
-        pdf.cell(190, 6, clean(f"ELETRICA: Rede: {v_rede}V | Medida: {v_med}V | Amp: {a_med}A | RLA: {rla_comp}A | LRA: {lra_comp}A"), 1, 1)
-        pdf.cell(190, 6, clean(f"SUCCAO: Pressao: {p_suc} PSI | T-Sat: {ts_suc}C | Tubo: {t_suc_tubo}C"), 1, 1)
-        pdf.cell(190, 6, clean(f"LIQUIDO: Pressao: {p_liq} PSI | T-Sat: {ts_liq}C | Tubo: {t_liq_tubo}C"), 1, 1)
+        # Linha Elétrica
+        pdf.cell(47, 6, clean(f"Rede: {v_rede} V"), 1, 0)
+        pdf.cell(47, 6, clean(f"Medida: {v_med} V"), 1, 0)
+        pdf.cell(32, 6, clean(f"Amp: {a_med} A"), 1, 0)
+        pdf.cell(32, 6, clean(f"RLA: {rla_comp} A"), 1, 0)
+        pdf.cell(32, 6, clean(f"LRA: {lra_comp} A"), 1, 1)
+        # Linha Sucção
+        pdf.cell(63, 6, clean(f"P-Suc: {p_suc} PSI"), 1, 0)
+        pdf.cell(63, 6, clean(f"T-Sat Suc: {ts_suc} C"), 1, 0)
+        pdf.cell(64, 6, clean(f"T-Tubo Suc: {t_suc_tubo} C"), 1, 1)
+        # Linha Líquido
+        pdf.cell(63, 6, clean(f"P-Liq: {p_liq} PSI"), 1, 0)
+        pdf.cell(63, 6, clean(f"T-Sat Liq: {ts_liq} C"), 1, 0)
+        pdf.cell(64, 6, clean(f"T-Tubo Liq: {t_liq_tubo} C"), 1, 1)
+        # Linha Performance Final
         pdf.set_font("Arial", 'B', 9)
         pdf.cell(95, 7, clean(f"SUPERAQUECIMENTO (SH): {sh_val} K"), 1, 0)
         pdf.cell(95, 7, clean(f"SUBRESFRIAMENTO (SC): {sc_val} K"), 1, 1)
         pdf.ln(4)
 
-        # REARRANJO 4: DIAGNÓSTICO E PROVIDÊNCIAS
+        # SEÇÃO 4: DIAGNÓSTICO E PROVIDÊNCIAS
         pdf.set_font("Arial", 'B', 10)
         pdf.cell(190, 7, " 4. DIAGNOSTICO E PARECER FINAL", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9)
