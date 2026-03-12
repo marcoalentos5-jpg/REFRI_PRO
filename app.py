@@ -132,14 +132,13 @@ with tab_diag:
         pdf = FPDF()
         pdf.add_page()
         
-        # INSTRUÇÃO: Aumentar logomarca
         pdf.image("logo.png", 10, 8, 42)
-        
         pdf.set_font("Arial", 'B', 22); pdf.set_text_color(0, 51, 102)
         pdf.set_xy(0, 10); pdf.cell(210, 10, "MPN", 0, 1, 'C')
         
-        # INSTRUÇÃO: Centralizar Relatório Técnico abaixo de MPN
+        # INSTRUÇÃO: Centralizar frase na página
         pdf.set_font("Arial", 'B', 16)
+        pdf.set_x(0)
         pdf.cell(210, 8, "Relatório Técnico".encode('latin-1', 'replace').decode('latin-1'), 0, 1, 'C')
 
         pdf.set_y(32)
@@ -177,25 +176,25 @@ with tab_diag:
         pdf.set_font("Arial", '', 8); pdf.set_text_color(0)
         y_p = pdf.get_y(); pdf.rect(10, y_p, 190, 45)
         
-        # INSTRUÇÃO: ABA ELÉTRICA (COM ACENTUAÇÃO E POSIÇÃO LRA)
         pdf.set_xy(12, y_p+2)
         pdf.set_font("Arial", 'B', 8); pdf.cell(60, 4, "[ ELÉTRICA ]".encode('latin-1').decode('latin-1'), 0, 1)
         pdf.set_font("Arial", '', 8)
         pdf.set_x(12); pdf.cell(60, 4, f"Tensao Rede: {v_rede} V", 0, 0); pdf.cell(50, 4, f"Corrente RLA: {rla_comp} A", 0, 0); pdf.cell(50, 4, f"Corrente LRA: {lra_comp} A", 0, 1)
         pdf.set_x(12); pdf.cell(60, 4, f"Tensao Medida: {v_med} V", 0, 0); pdf.cell(50, 4, f"Corrente Medida: {a_med} A", 0, 1)
-        pdf.set_x(12); pdf.cell(60, 4, f"Dif. Tensoes: {diff_v} V", 0, 1)
+        # INSTRUÇÃO: Diferença entre Correntes abaixo de Corrente Medida
+        pdf.set_x(12); pdf.cell(60, 4, f"Dif. Tensoes: {diff_v} V", 0, 0); pdf.set_x(72); pdf.cell(50, 4, f"Diferenca entre Correntes: {diff_a} A", 0, 1)
         
-        # INSTRUÇÃO: ABA TERMODINÂMICA (COM ACENTUAÇÃO)
         pdf.set_xy(12, y_p+28)
         pdf.set_font("Arial", 'B', 8); pdf.cell(60, 4, "[ TERMODINÂMICA ]".encode('latin-1').decode('latin-1'), 0, 1)
         pdf.set_font("Arial", '', 8)
         pdf.set_x(12); pdf.cell(45, 4, f"P. Succao: {p_suc} PSI", 0, 0); pdf.cell(45, 4, f"T. Tubo: {t_suc_tubo} C", 0, 0); pdf.cell(45, 4, f"T-Sat: {ts_suc} C", 0, 1)
         pdf.set_x(12); pdf.cell(45, 4, f"P. Liquido: {p_liq} PSI", 0, 0); pdf.cell(45, 4, f"T. Tubo: {t_liq_tubo} C", 0, 0); pdf.cell(45, 4, f"T-Sat: {ts_liq} C", 0, 1)
         
+        # INSTRUÇÃO: Descer SH e SC para o meio do campo
         pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(235, 245, 255)
-        pdf.set_xy(155, y_p+5)
+        pdf.set_xy(155, y_p+15) # Altura ajustada para o meio (y_p + 15)
         pdf.cell(38, 6, f" SH: {sh_val} K ", 1, 1, 'C', True)
-        pdf.set_xy(155, y_p+13)
+        pdf.set_xy(155, y_p+23)
         pdf.cell(38, 6, f" SC: {sc_val} K ", 1, 1, 'C', True)
 
         pdf.set_y(y_p + 48)
