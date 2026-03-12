@@ -132,7 +132,7 @@ with tab_diag:
         pdf = FPDF()
         pdf.add_page()
         
-        # CABEÇALHO (LOGO E TÍTULO)
+        # CABEÇALHO
         pdf.image("logo.png", 10, 8, 35)
         pdf.set_font("Arial", 'B', 22); pdf.set_text_color(0, 51, 102)
         pdf.set_xy(0, 10); pdf.cell(210, 10, "MPN", 0, 1, 'C')
@@ -142,14 +142,10 @@ with tab_diag:
         # 1. DADOS DO CLIENTE
         pdf.set_y(32)
         pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(220, 230, 241); pdf.set_text_color(0, 51, 102)
-        # Ajuste de largura para mover o campo Data para a esquerda
         pdf.cell(145, 6, " Dados do Cliente", 1, 0, 'L', True)
-        
-        # AJUSTE DE DATA: FORMATO dd/mm/aaaa, RÓTULO "Data da visita" e FONTE REDUZIDA para caber mais à esquerda
         pdf.set_font("Arial", 'B', 8)
         data_formatada = data_visita.strftime("%d/%m/%Y")
         pdf.cell(45, 6, f"Data da visita: {data_formatada}", 1, 1, 'C', True)
-        
         pdf.set_font("Arial", '', 8); pdf.set_text_color(0)
         y_c = pdf.get_y(); pdf.rect(10, y_c, 190, 28)
         pdf.set_xy(12, y_c+2); pdf.cell(90, 4, f"Cliente: {clean(cliente)}", 0, 0); pdf.cell(90, 4, f"CPF/CNPJ: {doc_cliente}", 0, 1)
@@ -170,20 +166,26 @@ with tab_diag:
         pdf.set_x(12); pdf.cell(65, 4, f"Mod. Cond: {mod_cond}", 0, 0); pdf.cell(65, 4, f"Serie Cond: {serie_cond}", 0, 0); pdf.cell(60, 4, f"Local Evap: {clean(loc_evap)}", 0, 1)
         pdf.set_x(12); pdf.cell(130, 4, f"Local Cond: {clean(loc_cond)}", 0, 1)
 
-        # 3. ANÁLISE DE PARÂMETROS OPERACIONAIS
+        # 3. ANÁLISE DE PARÂMETROS OPERACIONAIS (HARMONIZADO)
         pdf.set_y(y_e + 36)
         pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(220, 230, 241); pdf.set_text_color(0, 51, 102)
         pdf.cell(0, 6, " Analise de Parametros Operacionais", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 8); pdf.set_text_color(0)
         y_o = pdf.get_y(); pdf.rect(10, y_o, 190, 26)
-        pdf.set_xy(12, y_o+2); pdf.set_font("Arial", 'B', 8); pdf.cell(90, 4, "PARTE ELETRICA", 0, 1); pdf.set_font("Arial", '', 8)
-        pdf.set_x(12); pdf.cell(50, 4, f"Tensao Rede: {v_rede} V", 0, 0); pdf.cell(50, 4, f"Tensao Medida: {v_med} V", 0, 1)
-        pdf.set_x(12); pdf.cell(50, 4, f"Corrente RLA: {rla_comp} A", 0, 0); pdf.cell(50, 4, f"Corrente Medida: {a_med} A", 0, 1)
-        pdf.set_x(12); pdf.cell(50, 4, f"LRA: {lra_comp} A", 0, 0); pdf.cell(50, 4, f"Carga Motor: {carga_f} %", 0, 1)
-        pdf.set_xy(105, y_o+2); pdf.set_font("Arial", 'B', 8); pdf.cell(90, 4, "CICLO FRIGORIFICO", 0, 1); pdf.set_font("Arial", '', 8)
-        pdf.set_xy(105, pdf.get_y()); pdf.cell(50, 4, f"Pres. Succao: {p_suc} PSI", 0, 0); pdf.cell(50, 4, f"T-Sat Succao: {ts_suc} C", 0, 1)
-        pdf.set_xy(105, pdf.get_y()); pdf.cell(50, 4, f"Pres. Descarga: {p_liq} PSI", 0, 0); pdf.cell(50, 4, f"T-Sat Liquido: {ts_liq} C", 0, 1)
-        pdf.set_xy(105, pdf.get_y()); pdf.cell(50, 4, f"SH: {sh_val} K", 0, 0); pdf.cell(50, 4, f"SC: {sc_val} K", 0, 1)
+        
+        # PARTE ELÉTRICA (LADO ESQUERDO)
+        pdf.set_xy(12, y_o+2); pdf.set_font("Arial", 'B', 8); pdf.cell(90, 4, "PARTE ELETRICA", 0, 1)
+        pdf.set_font("Arial", '', 8)
+        pdf.set_x(12); pdf.cell(45, 4, f"Tensao Rede: {v_rede} V", 0, 0); pdf.cell(45, 4, f"Tensao Medida: {v_med} V", 0, 1)
+        pdf.set_x(12); pdf.cell(45, 4, f"Corrente RLA: {rla_comp} A", 0, 0); pdf.cell(45, 4, f"Corrente Medida: {a_med} A", 0, 1)
+        pdf.set_x(12); pdf.cell(45, 4, f"LRA: {lra_comp} A", 0, 0); pdf.cell(45, 4, f"Carga Motor: {carga_f} %", 0, 0)
+        
+        # CICLO FRIGORÍFICO (LADO DIREITO - ALINHADO)
+        pdf.set_xy(105, y_o+2); pdf.set_font("Arial", 'B', 8); pdf.cell(90, 4, "CICLO FRIGORIFICO", 0, 1)
+        pdf.set_font("Arial", '', 8)
+        pdf.set_xy(105, pdf.get_y()); pdf.cell(45, 4, f"Pres. Succao: {p_suc} PSI", 0, 0); pdf.cell(45, 4, f"T-Sat Succao: {ts_suc} C", 0, 1)
+        pdf.set_xy(105, pdf.get_y()); pdf.cell(45, 4, f"Pres. Descarga: {p_liq} PSI", 0, 0); pdf.cell(45, 4, f"T-Sat Liquido: {ts_liq} C", 0, 1)
+        pdf.set_xy(105, pdf.get_y()); pdf.cell(45, 4, f"SH: {sh_val} K", 0, 0); pdf.cell(45, 4, f"SC: {sc_val} K", 0, 1)
 
         # 4. PARECER TÉCNICO E RECOMENDAÇÕES
         pdf.set_y(y_o + 30)
