@@ -107,13 +107,23 @@ with tab_diag:
     with col_prob:
         st.subheader("⚠️ Problemas Encontrados")
         pi1, pi2 = st.columns(2)
-        p_sel = []
-        opts = ["Vazamento de Fluido", "Baixa Carga de Fluido", "Excesso de Fluido", "Linha de Liquido Congelando", "Colmeia Congelando", "Evaporadora Pingando", "Linha de Descarga Congelando"]
-        for i, opt in enumerate(opts):
-            if i % 2 == 0:
-                if pi1.checkbox(opt): p_sel.append(opt)
-            else:
-                if pi2.checkbox(opt): p_sel.append(opt)
+        problemas_selecionados = []
+        with pi1:
+            if st.checkbox("Vazamento de Fluido"): problemas_selecionados.append("Vazamento de Fluido")
+            if st.checkbox("Baixa Carga de Fluido"): problemas_selecionados.append("Baixa Carga de Fluido")
+            if st.checkbox("Excesso de Fluido"): problemas_selecionados.append("Excesso de Fluido")
+            if st.checkbox("Ar/Incondensáveis no Ciclo"): problemas_selecionados.append("Ar/Incondensáveis no Ciclo")
+            if st.checkbox("Obstrução Dispositivo Expansão"): problemas_selecionados.append("Obstrução Dispositivo Expansão")
+            if st.checkbox("Linha de Líquido Congelando"): problemas_selecionados.append("Linha de Líquido Congelando")
+            if st.checkbox("Colmeia Congelando"): problemas_selecionados.append("Colmeia Congelando")
+        with pi2:
+            if st.checkbox("Filtro Secador Obstruído"): problemas_selecionados.append("Filtro Secador Obstruído")
+            if st.checkbox("Compressor Sem Compressão"): problemas_selecionados.append("Compressor Sem Compressão")
+            if st.checkbox("Falha na Ventilação"): problemas_selecionados.append("Falha na Ventilação")
+            if st.checkbox("Falha na Placa Inverter"): problemas_selecionados.append("Falha na Placa Inverter")
+            if st.checkbox("Instabilidade na Rede Elétrica"): problemas_selecionados.append("Instabilidade na Rede Elétrica")
+            if st.checkbox("Evaporadora Pingando"): problemas_selecionados.append("Evaporadora Pingando")
+            if st.checkbox("Linha de Descarga Congelando"): problemas_selecionados.append("Linha de Descarga Congelando")
 
     with col_obs:
         st.subheader("📝 Observações do Técnico")
@@ -121,16 +131,25 @@ with tab_diag:
 
     st.markdown("---")
     
-    # MOTOR IA (NÃO ALTERA LAYOUT)
-    analise_ia = [f"🔍 [IA] Analisando {tecnologia} | {tipo_eq}"]
-    if sh_val > 15: analise_ia.append("⚠️ SH Elevado: Manual sugere falta de fluido.")
-    
+    # MOTOR IA (SIMULAÇÃO DE BUSCA E CRUZAMENTO)
+    analise_ia = []
+    medidas_ia = []
+    if tecnologia in ["Inverter", "VRF"] and (sh_val < 3 or sh_val > 15):
+        analise_ia.append(f"🔍 [PERÍCIA] Sistema {tecnologia}: SH fora da modulação nominal. Risco de golpe de líquido ou superaquecimento do enrolamento.")
+        medidas_ia.append("1. Validar curva de resistência dos sensores NTC conforme manual do fabricante.")
+    if "Congelando" in str(problemas_selecionados):
+        analise_ia.append("🔍 [ENGENHARIA] Detecção de restrição de fluxo ou baixa troca térmica. Cruzamento com base de dados indica obstrução ou falha de vazão.")
+        medidas_ia.append("2. Realizar limpeza química completa e verificar motor ventilador.")
+    if not analise_ia:
+        analise_ia.append("✅ Sistema operando dentro dos logs de normalidade técnica.")
+        medidas_ia.append("1. Manutenção preventiva de rotina conforme PMOC.")
+
     col_prop_ia, col_exec = st.columns(2)
     with col_prop_ia:
         st.subheader("🤖 Diagnóstico IA")
         for diag in analise_ia: st.info(diag)
         st.subheader("🔧 Medidas Propostas IA")
-        st.warning("1. Verificar carga e estanqueidade.")
+        for med in medidas_ia: st.warning(med)
     with col_exec:
         st.subheader("📋 Medidas Executadas")
         executadas_input = st.text_area("", placeholder="Descreva as medidas executadas...", key="exec_diag", height=200, label_visibility="collapsed")
@@ -138,19 +157,14 @@ with tab_diag:
     if st.button("📄 Gerar Relatório Profissional"):
         pdf = FPDF()
         pdf.add_page()
-        # CABEÇALHO E CORPO (REPLICAÇÃO EXATA DA IMAGEM)
+        # CABEÇALHO E CORPO (REPLICAÇÃO DO LAYOUT DA IMAGEM)
         pdf.set_font("Arial", 'B', 18); pdf.cell(190, 10, "MPN - RELATORIO TECNICO", 0, 1, 'C')
         pdf.ln(5)
-        
         pdf.set_fill_color(230, 240, 255); pdf.set_font("Arial", 'B', 10)
         pdf.cell(140, 7, " Dados do Cliente", 1, 0, 'L', True); pdf.cell(50, 7, f" Visita: {data_visita}", 1, 1, 'L', True)
-        pdf.set_font("Arial", '', 9); pdf.multi_cell(190, 6, clean(f"Cliente: {cliente}\nEmail: {email_cli}"), 1)
-
-        pdf.set_font("Arial", 'B', 10); pdf.cell(190, 7, " Problemas Encontrados", 1, 1, 'L', True)
-        pdf.set_font("Arial", '', 9); pdf.multi_cell(190, 6, clean(", ".join(p_sel)), 1)
-        
-        pdf.set_font("Arial", 'B', 10); pdf.cell(190, 7, " Observacoes", 1, 1, 'L', True)
-        pdf.set_font("Arial", '', 9); pdf.multi_cell(190, 6, clean(obs_tecnico), 1)
+        pdf.set_font("Arial", '', 9); pdf.multi_cell(190, 6, clean(f"Cliente: {cliente}\nEmail: {email_cli}\nProblemas: {', '.join(problemas_selecionados)}"), 1)
+        pdf.set_font("Arial", 'B', 10); pdf.cell(190, 7, " Medidas Executadas", 1, 1, 'L', True)
+        pdf.set_font("Arial", '', 9); pdf.multi_cell(190, 6, clean(executadas_input), 1)
 
         # ASSINATURAS REQUERIDAS
         pdf.set_y(-40)
@@ -160,4 +174,4 @@ with tab_diag:
         pdf.set_xy(115, -38); pdf.multi_cell(75, 4, clean(cliente), 0, 'C')
 
         pdf_bytes = pdf.output(dest='S').encode('latin-1')
-        st.download_button("⬇️ BAIXAR PDF", data=pdf_bytes, file_name="relatorio.pdf", mime="application/pdf")
+        st.download_button("⬇️ BAIXAR PDF", data=pdf_bytes, file_name="relatorio_final.pdf", mime="application/pdf")
