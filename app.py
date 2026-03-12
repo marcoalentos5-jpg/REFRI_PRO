@@ -113,8 +113,10 @@ with tab_termo:
     with tr3:
         sh_val = round(t_suc_tubo - ts_suc, 1)
         sc_val = round(ts_liq - t_liq_tubo, 1)
-        st.number_input("Superaquecimento (SH) (K)", value=sh_val, disabled=True)
-        st.number_input("Subresfriamento (SC) (K)", value=sc_val, disabled=True)
+        st.write("Superaquecimento (SH)")
+        st.info(f"{sh_val} K")
+        st.write("Subresfriamento (SC)")
+        st.info(f"{sc_val} K")
 
 with tab_diag:
     resumo_pre = f"SH: {sh_val}K | SC: {sc_val}K\n\nParecer: "
@@ -133,7 +135,7 @@ with tab_diag:
 
         pdf.set_y(32)
         pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(220, 230, 241); pdf.set_text_color(0, 51, 102)
-        pdf.cell(0, 6, " Dados do Cliente".encode('latin-1', 'replace').decode('latin-1'), 1, 1, 'L', True)
+        pdf.cell(0, 6, " Dados do Cliente", 1, 1, 'L', True)
         pdf.rect(10, pdf.get_y(), 190, 32)
         pdf.set_font("Arial", '', 8); pdf.set_text_color(0); pdf.set_xy(12, pdf.get_y()+2)
         pdf.cell(90, 4, f"Cliente: {clean(cliente)}", 0, 0); pdf.cell(60, 4, f"CPF/CNPJ: {doc_cliente}", 0, 0)
