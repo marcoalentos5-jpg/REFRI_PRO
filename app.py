@@ -136,7 +136,7 @@ with tab_diag:
             pdf = FPDF()
             pdf.add_page()
             
-            # --- 1. CABEÇALHO (LOGO À ESQUERDA E TÍTULOS CENTRALIZADOS) ---
+            # --- 1. CABEÇALHO ---
             try:
                 pdf.image("logo.png", 10, 8, 45) 
             except:
@@ -147,7 +147,6 @@ with tab_diag:
             pdf.cell(0, 10, "MPN", 0, 1, 'C')
             
             pdf.set_font("Arial", 'B', 14)
-            # "Relatório Técnico" com codificação Latin-1 correta
             txt_relatorio = "Relat" + chr(243) + "rio T" + chr(233) + "cnico"
             pdf.cell(0, 8, txt_relatorio, 0, 1, 'C')
 
@@ -228,11 +227,25 @@ with tab_diag:
             pdf.set_text_color(0); pdf.set_font("Arial", '', 9); pdf.ln(2)
             pdf.multi_cell(0, 6, clean(medidas), 1, 'L')
 
-            # --- 6. ASSINATURA ---
-            pdf.set_y(-35); pdf.set_font("Arial", 'I', 8)
-            pdf.cell(0, 5, "_______________________________________________________", 0, 1, 'C')
-            pdf.cell(0, 5, "Responsavel Tecnico: MPN Engenharia & Diagnostico", 0, 1, 'C')
+            # --- 6. ASSINATURAS (LADO A LADO) ---
+            pdf.set_y(-35)
+            y_assinatura = pdf.get_y()
+            pdf.set_font("Arial", 'B', 8)
+            
+            # Coluna Esquerda: Responsável Técnico
+            pdf.set_xy(15, y_assinatura)
+            pdf.cell(85, 0, "________________________________________", 0, 1, 'C')
+            pdf.set_x(15); pdf.cell(85, 5, "MPN Engenharia & Diagnostico", 0, 1, 'C')
+            pdf.set_x(15); pdf.set_font("Arial", '', 7); pdf.cell(85, 4, "CNPJ: 51.274.762/0001-17", 0, 1, 'C')
+            
+            # Coluna Direita: Cliente
+            pdf.set_font("Arial", 'B', 8)
+            pdf.set_xy(110, y_assinatura)
+            pdf.cell(85, 0, "________________________________________", 0, 1, 'C')
+            pdf.set_x(110); pdf.cell(85, 5, format_title(clean(cliente)), 0, 1, 'C')
+            pdf.set_x(110); pdf.set_font("Arial", '', 7); pdf.cell(85, 4, "Assinatura do Cliente", 0, 1, 'C')
 
+            # --- DOWNLOAD ---
             pdf_output = pdf.output(dest='S').encode('latin-1', errors='ignore')
             st.download_button(label="⬇️ Baixar Relatório PDF", data=pdf_output, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
 
