@@ -41,7 +41,6 @@ with tab_cad:
     c1, c2, c3, c4, c5, c6 = st.columns([2.5, 1.2, 1.4, 1.0, 1.0, 1.0])
     cliente = c1.text_input("Cliente/Empresa", key="f_cli")
     doc_cliente = c2.text_input("CPF/CNPJ", key="f_doc")
-    # ALTERAÇÃO: Formato dd/mm/aaaa aplicado no date_input
     data_visita = c3.date_input("📅 DATA DA VISITA", value=date.today(), format="DD/MM/YYYY", key="f_date")
     whatsapp = c4.text_input("🟢 WhatsApp", value="21980264217", key="f_wpp")
     celular = c5.text_input("📱 Celular", key="f_cel")
@@ -159,35 +158,45 @@ with tab_diag:
         pdf.set_font("Arial", '', 8); pdf.set_text_color(0)
         y_e = pdf.get_y(); pdf.rect(10, y_e, 190, 32)
         pdf.set_xy(12, y_e+2)
-        pdf.cell(65, 4, f"Marca: {clean(fabricante)}", 0, 0); pdf.cell(65, 4, f"Linha: {clean(linha)}", 0, 0); pdf.cell(60, 4, f"Modelo: {modelo_eq}", 0, 1)
-        pdf.set_x(12); pdf.cell(65, 4, f"Capacidade: {cap_digitada} BTU/h", 0, 0); pdf.cell(65, 4, f"Tecnologia: {tecnologia}", 0, 0); pdf.cell(60, 4, f"Fluido: {fluido}", 0, 1)
-        pdf.set_x(12); pdf.cell(65, 4, f"Sistema: {tipo_eq}", 0, 0); pdf.cell(65, 4, f"Mod. Evap: {mod_evap}", 0, 0); pdf.cell(60, 4, f"Serie Evap: {serie_evap}", 0, 1)
-        pdf.set_x(12); pdf.cell(65, 4, f"Mod. Cond: {mod_cond}", 0, 0); pdf.cell(65, 4, f"Serie Cond: {serie_cond}", 0, 0); pdf.cell(60, 4, f"Local Evap: {clean(loc_evap)}", 0, 1)
-        pdf.set_x(12); pdf.cell(130, 4, f"Local Cond: {clean(loc_cond)}", 0, 1)
+        pdf.cell(65, 4, f"Marca: {clean(fabricante)}", 0, 0); pdf.cell(65, 4, f"Modelo: {clean(modelo_eq)}", 0, 0); pdf.cell(60, 4, f"Capacidade: {cap_digitada} BTU/h", 0, 1)
+        pdf.set_x(12); pdf.cell(65, 4, f"Tecnologia: {tecnologia}", 0, 0); pdf.cell(65, 4, f"Gas: {fluido}", 0, 0); pdf.cell(60, 4, f"Sistema: {tipo_eq}", 0, 1)
+        pdf.set_x(12); pdf.cell(95, 4, f"Serie Evap: {serie_evap}", 0, 0); pdf.cell(95, 4, f"Serie Cond: {serie_cond}", 0, 1)
+        pdf.set_x(12); pdf.cell(95, 4, f"Loc. Evap: {clean(loc_evap)}", 0, 0); pdf.cell(95, 4, f"Loc. Cond: {clean(loc_cond)}", 0, 1)
 
+        # --- SEÇÃO ATUALIZADA RIGOROSAMENTE ---
         pdf.set_y(y_e + 36)
         pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(220, 230, 241); pdf.set_text_color(0, 51, 102)
-        pdf.cell(0, 6, " Analise de Parametros Operacionais", 1, 1, 'L', True)
-        pdf.set_font("Arial", '', 8); pdf.set_text_color(0)
-        y_o = pdf.get_y(); pdf.rect(10, y_o, 190, 26)
+        pdf.cell(190, 6, " Analise de Parametros Operacionais", 1, 1, 'L', True)
         
-        pdf.set_xy(12, y_o+2); pdf.set_font("Arial", 'B', 8); pdf.cell(90, 4, "PARTE ELETRICA", 0, 1)
-        pdf.set_font("Arial", '', 8)
-        pdf.set_x(12); pdf.cell(45, 4, f"Tensao Rede: {v_rede} V", 0, 0); pdf.cell(45, 4, f"Tensao Medida: {v_med} V", 0, 1)
-        pdf.set_x(12); pdf.cell(45, 4, f"Dif. Tensoes: {diff_v} V", 0, 0); pdf.cell(45, 4, f"Corrente RLA: {rla_comp} A", 0, 1)
-        pdf.set_x(12); pdf.cell(45, 4, f"Corrente Medida: {a_med} A", 0, 0); pdf.cell(45, 4, f"Dif. Correntes: {diff_a} A", 0, 1)
-        
-        pdf.set_xy(105, y_o+2); pdf.set_font("Arial", 'B', 8); pdf.cell(90, 4, "CICLO FRIGORIFICO", 0, 1)
-        pdf.set_font("Arial", '', 8)
-        pdf.set_xy(105, pdf.get_y()); pdf.cell(45, 4, f"Pres. Succao: {p_suc} PSI", 0, 0); pdf.cell(45, 4, f"T-Sat Succao: {ts_suc} C", 0, 1)
-        pdf.set_xy(105, pdf.get_y()); pdf.cell(45, 4, f"Pres. Descarga: {p_liq} PSI", 0, 0); pdf.cell(45, 4, f"T-Sat Liquido: {ts_liq} C", 0, 1)
-        pdf.set_xy(105, pdf.get_y()); pdf.cell(45, 4, f"SH: {sh_val} K", 0, 0); pdf.cell(45, 4, f"SC: {sc_val} K", 0, 1)
-
-        pdf.set_y(y_o + 30)
-        pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(0, 51, 102); pdf.set_text_color(255, 255, 255)
-        pdf.cell(0, 6, " Parecer Tecnico e Recomendacoes", 1, 1, 'C', True)
         pdf.set_font("Arial", '', 8); pdf.set_text_color(0)
-        pdf.multi_cell(0, 5, clean(medidas), 1, 'L')
+        y_p = pdf.get_y(); pdf.rect(10, y_p, 190, 32)
+        
+        # Coluna Elétrica: Dif. Tensoes em baixo de Corrente Medida
+        pdf.set_xy(12, y_p+2)
+        pdf.cell(60, 4, f"Tensao Rede: {v_rede} V", 0, 1)
+        pdf.set_x(12); pdf.cell(60, 4, f"Corrente Medida: {a_med} A", 0, 1)
+        pdf.set_x(12); pdf.cell(60, 4, f"Dif. Tensoes: {diff_v} V", 0, 1) # Posição conforme instrução
+        
+        # Coluna Termodinâmica
+        pdf.set_xy(80, y_p+2)
+        pdf.cell(60, 4, f"Pressao Succao: {p_suc} PSI", 0, 1)
+        pdf.set_xy(80, y_p+6); pdf.cell(60, 4, f"Pressao Liquido: {p_liq} PSI", 0, 1)
+        
+        # Destaque SH e SC: Negrito e Fundo de Destaque
+        pdf.set_font("Arial", 'B', 10); pdf.set_fill_color(235, 245, 255)
+        pdf.set_xy(145, y_p+4)
+        pdf.cell(48, 7, f" SH: {sh_val} K ", 1, 1, 'C', True)
+        pdf.set_xy(145, y_p+13)
+        pdf.cell(48, 7, f" SC: {sc_val} K ", 1, 1, 'C', True)
+        # --- FIM DA SEÇÃO ATUALIZADA ---
 
-        pdf_content = pdf.output(dest='S').encode('latin-1')
-        st.download_button(label="⬇️ Baixar Relatório PDF", data=pdf_content, file_name=f"Relatorio_{clean(cliente)}.pdf", mime="application/pdf")
+        # Parecer Final
+        pdf.set_y(y_p + 36)
+        pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(220, 230, 241); pdf.set_text_color(0, 51, 102)
+        pdf.cell(190, 6, " Parecer Tecnico / Diagnostico", 1, 1, 'L', True)
+        pdf.set_font("Arial", '', 9); pdf.set_text_color(0)
+        pdf.multi_cell(190, 5, clean(medidas), 1, 'L')
+
+        buf = io.BytesIO()
+        pdf.output(buf)
+        st.download_button("📩 Baixar Relatório PDF", buf.getvalue(), file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
