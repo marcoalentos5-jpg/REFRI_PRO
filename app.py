@@ -128,13 +128,13 @@ with tab_diag:
         pdf = FPDF()
         pdf.add_page()
         
-        pdf.image("logo.png", 10, 10, 40)
         pdf.set_xy(80, 10)
         pdf.set_font("Arial", 'B', 22); pdf.set_text_color(0, 51, 102)
         pdf.cell(50, 10, "MPN", 0, 1, 'C')
         pdf.set_x(80); pdf.set_font("Arial", 'B', 14)
         pdf.cell(50, 8, "Relatório Técnico".encode('latin-1', 'replace').decode('latin-1'), 0, 1, 'C')
 
+        # 1. DADOS DO CLIENTE
         pdf.set_y(32)
         pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(220, 230, 241); pdf.set_text_color(0, 51, 102)
         pdf.cell(0, 6, " Dados do Cliente", 1, 1, 'L', True)
@@ -142,10 +142,11 @@ with tab_diag:
         pdf.set_font("Arial", '', 8); pdf.set_text_color(0); pdf.set_xy(12, pdf.get_y()+2)
         pdf.cell(90, 4, f"Cliente: {clean(cliente)}", 0, 0); pdf.cell(60, 4, f"CPF/CNPJ: {doc_cliente}", 0, 0)
         pdf.set_xy(170, pdf.get_y()-7); pdf.set_font("Arial", 'B', 7); pdf.cell(28, 4, f"DATA: {data_visita}", 1, 0, 'C'); pdf.set_font("Arial", '', 8)
-        pdf.set_xy(12, pdf.get_y()+11); pdf.cell(110, 4, f"Endereço: {tipo_logr} {clean(nome_logr)}, {numero} ({clean(complemento)})", 0, 0); pdf.cell(60, 4, f"Bairro: {clean(bairro)}", 0, 1)
+        pdf.set_xy(12, pdf.get_y()+11); pdf.cell(110, 4, f"Endereço: {tipo_logr} {clean(nome_logr)}, {numero}", 0, 0); pdf.cell(60, 4, f"Bairro: {clean(bairro)}", 0, 1)
         pdf.set_x(12); pdf.cell(60, 4, f"CEP: {cep}", 0, 0); pdf.cell(90, 4, f"E-mail: {email_cli}", 0, 1)
         pdf.set_x(12); pdf.cell(50, 4, f"Whats: {whatsapp}", 0, 0); pdf.cell(50, 4, f"Cel: {celular}", 0, 0); pdf.cell(50, 4, f"Fixo: {tel_residencial}", 0, 1)
 
+        # 2. DADOS DO EQUIPAMENTO
         pdf.set_y(pdf.get_y() + 6)
         pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(220, 230, 241); pdf.set_text_color(0, 51, 102)
         pdf.cell(0, 6, " Dados do Equipamento", 1, 1, 'L', True)
