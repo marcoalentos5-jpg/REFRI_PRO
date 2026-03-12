@@ -7,6 +7,16 @@ import io
 # --- 1. CONFIGURAÇÃO DA PÁGINA (BLOQUEADA) ---
 st.set_page_config(page_title="MPN | Engenharia Pro", layout="wide", page_icon="❄️")
 
+# --- INSTRUÇÃO SEGUIDA: AUMENTO DA FONTE DAS ABAS VIA CSS ---
+st.markdown("""
+    <style>
+    .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
+        font-size: 20px;
+        font-weight: bold;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 # --- 2. MOTOR TERMODINÂMICO E UTILITÁRIOS ---
 def get_tsat_global(psig, gas):
     ancoras = {
@@ -182,7 +192,6 @@ with tab_diag:
         pdf.set_font("Arial", '', 8)
         pdf.set_x(12); pdf.cell(60, 4, f"Tensao Rede: {v_rede} V", 0, 0); pdf.cell(50, 4, f"Corrente RLA: {rla_comp} A", 0, 0); pdf.cell(50, 4, f"Corrente LRA: {lra_comp} A", 0, 1)
         pdf.set_x(12); pdf.cell(60, 4, f"Tensao Medida: {v_med} V", 0, 0); pdf.cell(50, 4, f"Corrente Medida: {a_med} A", 0, 1)
-        # INSTRUÇÃO: Dif. entre Correntes abaixo de Corrente Medida
         pdf.set_x(12); pdf.cell(60, 4, f"Dif. Tensoes: {diff_v} V", 0, 0); pdf.set_x(72); pdf.cell(50, 4, f"Dif. entre Correntes: {diff_a} A", 0, 1)
         
         # ABA TERMODINÂMICA
