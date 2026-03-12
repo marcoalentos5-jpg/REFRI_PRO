@@ -83,13 +83,15 @@ with tab_ele:
         v_rede = st.number_input("Tensão Rede (V)", value=220.0)
         v_med = st.number_input("Tensão Medida (V)", value=218.0)
         diff_v = round(v_rede - v_med, 1)
-        st.info(f"Queda de Tensão: {diff_v} V")
+        st.write("Queda de Tensão")
+        st.success(f"{diff_v} V")
         
     with el2:
         rla_comp = st.number_input("Corrente RLA (A)", value=1.0)
         a_med = st.number_input("Corrente Medida (A)", value=0.0)
         carga_f = round((a_med/rla_comp*100), 1) if rla_comp > 0 else 0.0
-        st.info(f"Carga do Motor: {carga_f}%")
+        st.write("Carga do Motor")
+        st.success(f"{carga_f}%")
         
     with el3:
         lra_comp = st.number_input("LRA (A)", value=0.0)
@@ -114,9 +116,9 @@ with tab_termo:
         sh_val = round(t_suc_tubo - ts_suc, 1)
         sc_val = round(ts_liq - t_liq_tubo, 1)
         st.write("Superaquecimento (SH)")
-        st.info(f"{sh_val} K")
+        st.success(f"{sh_val} K")
         st.write("Subresfriamento (SC)")
-        st.info(f"{sc_val} K")
+        st.success(f"{sc_val} K")
 
 with tab_diag:
     resumo_pre = f"SH: {sh_val}K | SC: {sc_val}K\n\nParecer: "
