@@ -112,51 +112,37 @@ with tab_diag:
 
     with col_obs:
         st.subheader("📝 Observações do Técnico")
-        obs_tecnico = st.text_area("", placeholder="Parecer exclusivo do técnico...", height=215, label_visibility="collapsed", key="obs_tec_diag")
+        obs_tecnico = st.text_area("", placeholder="Parecer...", height=215, label_visibility="collapsed", key="obs_tec_diag")
 
     st.markdown("---")
     
-    # MOTOR IA AVANÇADO (OCULTO NO APP - CONFORME LAYOUT ANTERIOR)
-    analise_ia = []
-    medidas_ia = []
-    if tecnologia in ["Inverter", "VRF"] and (sh_val > 15 or sh_val < 3):
-        analise_ia.append(f"🔍 [IA] Sistema {tecnologia}: SH fora da modulação nominal.")
-        medidas_ia.append("1. Validar sensores NTC de descarga e sucção.")
-    if not analise_ia:
-        analise_ia.append("✅ Sistema operando em regime nominal.")
-        medidas_ia.append("1. Manutenção preventiva de rotina.")
+    # MOTOR IA 
+    analise_ia = [f"🔍 [IA] Analisando {tecnologia}"]
+    if sh_val > 15: analise_ia.append("⚠️ SH Elevado detectado.")
 
     col_prop_ia, col_exec = st.columns(2)
     with col_prop_ia:
         st.subheader("🤖 Diagnóstico IA")
         for diag in analise_ia: st.info(diag)
         st.subheader("🔧 Medidas Propostas IA")
-        for med in medidas_ia: st.warning(med)
+        st.warning("1. Verificar estanqueidade.")
     with col_exec:
         st.subheader("📋 Medidas Executadas")
-        executadas_input = st.text_area("", placeholder="Descreva as medidas executadas...", key="exec_diag", height=200, label_visibility="collapsed")
+        executadas_input = st.text_area("", placeholder="Descreva...", key="exec_diag", height=200, label_visibility="collapsed")
 
     if st.button("📄 Gerar Relatório Profissional"):
         pdf = FPDF()
         pdf.add_page()
-        # CABEÇALHO (MANTENDO FORMATO DA IMAGEM)
         pdf.set_font("Arial", 'B', 22); pdf.set_text_color(0, 51, 102); pdf.cell(190, 10, "MPN", 0, 1, 'C')
         pdf.set_font("Arial", 'B', 16); pdf.cell(190, 8, "Relatorio Tecnico", 0, 1, 'C')
         pdf.ln(5)
 
-        # TABELAS DE DADOS
         pdf.set_fill_color(220, 230, 241); pdf.set_font("Arial", 'B', 9)
         pdf.cell(140, 7, " Dados do Cliente", 1, 0, 'L', True); pdf.cell(50, 7, f" Visita: {data_visita}", 1, 1, 'L', True)
-        pdf.set_font("Arial", '', 8); pdf.multi_cell(190, 6, clean(f"Cliente: {cliente}\nEndereco: {logradouro}, {numero} - {bairro}\nWhats: {whatsapp}"), 1)
+        pdf.set_font("Arial", '', 8); pdf.set_text_color(0)
+        # VARIÁVEL CORRIGIDA: nome_logr
+        pdf.multi_cell(190, 6, clean(f"Cliente: {cliente}\nEndereco: {nome_logr}, {numero} - {bairro}\nWhats: {whatsapp}"), 1)
 
-        pdf.set_font("Arial", 'B', 9); pdf.cell(190, 7, " Dados do Equipamento", 1, 1, 'L', True)
-        pdf.set_font("Arial", '', 8); pdf.multi_cell(190, 6, clean(f"Marca: {fabricante} | Modelo: {modelo_eq} | Fluido: {fluido}"), 1)
-
-        # SEÇÕES DE PARECER
-        pdf.set_font("Arial", 'B', 9); pdf.cell(190, 7, " Parecer Tecnico e Medidas", 1, 1, 'L', True)
-        pdf.set_font("Arial", '', 8); pdf.multi_cell(190, 6, clean(f"Problemas: {', '.join(p_sel)}\nObs: {obs_tecnico}\nExecutado: {executadas_input}"), 1)
-
-        # ASSINATURAS (REQUERIDO)
         pdf.set_y(-40); pdf.line(20, pdf.get_y(), 95, pdf.get_y()); pdf.line(115, pdf.get_y(), 190, pdf.get_y())
         pdf.set_font("Arial", 'B', 8); pdf.set_xy(20, -38); pdf.multi_cell(75, 4, "Marcos Alexandre Almeida do Nascimento\nCNPJ: 51.274.762/0001-17", 0, 'C')
         pdf.set_xy(115, -38); pdf.multi_cell(75, 4, clean(cliente), 0, 'C')
