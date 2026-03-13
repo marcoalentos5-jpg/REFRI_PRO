@@ -302,7 +302,6 @@ with tab_hist:
         # --- DIAGNOSTICO AUTOMATICO ---
 diagnostico = []
 
-# Superaquecimento
 if sh_val < 3:
     diagnostico.append("Superaquecimento muito baixo - possivel excesso de fluido ou valvula de expansao aberta")
 elif sh_val > 15:
@@ -310,6 +309,22 @@ elif sh_val > 15:
 else:
     diagnostico.append("Superaquecimento dentro da faixa recomendada")
 
+if sc_val < 2:
+    diagnostico.append("Subresfriamento muito baixo - possivel baixa carga de refrigerante")
+elif sc_val > 12:
+    diagnostico.append("Subresfriamento elevado - possivel excesso de refrigerante ou restricao na linha liquida")
+else:
+    diagnostico.append("Subresfriamento dentro da faixa normal")
+
+if a_med > rla_comp and rla_comp > 0:
+    diagnostico.append("Corrente acima da nominal - verificar compressor ou carga elevada")
+elif a_med < (rla_comp * 0.5) and rla_comp > 0:
+    diagnostico.append("Corrente muito baixa - possivel baixa carga termica ou falta de refrigerante")
+
+if abs(diff_v) > 10:
+    diagnostico.append("Variacao significativa de tensao detectada na rede")
+
+diag_ia = " | ".join(diagnostico)
 # Subresfriamento
 if sc_val < 2:
     diagnostico.append("Subresfriamento muito baixo - possivel baixa carga de refrigerante")
