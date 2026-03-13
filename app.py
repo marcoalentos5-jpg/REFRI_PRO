@@ -6,7 +6,7 @@ import io
 import sqlite3
 import pandas as pd
 
-# --- 0. BANCO DE DADOS (CONFIGURAÇÃO INVISÍVEL) ---
+# --- 0. BANCO DE DADOS ---
 def init_db():
     conn = sqlite3.connect('banco_dados.db')
     c = conn.cursor()
@@ -18,61 +18,44 @@ def init_db():
         sistema TEXT, loc_cond TEXT, v_rede REAL, v_med REAL, a_med REAL, rla REAL, lra REAL,
         p_suc REAL, p_liq REAL, sh REAL, sc REAL, problemas TEXT, medidas TEXT, observacoes TEXT
     )''')
+    c.execute('''CREATE TABLE IF NOT EXISTS base_conhecimento (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        fabricante TEXT, modelo TEXT, tipo_dado TEXT, 
+        codigo_erro TEXT, descricao TEXT, link_manual TEXT, data_registro TEXT
+    )''')
     conn.commit()
     conn.close()
 
-def salvar_dados(dados):
+def salvar_conhecimento(fab, mod, tipo, code, desc, link):
     conn = sqlite3.connect('banco_dados.db')
     c = conn.cursor()
-    c.execute('''INSERT INTO atendimentos (
-        data_visita, cliente, doc_cliente, whatsapp, celular, fixo, endereco, email,
-        marca, modelo, serie_evap, linha, capacidade, serie_cond, tecnologia, fluido,
-        loc_evap, sistema, loc_cond, v_rede, v_med, a_med, rla, lra, p_suc, p_liq,
-        sh, sc, problemas, medidas, observacoes
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', dados)
+    data_hoje = datetime.now().strftime("%d/%m/%Y %H:%M")
+    c.execute('''INSERT INTO base_conhecimento (fabricante, modelo, tipo_dado, codigo_erro, descricao, link_manual, data_registro) 
+                 VALUES (?,?,?,?,?,?,?)''', (fab, mod, tipo, code, desc, link, data_hoje))
     conn.commit()
     conn.close()
 
 init_db()
 
-# --- 1. CONFIGURAÇÃO DA PÁGINA (BLOQUEADA) ---
+# --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="MPN | Engenharia Pro", layout="wide", page_icon="❄️")
+st.markdown("<style>.stTabs [data-baseweb='tab-list'] button [data-testid='stMarkdownContainer'] p {font-size: 20px; font-weight: bold;}</style>", unsafe_allow_html=True)
 
-st.markdown("""
-    <style>
-    .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
-        font-size: 20px;
-        font-weight: bold;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-# --- 2. MOTOR TERMODINÂMICO E UTILITÁRIOS ---
+# --- 2. MOTOR TERMODINÂMICO ---
 def get_tsat_global(psig, gas):
     ancoras = {
-        "R-410A": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 550.0, 600.0], 
-                   "t": [-51.0, -17.02, -0.29, 11.55, 20.93, 28.84, 35.58, 41.74, 47.3, 52.1, 56.59, 60.7, 64.59]},
-        "R-32": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 550.0, 600.0], 
-                 "t": [-51.7, -17.46, 0.87, 10.86, 20.14, 27.9, 34.63, 40.6, 45.96, 50.8, 55.36, 59.5, 63.43]},
-        "R-22": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 600.0], 
-                 "t": [-40.8, -3.34, 15.80, 28.15, 38.56, 47.30, 54.89, 61.63, 73.2, 78.38, 87.53]},
-        "R-134a": {"p": [0.0, 20.0, 50.0, 80.0, 100.0, 130.0, 150.0, 180.0, 200.0], 
-                   "t": [-26.08, -1.0, 12.23, 22.8, 30.92, 38.4, 43.65, 50.1, 53.74]}
+        "R-410A": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 550.0, 600.0], "t": [-51.0, -17.02, -0.29, 11.55, 20.93, 28.84, 35.58, 41.74, 47.3, 52.1, 56.59, 60.7, 64.59]},
+        "R-32": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 550.0, 600.0], "t": [-51.7, -17.46, 0.87, 10.86, 20.14, 27.9, 34.63, 40.6, 45.96, 50.8, 55.36, 59.5, 63.43]},
+        "R-22": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 600.0], "t": [-40.8, -3.34, 15.80, 28.15, 38.56, 47.30, 54.89, 61.63, 73.2, 78.38, 87.53]},
+        "R-134a": {"p": [0.0, 20.0, 50.0, 80.0, 100.0, 130.0, 150.0, 180.0, 200.0], "t": [-26.08, -1.0, 12.23, 22.8, 30.92, 38.4, 43.65, 50.1, 53.74]}
     }
     if gas not in ancoras or psig is None: return 0.0
     try: return round(float(np.interp(psig, ancoras[gas]["p"], ancoras[gas]["t"])), 2)
     except: return 0.0
 
-def clean(txt):
-    if not txt: return "N/A"
-    replacements = {'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ã': 'a', 'õ': 'o', 'ç': 'c', 'Á': 'A', 'É': 'E', 'Í': 'I', 'Ó': 'O', 'Ú': 'U', 'Ã': 'A', 'Õ': 'O', 'Ç': 'C', '°': 'C', 'º': '.'}
-    res = str(txt)
-    for old, new in replacements.items(): res = res.replace(old, new)
-    return res.encode('ascii', 'ignore').decode('ascii')
-
-# --- 3. INTERFACE DO APP ---
+# --- 3. INTERFACE ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
-tab_cad, tab_ele, tab_termo, tab_diag, tab_hist = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico", "📜 Histórico"])
+tab_cad, tab_ele, tab_termo, tab_diag, tab_hist, tab_manual = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico", "📜 Histórico", "📥 Cadastro Técnico"])
 
 with tab_cad:
     st.subheader("👤 Identificação e Contato")
@@ -105,154 +88,89 @@ with tab_ele:
     st.subheader("⚡ Parâmetros Elétricos")
     el1, el2, el3 = st.columns(3)
     with el1:
-        v_rede = st.number_input("Tensão Rede (V)", value=220.0)
-        v_med = st.number_input("Tensão Medida (V)", value=218.0)
-        diff_v = round(v_rede - v_med, 1)
-        st.write("Diferença entre Tensões"); st.success(f"{diff_v} V")
+        v_rede = st.number_input("Tensão Rede (V)", value=220.0); v_med = st.number_input("Tensão Medida (V)", value=218.0)
+        st.write("Diferença entre Tensões"); st.success(f"{round(v_rede - v_med, 1)} V")
     with el2:
-        rla_comp = st.number_input("Corrente RLA (A)", value=1.0)
-        a_med = st.number_input("Corrente Medida (A)", value=0.0)
-        diff_a = round(a_med - rla_comp, 1)
-        st.write("Diferença entre Correntes"); st.success(f"{diff_a} A")
-    with el3:
-        lra_comp = st.number_input("LRA (A)", value=0.0)
+        rla_comp = st.number_input("Corrente RLA (A)", value=1.0); a_med = st.number_input("Corrente Medida (A)", value=0.0)
+        st.write("Diferença entre Correntes"); st.success(f"{round(a_med - rla_comp, 1)} A")
+    with el3: lra_comp = st.number_input("LRA (A)", value=0.0)
 
 with tab_termo:
     st.subheader("🌡️ Ciclo Frigorífico")
     tr1, tr2, tr3 = st.columns(3)
     with tr1:
         st.markdown("**Sucção (Baixa)**")
-        p_suc = st.number_input("Pressão (PSI)", value=118.0, key="ps")
-        t_suc_tubo = st.number_input("Temp. Tubo (°C)", value=12.0, key="ts")
-        ts_suc = get_tsat_global(p_suc, fluido)
-        st.write("T-Sat Sucção"); st.info(f"{ts_suc} °C")
+        p_suc = st.number_input("Pressão (PSI)", value=118.0, key="ps"); t_suc_tubo = st.number_input("Temp. Tubo (°C)", value=12.0, key="ts")
+        ts_suc = get_tsat_global(p_suc, fluido); st.write("T-Sat Sucção"); st.info(f"{ts_suc} °C")
     with tr2:
         st.markdown("**Líquido (Alta)**")
-        p_liq = st.number_input("Pressão (PSI)", value=345.0, key="pl")
-        t_liq_tubo = st.number_input("Temp. Tubo (°C)", value=30.0, key="tl")
-        ts_liq = get_tsat_global(p_liq, fluido)
-        st.write("T-Sat Líquido"); st.info(f"{ts_liq} °C")
+        p_liq = st.number_input("Pressão (PSI)", value=345.0, key="pl"); t_liq_tubo = st.number_input("Temp. Tubo (°C)", value=30.0, key="tl")
+        ts_liq = get_tsat_global(p_liq, fluido); st.write("T-Sat Líquido"); st.info(f"{ts_liq} °C")
     with tr3:
         st.markdown("**Performance**")
-        sh_val = round(t_suc_tubo - ts_suc, 1)
-        sc_val = round(ts_liq - t_liq_tubo, 1)
-        st.write("Superaquecimento (SH)"); st.success(f"**{sh_val} K**")
-        st.write("Subresfriamento (SC)"); st.success(f"**{sc_val} K**")
+        st.write("Superaquecimento (SH)"); st.success(f"**{round(t_suc_tubo - ts_suc, 1)} K**")
+        st.write("Subresfriamento (SC)"); st.success(f"**{round(ts_liq - t_liq_tubo, 1)} K**")
+    
+    st.markdown("---")
+    st.subheader("⚖️ Calculadora de Carga por Balança")
+    cal1, cal2, cal3 = st.columns(3)
+    distancia = cal1.number_input("Distância Total (m)", value=3.0, min_value=0.0)
+    limite_fab = cal2.number_input("Limite sem Carga (m)", value=7.5, min_value=0.0)
+    gramatura = cal3.number_input("Gramas por metro (g/m)", value=20.0, min_value=0.0)
+    
+    excedente = max(0.0, distancia - limite_fab)
+    carga_total = excedente * gramatura
+    st.info(f"**Adicional de Fluido:** {carga_total} g")
 
 with tab_diag:
+    # FUNCIONALIDADE: CRUZAMENTO AUTOMÁTICO DE DADOS
+    if fabricante or modelo_eq:
+        conn = sqlite3.connect('banco_dados.db')
+        check_q = f"SELECT COUNT(*) FROM base_conhecimento WHERE fabricante LIKE '%{fabricante}%' OR modelo LIKE '%{modelo_eq}%'"
+        num_notas = conn.execute(check_q).fetchone()[0]
+        if num_notas > 0:
+            st.warning(f"🔔 **Atenção:** Existem {num_notas} nota(s) de peritos cadastradas para este fabricante/modelo na sua base de conhecimento.")
+        conn.close()
+
     col_prob, col_obs = st.columns(2)
     with col_prob:
         st.subheader("⚠️ Problemas Encontrados")
-        pi1, pi2 = st.columns(2)
         p_sel = []
         opcoes = ["Vazamento de Fluido", "Baixa Carga de Fluido", "Excesso de Fluido", "Ar/Incondensaveis no Ciclo", "Obstrucao Dispositivo Expansao", "Linha de Liquido Congelando", "Colmeia Congelando", "Filtro Secador Obstruido", "Compressor Sem Compressao", "Falha na Ventilacao", "Falha na Placa Inverter", "Instabilidade na Rede Eletrica", "Evaporadora Pingando", "Linha de Descarga Congelando"]
-        for i, opt in enumerate(opcoes):
-            if i % 2 == 0:
-                if pi1.checkbox(opt): p_sel.append(opt)
-            else:
-                if pi2.checkbox(opt): p_sel.append(opt)
+        for opt in opcoes:
+            if st.checkbox(opt): p_sel.append(opt)
     with col_obs:
         st.subheader("📝 Observações do Técnico")
-        obs_tecnico = st.text_area("", placeholder="Parecer técnico...", height=215, label_visibility="collapsed", key="obs_tec_diag")
+        obs_tecnico = st.text_area("Digite o parecer técnico...", height=200)
+    
     st.markdown("---")
-    col_prop_ia, col_exec = st.columns(2)
-    with col_prop_ia:
-        st.subheader("🤖 Diagnóstico IA")
-        diag_ia = f"Análise Profunda: SH {sh_val}K | SC {sc_val}K. Sistema {tecnologia}."
-        st.info(diag_ia)
-        st.subheader("🔧 Medidas Propostas IA")
-        st.warning("1. Verificar estanqueidade e parâmetros nominais conforme manual.")
-    with col_exec:
-        st.subheader("📋 Medidas Executadas")
-        executadas_input = st.text_area("", placeholder="Descreva as medidas executadas...", key="exec_diag", height=200, label_visibility="collapsed")
-
-    if st.button("📄 Gerar Relatório Profissional"):
-        endereco_completo = f"{tipo_logr} {nome_logr}, {numero} {complemento} - {bairro} | CEP: {cep}"
-        prob_txt = ', '.join(p_sel) if p_sel else 'Nenhum'
-        dados_para_banco = (
-            str(data_visita), cliente, doc_cliente, whatsapp, celular, tel_residencial,
-            endereco_completo, email_cli, fabricante, modelo_eq, serie_evap, linha,
-            cap_digitada, serie_cond, tecnologia, fluido, loc_evap, tipo_eq, loc_cond,
-            v_rede, v_med, a_med, rla_comp, lra_comp, p_suc, p_liq, sh_val, sc_val,
-            prob_txt, executadas_input, obs_tecnico
-        )
-        salvar_dados(dados_para_banco)
-
-        pdf = FPDF()
-        pdf.add_page()
-        try: pdf.image("logo.png", 10, 8, 50)
-        except: pass
-        pdf.set_font("Arial", 'B', 20); pdf.set_text_color(0, 51, 102)
-        pdf.cell(190, 15, "Relatorio Tecnico", 0, 1, 'C'); pdf.ln(10)
-
-        pdf.set_fill_color(230, 230, 230); pdf.set_font("Arial", 'B', 10)
-        pdf.cell(190, 7, " 1. IDENTIFICACAO DO CLIENTE E CONTATO", 1, 1, 'L', True)
-        pdf.set_font("Arial", '', 9); pdf.set_text_color(0)
-        pdf.cell(45, 6, clean(f"Data: {data_visita.strftime('%d/%m/%Y')}"), 1, 0)
-        pdf.cell(100, 6, clean(f"Cliente: {cliente}"), 1, 0)
-        pdf.cell(45, 6, clean(f"CPF/CNPJ: {doc_cliente}"), 1, 1)
-        pdf.cell(190, 6, clean(f"Endereco: {endereco_completo}"), 1, 1)
-        pdf.cell(63, 6, clean(f"Wpp: {whatsapp}"), 1, 0); pdf.cell(63, 6, clean(f"Cel: {celular}"), 1, 0); pdf.cell(64, 6, clean(f"Fixo: {tel_residencial}"), 1, 1)
-        pdf.cell(190, 6, clean(f"E-mail: {email_cli}"), 1, 1); pdf.ln(4)
-
-        pdf.set_font("Arial", 'B', 10); pdf.cell(190, 7, " 2. ESPECIFICACOES DO EQUIPAMENTO", 1, 1, 'L', True)
-        pdf.set_font("Arial", '', 9); pdf.cell(63, 6, clean(f"Marca: {fabricante}"), 1, 0); pdf.cell(63, 6, clean(f"Modelo: {modelo_eq}"), 1, 0); pdf.cell(64, 6, clean(f"Linha: {linha}"), 1, 1)
-        pdf.cell(63, 6, clean(f"Cap: {cap_digitada} BTU/h"), 1, 0); pdf.cell(63, 6, clean(f"Tec: {tecnologia}"), 1, 0); pdf.cell(64, 6, clean(f"Gas: {fluido}"), 1, 1)
-        pdf.cell(95, 6, clean(f"Sistema: {tipo_eq}"), 1, 0); pdf.cell(95, 6, clean(f"Local Evap: {loc_evap}"), 1, 1)
-        pdf.cell(95, 6, clean(f"Serie Evap: {serie_evap}"), 1, 0); pdf.cell(95, 6, clean(f"Local Cond: {loc_cond}"), 1, 1)
-        pdf.cell(190, 6, clean(f"Serie Cond: {serie_cond}"), 1, 1); pdf.ln(4)
-
-        pdf.set_font("Arial", 'B', 10); pdf.cell(190, 7, " 3. ANALISE TECNICA E PERFORMANCE", 1, 1, 'L', True)
-        pdf.set_font("Arial", '', 9); pdf.set_fill_color(240, 240, 240)
-        pdf.cell(38, 6, clean(f"Rede: {v_rede}V"), 1, 0)
-        pdf.set_font("Arial", 'B', 9); pdf.cell(38, 6, clean(f"Med: {v_med}V"), 1, 0, True); pdf.set_font("Arial", '', 9)
-        pdf.cell(38, 6, clean(f"Dif: {diff_v}V"), 1, 0); pdf.cell(38, 6, clean(f"RLA: {rla_comp}A"), 1, 0); pdf.cell(38, 6, clean(f"LRA: {lra_comp}A"), 1, 1)
-        pdf.set_font("Arial", 'B', 9); pdf.cell(95, 6, clean(f"Corrente Medida: {a_med} A"), 1, 0, True); pdf.set_font("Arial", '', 9)
-        pdf.cell(95, 6, clean(f"Diferenca Corrente: {diff_a} A"), 1, 1)
-        pdf.cell(63, 6, clean(f"P-Suc: {p_suc} PSI"), 1, 0)
-        pdf.set_font("Arial", 'B', 9); pdf.cell(63, 6, clean(f"T-Sat Suc: {ts_suc}C"), 1, 0, True); pdf.set_font("Arial", '', 9)
-        pdf.cell(64, 6, clean(f"T-Tubo Suc: {t_suc_tubo}C"), 1, 1)
-        pdf.cell(63, 6, clean(f"P-Liq: {p_liq} PSI"), 1, 0)
-        pdf.set_font("Arial", 'B', 9); pdf.cell(63, 6, clean(f"T-Sat Liq: {ts_liq}C"), 1, 0, True); pdf.set_font("Arial", '', 9)
-        pdf.cell(64, 6, clean(f"T-Tubo Liq: {t_liq_tubo}C"), 1, 1)
-        pdf.set_font("Arial", 'B', 9); pdf.cell(95, 7, clean(f"SUPERAQUECIMENTO (SH): {sh_val} K"), 1, 0); pdf.cell(95, 7, clean(f"SUBRESFRIAMENTO (SC): {sc_val} K"), 1, 1); pdf.ln(4)
-
-        pdf.set_font("Arial", 'B', 10); pdf.cell(190, 7, " 4. DIAGNOSTICO E PARECER FINAL", 1, 1, 'L', True)
-        pdf.set_font("Arial", '', 9)
-        pdf.set_font("Arial", 'B', 9); pdf.cell(190, 6, clean("Problemas Encontrados:"), "LTR", 1); pdf.set_font("Arial", '', 9)
-        pdf.multi_cell(190, 6, clean(prob_txt), "LRB")
-        pdf.set_font("Arial", 'B', 9); pdf.cell(190, 6, clean("Medidas Executadas pelo Tecnico:"), "LTR", 1); pdf.set_font("Arial", '', 9)
-        pdf.multi_cell(190, 6, clean(executadas_input if executadas_input else "Nenhuma medida descrita"), "LRB")
-        pdf.set_font("Arial", 'B', 9); pdf.cell(190, 6, clean("Parecer Tecnico e Observacoes:"), "LTR", 1); pdf.set_font("Arial", '', 9)
-        pdf.multi_cell(190, 6, clean(obs_tecnico if obs_tecnico else "Sem observacoes adicionais"), "LRB")
-
-        # ASSINATURAS (CNPJ CORRIGIDO)
-        pdf.ln(25); y_pos = pdf.get_y(); pdf.line(20, y_pos, 90, y_pos); pdf.line(120, y_pos, 190, y_pos)
-        pdf.set_xy(20, y_pos + 1); pdf.set_font("Arial", 'B', 8); pdf.cell(70, 4, "Marcos Alexandre Almeida do Nascimento", 0, 1, 'C')
-        pdf.set_x(20); pdf.set_font("Arial", '', 8); pdf.cell(70, 4, "CNPJ 51.274.762/0001-17", 0, 1, 'C')
-        pdf.set_xy(120, y_pos + 1); pdf.set_font("Arial", 'B', 8); pdf.cell(70, 4, clean(f"{cliente}"), 0, 1, 'C')
-        pdf.set_x(120); pdf.set_font("Arial", '', 8); pdf.cell(70, 4, "Cliente", 0, 1, 'C')
-
-        pdf_bytes = pdf.output(dest='S').encode('latin-1', 'ignore')
-        st.download_button("📥 Baixar Relatorio PDF", data=pdf_bytes, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
-        st.toast("✅ Dados salvos e PDF gerado!")
+    st.subheader("🧠 Consulta de Inteligência (Base de Conhecimento)")
+    busca = st.text_input("🔍 Pesquisar por Fabricante, Modelo ou Código de Erro")
+    if busca:
+        conn = sqlite3.connect('banco_dados.db')
+        query = f"SELECT * FROM base_conhecimento WHERE fabricante LIKE '%{busca}%' OR modelo LIKE '%{busca}%' OR codigo_erro LIKE '%{busca}%'"
+        df_res = pd.read_sql_query(query, conn)
+        if not df_res.empty:
+            for idx, row in df_res.iterrows():
+                with st.expander(f"📌 {row['tipo_dado']} - {row['fabricante']} ({row['modelo']})"):
+                    if row['codigo_erro']: st.warning(f"**Código de Erro:** {row['codigo_erro']}")
+                    st.write(f"**Conteúdo:**\n{row['descricao']}")
+                    if row['link_manual']: st.link_button("Acessar Link/Manual", row['link_manual'])
+        else: st.info("Nenhuma informação encontrada para esta busca.")
+        conn.close()
 
 with tab_hist:
     st.subheader("📜 Histórico de Atendimentos")
-    conn = sqlite3.connect('banco_dados.db')
-    query = "SELECT data_visita, cliente, doc_cliente, marca, modelo, tecnologia, sh, sc FROM atendimentos ORDER BY id DESC"
-    df = pd.read_sql_query(query, conn)
-    conn.close()
-    
-    if not df.empty:
-        df['data_visita'] = pd.to_datetime(df['data_visita']).dt.date
-        f_col1, f_col2 = st.columns(2)
-        with f_col1: busca = st.text_input("🔍 Pesquisar por Cliente", placeholder="Digite o nome...")
-        with f_col2: periodo = st.date_input("📅 Filtrar por Período", value=[df['data_visita'].min(), df['data_visita'].max()])
-        
-        if busca: df = df[df['cliente'].str.contains(busca, case=False, na=False)]
-        if len(periodo) == 2: df = df[(df['data_visita'] >= periodo[0]) & (df['data_visita'] <= periodo[1])]
-            
-        st.dataframe(df, use_container_width=True)
-    else:
-        st.info("Nenhum atendimento registrado no histórico.")
+    conn = sqlite3.connect('banco_dados.db'); df_atend = pd.read_sql_query("SELECT * FROM atendimentos", conn); st.dataframe(df_atend); conn.close()
+
+with tab_manual:
+    st.subheader("📥 Cadastro de Conhecimento Técnico")
+    with st.form("form_conhecimento", clear_on_submit=True):
+        f1, f2, f3 = st.columns(3)
+        fabricante_c, modelo_c, tipo_c = f1.text_input("Fabricante"), f2.text_input("Modelo / Linha"), f3.selectbox("Tipo de Informação", ["Manual de Serviço", "Código de Erro", "Tabela de Referência", "Experiência de Perito", "Opinião do Fabricante"])
+        c_erro, desc_c, link_c = st.text_input("Código de Erro"), st.text_area("Conteúdo Detalhado"), st.text_input("Link URL")
+        if st.form_submit_button("📥 SALVAR NO BANCO DE CONHECIMENTO"):
+            if fabricante_c and desc_c:
+                salvar_conhecimento(fabricante_c, modelo_c, tipo_c, c_erro, desc_c, link_c)
+                st.success("Informação armazenada!")
+            else: st.error("Preencha os campos obrigatórios.")
