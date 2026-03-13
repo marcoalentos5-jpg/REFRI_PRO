@@ -330,79 +330,184 @@ rla_comp = seguro(rla_comp)
 
 diff_v = seguro(diff_v)
 
-    # --- DIAGNOSTICO HVAC INTELIGENTE V3 ---
+   # =============================
+# MOTOR DE DIAGNOSTICO HVAC
+# =============================
+
 diagnostico = []
 probabilidades = {}
+
+# =============================
+# ANALISE POR FLUIDO REFRIGERANTE
+# =============================
+
+faixas_pressao = {
+
+    "R410A": {
+        "suc_min": 105,
+        "suc_max": 135,
+        "liq_min": 300,
+        "liq_max": 420
+    },
+
+    "R32": {
+        "suc_min": 95,
+        "suc_max": 125,
+        "liq_min": 280,
+        "liq_max": 400
+    },
+
+    "R22": {
+        "suc_min": 60,
+        "suc_max": 75,
+        "liq_min": 220,
+        "liq_max": 260
+    },
+
+    "R134a": {
+        "suc_min": 25,
+        "suc_max": 40,
+        "liq_min": 140,
+        "liq_max": 180
+    }
+
+}
+
+
+if fluido in faixas_pressao:
+
+    suc_min = faixas_pressao[fluido]["suc_min"]
+    suc_max = faixas_pressao[fluido]["suc_max"]
+
+    liq_min = faixas_pressao[fluido]["liq_min"]
+    liq_max = faixas_pressao[fluido]["liq_max"]
+
+    if p_suc < suc_min:
+        diagnostico.append("Pressao de succao abaixo da faixa ideal do refrigerante")
+        probabilidades["Baixa carga de refrigerante"] = 75
+
+    elif p_suc > suc_max:
+        diagnostico.append("Pressao de succao acima da faixa ideal")
+        probabilidades["Possivel retorno de liquido"] = 70
+
+    if p_liq > liq_max:
+        diagnostico.append("Pressao de condensacao acima da faixa do refrigerante")
+        probabilidades["Condensador sujo ou ventilacao insuficiente"] = 80
+
+    elif p_liq < liq_min:
+        diagnostico.append("Pressao de condensacao abaixo da faixa ideal")
+        probabilidades["Baixa carga de refrigerante"] = 70
+
+def registrar(msg, falha=None, prob=0):
+    diagnostico.append(msg)
+    if falha:
+        probabilidades[falha] = prob
+
 
 # =============================
 # ANALISE SUPERHEAT / SUBCOOL
 # =============================
 
 if sh_val > 15 and sc_val < 3:
-    diagnostico.append("Baixa carga de refrigerante ou vazamento")
-    probabilidades["Vazamento de refrigerante"] = 80
+    registrar(
+        "Baixa carga de refrigerante ou vazamento",
+        "Vazamento de refrigerante",
+        80
+    )
 
 elif sh_val < 3 and sc_val > 10:
-    diagnostico.append("Excesso de refrigerante no sistema")
-    probabilidades["Excesso de fluido refrigerante"] = 75
+    registrar(
+        "Excesso de refrigerante no sistema",
+        "Excesso de fluido refrigerante",
+        75
+    )
 
 elif sh_val > 20 and sc_val > 10:
-    diagnostico.append("Restricao na linha liquida ou filtro secador")
-    probabilidades["Restricao no circuito"] = 70
+    registrar(
+        "Restricao na linha liquida ou filtro secador",
+        "Restricao no circuito",
+        70
+    )
 
 elif sh_val < 2 and sc_val < 2:
-    diagnostico.append("Possivel falha na valvula de expansao")
-    probabilidades["Falha valvula expansao"] = 65
+    registrar(
+        "Possivel falha na valvula de expansao",
+        "Falha valvula expansao",
+        65
+    )
 
 elif 5 <= sh_val <= 12 and 5 <= sc_val <= 10:
-    diagnostico.append("Ciclo frigorifico operando normalmente")
+    registrar("Ciclo frigorifico operando normalmente")
+
 
 # =============================
-# ANALISE DE PRESSAO SUCCAO
+# PRESSAO SUCCAO
 # =============================
 
 if p_suc < 90:
-    diagnostico.append("Pressao de succao muito baixa")
-    probabilidades["Evaporador sujo ou restricao"] = 60
+    registrar(
+        "Pressao de succao muito baixa",
+        "Evaporador sujo ou restricao",
+        60
+    )
 
 elif p_suc > 160:
-    diagnostico.append("Pressao de succao elevada")
-    probabilidades["Retorno de liquido"] = 55
+    registrar(
+        "Pressao de succao elevada",
+        "Retorno de liquido",
+        55
+    )
+
 
 # =============================
-# ANALISE PRESSAO CONDENSAÇÃO
+# PRESSAO CONDENSAÇÃO
 # =============================
 
 if p_liq > 420:
-    diagnostico.append("Pressao de condensacao elevada")
-    probabilidades["Condensador sujo"] = 75
+    registrar(
+        "Pressao de condensacao elevada",
+        "Condensador sujo",
+        75
+    )
 
 elif p_liq < 250:
-    diagnostico.append("Pressao de condensacao baixa")
-    probabilidades["Baixa carga refrigerante"] = 70
+    registrar(
+        "Pressao de condensacao baixa",
+        "Baixa carga refrigerante",
+        70
+    )
+
 
 # =============================
-# EFICIENCIA DO EVAPORADOR
+# EFICIENCIA EVAPORADOR
 # =============================
 
 delta_evap = t_suc_tubo - ts_suc
 
 if delta_evap < 2:
-    diagnostico.append("Baixa transferencia de calor no evaporador")
-    probabilidades["Fluxo de ar insuficiente"] = 60
+    registrar(
+        "Baixa transferencia de calor no evaporador",
+        "Fluxo de ar insuficiente",
+        60
+    )
+
 
 # =============================
-# EFICIENCIA DO CONDENSADOR
+# EFICIENCIA CONDENSADOR
 # =============================
 
 delta_cond = ts_liq - t_liq_tubo
 
 if delta_cond < 2:
-    diagnostico.append("Condensacao ineficiente")
-    probabilidades["Ventilacao insuficiente"] = 55
+    registrar(
+        "Condensacao ineficiente",
+        "Ventilacao insuficiente",
+        55
+    )
+
 
 # =============================
-# ANALISE DO COMPRESSOR
+# COMPRESSOR
 # =============================
 
 if rla_comp > 0:
@@ -410,70 +515,69 @@ if rla_comp > 0:
     carga_pct = (a_med / rla_comp) * 100
 
     if carga_pct > 120:
-        diagnostico.append("Compressor sobrecarregado")
-        probabilidades["Alta pressao ou excesso refrigerante"] = 65
+        registrar(
+            "Compressor sobrecarregado",
+            "Alta pressao ou excesso refrigerante",
+            65
+        )
 
     elif carga_pct < 40:
-        diagnostico.append("Compressor operando com carga muito baixa")
-        probabilidades["Baixa carga termica"] = 60
+        registrar(
+            "Compressor operando com carga muito baixa",
+            "Baixa carga termica",
+            60
+        )
+
 
 # =============================
-# POSSIVEL COMPRESSOR FRACO
+# COMPRESSOR FRACO
 # =============================
 
 if p_suc > 140 and p_liq < 300:
-    diagnostico.append("Possivel perda de compressao")
-    probabilidades["Compressor desgastado"] = 70
+    registrar(
+        "Possivel perda de compressao",
+        "Compressor desgastado",
+        70
+    )
+
 
 # =============================
-# ANALISE DE TENSAO
+# TENSAO ELETRICA
 # =============================
 
 if abs(diff_v) > 10:
-    diagnostico.append("Variacao significativa de tensao")
-    probabilidades["Problema na rede eletrica"] = 80
+    registrar(
+        "Variacao significativa de tensao",
+        "Problema na rede eletrica",
+        80
+    )
+
 
 # =============================
-# DIAGNOSTICO ESPECIFICO INVERTER
+# INVERTER
 # =============================
 
 if tecnologia == "Inverter":
 
     if sh_val < 2:
-        diagnostico.append("Controle inverter possivelmente modulando excessivamente")
+        registrar("Controle inverter possivelmente modulando excessivamente")
 
     if p_liq > 420:
-        diagnostico.append("Possivel limitacao de frequencia por alta pressao")
+        registrar("Possivel limitacao de frequencia por alta pressao")
+
 
 # =============================
 # RESULTADO FINAL
 # =============================
 
-if len(diagnostico) == 0:
+if not diagnostico:
     diagnostico.append("Sistema operando dentro dos parametros")
 
 diag_ia = " | ".join(diagnostico)
 
-# =============================
-# PROBABILIDADE DE FALHAS
-# =============================
 
 if probabilidades:
     ranking = sorted(probabilidades.items(), key=lambda x: x[1], reverse=True)
     prob_txt = " | ".join([f"{f} ({p}%)" for f,p in ranking])
 else:
     prob_txt = "Nenhuma falha critica detectada"
-
-# =============================
-# EXIBIÇÃO DO DIAGNÓSTICO
-# =============================
-
-st.header("DIAGNÓSTICO")
-
-st.subheader("🤖 Diagnóstico IA")
-
-st.write("### 🔎 Análise do Sistema")
-st.write(diag_ia)
-
-st.write("### 📊 Probabilidade de Falhas")
-st.write(prob_txt)
