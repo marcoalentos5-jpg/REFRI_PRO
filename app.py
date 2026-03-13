@@ -303,6 +303,24 @@ with tab_hist:
 diagnostico = []
 probabilidades = {}
 
+with aba3:
+
+    st.header("DIAGNÓSTICO")
+
+    st.subheader("🤖 Diagnóstico IA")
+
+    st.write("### 🔎 Análise do Sistema")
+    st.write(diag_ia)
+
+    st.write("### 📊 Probabilidade de Falhas")
+    st.write(prob_txt)
+
+    try:
+        st.write("### ❤️ Saúde do Sistema")
+        st.write(f"{health_score}%")
+    except:
+        pass
+
 # =============================
 # ANALISE SUPERHEAT / SUBCOOL
 # =============================
