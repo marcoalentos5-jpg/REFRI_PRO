@@ -5,8 +5,9 @@ from fpdf import FPDF
 import io
 import sqlite3
 import pandas as pd
+import unicodedata
 
-# --- 0. BANCO DE DADOS (ESTRUTURA PRESERVADA) ---
+# --- 0. BANCO DE DADOS (ESTRUTURA BLOQUEADA) ---
 def init_db():
     conn = sqlite3.connect('banco_dados.db')
     c = conn.cursor()
@@ -35,7 +36,7 @@ def salvar_dados(dados):
 
 init_db()
 
-# --- 1. CONFIGURAÇÃO DA PÁGINA (BLOQUEADA) ---
+# --- 1. CONFIGURAÇÃO DA PÁGINA (LAYOUT BLOQUEADO) ---
 st.set_page_config(page_title="MPN | Engenharia Pro", layout="wide", page_icon="❄️")
 
 st.markdown("""
@@ -48,6 +49,10 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # --- 2. UTILITÁRIOS E MOTOR TERMODINÂMICO ---
+def remover_acentos(texto):
+    if not texto: return ""
+    return "".join(c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn').lower()
+
 def get_tsat_global(psig, gas):
     ancoras = {
         "R-410A": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 550.0, 600.0], 
@@ -71,7 +76,7 @@ def clean(txt):
     for old, new in replacements.items(): res = res.replace(old, new)
     return res.encode('ascii', 'ignore').decode('ascii')
 
-# --- 3. INTERFACE (ESTRUTURA DE TABS BLOQUEADA) ---
+# --- 3. INTERFACE (ESTRUTURA BLOQUEADA) ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
 tab_cad, tab_ele, tab_termo, tab_diag, tab_hist = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico", "📜 Histórico"])
 
@@ -188,7 +193,7 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 20); pdf.set_text_color(0, 51, 102)
         pdf.cell(190, 15, "Relatorio Tecnico", 0, 1, 'C'); pdf.ln(10)
 
-        # SEÇÕES DO RELATÓRIO (LAYOUT BLOQUEADO)
+        # DESIGN DO RELATÓRIO (BLOQUEADO)
         pdf.set_fill_color(230, 230, 230); pdf.set_font("Arial", 'B', 10)
         pdf.cell(190, 7, " 1. IDENTIFICACAO DO CLIENTE E CONTATO", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9); pdf.set_text_color(0)
@@ -250,29 +255,28 @@ with tab_hist:
     if not df.empty:
         df['data_visita'] = pd.to_datetime(df['data_visita']).dt.date
         f_col1, f_col2 = st.columns(2)
-        with f_col1: busca = st.text_input("🔍 Pesquisar por Cliente", placeholder="Digite o nome...")
-        with f_col2: periodo = st.date_input("📅 Filtrar por Período", value=[df['data_visita'].min(), df['data_visita'].max()])
+        with f_col1: 
+            busca = st.text_input("🔍 Pesquisar por Cliente", placeholder="Ex: Joao (sem acento funciona)")
+        with f_col2: 
+            periodo = st.date_input("📅 Filtrar por Período", 
+                                    value=[df['data_visita'].min(), df['data_visita'].max()],
+                                    format="DD/MM/YYYY") # DATA BRASILEIRA NO FILTRO
         
-        if busca: df = df[df['cliente'].str.contains(busca, case=False, na=False)]
-        if len(periodo) == 2: df = df[(df['data_visita'] >= periodo[0]) & (df['data_visita'] <= periodo[1])]
+        # Filtro de Busca (Insensível a acentos)
+        if busca:
+            df = df[df['cliente'].apply(lambda x: remover_acentos(busca) in remover_acentos(x))]
+            
+        if len(periodo) == 2:
+            df = df[(df['data_visita'] >= periodo[0]) & (df['data_visita'] <= periodo[1])]
         
-        # Inserção da coluna de seleção (Checkbox) à esquerda
         df.insert(0, "Selecionar", False)
         
-        # Editor de dados configurado para Formato Brasileiro e Exclusão
         df_editado = st.data_editor(
             df, 
             column_config={
-                "Selecionar": st.column_config.CheckboxColumn(
-                    "Excluir?",
-                    help="Marque para deletar",
-                    default=False,
-                ),
-                "data_visita": st.column_config.DateColumn(
-                    "Data",
-                    format="DD/MM/YYYY", # DATA NO FORMATO BRASILEIRO
-                ),
-                "id": None # ID oculto para preservar o visual
+                "Selecionar": st.column_config.CheckboxColumn("Excluir?", help="Marque para deletar", default=False),
+                "data_visita": st.column_config.DateColumn("Data", format="DD/MM/YYYY"), # DATA BRASILEIRA NA TABELA
+                "id": None 
             },
             disabled=["data_visita", "cliente", "doc_cliente", "marca", "modelo", "tecnologia", "sh", "sc"],
             hide_index=True,
@@ -280,7 +284,6 @@ with tab_hist:
             key="historico_editor"
         )
         
-        # Botão de exclusão posicionado abaixo da lista
         if st.button("🗑️ Excluir Relatório"):
             ids_para_excluir = df_editado[df_editado["Selecionar"] == True]["id"].tolist()
             if ids_para_excluir:
