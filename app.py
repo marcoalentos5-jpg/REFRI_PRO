@@ -379,32 +379,18 @@ st.text_area(
     height=220
 )
 
+# =============================
+# BOTAO COPIAR RELATORIO
+# =============================
+
 st.markdown(
-    f"""
+f"""
 <button onclick="navigator.clipboard.writeText(`{relatorio_txt}`)"
 style="padding:10px;font-size:16px;border-radius:6px;">
 📋 Copiar Relatório
 </button>
 """,
-    unsafe_allow_html=True
-)
-st.write("### 📄 Relatório Técnico")
-
-st.text_area(
-    import streamlit.components.v1 as components
-
-components.html(
-    f"""
-    <button onclick="navigator.clipboard.writeText(`{relatorio_txt}`)"
-    style="padding:10px;font-size:16px;">
-    📋 Copiar Relatório
-    </button>
-    """,
-    height=60
-)
-    "Conteúdo do Relatório",
-    relatorio_txt,
-    height=220
+unsafe_allow_html=True
 )
 # =============================
 # TEXTO DO RELATÓRIO
