@@ -299,27 +299,9 @@ with tab_hist:
                 st.warning("Selecione ao menos um relatório para excluir.")
     else:
         st.info("Nenhum atendimento registrado no histórico.")
-     # --- DIAGNOSTICO HVAC INTELIGENTE V3 ---
+    # --- DIAGNOSTICO HVAC INTELIGENTE V3 ---
 diagnostico = []
 probabilidades = {}
-
-with aba3:
-
-    st.header("DIAGNÓSTICO")
-
-    st.subheader("🤖 Diagnóstico IA")
-
-    st.write("### 🔎 Análise do Sistema")
-    st.write(diag_ia)
-
-    st.write("### 📊 Probabilidade de Falhas")
-    st.write(prob_txt)
-
-    try:
-        st.write("### ❤️ Saúde do Sistema")
-        st.write(f"{health_score}%")
-    except:
-        pass
 
 # =============================
 # ANALISE SUPERHEAT / SUBCOOL
@@ -450,3 +432,17 @@ if probabilidades:
     prob_txt = " | ".join([f"{f} ({p}%)" for f,p in ranking])
 else:
     prob_txt = "Nenhuma falha critica detectada"
+
+# =============================
+# EXIBIÇÃO DO DIAGNÓSTICO
+# =============================
+
+st.header("DIAGNÓSTICO")
+
+st.subheader("🤖 Diagnóstico IA")
+
+st.write("### 🔎 Análise do Sistema")
+st.write(diag_ia)
+
+st.write("### 📊 Probabilidade de Falhas")
+st.write(prob_txt)
