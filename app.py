@@ -6,7 +6,7 @@ import io
 import sqlite3
 import pandas as pd
 
-# --- 0. BANCO DE DADOS ---
+# --- 0. BANCO DE DADOS (ESTRUTURA PRESERVADA) ---
 def init_db():
     conn = sqlite3.connect('banco_dados.db')
     c = conn.cursor()
@@ -47,7 +47,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. MOTOR TERMODINÂMICO E UTILITÁRIOS ---
+# --- 2. UTILITÁRIOS E MOTOR TERMODINÂMICO ---
 def get_tsat_global(psig, gas):
     ancoras = {
         "R-410A": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 550.0, 600.0], 
@@ -65,12 +65,13 @@ def get_tsat_global(psig, gas):
 
 def clean(txt):
     if not txt: return "N/A"
-    replacements = {'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ã': 'a', 'õ': 'o', 'ç': 'c', 'Á': 'A', 'É': 'E', 'Í': 'I', 'Ó': 'O', 'Ú': 'U', 'Ã': 'A', 'Õ': 'O', 'Ç': 'C', '°': 'C', 'º': '.'}
+    replacements = {'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ã': 'a', 'õ': 'o', 'ç': 'c', 
+                    'Á': 'A', 'É': 'E', 'Í': 'I', 'Ó': 'O', 'Ú': 'U', 'Ã': 'A', 'Õ': 'O', 'Ç': 'C', '°': 'C', 'º': '.'}
     res = str(txt)
     for old, new in replacements.items(): res = res.replace(old, new)
     return res.encode('ascii', 'ignore').decode('ascii')
 
-# --- 3. INTERFACE DO APP ---
+# --- 3. INTERFACE (ESTRUTURA DE TABS BLOQUEADA) ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
 tab_cad, tab_ele, tab_termo, tab_diag, tab_hist = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico", "📜 Histórico"])
 
@@ -80,8 +81,10 @@ with tab_cad:
     cliente, doc_cliente = c1.text_input("Cliente/Empresa", key="f_cli"), c2.text_input("CPF/CNPJ", key="f_doc")
     data_visita = c3.date_input("📅 DATA DA VISITA", value=date.today(), format="DD/MM/YYYY", key="f_date")
     whatsapp, celular, tel_residencial = c4.text_input("🟢 WhatsApp", value="21980264217", key="f_wpp"), c5.text_input("📱 Celular", key="f_cel"), c6.text_input("📞 Fixo", key="f_fix")
+    
     e1, e2, e3, e4, e5, e6, e7 = st.columns([0.6, 1.5, 0.4, 0.6, 1.0, 0.8, 1.5])
     tipo_logr, nome_logr, numero, complemento, bairro, cep, email_cli = e1.selectbox("Tipo", ["Rua", "Av.", "Trav.", "Alam.", "Estr.", "Rod.", "Pça."], key="f_tlog"), e2.text_input("Logradouro", key="f_nlog"), e3.text_input("Nº", key="f_num"), e4.text_input("Comp.", key="f_comp"), e5.text_input("Bairro", key="f_bai"), e6.text_input("CEP", key="f_cep"), e7.text_input("✉️ E-mail", key="f_mail")
+    
     st.markdown("---")
     st.subheader("⚙️ Dados do Equipamento")
     g1, g2, g3, g4 = st.columns(4)
@@ -185,6 +188,7 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 20); pdf.set_text_color(0, 51, 102)
         pdf.cell(190, 15, "Relatorio Tecnico", 0, 1, 'C'); pdf.ln(10)
 
+        # SEÇÕES DO RELATÓRIO (LAYOUT BLOQUEADO)
         pdf.set_fill_color(230, 230, 230); pdf.set_font("Arial", 'B', 10)
         pdf.cell(190, 7, " 1. IDENTIFICACAO DO CLIENTE E CONTATO", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9); pdf.set_text_color(0)
@@ -234,7 +238,7 @@ with tab_diag:
 
         pdf_bytes = pdf.output(dest='S').encode('latin-1', 'ignore')
         st.download_button("📥 Baixar Relatorio PDF", data=pdf_bytes, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
-        st.toast("✅ Dados salvos e PDF gerado!")
+        st.toast("✅ Relatório gerado com sucesso!")
 
 with tab_hist:
     st.subheader("📜 Histórico de Atendimentos")
@@ -252,19 +256,23 @@ with tab_hist:
         if busca: df = df[df['cliente'].str.contains(busca, case=False, na=False)]
         if len(periodo) == 2: df = df[(df['data_visita'] >= periodo[0]) & (df['data_visita'] <= periodo[1])]
         
-        # Inserindo a coluna de seleção ao lado esquerdo
+        # Inserção da coluna de seleção (Checkbox) à esquerda
         df.insert(0, "Selecionar", False)
         
-        # Configuração do Editor de Dados (Mantendo o layout original)
+        # Editor de dados configurado para Formato Brasileiro e Exclusão
         df_editado = st.data_editor(
             df, 
             column_config={
                 "Selecionar": st.column_config.CheckboxColumn(
                     "Excluir?",
-                    help="Selecione para excluir este relatório",
+                    help="Marque para deletar",
                     default=False,
                 ),
-                "id": None # Oculta o ID para manter o layout limpo
+                "data_visita": st.column_config.DateColumn(
+                    "Data",
+                    format="DD/MM/YYYY", # DATA NO FORMATO BRASILEIRO
+                ),
+                "id": None # ID oculto para preservar o visual
             },
             disabled=["data_visita", "cliente", "doc_cliente", "marca", "modelo", "tecnologia", "sh", "sc"],
             hide_index=True,
@@ -272,7 +280,7 @@ with tab_hist:
             key="historico_editor"
         )
         
-        # Botão abaixo da lista
+        # Botão de exclusão posicionado abaixo da lista
         if st.button("🗑️ Excluir Relatório"):
             ids_para_excluir = df_editado[df_editado["Selecionar"] == True]["id"].tolist()
             if ids_para_excluir:
@@ -282,9 +290,9 @@ with tab_hist:
                     c.execute("DELETE FROM atendimentos WHERE id = ?", (id_del,))
                 conn.commit()
                 conn.close()
-                st.success(f"{len(ids_para_excluir)} relatório(s) excluído(s)!")
+                st.success(f"{len(ids_para_excluir)} registro(s) removido(s)!")
                 st.rerun()
             else:
-                st.warning("Nenhum relatório selecionado para exclusão.")
+                st.warning("Selecione ao menos um relatório para excluir.")
     else:
         st.info("Nenhum atendimento registrado no histórico.")
