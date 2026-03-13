@@ -6,7 +6,7 @@ import io
 import sqlite3
 import pandas as pd
 
-# --- 0. BANCO DE DADOS (CONSERVAÇÃO DA ESTRUTURA) ---
+# --- 0. BANCO DE DADOS (ALIMENTAÇÃO AMPLIADA CONFORME SOLICITADO) ---
 def init_db():
     conn = sqlite3.connect('banco_dados.db')
     c = conn.cursor()
@@ -23,6 +23,27 @@ def init_db():
         fabricante TEXT, modelo TEXT, tipo_dado TEXT, 
         codigo_erro TEXT, descricao TEXT, link_manual TEXT
     )''')
+    
+    # Inserção rigorosa dos novos fabricantes solicitados
+    c.execute("SELECT COUNT(*) FROM base_conhecimento WHERE fabricante IN ('HITACHI', 'MIDEA', 'CONSUL', 'TCL')")
+    if c.fetchone()[0] == 0:
+        dados_novos = [
+            ('HITACHI', 'Utopia/Set Free', 'Erro', '01', 'Ativação do dispositivo de proteção interna (bóia ou termistor).', ''),
+            ('HITACHI', 'Utopia/Set Free', 'Erro', '03', 'Anormalidade na transmissão entre interna e externa.', ''),
+            ('MIDEA', 'Liva / Springer', 'Erro', 'E1', 'Erro de comunicação. Verificar cabos e bornes de interligação.', ''),
+            ('MIDEA', 'Liva / Springer', 'Erro', 'EC', 'Detecção de vazamento de fluido ou falha no sensor de pressão.', ''),
+            ('CONSUL', 'Bem-Estar', 'Erro', 'E4', 'Falha no sensor de temperatura da evaporadora (10k).', ''),
+            ('CONSUL', 'Facilite', 'Erro', 'F1', 'Erro de comunicação ou falha na EEPROM da placa.', ''),
+            ('TCL', 'Elite Series', 'Erro', 'E0', 'Erro de comunicação. Checar sinal serial e aterramento.', ''),
+            ('TCL', 'Elite Series', 'Erro', 'E6', 'Falha no motor ventilador da unidade interna.', ''),
+            ('ELGIN', 'Eco Power', 'Erro', 'E1', 'Proteção contra alta pressão no sistema.', ''),
+            ('GREE', 'G-Top', 'Erro', 'H6', 'Falha no motor ventilador da unidade interna (PG/DC).', ''),
+            ('UNIVERSAL', 'Todos', 'Manutenção', 'Filtros', 'Limpeza de filtros de ar recomendada a cada 15 dias em uso severo.', ''),
+            ('UNIVERSAL', 'Todos', 'Conserto', 'Vazamento', 'Vazamentos em porcas flangeadas respondem por 70% das perdas de carga.', '')
+        ]
+        c.executemany('''INSERT INTO base_conhecimento (fabricante, modelo, tipo_dado, codigo_erro, descricao, link_manual) 
+                         VALUES (?,?,?,?,?,?)''', dados_novos)
+    
     conn.commit()
     conn.close()
 
@@ -36,7 +57,7 @@ def salvar_conhecimento(fab, mod, tipo, code, desc, link):
 
 init_db()
 
-# --- 1. CONFIGURAÇÃO DA PÁGINA (BLOQUEADA) ---
+# --- 1. CONFIGURAÇÃO DA PÁGINA (ESTÁTICA) ---
 st.set_page_config(page_title="MPN | Engenharia Pro", layout="wide", page_icon="❄️")
 
 st.markdown("""
@@ -101,50 +122,41 @@ with tab_ele:
     with el1:
         v_rede = st.number_input("Tensão Rede (V)", value=220.0)
         v_med = st.number_input("Tensão Medida (V)", value=218.0)
-        diff_v = round(v_rede - v_med, 1)
-        st.write("Diferença entre Tensões"); st.success(f"{diff_v} V")
+        st.write("Diferença entre Tensões"); st.success(f"{round(v_rede - v_med, 1)} V")
     with el2:
         rla_comp = st.number_input("Corrente RLA (A)", value=1.0)
         a_med = st.number_input("Corrente Medida (A)", value=0.0)
-        diff_a = round(a_med - rla_comp, 1)
-        st.write("Diferença entre Correntes"); st.success(f"{diff_a} A")
-    with el3:
-        lra_comp = st.number_input("LRA (A)", value=0.0)
+        st.write("Diferença entre Correntes"); st.success(f"{round(a_med - rla_comp, 1)} A")
+    with el3: lra_comp = st.number_input("LRA (A)", value=0.0)
 
 with tab_termo:
     st.subheader("🌡️ Ciclo Frigorífico")
     tr1, tr2, tr3 = st.columns(3)
     with tr1:
-        st.markdown("**Sucção (Baixa)**")
         p_suc = st.number_input("Pressão (PSI)", value=118.0, key="ps")
         t_suc_tubo = st.number_input("Temp. Tubo (°C)", value=12.0, key="ts")
         ts_suc = get_tsat_global(p_suc, fluido)
         st.write("T-Sat Sucção"); st.info(f"{ts_suc} °C")
     with tr2:
-        st.markdown("**Líquido (Alta)**")
         p_liq = st.number_input("Pressão (PSI)", value=345.0, key="pl")
         t_liq_tubo = st.number_input("Temp. Tubo (°C)", value=30.0, key="tl")
         ts_liq = get_tsat_global(p_liq, fluido)
         st.write("T-Sat Líquido"); st.info(f"{ts_liq} °C")
     with tr3:
-        st.markdown("**Performance**")
-        sh_val = round(t_suc_tubo - ts_suc, 1)
-        sc_val = round(ts_liq - t_liq_tubo, 1)
-        st.write("Superaquecimento (SH)"); st.success(f"**{sh_val} K**")
-        st.write("Subresfriamento (SC)"); st.success(f"**{sc_val} K**")
+        st.write("Superaquecimento (SH)"); st.success(f"**{round(t_suc_tubo - ts_suc, 1)} K**")
+        st.write("Subresfriamento (SC)"); st.success(f"**{round(ts_liq - t_liq_tubo, 1)} K**")
 
 with tab_diag:
     col_prob, col_obs = st.columns(2)
     with col_prob:
         st.subheader("⚠️ Problemas Encontrados")
         pi1, pi2 = st.columns(2)
-        p_sel = []
         opcoes = ["Vazamento de Fluido", "Baixa Carga de Fluido", "Excesso de Fluido", "Ar/Incondensaveis no Ciclo", "Obstrucao Dispositivo Expansao", "Linha de Liquido Congelando", "Colmeia Congelando", "Filtro Secador Obstruido", "Compressor Sem Compressao", "Falha na Ventilacao", "Falha na Placa Inverter", "Instabilidade na Rede Eletrica", "Evaporadora Pingando", "Linha de Descarga Congelando"]
         for i, opt in enumerate(opcoes):
             if i % 2 == 0:
-                if pi1.checkbox(opt): p_sel.append(opt)
+                if pi1.checkbox(opt): pass
             else:
-                if pi2.checkbox(opt): p_sel.append(opt)
+                if pi2.checkbox(opt): pass
     with col_obs:
         st.subheader("📝 Observações do Técnico")
         obs_tecnico = st.text_area("", placeholder="Parecer técnico...", height=200)
