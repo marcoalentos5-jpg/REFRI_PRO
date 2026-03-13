@@ -6,7 +6,7 @@ import io
 import sqlite3
 import pandas as pd
 
-# --- 0. BANCO DE DADOS (CONFIGURAÇÃO INVISÍVEL) ---
+# --- 0. BANCO DE DADOS ---
 def init_db():
     conn = sqlite3.connect('banco_dados.db')
     c = conn.cursor()
@@ -33,9 +33,16 @@ def salvar_dados(dados):
     conn.commit()
     conn.close()
 
+def excluir_registro(id_registro):
+    conn = sqlite3.connect('banco_dados.db')
+    c = conn.cursor()
+    c.execute("DELETE FROM atendimentos WHERE id = ?", (id_registro,))
+    conn.commit()
+    conn.close()
+
 init_db()
 
-# --- 1. CONFIGURAÇÃO DA PÁGINA (BLOQUEADA) ---
+# --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="MPN | Engenharia Pro", layout="wide", page_icon="❄️")
 
 st.markdown("""
@@ -65,13 +72,12 @@ def get_tsat_global(psig, gas):
 
 def clean(txt):
     if not txt: return "N/A"
-    replacements = {'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ã': 'a', 'õ': 'o', 'ç': 'c', 
-                    'Á': 'A', 'É': 'E', 'Í': 'I', 'Ó': 'O', 'Ú': 'U', 'Ã': 'A', 'Õ': 'O', 'Ç': 'C', '°': 'C', 'º': '.'}
+    replacements = {'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ã': 'a', 'õ': 'o', 'ç': 'c', 'Á': 'A', 'É': 'E', 'Í': 'I', 'Ó': 'O', 'Ú': 'U', 'Ã': 'A', 'Õ': 'O', 'Ç': 'C', '°': 'C', 'º': '.'}
     res = str(txt)
     for old, new in replacements.items(): res = res.replace(old, new)
     return res.encode('ascii', 'ignore').decode('ascii')
 
-# --- 3. INTERFACE DO APP (LAYOUT ORIGINAL PRESERVADO) ---
+# --- 3. INTERFACE DO APP ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
 tab_cad, tab_ele, tab_termo, tab_diag, tab_hist = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico", "📜 Histórico"])
 
@@ -81,10 +87,8 @@ with tab_cad:
     cliente, doc_cliente = c1.text_input("Cliente/Empresa", key="f_cli"), c2.text_input("CPF/CNPJ", key="f_doc")
     data_visita = c3.date_input("📅 DATA DA VISITA", value=date.today(), format="DD/MM/YYYY", key="f_date")
     whatsapp, celular, tel_residencial = c4.text_input("🟢 WhatsApp", value="21980264217", key="f_wpp"), c5.text_input("📱 Celular", key="f_cel"), c6.text_input("📞 Fixo", key="f_fix")
-    
     e1, e2, e3, e4, e5, e6, e7 = st.columns([0.6, 1.5, 0.4, 0.6, 1.0, 0.8, 1.5])
     tipo_logr, nome_logr, numero, complemento, bairro, cep, email_cli = e1.selectbox("Tipo", ["Rua", "Av.", "Trav.", "Alam.", "Estr.", "Rod.", "Pça."], key="f_tlog"), e2.text_input("Logradouro", key="f_nlog"), e3.text_input("Nº", key="f_num"), e4.text_input("Comp.", key="f_comp"), e5.text_input("Bairro", key="f_bai"), e6.text_input("CEP", key="f_cep"), e7.text_input("✉️ E-mail", key="f_mail")
-    
     st.markdown("---")
     st.subheader("⚙️ Dados do Equipamento")
     g1, g2, g3, g4 = st.columns(4)
@@ -242,7 +246,8 @@ with tab_diag:
 with tab_hist:
     st.subheader("📜 Histórico de Atendimentos")
     conn = sqlite3.connect('banco_dados.db')
-    query = "SELECT data_visita, cliente, doc_cliente, marca, modelo, tecnologia, sh, sc FROM atendimentos ORDER BY id DESC"
+    # Selecionamos o ID agora para permitir a exclusão
+    query = "SELECT id, data_visita, cliente, doc_cliente, marca, modelo, tecnologia, sh, sc FROM atendimentos ORDER BY id DESC"
     df = pd.read_sql_query(query, conn)
     conn.close()
     
@@ -255,6 +260,21 @@ with tab_hist:
         if busca: df = df[df['cliente'].str.contains(busca, case=False, na=False)]
         if len(periodo) == 2: df = df[(df['data_visita'] >= periodo[0]) & (df['data_visita'] <= periodo[1])]
             
-        st.dataframe(df, use_container_width=True)
+        # --- Lógica de Exclusão (Mantendo o Layout) ---
+        st.markdown("---")
+        st.write("🗑️ **Gerenciar Registros**")
+        
+        # Criamos uma caixa de seleção para escolher o relatório a excluir baseada no ID e Nome
+        opcoes_exclusao = {f"ID: {row['id']} | {row['cliente']} ({row['data_visita']})": row['id'] for _, row in df.iterrows()}
+        selecionado_para_excluir = st.selectbox("Selecione um relatório para excluir:", ["Nenhum"] + list(opcoes_exclusao.keys()))
+        
+        if selecionado_para_excluir != "Nenhum":
+            if st.button("❌ Excluir Relatório Selecionado"):
+                id_para_deletar = opcoes_exclusao[selecionado_para_excluir]
+                excluir_registro(id_para_deletar)
+                st.success("Registro excluído com sucesso!")
+                st.rerun() # Atualiza a tela para refletir a exclusão no dataframe abaixo
+
+        st.dataframe(df.drop(columns=['id']), use_container_width=True)
     else:
         st.info("Nenhum atendimento registrado no histórico.")
