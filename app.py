@@ -333,6 +333,136 @@ diff_v = seguro(diff_v)
    # =============================
 # MOTOR DE DIAGNOSTICO HVAC
 # =============================
+st.write("### 📄 Relatório Técnico")
+
+st.text_area(
+    import streamlit.components.v1 as components
+
+components.html(
+    f"""
+    <button onclick="navigator.clipboard.writeText(`{relatorio_txt}`)"
+    style="padding:10px;font-size:16px;">
+    📋 Copiar Relatório
+    </button>
+    """,
+    height=60
+)
+    "Conteúdo do Relatório",
+    relatorio_txt,
+    height=220
+)
+# =============================
+# TEXTO DO RELATÓRIO
+# =============================
+
+relatorio_txt = f"""
+RELATORIO TECNICO HVAC
+
+Diagnostico IA:
+{diag_ia}
+
+Probabilidade de Falhas:
+{prob_txt}
+
+Contramedidas Recomendadas:
+{contramedidas_txt}
+
+Eficiencia do Sistema (COP aproximado):
+{cop_aprox}
+"""
+
+
+# =============================
+# CALCULO EFICIENCIA (COP APROX)
+# =============================
+
+try:
+
+    delta_cond = ts_liq - t_liq_tubo
+    delta_evap = t_suc_tubo - ts_suc
+
+    cop_aprox = round((delta_cond + 1) / (delta_evap + 1), 2)
+
+    if cop_aprox < 1.5:
+        diagnostico.append("Baixa eficiencia energetica do sistema")
+
+    elif cop_aprox > 4:
+        diagnostico.append("Sistema operando com alta eficiencia")
+
+except:
+    cop_aprox = 0
+
+
+# =============================
+# RESULTADO FINAL DIAGNOSTICO
+# =============================
+
+if len(diagnostico) == 0:
+    diagnostico.append("Sistema operando dentro dos parametros")
+
+diag_ia = " | ".join(diagnostico)
+
+
+# =============================
+# PROBABILIDADE DE FALHAS
+# =============================
+
+if probabilidades:
+    ranking = sorted(probabilidades.items(), key=lambda x: x[1], reverse=True)
+    prob_txt = " | ".join([f"{f} ({p}%)" for f,p in ranking])
+else:
+    prob_txt = "Nenhuma falha critica detectada"
+
+
+# =============================
+# CONTRAMEDIDAS AUTOMATICAS
+# =============================
+
+contramedidas = []
+
+for falha in probabilidades:
+
+    if "refrigerante" in falha.lower():
+        contramedidas.append("Verificar carga de refrigerante e possiveis vazamentos")
+
+    if "condensador" in falha.lower():
+        contramedidas.append("Limpar condensador e verificar ventilacao")
+
+    if "evaporador" in falha.lower():
+        contramedidas.append("Limpar evaporador e verificar fluxo de ar")
+
+    if "compressor" in falha.lower():
+        contramedidas.append("Verificar eficiencia mecanica do compressor")
+
+    if "rede eletrica" in falha.lower():
+        contramedidas.append("Verificar tensao da rede e conexoes eletricas")
+
+
+if not contramedidas:
+    contramedidas.append("Nenhuma acao corretiva necessaria no momento")
+
+contramedidas_txt = " | ".join(contramedidas)
+
+
+# =============================
+# EXIBICAO NA ABA DIAGNOSTICO
+# =============================
+
+st.header("DIAGNÓSTICO")
+
+st.subheader("🤖 Diagnóstico IA")
+
+st.write("### 🔎 Análise do Sistema")
+st.write(diag_ia)
+
+st.write("### 📊 Probabilidade de Falhas")
+st.write(prob_txt)
+
+st.write("### 🛠️ Contramedidas Recomendadas")
+st.write(contramedidas_txt)
+
+st.write("### ⚡ Eficiência do Sistema (COP aproximado)")
+st.write(cop_aprox)
 
 diagnostico = []
 probabilidades = {}
