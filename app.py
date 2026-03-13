@@ -1,13 +1,43 @@
 import streamlit as st
 import numpy as np
-from datetime import date
+from datetime import date, datetime
 from fpdf import FPDF
 import io
+import sqlite3
+import pandas as pd
+
+# --- 0. BANCO DE DADOS (CONFIGURAÇÃO INVISÍVEL) ---
+def init_db():
+    conn = sqlite3.connect('banco_dados.db')
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS atendimentos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        data_visita TEXT, cliente TEXT, doc_cliente TEXT, whatsapp TEXT, celular TEXT, fixo TEXT,
+        endereco TEXT, email TEXT, marca TEXT, modelo TEXT, serie_evap TEXT, linha TEXT, 
+        capacidade TEXT, serie_cond TEXT, tecnologia TEXT, fluido TEXT, loc_evap TEXT, 
+        sistema TEXT, loc_cond TEXT, v_rede REAL, v_med REAL, a_med REAL, rla REAL, lra REAL,
+        p_suc REAL, p_liq REAL, sh REAL, sc REAL, problemas TEXT, medidas TEXT, observacoes TEXT
+    )''')
+    conn.commit()
+    conn.close()
+
+def salvar_dados(dados):
+    conn = sqlite3.connect('banco_dados.db')
+    c = conn.cursor()
+    c.execute('''INSERT INTO atendimentos (
+        data_visita, cliente, doc_cliente, whatsapp, celular, fixo, endereco, email,
+        marca, modelo, serie_evap, linha, capacidade, serie_cond, tecnologia, fluido,
+        loc_evap, sistema, loc_cond, v_rede, v_med, a_med, rla, lra, p_suc, p_liq,
+        sh, sc, problemas, medidas, observacoes
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', dados)
+    conn.commit()
+    conn.close()
+
+init_db()
 
 # --- 1. CONFIGURAÇÃO DA PÁGINA (BLOQUEADA) ---
 st.set_page_config(page_title="MPN | Engenharia Pro", layout="wide", page_icon="❄️")
 
-# ESTILO DAS ABAS (20PX E NEGRITO)
 st.markdown("""
     <style>
     .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
@@ -42,7 +72,7 @@ def clean(txt):
 
 # --- 3. INTERFACE DO APP ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
-tab_cad, tab_ele, tab_termo, tab_diag = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico"])
+tab_cad, tab_ele, tab_termo, tab_diag, tab_hist = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico", "📜 Histórico"])
 
 with tab_cad:
     st.subheader("👤 Identificação e Contato")
@@ -121,11 +151,9 @@ with tab_diag:
                 if pi1.checkbox(opt): p_sel.append(opt)
             else:
                 if pi2.checkbox(opt): p_sel.append(opt)
-
     with col_obs:
         st.subheader("📝 Observações do Técnico")
         obs_tecnico = st.text_area("", placeholder="Parecer técnico...", height=215, label_visibility="collapsed", key="obs_tec_diag")
-
     st.markdown("---")
     col_prop_ia, col_exec = st.columns(2)
     with col_prop_ia:
@@ -139,6 +167,17 @@ with tab_diag:
         executadas_input = st.text_area("", placeholder="Descreva as medidas executadas...", key="exec_diag", height=200, label_visibility="collapsed")
 
     if st.button("📄 Gerar Relatório Profissional"):
+        endereco_completo = f"{tipo_logr} {nome_logr}, {numero} {complemento} - {bairro} | CEP: {cep}"
+        prob_txt = ', '.join(p_sel) if p_sel else 'Nenhum'
+        dados_para_banco = (
+            str(data_visita), cliente, doc_cliente, whatsapp, celular, tel_residencial,
+            endereco_completo, email_cli, fabricante, modelo_eq, serie_evap, linha,
+            cap_digitada, serie_cond, tecnologia, fluido, loc_evap, tipo_eq, loc_cond,
+            v_rede, v_med, a_med, rla_comp, lra_comp, p_suc, p_liq, sh_val, sc_val,
+            prob_txt, executadas_input, obs_tecnico
+        )
+        salvar_dados(dados_para_banco)
+
         pdf = FPDF()
         pdf.add_page()
         try: pdf.image("logo.png", 10, 8, 50)
@@ -146,18 +185,16 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 20); pdf.set_text_color(0, 51, 102)
         pdf.cell(190, 15, "Relatorio Tecnico", 0, 1, 'C'); pdf.ln(10)
 
-        # 1. IDENTIFICAÇÃO E CONTATO (LARGURAS AJUSTADAS)
         pdf.set_fill_color(230, 230, 230); pdf.set_font("Arial", 'B', 10)
         pdf.cell(190, 7, " 1. IDENTIFICACAO DO CLIENTE E CONTATO", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9); pdf.set_text_color(0)
-        pdf.cell(45, 6, clean(f"Data: {data_visita.strftime('%d/%m/%Y')}"), 1, 0) # CAMPO DIMINUÍDO
+        pdf.cell(45, 6, clean(f"Data: {data_visita.strftime('%d/%m/%Y')}"), 1, 0)
         pdf.cell(100, 6, clean(f"Cliente: {cliente}"), 1, 0)
-        pdf.cell(45, 6, clean(f"CPF/CNPJ: {doc_cliente}"), 1, 1) # CAMPO DIMINUÍDO
-        pdf.cell(190, 6, clean(f"Endereco: {tipo_logr} {nome_logr}, {numero} {complemento} - {bairro} | CEP: {cep}"), 1, 1)
+        pdf.cell(45, 6, clean(f"CPF/CNPJ: {doc_cliente}"), 1, 1)
+        pdf.cell(190, 6, clean(f"Endereco: {endereco_completo}"), 1, 1)
         pdf.cell(63, 6, clean(f"Wpp: {whatsapp}"), 1, 0); pdf.cell(63, 6, clean(f"Cel: {celular}"), 1, 0); pdf.cell(64, 6, clean(f"Fixo: {tel_residencial}"), 1, 1)
         pdf.cell(190, 6, clean(f"E-mail: {email_cli}"), 1, 1); pdf.ln(4)
 
-        # 2. EQUIPAMENTO
         pdf.set_font("Arial", 'B', 10); pdf.cell(190, 7, " 2. ESPECIFICACOES DO EQUIPAMENTO", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9); pdf.cell(63, 6, clean(f"Marca: {fabricante}"), 1, 0); pdf.cell(63, 6, clean(f"Modelo: {modelo_eq}"), 1, 0); pdf.cell(64, 6, clean(f"Linha: {linha}"), 1, 1)
         pdf.cell(63, 6, clean(f"Cap: {cap_digitada} BTU/h"), 1, 0); pdf.cell(63, 6, clean(f"Tec: {tecnologia}"), 1, 0); pdf.cell(64, 6, clean(f"Gas: {fluido}"), 1, 1)
@@ -165,7 +202,6 @@ with tab_diag:
         pdf.cell(95, 6, clean(f"Serie Evap: {serie_evap}"), 1, 0); pdf.cell(95, 6, clean(f"Local Cond: {loc_cond}"), 1, 1)
         pdf.cell(190, 6, clean(f"Serie Cond: {serie_cond}"), 1, 1); pdf.ln(4)
 
-        # 3. ANÁLISE TÉCNICA E PERFORMANCE
         pdf.set_font("Arial", 'B', 10); pdf.cell(190, 7, " 3. ANALISE TECNICA E PERFORMANCE", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9); pdf.set_fill_color(240, 240, 240)
         pdf.cell(38, 6, clean(f"Rede: {v_rede}V"), 1, 0)
@@ -181,18 +217,15 @@ with tab_diag:
         pdf.cell(64, 6, clean(f"T-Tubo Liq: {t_liq_tubo}C"), 1, 1)
         pdf.set_font("Arial", 'B', 9); pdf.cell(95, 7, clean(f"SUPERAQUECIMENTO (SH): {sh_val} K"), 1, 0); pdf.cell(95, 7, clean(f"SUBRESFRIAMENTO (SC): {sc_val} K"), 1, 1); pdf.ln(4)
 
-        # 4. DIAGNÓSTICO E PARECER FINAL
         pdf.set_font("Arial", 'B', 10); pdf.cell(190, 7, " 4. DIAGNOSTICO E PARECER FINAL", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9)
         pdf.set_font("Arial", 'B', 9); pdf.cell(190, 6, clean("Problemas Encontrados:"), "LTR", 1); pdf.set_font("Arial", '', 9)
-        prob_txt = ', '.join(p_sel) if p_sel else 'Nenhum problema detectado'
         pdf.multi_cell(190, 6, clean(prob_txt), "LRB")
         pdf.set_font("Arial", 'B', 9); pdf.cell(190, 6, clean("Medidas Executadas pelo Tecnico:"), "LTR", 1); pdf.set_font("Arial", '', 9)
         pdf.multi_cell(190, 6, clean(executadas_input if executadas_input else "Nenhuma medida descrita"), "LRB")
         pdf.set_font("Arial", 'B', 9); pdf.cell(190, 6, clean("Parecer Tecnico e Observacoes:"), "LTR", 1); pdf.set_font("Arial", '', 9)
         pdf.multi_cell(190, 6, clean(obs_tecnico if obs_tecnico else "Sem observacoes adicionais"), "LRB")
 
-        # ASSINATURAS
         pdf.ln(25); y_pos = pdf.get_y(); pdf.line(20, y_pos, 90, y_pos); pdf.line(120, y_pos, 190, y_pos)
         pdf.set_xy(20, y_pos + 1); pdf.set_font("Arial", 'B', 8); pdf.cell(70, 4, "Marcos Alexandre Almeida do Nascimento", 0, 1, 'C')
         pdf.set_x(20); pdf.set_font("Arial", '', 8); pdf.cell(70, 4, "CNPJ 1.274.762/0001-17", 0, 1, 'C')
@@ -201,3 +234,31 @@ with tab_diag:
 
         pdf_bytes = pdf.output(dest='S').encode('latin-1', 'ignore')
         st.download_button("📥 Baixar Relatorio PDF", data=pdf_bytes, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
+        st.toast("✅ Dados salvos e PDF gerado!")
+
+with tab_hist:
+    st.subheader("📜 Histórico de Atendimentos")
+    conn = sqlite3.connect('banco_dados.db')
+    query = "SELECT data_visita, cliente, doc_cliente, marca, modelo, tecnologia, sh, sc FROM atendimentos ORDER BY id DESC"
+    df = pd.read_sql_query(query, conn)
+    conn.close()
+    
+    if not df.empty:
+        # CONVERSÃO PARA DATA PARA FILTRO PRECISO
+        df['data_visita'] = pd.to_datetime(df['data_visita']).dt.date
+        
+        f_col1, f_col2 = st.columns(2)
+        with f_col1:
+            busca = st.text_input("🔍 Pesquisar por Cliente", placeholder="Digite o nome...")
+        with f_col2:
+            periodo = st.date_input("📅 Filtrar por Período", value=[df['data_visita'].min(), df['data_visita'].max()])
+        
+        # APLICAÇÃO DOS FILTROS
+        if busca:
+            df = df[df['cliente'].str.contains(busca, case=False, na=False)]
+        if len(periodo) == 2:
+            df = df[(df['data_visita'] >= periodo[0]) & (df['data_visita'] <= periodo[1])]
+            
+        st.dataframe(df, use_container_width=True)
+    else:
+        st.info("Nenhum atendimento registrado no histórico.")
