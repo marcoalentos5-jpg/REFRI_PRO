@@ -299,94 +299,136 @@ with tab_hist:
                 st.warning("Selecione ao menos um relatório para excluir.")
     else:
         st.info("Nenhum atendimento registrado no histórico.")
-      # --- DIAGNOSTICO AUTOMATICO HVAC PROFISSIONAL ---
+     # --- DIAGNOSTICO HVAC INTELIGENTE V3 ---
 diagnostico = []
+probabilidades = {}
 
-# =========================
-# ANALISE SUPERHEAT / SUBCOOLING
-# =========================
+# =============================
+# ANALISE SUPERHEAT / SUBCOOL
+# =============================
 
 if sh_val > 15 and sc_val < 3:
-    diagnostico.append("Baixa carga de refrigerante ou vazamento no sistema")
+    diagnostico.append("Baixa carga de refrigerante ou vazamento")
+    probabilidades["Vazamento de refrigerante"] = 80
 
 elif sh_val < 3 and sc_val > 10:
-    diagnostico.append("Possivel excesso de refrigerante")
+    diagnostico.append("Excesso de refrigerante no sistema")
+    probabilidades["Excesso de fluido refrigerante"] = 75
 
 elif sh_val > 20 and sc_val > 10:
-    diagnostico.append("Restricao na linha liquida ou filtro secador obstruido")
+    diagnostico.append("Restricao na linha liquida ou filtro secador")
+    probabilidades["Restricao no circuito"] = 70
 
 elif sh_val < 2 and sc_val < 2:
-    diagnostico.append("Possivel falha na valvula de expansao ou sensor")
+    diagnostico.append("Possivel falha na valvula de expansao")
+    probabilidades["Falha valvula expansao"] = 65
 
 elif 5 <= sh_val <= 12 and 5 <= sc_val <= 10:
-    diagnostico.append("Ciclo frigorifico operando dentro da faixa recomendada")
+    diagnostico.append("Ciclo frigorifico operando normalmente")
 
-# =========================
-# PRESSAO DE SUCCAO
-# =========================
+# =============================
+# ANALISE DE PRESSAO SUCCAO
+# =============================
 
 if p_suc < 90:
-    diagnostico.append("Pressao de succao muito baixa - verificar evaporador sujo ou baixa carga")
+    diagnostico.append("Pressao de succao muito baixa")
+    probabilidades["Evaporador sujo ou restricao"] = 60
 
 elif p_suc > 160:
-    diagnostico.append("Pressao de succao elevada - possivel retorno de liquido")
+    diagnostico.append("Pressao de succao elevada")
+    probabilidades["Retorno de liquido"] = 55
 
-# =========================
-# PRESSAO DE CONDENSAÇÃO
-# =========================
+# =============================
+# ANALISE PRESSAO CONDENSAÇÃO
+# =============================
 
 if p_liq > 420:
-    diagnostico.append("Pressao de condensacao elevada - possivel condensador sujo ou ventilacao deficiente")
+    diagnostico.append("Pressao de condensacao elevada")
+    probabilidades["Condensador sujo"] = 75
 
 elif p_liq < 250:
-    diagnostico.append("Pressao de condensacao baixa - verificar carga de refrigerante")
+    diagnostico.append("Pressao de condensacao baixa")
+    probabilidades["Baixa carga refrigerante"] = 70
 
-# =========================
-# ANALISE DE EFICIENCIA DO CICLO
-# =========================
+# =============================
+# EFICIENCIA DO EVAPORADOR
+# =============================
 
-delta_temp_evap = t_suc_tubo - ts_suc
-delta_temp_cond = ts_liq - t_liq_tubo
+delta_evap = t_suc_tubo - ts_suc
 
-if delta_temp_evap < 2:
-    diagnostico.append("Transferencia de calor fraca no evaporador")
+if delta_evap < 2:
+    diagnostico.append("Baixa transferencia de calor no evaporador")
+    probabilidades["Fluxo de ar insuficiente"] = 60
 
-if delta_temp_cond < 2:
+# =============================
+# EFICIENCIA DO CONDENSADOR
+# =============================
+
+delta_cond = ts_liq - t_liq_tubo
+
+if delta_cond < 2:
     diagnostico.append("Condensacao ineficiente")
+    probabilidades["Ventilacao insuficiente"] = 55
 
-# =========================
-# CORRENTE DO COMPRESSOR
-# =========================
+# =============================
+# ANALISE DO COMPRESSOR
+# =============================
 
 if rla_comp > 0:
 
     carga_pct = (a_med / rla_comp) * 100
 
     if carga_pct > 120:
-        diagnostico.append("Compressor sobrecarregado - verificar alta pressao ou excesso de fluido")
+        diagnostico.append("Compressor sobrecarregado")
+        probabilidades["Alta pressao ou excesso refrigerante"] = 65
 
     elif carga_pct < 40:
         diagnostico.append("Compressor operando com carga muito baixa")
+        probabilidades["Baixa carga termica"] = 60
 
-# =========================
+# =============================
 # POSSIVEL COMPRESSOR FRACO
-# =========================
+# =============================
 
 if p_suc > 140 and p_liq < 300:
-    diagnostico.append("Possivel perda de compressao no compressor")
+    diagnostico.append("Possivel perda de compressao")
+    probabilidades["Compressor desgastado"] = 70
 
-# =========================
+# =============================
 # ANALISE DE TENSAO
-# =========================
+# =============================
 
 if abs(diff_v) > 10:
-    diagnostico.append("Variacao significativa de tensao detectada")
+    diagnostico.append("Variacao significativa de tensao")
+    probabilidades["Problema na rede eletrica"] = 80
 
-# =========================
+# =============================
+# DIAGNOSTICO ESPECIFICO INVERTER
+# =============================
+
+if tecnologia == "Inverter":
+
+    if sh_val < 2:
+        diagnostico.append("Controle inverter possivelmente modulando excessivamente")
+
+    if p_liq > 420:
+        diagnostico.append("Possivel limitacao de frequencia por alta pressao")
+
+# =============================
 # RESULTADO FINAL
-# =========================
+# =============================
 
 if len(diagnostico) == 0:
-    diagnostico.append("Sistema aparentemente operando dentro dos parametros")
+    diagnostico.append("Sistema operando dentro dos parametros")
 
 diag_ia = " | ".join(diagnostico)
+
+# =============================
+# PROBABILIDADE DE FALHAS
+# =============================
+
+if probabilidades:
+    ranking = sorted(probabilidades.items(), key=lambda x: x[1], reverse=True)
+    prob_txt = " | ".join([f"{f} ({p}%)" for f,p in ranking])
+else:
+    prob_txt = "Nenhuma falha critica detectada"
