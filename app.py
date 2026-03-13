@@ -299,34 +299,49 @@ with tab_hist:
                 st.warning("Selecione ao menos um relatório para excluir.")
     else:
         st.info("Nenhum atendimento registrado no histórico.")
-        # --- DIAGNOSTICO AUTOMATICO ---
+       # --- DIAGNOSTICO AUTOMATICO AVANCADO ---
 diagnostico = []
 
-# Superaquecimento
-if sh_val < 3:
-    diagnostico.append("Superaquecimento muito baixo - possivel excesso de fluido ou valvula de expansao aberta")
-elif sh_val > 15:
-    diagnostico.append("Superaquecimento elevado - possivel baixa carga de refrigerante ou restricao no sistema")
-else:
-    diagnostico.append("Superaquecimento dentro da faixa recomendada")
+# SUPERHEAT + SUBCOOLING
+if sh_val > 15 and sc_val < 3:
+    diagnostico.append("Baixa carga de refrigerante ou vazamento no sistema")
 
-# Subresfriamento
-if sc_val < 2:
-    diagnostico.append("Subresfriamento muito baixo - possivel baixa carga de refrigerante")
-elif sc_val > 12:
-    diagnostico.append("Subresfriamento elevado - possivel excesso de refrigerante ou restricao na linha liquida")
-else:
-    diagnostico.append("Subresfriamento dentro da faixa normal")
+elif sh_val < 3 and sc_val > 10:
+    diagnostico.append("Possivel excesso de refrigerante no sistema")
 
-# Corrente
+elif sh_val > 20 and sc_val > 10:
+    diagnostico.append("Restricao na linha liquida ou filtro secador obstruido")
+
+elif sh_val < 2 and sc_val < 2:
+    diagnostico.append("Possivel falha na valvula de expansao ou sensor de temperatura")
+
+elif 5 <= sh_val <= 12 and 5 <= sc_val <= 10:
+    diagnostico.append("Ciclo frigorifico operando dentro da faixa recomendada")
+
+# PRESSAO DE SUCCAO
+if p_suc < 90:
+    diagnostico.append("Pressao de succao baixa - verificar evaporador sujo, baixa carga ou restricao")
+
+elif p_suc > 150:
+    diagnostico.append("Pressao de succao elevada - possivel excesso de carga ou retorno de liquido")
+
+# PRESSAO DE LIQUIDO
+if p_liq < 250:
+    diagnostico.append("Pressao de condensacao baixa - verificar carga de refrigerante")
+
+elif p_liq > 420:
+    diagnostico.append("Pressao de condensacao elevada - verificar condensador sujo ou ventilacao")
+
+# CORRENTE DO COMPRESSOR
 if a_med > rla_comp and rla_comp > 0:
-    diagnostico.append("Corrente acima da nominal - verificar compressor ou carga elevada")
+    diagnostico.append("Corrente acima da nominal - verificar sobrecarga ou problema mecanico no compressor")
+
 elif a_med < (rla_comp * 0.5) and rla_comp > 0:
-    diagnostico.append("Corrente muito baixa - possivel baixa carga termica ou falta de refrigerante")
+    diagnostico.append("Corrente muito baixa - possivel baixa carga termica ou refrigerante insuficiente")
 
-# Tensão
+# TENSAO
 if abs(diff_v) > 10:
-    diagnostico.append("Variacao significativa de tensao detectada na rede")
+    diagnostico.append("Variacao significativa de tensao detectada na rede eletrica")
 
-# Resultado final
+# RESULTADO FINAL
 diag_ia = " | ".join(diagnostico)
