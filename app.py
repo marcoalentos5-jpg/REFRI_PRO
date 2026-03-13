@@ -299,6 +299,37 @@ with tab_hist:
                 st.warning("Selecione ao menos um relatório para excluir.")
     else:
         st.info("Nenhum atendimento registrado no histórico.")
+
+# =============================
+# PROTECAO CONTRA ERROS DE VALORES
+# =============================
+
+def seguro(v):
+    try:
+        if v is None:
+            return 0
+        return float(v)
+    except:
+        return 0
+
+
+sh_val = seguro(sh_val)
+sc_val = seguro(sc_val)
+
+p_suc = seguro(p_suc)
+p_liq = seguro(p_liq)
+
+t_suc_tubo = seguro(t_suc_tubo)
+ts_suc = seguro(ts_suc)
+
+t_liq_tubo = seguro(t_liq_tubo)
+ts_liq = seguro(ts_liq)
+
+a_med = seguro(a_med)
+rla_comp = seguro(rla_comp)
+
+diff_v = seguro(diff_v)
+
     # --- DIAGNOSTICO HVAC INTELIGENTE V3 ---
 diagnostico = []
 probabilidades = {}
