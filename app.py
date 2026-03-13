@@ -76,40 +76,19 @@ def clean(txt):
     for old, new in replacements.items(): res = res.replace(old, new)
     return res.encode('ascii', 'ignore').decode('ascii')
 
-# --- 3. CLASSE PDF (LAYOUT BLOQUEADO) ---
-class PDF(FPDF):
-    def header(self):
-        self.set_fill_color(30, 144, 255)
-        self.rect(0, 0, 210, 35, 'F')
-        self.set_font('Arial', 'B', 18)
-        self.set_text_color(255, 255, 255)
-        self.cell(0, 15, 'MPN | ENGENHARIA & DIAGNOSTICO', 0, 1, 'C')
-        self.set_font('Arial', 'I', 10)
-        self.cell(0, 5, 'Relatorio Tecnico de Manutencao e Performance', 0, 1, 'C')
-        self.ln(10)
-
-# --- 4. INTERFACE (ESTRUTURA BLOQUEADA) ---
+# --- 3. INTERFACE (ESTRUTURA BLOQUEADA) ---
 st.title("❄️ MPN | Engenharia & Diagnóstico")
 tab_cad, tab_ele, tab_termo, tab_diag, tab_hist = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico", "📜 Histórico"])
 
 with tab_cad:
     st.subheader("👤 Identificação e Contato")
     c1, c2, c3, c4, c5, c6 = st.columns([2.5, 1.2, 1.4, 1.0, 1.0, 1.0])
-    cliente = c1.text_input("Cliente/Empresa", key="f_cli")
-    doc_cliente = c2.text_input("CPF/CNPJ", key="f_doc")
+    cliente, doc_cliente = c1.text_input("Cliente/Empresa", key="f_cli"), c2.text_input("CPF/CNPJ", key="f_doc")
     data_visita = c3.date_input("📅 DATA DA VISITA", value=date.today(), format="DD/MM/YYYY", key="f_date")
-    whatsapp = c4.text_input("🟢 WhatsApp", value="21980264217", key="f_wpp")
-    celular = c5.text_input("📱 Celular", key="f_cel")
-    tel_residencial = c6.text_input("📞 Fixo", key="f_fix")
+    whatsapp, celular, tel_residencial = c4.text_input("🟢 WhatsApp", value="21980264217", key="f_wpp"), c5.text_input("📱 Celular", key="f_cel"), c6.text_input("📞 Fixo", key="f_fix")
     
     e1, e2, e3, e4, e5, e6, e7 = st.columns([0.6, 1.5, 0.4, 0.6, 1.0, 0.8, 1.5])
-    tipo_logr = e1.selectbox("Tipo", ["Rua", "Av.", "Trav.", "Alam.", "Estr.", "Rod.", "Pça."], key="f_tlog")
-    nome_logr = e2.text_input("Logradouro", key="f_nlog")
-    numero = e3.text_input("Nº", key="f_num")
-    complemento = e4.text_input("Comp.", key="f_comp")
-    bairro = e5.text_input("Bairro", key="f_bai")
-    cep = e6.text_input("CEP", key="f_cep")
-    email_cli = e7.text_input("✉️ E-mail", key="f_mail")
+    tipo_logr, nome_logr, numero, complemento, bairro, cep, email_cli = e1.selectbox("Tipo", ["Rua", "Av.", "Trav.", "Alam.", "Estr.", "Rod.", "Pça."], key="f_tlog"), e2.text_input("Logradouro", key="f_nlog"), e3.text_input("Nº", key="f_num"), e4.text_input("Comp.", key="f_comp"), e5.text_input("Bairro", key="f_bai"), e6.text_input("CEP", key="f_cep"), e7.text_input("✉️ E-mail", key="f_mail")
     
     st.markdown("---")
     st.subheader("⚙️ Dados do Equipamento")
@@ -170,41 +149,153 @@ with tab_termo:
 
 with tab_diag:
     col_prob, col_obs = st.columns(2)
-    p_sel = []
     with col_prob:
         st.subheader("⚠️ Problemas Encontrados")
         pi1, pi2 = st.columns(2)
+        p_sel = []
         opcoes = ["Vazamento de Fluido", "Baixa Carga de Fluido", "Excesso de Fluido", "Ar/Incondensaveis no Ciclo", "Obstrucao Dispositivo Expansao", "Linha de Liquido Congelando", "Colmeia Congelando", "Filtro Secador Obstruido", "Compressor Sem Compressao", "Falha na Ventilacao", "Falha na Placa Inverter", "Instabilidade na Rede Eletrica", "Evaporadora Pingando", "Linha de Descarga Congelando"]
         for i, opt in enumerate(opcoes):
-            container = pi1 if i % 2 == 0 else pi2
-            if container.checkbox(opt, key=f"p_{i}"): p_sel.append(opt)
+            if i % 2 == 0:
+                if pi1.checkbox(opt): p_sel.append(opt)
+            else:
+                if pi2.checkbox(opt): p_sel.append(opt)
     with col_obs:
-        st.subheader("📝 Notas e Condutas")
-        medidas = st.text_area("Medidas Tomadas", key="f_med")
-        observacoes = st.text_area("Observações Adicionais", key="f_obs")
-
+        st.subheader("📝 Observações do Técnico")
+        obs_tecnico = st.text_area("", placeholder="Parecer técnico...", height=215, label_visibility="collapsed", key="obs_tec_diag")
     st.markdown("---")
-    if st.button("💾 SALVAR DADOS E GERAR RELATÓRIO", use_container_width=True):
-        endereco_full = f"{tipo_logr} {nome_logr}, {numero} - {complemento}, {bairro} - CEP: {cep}"
-        dados_final = (str(data_visita), cliente, doc_cliente, whatsapp, celular, tel_residencial, endereco_full, email_cli, fabricante, modelo_eq, serie_evap, linha, cap_digitada, serie_cond, tecnologia, fluido, loc_evap, tipo_eq, loc_cond, v_rede, v_med, a_med, rla_comp, lra_comp, p_suc, p_liq, sh_val, sc_val, ", ".join(p_sel), medidas, observacoes)
-        salvar_dados(dados_final)
-        
-        # --- GERAÇÃO DO PDF EM MEMÓRIA (BOTÃO DE DOWNLOAD) ---
-        pdf = PDF()
+    col_prop_ia, col_exec = st.columns(2)
+    with col_prop_ia:
+        st.subheader("🤖 Diagnóstico IA")
+        diag_ia = f"Análise Profunda: SH {sh_val}K | SC {sc_val}K. Sistema {tecnologia}."
+        st.info(diag_ia)
+        st.subheader("🔧 Medidas Propostas IA")
+        st.warning("1. Verificar estanqueidade e parâmetros nominais conforme manual.")
+    with col_exec:
+        st.subheader("📋 Medidas Executadas")
+        executadas_input = st.text_area("", placeholder="Descreva as medidas executadas...", key="exec_diag", height=200, label_visibility="collapsed")
+
+    if st.button("📄 Gerar Relatório Profissional"):
+        endereco_completo = f"{tipo_logr} {nome_logr}, {numero} {complemento} - {bairro} | CEP: {cep}"
+        prob_txt = ', '.join(p_sel) if p_sel else 'Nenhum'
+        dados_para_banco = (
+            str(data_visita), cliente, doc_cliente, whatsapp, celular, tel_residencial,
+            endereco_completo, email_cli, fabricante, modelo_eq, serie_evap, linha,
+            cap_digitada, serie_cond, tecnologia, fluido, loc_evap, tipo_eq, loc_cond,
+            v_rede, v_med, a_med, rla_comp, lra_comp, p_suc, p_liq, sh_val, sc_val,
+            prob_txt, executadas_input, obs_tecnico
+        )
+        salvar_dados(dados_para_banco)
+
+        pdf = FPDF()
         pdf.add_page()
-        pdf.set_font('Arial', 'B', 12)
-        pdf.cell(0, 10, f"CLIENTE: {clean(cliente)}", 0, 1)
-        pdf.set_font('Arial', '', 10)
-        pdf.cell(0, 10, f"Data: {data_visita} | Equipamento: {clean(fabricante)} {clean(modelo_eq)}", 0, 1)
-        pdf.multi_cell(0, 10, f"Diagnostico: {clean(', '.join(p_sel))}")
-        
-        pdf_output = pdf.output(dest='S').encode('latin-1')
-        st.download_button(label="📥 BAIXAR RELATÓRIO PDF", data=pdf_output, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf", use_container_width=True)
-        st.success("Dados salvos e relatório pronto!")
+        try: pdf.image("logo.png", 10, 8, 50)
+        except: pass
+        pdf.set_font("Arial", 'B', 20); pdf.set_text_color(0, 51, 102)
+        pdf.cell(190, 15, "Relatorio Tecnico", 0, 1, 'C'); pdf.ln(10)
+
+        # DESIGN DO RELATÓRIO (BLOQUEADO)
+        pdf.set_fill_color(230, 230, 230); pdf.set_font("Arial", 'B', 10)
+        pdf.cell(190, 7, " 1. IDENTIFICACAO DO CLIENTE E CONTATO", 1, 1, 'L', True)
+        pdf.set_font("Arial", '', 9); pdf.set_text_color(0)
+        pdf.cell(45, 6, clean(f"Data: {data_visita.strftime('%d/%m/%Y')}"), 1, 0)
+        pdf.cell(100, 6, clean(f"Cliente: {cliente}"), 1, 0)
+        pdf.cell(45, 6, clean(f"CPF/CNPJ: {doc_cliente}"), 1, 1)
+        pdf.cell(190, 6, clean(f"Endereco: {endereco_completo}"), 1, 1)
+        pdf.cell(63, 6, clean(f"Wpp: {whatsapp}"), 1, 0); pdf.cell(63, 6, clean(f"Cel: {celular}"), 1, 0); pdf.cell(64, 6, clean(f"Fixo: {tel_residencial}"), 1, 1)
+        pdf.cell(190, 6, clean(f"E-mail: {email_cli}"), 1, 1); pdf.ln(4)
+
+        pdf.set_font("Arial", 'B', 10); pdf.cell(190, 7, " 2. ESPECIFICACOES DO EQUIPAMENTO", 1, 1, 'L', True)
+        pdf.set_font("Arial", '', 9); pdf.cell(63, 6, clean(f"Marca: {fabricante}"), 1, 0); pdf.cell(63, 6, clean(f"Modelo: {modelo_eq}"), 1, 0); pdf.cell(64, 6, clean(f"Linha: {linha}"), 1, 1)
+        pdf.cell(63, 6, clean(f"Cap: {cap_digitada} BTU/h"), 1, 0); pdf.cell(63, 6, clean(f"Tec: {tecnologia}"), 1, 0); pdf.cell(64, 6, clean(f"Gas: {fluido}"), 1, 1)
+        pdf.cell(95, 6, clean(f"Sistema: {tipo_eq}"), 1, 0); pdf.cell(95, 6, clean(f"Local Evap: {loc_evap}"), 1, 1)
+        pdf.cell(95, 6, clean(f"Serie Evap: {serie_evap}"), 1, 0); pdf.cell(95, 6, clean(f"Local Cond: {loc_cond}"), 1, 1)
+        pdf.cell(190, 6, clean(f"Serie Cond: {serie_cond}"), 1, 1); pdf.ln(4)
+
+        pdf.set_font("Arial", 'B', 10); pdf.cell(190, 7, " 3. ANALISE TECNICA E PERFORMANCE", 1, 1, 'L', True)
+        pdf.set_font("Arial", '', 9); pdf.set_fill_color(240, 240, 240)
+        pdf.cell(38, 6, clean(f"Rede: {v_rede}V"), 1, 0)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(38, 6, clean(f"Med: {v_med}V"), 1, 0, True); pdf.set_font("Arial", '', 9)
+        pdf.cell(38, 6, clean(f"Dif: {diff_v}V"), 1, 0); pdf.cell(38, 6, clean(f"RLA: {rla_comp}A"), 1, 0); pdf.cell(38, 6, clean(f"LRA: {lra_comp}A"), 1, 1)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(95, 6, clean(f"Corrente Medida: {a_med} A"), 1, 0, True); pdf.set_font("Arial", '', 9)
+        pdf.cell(95, 6, clean(f"Diferenca Corrente: {diff_a} A"), 1, 1)
+        pdf.cell(63, 6, clean(f"P-Suc: {p_suc} PSI"), 1, 0)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(63, 6, clean(f"T-Sat Suc: {ts_suc}C"), 1, 0, True); pdf.set_font("Arial", '', 9)
+        pdf.cell(64, 6, clean(f"T-Tubo Suc: {t_suc_tubo}C"), 1, 1)
+        pdf.cell(63, 6, clean(f"P-Liq: {p_liq} PSI"), 1, 0)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(63, 6, clean(f"T-Sat Liq: {ts_liq}C"), 1, 0, True); pdf.set_font("Arial", '', 9)
+        pdf.cell(64, 6, clean(f"T-Tubo Liq: {t_liq_tubo}C"), 1, 1)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(95, 7, clean(f"SUPERAQUECIMENTO (SH): {sh_val} K"), 1, 0); pdf.cell(95, 7, clean(f"SUBRESFRIAMENTO (SC): {sc_val} K"), 1, 1); pdf.ln(4)
+
+        pdf.set_font("Arial", 'B', 10); pdf.cell(190, 7, " 4. DIAGNOSTICO E PARECER FINAL", 1, 1, 'L', True)
+        pdf.set_font("Arial", '', 9)
+        pdf.set_font("Arial", 'B', 9); pdf.cell(190, 6, clean("Problemas Encontrados:"), "LTR", 1); pdf.set_font("Arial", '', 9)
+        pdf.multi_cell(190, 6, clean(prob_txt), "LRB")
+        pdf.set_font("Arial", 'B', 9); pdf.cell(190, 6, clean("Medidas Executadas pelo Tecnico:"), "LTR", 1); pdf.set_font("Arial", '', 9)
+        pdf.multi_cell(190, 6, clean(executadas_input if executadas_input else "Nenhuma medida descrita"), "LRB")
+        pdf.set_font("Arial", 'B', 9); pdf.cell(190, 6, clean("Parecer Tecnico e Observacoes:"), "LTR", 1); pdf.set_font("Arial", '', 9)
+        pdf.multi_cell(190, 6, clean(obs_tecnico if obs_tecnico else "Sem observacoes adicionais"), "LRB")
+
+        pdf.ln(25); y_pos = pdf.get_y(); pdf.line(20, y_pos, 90, y_pos); pdf.line(120, y_pos, 190, y_pos)
+        pdf.set_xy(20, y_pos + 1); pdf.set_font("Arial", 'B', 8); pdf.cell(70, 4, "Marcos Alexandre Almeida do Nascimento", 0, 1, 'C')
+        pdf.set_x(20); pdf.set_font("Arial", '', 8); pdf.cell(70, 4, "CNPJ 51.274.762/0001-17", 0, 1, 'C')
+        pdf.set_xy(120, y_pos + 1); pdf.set_font("Arial", 'B', 8); pdf.cell(70, 4, clean(f"{cliente}"), 0, 1, 'C')
+        pdf.set_x(120); pdf.set_font("Arial", '', 8); pdf.cell(70, 4, "Cliente", 0, 1, 'C')
+
+        pdf_bytes = pdf.output(dest='S').encode('latin-1', 'ignore')
+        st.download_button("📥 Baixar Relatorio PDF", data=pdf_bytes, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
+        st.toast("✅ Relatório gerado com sucesso!")
 
 with tab_hist:
     st.subheader("📜 Histórico de Atendimentos")
     conn = sqlite3.connect('banco_dados.db')
-    df = pd.read_sql_query("SELECT id, data_visita, cliente, modelo, fluido FROM atendimentos ORDER BY id DESC", conn)
+    query = "SELECT id, data_visita, cliente, doc_cliente, marca, modelo, tecnologia, sh, sc FROM atendimentos ORDER BY id DESC"
+    df = pd.read_sql_query(query, conn)
     conn.close()
-    st.dataframe(df, use_container_width=True)
+    
+    if not df.empty:
+        df['data_visita'] = pd.to_datetime(df['data_visita']).dt.date
+        f_col1, f_col2 = st.columns(2)
+        with f_col1: 
+            busca = st.text_input("🔍 Pesquisar por Cliente", placeholder="Ex: Joao (sem acento funciona)")
+        with f_col2: 
+            periodo = st.date_input("📅 Filtrar por Período", 
+                                    value=[df['data_visita'].min(), df['data_visita'].max()],
+                                    format="DD/MM/YYYY") # DATA BRASILEIRA NO FILTRO
+        
+        # Filtro de Busca (Insensível a acentos)
+        if busca:
+            df = df[df['cliente'].apply(lambda x: remover_acentos(busca) in remover_acentos(x))]
+            
+        if len(periodo) == 2:
+            df = df[(df['data_visita'] >= periodo[0]) & (df['data_visita'] <= periodo[1])]
+        
+        df.insert(0, "Selecionar", False)
+        
+        df_editado = st.data_editor(
+            df, 
+            column_config={
+                "Selecionar": st.column_config.CheckboxColumn("Excluir?", help="Marque para deletar", default=False),
+                "data_visita": st.column_config.DateColumn("Data", format="DD/MM/YYYY"), # DATA BRASILEIRA NA TABELA
+                "id": None 
+            },
+            disabled=["data_visita", "cliente", "doc_cliente", "marca", "modelo", "tecnologia", "sh", "sc"],
+            hide_index=True,
+            use_container_width=True,
+            key="historico_editor"
+        )
+        
+        if st.button("🗑️ Excluir Relatório"):
+            ids_para_excluir = df_editado[df_editado["Selecionar"] == True]["id"].tolist()
+            if ids_para_excluir:
+                conn = sqlite3.connect('banco_dados.db')
+                c = conn.cursor()
+                for id_del in ids_para_excluir:
+                    c.execute("DELETE FROM atendimentos WHERE id = ?", (id_del,))
+                conn.commit()
+                conn.close()
+                st.success(f"{len(ids_para_excluir)} registro(s) removido(s)!")
+                st.rerun()
+            else:
+                st.warning("Selecione ao menos um relatório para excluir.")
+    else:
+        st.info("Nenhum atendimento registrado no histórico.")
