@@ -299,3 +299,34 @@ with tab_hist:
                 st.warning("Selecione ao menos um relatório para excluir.")
     else:
         st.info("Nenhum atendimento registrado no histórico.")
+        # --- DIAGNOSTICO AUTOMATICO ---
+diagnostico = []
+
+# Superaquecimento
+if sh_val < 3:
+    diagnostico.append("Superaquecimento muito baixo - possivel excesso de fluido ou valvula de expansao aberta")
+elif sh_val > 15:
+    diagnostico.append("Superaquecimento elevado - possivel baixa carga de refrigerante ou restricao no sistema")
+else:
+    diagnostico.append("Superaquecimento dentro da faixa recomendada")
+
+# Subresfriamento
+if sc_val < 2:
+    diagnostico.append("Subresfriamento muito baixo - possivel baixa carga de refrigerante")
+elif sc_val > 12:
+    diagnostico.append("Subresfriamento elevado - possivel excesso de refrigerante ou restricao na linha liquida")
+else:
+    diagnostico.append("Subresfriamento dentro da faixa normal")
+
+# Corrente
+if a_med > rla_comp and rla_comp > 0:
+    diagnostico.append("Corrente acima da nominal - verificar compressor ou carga elevada")
+elif a_med < (rla_comp * 0.5) and rla_comp > 0:
+    diagnostico.append("Corrente muito baixa - possivel baixa carga termica ou falta de refrigerante")
+
+# Tensão
+if abs(diff_v) > 10:
+    diagnostico.append("Variacao significativa de tensao detectada na rede")
+
+# Resultado final
+diag_ia = " | ".join(diagnostico)
