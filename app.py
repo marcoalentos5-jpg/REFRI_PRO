@@ -226,9 +226,10 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 9); pdf.cell(190, 6, clean("Parecer Tecnico e Observacoes:"), "LTR", 1); pdf.set_font("Arial", '', 9)
         pdf.multi_cell(190, 6, clean(obs_tecnico if obs_tecnico else "Sem observacoes adicionais"), "LRB")
 
+        # ASSINATURAS (CNPJ CORRIGIDO)
         pdf.ln(25); y_pos = pdf.get_y(); pdf.line(20, y_pos, 90, y_pos); pdf.line(120, y_pos, 190, y_pos)
         pdf.set_xy(20, y_pos + 1); pdf.set_font("Arial", 'B', 8); pdf.cell(70, 4, "Marcos Alexandre Almeida do Nascimento", 0, 1, 'C')
-        pdf.set_x(20); pdf.set_font("Arial", '', 8); pdf.cell(70, 4, "CNPJ 1.274.762/0001-17", 0, 1, 'C')
+        pdf.set_x(20); pdf.set_font("Arial", '', 8); pdf.cell(70, 4, "CNPJ 51.274.762/0001-17", 0, 1, 'C')
         pdf.set_xy(120, y_pos + 1); pdf.set_font("Arial", 'B', 8); pdf.cell(70, 4, clean(f"{cliente}"), 0, 1, 'C')
         pdf.set_x(120); pdf.set_font("Arial", '', 8); pdf.cell(70, 4, "Cliente", 0, 1, 'C')
 
@@ -244,20 +245,13 @@ with tab_hist:
     conn.close()
     
     if not df.empty:
-        # CONVERSÃO PARA DATA PARA FILTRO PRECISO
         df['data_visita'] = pd.to_datetime(df['data_visita']).dt.date
-        
         f_col1, f_col2 = st.columns(2)
-        with f_col1:
-            busca = st.text_input("🔍 Pesquisar por Cliente", placeholder="Digite o nome...")
-        with f_col2:
-            periodo = st.date_input("📅 Filtrar por Período", value=[df['data_visita'].min(), df['data_visita'].max()])
+        with f_col1: busca = st.text_input("🔍 Pesquisar por Cliente", placeholder="Digite o nome...")
+        with f_col2: periodo = st.date_input("📅 Filtrar por Período", value=[df['data_visita'].min(), df['data_visita'].max()])
         
-        # APLICAÇÃO DOS FILTROS
-        if busca:
-            df = df[df['cliente'].str.contains(busca, case=False, na=False)]
-        if len(periodo) == 2:
-            df = df[(df['data_visita'] >= periodo[0]) & (df['data_visita'] <= periodo[1])]
+        if busca: df = df[df['cliente'].str.contains(busca, case=False, na=False)]
+        if len(periodo) == 2: df = df[(df['data_visita'] >= periodo[0]) & (df['data_visita'] <= periodo[1])]
             
         st.dataframe(df, use_container_width=True)
     else:
