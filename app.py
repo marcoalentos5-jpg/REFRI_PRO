@@ -325,100 +325,114 @@ rla_comp = seguro(rla_comp)
 diff_v = seguro(diff_v)
 
 # =============================
-# MOTOR DE DIAGNOSTICO HVAC (INICIALIZAÇÃO)
+# MOTOR DE DIAGNOSTICO HVAC (ORGANIZADO)
 # =============================
 
 diagnostico = []
 probabilidades = {}
 
 def registrar(msg, falha=None, prob=0):
+    # Evita mensagens repetidas na lista
     if msg not in diagnostico:
         diagnostico.append(msg)
     if falha:
-        probabilidades[falha] = prob
+        # Mantém apenas a maior probabilidade se a falha for registrada mais de uma vez
+        if falha in probabilidades:
+            probabilidades[falha] = max(probabilidades[falha], prob)
+        else:
+            probabilidades[falha] = prob
 
 # =============================
-# LOGICA DE PROCESSAMENTO (ANTES DA EXIBIÇÃO)
+# LOGICA DE PROCESSAMENTO (PRECISA)
 # =============================
 
-# EFICIENCIA EVAPORADOR
+# 1. EFICIENCIA DOS TROCADORES
 delta_evap = t_suc_tubo - ts_suc
 if delta_evap < 2:
-    registrar("Baixa transferencia de calor no evaporador", "Fluxo de ar insuficiente", 60)
+    registrar("Baixa troca térmica no Evaporador", "Sujeira ou Obstrução no Fluxo de Ar (Evap)", 60)
 
-# EFICIENCIA CONDENSADOR
 delta_cond = ts_liq - t_liq_tubo
 if delta_cond < 2:
-    registrar("Condensacao ineficiente", "Ventilacao insuficiente", 55)
+    registrar("Baixa troca térmica no Condensador", "Sujeira ou Má Ventilação (Cond)", 55)
 
-# COMPRESSOR
+# 2. ANÁLISE DO COMPRESSOR E CARGA
 if rla_comp > 0:
     carga_pct = (a_med / rla_comp) * 100
     if carga_pct > 120:
-        registrar("Compressor sobrecarregado", "Alta pressao ou excesso refrigerante", 65)
-    elif carga_pct < 40:
-        registrar("Compressor operando com carga muito baixa", "Baixa carga termica", 60)
+        registrar("Alta corrente detectada (Sobrecapacidate)", "Sobrecarga Elétrica ou Mecânica", 65)
+    elif carga_pct < 40 and carga_pct > 0:
+        registrar("Baixo consumo de corrente", "Operação em Baixa Carga Térmica", 40)
 
-# COMPRESSOR FRACO
+# 3. FALHAS CRÍTICAS DE COMPRESSÃO
 if p_suc > 140 and p_liq < 300:
-    registrar("Possivel perda de compressao", "Compressor desgastado", 70)
+    registrar("Pressões equalizadas/anormais", "Perda de Eficiência do Compressor", 75)
 
-# TENSAO ELETRICA
+# 4. REDE ELÉTRICA
 if abs(diff_v) > 10:
-    registrar("Variacao significativa de tensao", "Problema na rede eletrica", 80)
+    registrar("Instabilidade na tensão de alimentação", "Falha na Rede Elétrica", 80)
 
-# INVERTER
+# 5. AJUSTES PARA TECNOLOGIA INVERTER
 if tecnologia == "Inverter":
     if sh_val < 2:
-        registrar("Controle inverter possivelmente modulando excessivamente", "Ajuste de controle do compressor", 40)
+        registrar("Superaquecimento muito baixo", "Instabilidade na Expansão/Inverter", 45)
     if p_liq > 420:
-        registrar("Possivel limitacao de frequencia por alta pressao", "Alta pressao de condensacao", 50)
+        registrar("Pressão de alta crítica", "Limitação de Frequência por Alta Pressão", 50)
 
-# CALCULO EFICIENCIA (COP APROX)
+# 6. CÁLCULO DE EFICIÊNCIA (COP)
 try:
     cop_aprox = round((delta_cond + 1) / (delta_evap + 1), 2)
     if cop_aprox < 1.5:
-        registrar("Baixa eficiencia energetica do sistema")
-    elif cop_aprox > 4:
-        registrar("Sistema operando com alta eficiencia")
+        registrar("Desempenho energético abaixo do esperado")
+    elif cop_aprox > 4.5:
+        registrar("Desempenho energético otimizado")
 except:
     cop_aprox = 0
 
 # =============================
-# CONSOLIDACAO DOS DADOS
+# CONSOLIDACAO DOS TEXTOS (SEM ALTERAR LAYOUT)
 # =============================
 
 if not diagnostico:
-    diagnostico.append("Sistema operando dentro dos parametros")
+    diagnostico.append("Sistema operando dentro dos parâmetros ideais")
 
 diag_ia = " | ".join(diagnostico)
 
 if probabilidades:
     ranking = sorted(probabilidades.items(), key=lambda x: x[1], reverse=True)
-    prob_txt = " | ".join([f"{f} ({p}%)" for f, p in ranking])
+    prob_txt = " | ".join([f"{f}: {p}%" for f, p in ranking])
 else:
-    prob_txt = "Nenhuma falha critica detectada"
+    prob_txt = "Nenhuma anomalia crítica identificada"
 
-# CONTRAMEDIDAS
+# CONTRAMEDIDAS BASEADAS NAS FALHAS
 contramedidas = []
 for falha in probabilidades:
     f_lower = falha.lower()
-    if "refrigerante" in f_lower: contramedidas.append("Verificar carga de refrigerante e possiveis vazamentos")
-    if "condensador" in f_lower: contramedidas.append("Limpar condensador e verificar ventilacao")
-    if "evaporador" in f_lower: contramedidas.append("Limpar evaporador e verificar fluxo de ar")
-    if "compressor" in f_lower: contramedidas.append("Verificar eficiencia mecanica do compressor")
-    if "rede eletrica" in f_lower: contramedidas.append("Verificar tensao da rede e conexoes eletricas")
+    if "refrigerante" in f_lower: contramedidas.append("Checar carga de fluido e estanqueidade")
+    if "cond" in f_lower: contramedidas.append("Limpeza química do condensador e teste do ventilador")
+    if "evap" in f_lower: contramedidas.append("Limpeza de filtros/serpentina e checagem de duto")
+    if "compressor" in f_lower: contramedidas.append("Avaliar válvulas internas e isolamento do motor")
+    if "eletrica" in f_lower: contramedidas.append("Revisar conexões e medir tensão de entrada")
 
 if not contramedidas:
-    contramedidas.append("Nenhuma acao corretiva necessaria no momento")
+    contramedidas.append("Manter plano de manutenção preventiva")
 
-contramedidas_txt = " | ".join(contramedidas)
+contramedidas_txt = " | ".join(list(set(contramedidas))) # Remove duplicatas nas contramedidas
 
-relatorio_txt = f"""RELATORIO TECNICO HVAC
-Diagnostico IA: {diag_ia}
-Probabilidade de Falhas: {prob_txt}
-Contramedidas Recomendadas: {contramedidas_txt}
-Eficiencia do Sistema (COP aproximado): {cop_aprox}"""
+relatorio_txt = f"""
+RELATORIO TECNICO HVAC
+
+Diagnostico IA:
+{diag_ia}
+
+Probabilidade de Falhas:
+{prob_txt}
+
+Contramedidas Recomendadas:
+{contramedidas_txt}
+
+Eficiencia do Sistema (COP aproximado):
+{cop_aprox}
+"""
 
 # =============================
 # EXIBICAO NA ABA DIAGNOSTICO (LAYOUT BLOQUEADO)
@@ -426,14 +440,19 @@ Eficiencia do Sistema (COP aproximado): {cop_aprox}"""
 
 st.header("DIAGNÓSTICO")
 st.subheader("🤖 Diagnóstico IA")
+
 st.write("### 🔎 Análise do Sistema")
 st.write(diag_ia)
+
 st.write("### 📊 Probabilidade de Falhas")
 st.write(prob_txt)
+
 st.write("### 🛠️ Contramedidas Recomendadas")
 st.write(contramedidas_txt)
+
 st.write("### ⚡ Eficiência do Sistema (COP aproximado)")
 st.write(cop_aprox)
+
 st.write("### 📄 Relatório Técnico")
 
 st.text_area(
