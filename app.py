@@ -1,3 +1,4 @@
+import streamlit.components.v1 as components
 import streamlit as st
 import numpy as np
 from datetime import date, datetime
@@ -333,6 +334,60 @@ diff_v = seguro(diff_v)
    # =============================
 # MOTOR DE DIAGNOSTICO HVAC
 # =============================
+
+# =============================
+# RELATORIO TECNICO
+# =============================
+
+relatorio_txt = f"""
+RELATORIO TECNICO HVAC
+
+Diagnostico IA:
+{diag_ia}
+
+Probabilidade de Falhas:
+{prob_txt}
+
+Contramedidas Recomendadas:
+{contramedidas_txt}
+
+Eficiencia do Sistema (COP aproximado):
+{cop_aprox}
+"""
+
+st.header("DIAGNÓSTICO")
+
+st.subheader("🤖 Diagnóstico IA")
+
+st.write("### 🔎 Análise do Sistema")
+st.write(diag_ia)
+
+st.write("### 📊 Probabilidade de Falhas")
+st.write(prob_txt)
+
+st.write("### 🛠️ Contramedidas Recomendadas")
+st.write(contramedidas_txt)
+
+st.write("### ⚡ Eficiência do Sistema (COP aproximado)")
+st.write(cop_aprox)
+
+st.write("### 📄 Relatório Técnico")
+
+st.text_area(
+    "Conteúdo do Relatório",
+    relatorio_txt,
+    height=220
+)
+
+st.markdown(
+    f"""
+<button onclick="navigator.clipboard.writeText(`{relatorio_txt}`)"
+style="padding:10px;font-size:16px;border-radius:6px;">
+📋 Copiar Relatório
+</button>
+""",
+    unsafe_allow_html=True
+)
 st.write("### 📄 Relatório Técnico")
 
 st.text_area(
