@@ -6,11 +6,10 @@ import io
 import sqlite3
 import pandas as pd
 
-# --- 0. BANCO DE DADOS (CRIAÇÃO E ALIMENTAÇÃO TÉCNICA) ---
+# --- 0. BANCO DE DADOS (CONFIGURAÇÃO INVISÍVEL E CONHECIMENTO TÉCNICO) ---
 def init_db():
     conn = sqlite3.connect('banco_dados.db')
     c = conn.cursor()
-    # Tabela de atendimentos original
     c.execute('''CREATE TABLE IF NOT EXISTS atendimentos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         data_visita TEXT, cliente TEXT, doc_cliente TEXT, whatsapp TEXT, celular TEXT, fixo TEXT,
@@ -19,30 +18,19 @@ def init_db():
         sistema TEXT, loc_cond TEXT, v_rede REAL, v_med REAL, a_med REAL, rla REAL, lra REAL,
         p_suc REAL, p_liq REAL, sh REAL, sc REAL, problemas TEXT, medidas TEXT, observacoes TEXT
     )''')
-    
-    # Tabela de conhecimento técnico (Manuais e Peritos)
+    # Tabela de conhecimento para a IA consultar
     c.execute('''CREATE TABLE IF NOT EXISTS base_conhecimento (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        fabricante TEXT, modelo TEXT, tipo TEXT, codigo_erro TEXT, descricao TEXT
+        id INTEGER PRIMARY KEY AUTOINCREMENT, fabricante TEXT, tipo TEXT, descricao TEXT
     )''')
-    
-    # ALIMENTAÇÃO AUTOMÁTICA DE DADOS TÉCNICOS (Executa apenas se estiver vazio)
+    # Alimentação inicial se vazio
     c.execute("SELECT COUNT(*) FROM base_conhecimento")
     if c.fetchone()[0] == 0:
-        dados_tecnicos = [
-            ('SAMSUNG', 'WindFree', 'Erro', 'E1 21', 'Falha de comunicacao. Verificar cabos de sinal e bornes.'),
-            ('LG', 'Dual Inverter', 'Erro', 'CH05', 'Falha de comunicacao serial. Checar aterramento e continuidade.'),
-            ('DAIKIN', 'Inverter', 'Erro', 'U4', 'Erro de transmissao entre unidades. Verificar fiação.'),
-            ('MIDEA', 'Liva', 'Erro', 'EC', 'Deteccao de vazamento de fluido ou falha no sensor de pressao.'),
-            ('HITACHI', 'Utopia', 'Erro', '01', 'Ativacao do dispositivo de protecao da unidade interna.'),
-            ('TCL', 'Elite', 'Erro', 'E0', 'Erro de comunicacao entre interna e externa.'),
-            ('UNIVERSAL', 'Todos', 'Diagnóstico', 'SH Alto', 'SH acima de 12K indica falta de fluido ou restricao no dispositivo de expansao.'),
-            ('UNIVERSAL', 'Todos', 'Diagnóstico', 'SH Baixo', 'SH abaixo de 4K indica excesso de fluido ou baixa carga térmica (risco de golpe de líquido).'),
-            ('UNIVERSAL', 'Inverter', 'Perito', 'Sensores', 'Sensores de degelo costumam apresentar falha intermitente. Medir kOhm a 25C.'),
-            ('UNIVERSAL', 'Todos', 'Perito', 'Compressor', 'Verificar resistencia isolacao (massa) com megohmetro. Valor ideal > 100 Mohm.')
+        dados = [
+            ('SAMSUNG', 'ERRO', 'E1 21: Falha de comunicação. Verificar cabos e bornes.'),
+            ('LG', 'ERRO', 'CH05: Falha de comunicação serial. Checar aterramento.'),
+            ('UNIVERSAL', 'PERITO', 'SH ideal entre 5K e 8K. Acima de 12K indica falta de gás.')
         ]
-        c.executemany("INSERT INTO base_conhecimento (fabricante, modelo, tipo, codigo_erro, descricao) VALUES (?,?,?,?,?)", dados_tecnicos)
-    
+        c.executemany("INSERT INTO base_conhecimento (fabricante, tipo, descricao) VALUES (?,?,?)", dados)
     conn.commit()
     conn.close()
 
@@ -64,9 +52,8 @@ def gerar_pdf(dados):
     pdf.ln(10)
     pdf.set_font("Arial", 'B', 12)
     pdf.cell(200, 10, f"Cliente: {dados['cliente']}", ln=True)
-    pdf.cell(200, 10, f"Equipamento: {dados['marca']} - {dados['modelo']}", ln=True)
+    pdf.cell(200, 10, f"Marca/Modelo: {dados['marca']} {dados['modelo']}", ln=True)
     pdf.ln(5)
-    pdf.set_font("Arial", 'B', 11)
     pdf.cell(200, 10, "DIAGNOSTICO DA IA:", ln=True)
     pdf.set_font("Arial", '', 10)
     pdf.multi_cell(0, 7, dados['diag_ia'])
@@ -77,11 +64,11 @@ def gerar_pdf(dados):
     pdf.multi_cell(0, 7, dados['obs'])
     return pdf.output(dest='S').encode('latin-1', 'ignore')
 
-# --- 2. CONFIGURAÇÃO DA PÁGINA (ESTRUTURA ORIGINAL) ---
+# --- 2. CONFIGURAÇÃO DA PÁGINA (BLOQUEADA) ---
 st.set_page_config(page_title="MPN | Engenharia Pro", layout="wide", page_icon="❄️")
 st.markdown("<style>.stTabs [data-baseweb='tab-list'] button [data-testid='stMarkdownContainer'] p {font-size: 20px; font-weight: bold;}</style>", unsafe_allow_html=True)
 
-# --- 3. MOTOR TERMODINÂMICO ---
+# --- 3. MOTOR TERMODINÂMICO E UTILITÁRIOS ---
 def get_tsat_global(psig, gas):
     ancoras = {
         "R-410A": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 550.0, 600.0], "t": [-51.0, -17.02, -0.29, 11.55, 20.93, 28.84, 35.58, 41.74, 47.3, 52.1, 56.59, 60.7, 64.59]},
@@ -94,6 +81,7 @@ def get_tsat_global(psig, gas):
     except: return 0.0
 
 # --- 4. INTERFACE DO APP ---
+st.title("❄️ MPN | Engenharia & Diagnóstico")
 tab_cad, tab_ele, tab_termo, tab_diag, tab_hist = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico", "📜 Histórico"])
 
 with tab_cad:
@@ -113,7 +101,7 @@ with tab_cad:
 with tab_ele:
     st.subheader("⚡ Parâmetros Elétricos")
     el1, el2 = st.columns(2)
-    v_med, a_med = el1.number_input("Tensão Medida (V)", value=218.0), el2.number_input("Corrente Medida (A)", value=0.0)
+    v_med, a_med = el1.number_input("Tensão (V)", value=218.0), el2.number_input("Corrente (A)", value=0.0)
 
 with tab_termo:
     st.subheader("🌡️ Ciclo Frigorífico")
@@ -126,7 +114,10 @@ with tab_diag:
         st.subheader("📝 Observações do Técnico")
         obs_tecnico = st.text_area("", placeholder="Parecer técnico...", height=150)
         st.markdown("### 🤖 Diagnóstico da IA")
-        diag_ia = f"Análise: Superaquecimento em {sh_val}K."
+        # Lógica de diagnóstico cruzado
+        diag_ia = "Análise: Sistema operando em condições normais."
+        if sh_val > 12: diag_ia = f"Alerta: Superaquecimento elevado ({sh_val}K). Possível falta de fluido ou restrição."
+        elif sh_val < 4: diag_ia = f"Alerta: Superaquecimento baixo ({sh_val}K). Risco de retorno de líquido."
         st.info(diag_ia)
         if st.button("🖨️ Gerar Relatório"):
             pdf_bytes = gerar_pdf({'cliente': cliente, 'marca': fabricante, 'modelo': modelo_eq, 'obs': obs_tecnico, 'diag_ia': diag_ia})
@@ -139,10 +130,10 @@ with tab_hist:
     if not df.empty:
         df['data_visita'] = pd.to_datetime(df['data_visita']).dt.strftime('%d/%m/%Y')
         for idx, row in df.iterrows():
-            col1, col2 = st.columns([0.1, 0.9])
-            if col1.checkbox("", key=f"del_{row['id']}"):
+            c_del, c_inf = st.columns([0.1, 0.9])
+            if c_del.checkbox("", key=f"check_{row['id']}"):
                 if st.button(f"🗑️ Excluir ID {row['id']}", key=f"btn_{row['id']}"):
                     excluir_atendimento(row['id'])
                     st.rerun()
-            col2.write(f"**ID {row['id']}** | {row['data_visita']} | {row['cliente']} | {row['marca']} {row['modelo']}")
+            c_inf.write(f"**ID {row['id']}** | {row['data_visita']} | {row['cliente']} | {row['marca']} {row['modelo']}")
     conn.close()
