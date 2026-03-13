@@ -1,4 +1,3 @@
-import streamlit.components.v1 as components
 import streamlit as st
 import numpy as np
 from datetime import date, datetime
@@ -331,86 +330,19 @@ rla_comp = seguro(rla_comp)
 
 diff_v = seguro(diff_v)
 
-   # =============================
+
+# =============================
 # MOTOR DE DIAGNOSTICO HVAC
 # =============================
 
-# =============================
-# RELATORIO TECNICO
-# =============================
+diagnostico = []
+probabilidades = {}
 
-relatorio_txt = f"""
-RELATORIO TECNICO HVAC
 
-Diagnostico IA:
-{diag_ia}
-
-Probabilidade de Falhas:
-{prob_txt}
-
-Contramedidas Recomendadas:
-{contramedidas_txt}
-
-Eficiencia do Sistema (COP aproximado):
-{cop_aprox}
-"""
-
-st.header("DIAGNÓSTICO")
-
-st.subheader("🤖 Diagnóstico IA")
-
-st.write("### 🔎 Análise do Sistema")
-st.write(diag_ia)
-
-st.write("### 📊 Probabilidade de Falhas")
-st.write(prob_txt)
-
-st.write("### 🛠️ Contramedidas Recomendadas")
-st.write(contramedidas_txt)
-
-st.write("### ⚡ Eficiência do Sistema (COP aproximado)")
-st.write(cop_aprox)
-
-st.write("### 📄 Relatório Técnico")
-
-st.text_area(
-    "Conteúdo do Relatório",
-    relatorio_txt,
-    height=220
-)
-
-# =============================
-# BOTAO COPIAR RELATORIO
-# =============================
-
-st.markdown(
-f"""
-<button onclick="navigator.clipboard.writeText(`{relatorio_txt}`)"
-style="padding:10px;font-size:16px;border-radius:6px;">
-📋 Copiar Relatório
-</button>
-""",
-unsafe_allow_html=True
-)
-# =============================
-# TEXTO DO RELATÓRIO
-# =============================
-
-relatorio_txt = f"""
-RELATORIO TECNICO HVAC
-
-Diagnostico IA:
-{diag_ia}
-
-Probabilidade de Falhas:
-{prob_txt}
-
-Contramedidas Recomendadas:
-{contramedidas_txt}
-
-Eficiencia do Sistema (COP aproximado):
-{cop_aprox}
-"""
+def registrar(msg, falha=None, prob=0):
+    diagnostico.append(msg)
+    if falha:
+        probabilidades[falha] = prob
 
 
 # =============================
@@ -438,7 +370,7 @@ except:
 # RESULTADO FINAL DIAGNOSTICO
 # =============================
 
-if len(diagnostico) == 0:
+if not diagnostico:
     diagnostico.append("Sistema operando dentro dos parametros")
 
 diag_ia = " | ".join(diagnostico)
@@ -450,9 +382,39 @@ diag_ia = " | ".join(diagnostico)
 
 if probabilidades:
     ranking = sorted(probabilidades.items(), key=lambda x: x[1], reverse=True)
-    prob_txt = " | ".join([f"{f} ({p}%)" for f,p in ranking])
+    prob_txt = " | ".join([f"{f} ({p}%)" for f, p in ranking])
 else:
     prob_txt = "Nenhuma falha critica detectada"
+
+
+# =============================
+# CONTRAMEDIDAS AUTOMATICAS
+# =============================
+
+contramedidas = []
+
+for falha in probabilidades:
+
+    if "refrigerante" in falha.lower():
+        contramedidas.append("Verificar carga de refrigerante e possiveis vazamentos")
+
+    if "condensador" in falha.lower():
+        contramedidas.append("Limpar condensador e verificar ventilacao")
+
+    if "evaporador" in falha.lower():
+        contramedidas.append("Limpar evaporador e verificar fluxo de ar")
+
+    if "compressor" in falha.lower():
+        contramedidas.append("Verificar eficiencia mecanica do compressor")
+
+    if "rede eletrica" in falha.lower():
+        contramedidas.append("Verificar tensao da rede e conexoes eletricas")
+
+if not contramedidas:
+    contramedidas.append("Nenhuma acao corretiva necessaria no momento")
+
+contramedidas_txt = " | ".join(contramedidas)
+
 
 # =============================
 # RELATORIO TECNICO
@@ -473,6 +435,11 @@ Contramedidas Recomendadas:
 Eficiencia do Sistema (COP aproximado):
 {cop_aprox}
 """
+
+
+# =============================
+# EXIBICAO NA ABA DIAGNOSTICO
+# =============================
 
 st.header("DIAGNÓSTICO")
 
@@ -507,199 +474,6 @@ style="padding:10px;font-size:16px;border-radius:6px;">
 """,
 unsafe_allow_html=True
 )
-
-# =============================
-# CONTRAMEDIDAS AUTOMATICAS
-# =============================
-
-contramedidas = []
-
-for falha in probabilidades:
-
-    if "refrigerante" in falha.lower():
-        contramedidas.append("Verificar carga de refrigerante e possiveis vazamentos")
-
-    if "condensador" in falha.lower():
-        contramedidas.append("Limpar condensador e verificar ventilacao")
-
-    if "evaporador" in falha.lower():
-        contramedidas.append("Limpar evaporador e verificar fluxo de ar")
-
-    if "compressor" in falha.lower():
-        contramedidas.append("Verificar eficiencia mecanica do compressor")
-
-    if "rede eletrica" in falha.lower():
-        contramedidas.append("Verificar tensao da rede e conexoes eletricas")
-
-
-if not contramedidas:
-    contramedidas.append("Nenhuma acao corretiva necessaria no momento")
-
-contramedidas_txt = " | ".join(contramedidas)
-
-
-# =============================
-# EXIBICAO NA ABA DIAGNOSTICO
-# =============================
-
-st.header("DIAGNÓSTICO")
-
-st.subheader("🤖 Diagnóstico IA")
-
-st.write("### 🔎 Análise do Sistema")
-st.write(diag_ia)
-
-st.write("### 📊 Probabilidade de Falhas")
-st.write(prob_txt)
-
-st.write("### 🛠️ Contramedidas Recomendadas")
-st.write(contramedidas_txt)
-
-st.write("### ⚡ Eficiência do Sistema (COP aproximado)")
-st.write(cop_aprox)
-
-diagnostico = []
-probabilidades = {}
-
-# =============================
-# ANALISE POR FLUIDO REFRIGERANTE
-# =============================
-
-faixas_pressao = {
-
-    "R410A": {
-        "suc_min": 105,
-        "suc_max": 135,
-        "liq_min": 300,
-        "liq_max": 420
-    },
-
-    "R32": {
-        "suc_min": 95,
-        "suc_max": 125,
-        "liq_min": 280,
-        "liq_max": 400
-    },
-
-    "R22": {
-        "suc_min": 60,
-        "suc_max": 75,
-        "liq_min": 220,
-        "liq_max": 260
-    },
-
-    "R134a": {
-        "suc_min": 25,
-        "suc_max": 40,
-        "liq_min": 140,
-        "liq_max": 180
-    }
-
-}
-
-
-if fluido in faixas_pressao:
-
-    suc_min = faixas_pressao[fluido]["suc_min"]
-    suc_max = faixas_pressao[fluido]["suc_max"]
-
-    liq_min = faixas_pressao[fluido]["liq_min"]
-    liq_max = faixas_pressao[fluido]["liq_max"]
-
-    if p_suc < suc_min:
-        diagnostico.append("Pressao de succao abaixo da faixa ideal do refrigerante")
-        probabilidades["Baixa carga de refrigerante"] = 75
-
-    elif p_suc > suc_max:
-        diagnostico.append("Pressao de succao acima da faixa ideal")
-        probabilidades["Possivel retorno de liquido"] = 70
-
-    if p_liq > liq_max:
-        diagnostico.append("Pressao de condensacao acima da faixa do refrigerante")
-        probabilidades["Condensador sujo ou ventilacao insuficiente"] = 80
-
-    elif p_liq < liq_min:
-        diagnostico.append("Pressao de condensacao abaixo da faixa ideal")
-        probabilidades["Baixa carga de refrigerante"] = 70
-
-def registrar(msg, falha=None, prob=0):
-    diagnostico.append(msg)
-    if falha:
-        probabilidades[falha] = prob
-
-
-# =============================
-# ANALISE SUPERHEAT / SUBCOOL
-# =============================
-
-if sh_val > 15 and sc_val < 3:
-    registrar(
-        "Baixa carga de refrigerante ou vazamento",
-        "Vazamento de refrigerante",
-        80
-    )
-
-elif sh_val < 3 and sc_val > 10:
-    registrar(
-        "Excesso de refrigerante no sistema",
-        "Excesso de fluido refrigerante",
-        75
-    )
-
-elif sh_val > 20 and sc_val > 10:
-    registrar(
-        "Restricao na linha liquida ou filtro secador",
-        "Restricao no circuito",
-        70
-    )
-
-elif sh_val < 2 and sc_val < 2:
-    registrar(
-        "Possivel falha na valvula de expansao",
-        "Falha valvula expansao",
-        65
-    )
-
-elif 5 <= sh_val <= 12 and 5 <= sc_val <= 10:
-    registrar("Ciclo frigorifico operando normalmente")
-
-
-# =============================
-# PRESSAO SUCCAO
-# =============================
-
-if p_suc < 90:
-    registrar(
-        "Pressao de succao muito baixa",
-        "Evaporador sujo ou restricao",
-        60
-    )
-
-elif p_suc > 160:
-    registrar(
-        "Pressao de succao elevada",
-        "Retorno de liquido",
-        55
-    )
-
-
-# =============================
-# PRESSAO CONDENSAÇÃO
-# =============================
-
-if p_liq > 420:
-    registrar(
-        "Pressao de condensacao elevada",
-        "Condensador sujo",
-        75
-    )
-
-elif p_liq < 250:
-    registrar(
-        "Pressao de condensacao baixa",
-        "Baixa carga refrigerante",
-        70
-    )
 
 
 # =============================
@@ -784,10 +558,18 @@ if abs(diff_v) > 10:
 if tecnologia == "Inverter":
 
     if sh_val < 2:
-        registrar("Controle inverter possivelmente modulando excessivamente")
+        registrar(
+            "Controle inverter possivelmente modulando excessivamente",
+            "Ajuste de controle do compressor",
+            40
+        )
 
     if p_liq > 420:
-        registrar("Possivel limitacao de frequencia por alta pressao")
+        registrar(
+            "Possivel limitacao de frequencia por alta pressao",
+            "Alta pressao de condensacao",
+            50
+        )
 
 
 # =============================
@@ -800,8 +582,12 @@ if not diagnostico:
 diag_ia = " | ".join(diagnostico)
 
 
+# =============================
+# PROBABILIDADE DE FALHAS
+# =============================
+
 if probabilidades:
     ranking = sorted(probabilidades.items(), key=lambda x: x[1], reverse=True)
-    prob_txt = " | ".join([f"{f} ({p}%)" for f,p in ranking])
+    prob_txt = " | ".join([f"{f} ({p}%)" for f, p in ranking])
 else:
     prob_txt = "Nenhuma falha critica detectada"
