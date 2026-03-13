@@ -33,16 +33,9 @@ def salvar_dados(dados):
     conn.commit()
     conn.close()
 
-def excluir_registro(id_registro):
-    conn = sqlite3.connect('banco_dados.db')
-    c = conn.cursor()
-    c.execute("DELETE FROM atendimentos WHERE id = ?", (id_registro,))
-    conn.commit()
-    conn.close()
-
 init_db()
 
-# --- 1. CONFIGURAÇÃO DA PÁGINA ---
+# --- 1. CONFIGURAÇÃO DA PÁGINA (BLOQUEADA) ---
 st.set_page_config(page_title="MPN | Engenharia Pro", layout="wide", page_icon="❄️")
 
 st.markdown("""
@@ -246,7 +239,6 @@ with tab_diag:
 with tab_hist:
     st.subheader("📜 Histórico de Atendimentos")
     conn = sqlite3.connect('banco_dados.db')
-    # Selecionamos o ID agora para permitir a exclusão
     query = "SELECT id, data_visita, cliente, doc_cliente, marca, modelo, tecnologia, sh, sc FROM atendimentos ORDER BY id DESC"
     df = pd.read_sql_query(query, conn)
     conn.close()
@@ -259,22 +251,40 @@ with tab_hist:
         
         if busca: df = df[df['cliente'].str.contains(busca, case=False, na=False)]
         if len(periodo) == 2: df = df[(df['data_visita'] >= periodo[0]) & (df['data_visita'] <= periodo[1])]
-            
-        # --- Lógica de Exclusão (Mantendo o Layout) ---
-        st.markdown("---")
-        st.write("🗑️ **Gerenciar Registros**")
         
-        # Criamos uma caixa de seleção para escolher o relatório a excluir baseada no ID e Nome
-        opcoes_exclusao = {f"ID: {row['id']} | {row['cliente']} ({row['data_visita']})": row['id'] for _, row in df.iterrows()}
-        selecionado_para_excluir = st.selectbox("Selecione um relatório para excluir:", ["Nenhum"] + list(opcoes_exclusao.keys()))
+        # Inserindo a coluna de seleção ao lado esquerdo
+        df.insert(0, "Selecionar", False)
         
-        if selecionado_para_excluir != "Nenhum":
-            if st.button("❌ Excluir Relatório Selecionado"):
-                id_para_deletar = opcoes_exclusao[selecionado_para_excluir]
-                excluir_registro(id_para_deletar)
-                st.success("Registro excluído com sucesso!")
-                st.rerun() # Atualiza a tela para refletir a exclusão no dataframe abaixo
-
-        st.dataframe(df.drop(columns=['id']), use_container_width=True)
+        # Configuração do Editor de Dados (Mantendo o layout original)
+        df_editado = st.data_editor(
+            df, 
+            column_config={
+                "Selecionar": st.column_config.CheckboxColumn(
+                    "Excluir?",
+                    help="Selecione para excluir este relatório",
+                    default=False,
+                ),
+                "id": None # Oculta o ID para manter o layout limpo
+            },
+            disabled=["data_visita", "cliente", "doc_cliente", "marca", "modelo", "tecnologia", "sh", "sc"],
+            hide_index=True,
+            use_container_width=True,
+            key="historico_editor"
+        )
+        
+        # Botão abaixo da lista
+        if st.button("🗑️ Excluir Relatório"):
+            ids_para_excluir = df_editado[df_editado["Selecionar"] == True]["id"].tolist()
+            if ids_para_excluir:
+                conn = sqlite3.connect('banco_dados.db')
+                c = conn.cursor()
+                for id_del in ids_para_excluir:
+                    c.execute("DELETE FROM atendimentos WHERE id = ?", (id_del,))
+                conn.commit()
+                conn.close()
+                st.success(f"{len(ids_para_excluir)} relatório(s) excluído(s)!")
+                st.rerun()
+            else:
+                st.warning("Nenhum relatório selecionado para exclusão.")
     else:
         st.info("Nenhum atendimento registrado no histórico.")
