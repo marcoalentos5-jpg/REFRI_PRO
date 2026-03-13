@@ -312,112 +312,154 @@ def seguro(v):
     except:
         return 0
 
+
 sh_val = seguro(sh_val)
 sc_val = seguro(sc_val)
+
 p_suc = seguro(p_suc)
 p_liq = seguro(p_liq)
+
 t_suc_tubo = seguro(t_suc_tubo)
 ts_suc = seguro(ts_suc)
+
 t_liq_tubo = seguro(t_liq_tubo)
 ts_liq = seguro(ts_liq)
+
 a_med = seguro(a_med)
 rla_comp = seguro(rla_comp)
+
 diff_v = seguro(diff_v)
 
+
 # =============================
-# MOTOR DE DIAGNOSTICO HVAC (ORGANIZADO)
+# MOTOR DE DIAGNOSTICO HVAC
 # =============================
 
 diagnostico = []
 probabilidades = {}
 
+
 def registrar(msg, falha=None, prob=0):
-    # Evita mensagens repetidas na lista
-    if msg not in diagnostico:
-        diagnostico.append(msg)
+    diagnostico.append(msg)
     if falha:
-        # Mantém apenas a maior probabilidade se a falha for registrada mais de uma vez
-        if falha in probabilidades:
-            probabilidades[falha] = max(probabilidades[falha], prob)
-        else:
-            probabilidades[falha] = prob
+        probabilidades[falha] = prob
+
 
 # =============================
-# LOGICA DE PROCESSAMENTO (PRECISA)
+# PROCESSAMENTO DOS DIAGNÓSTICOS (RESTAURADO)
 # =============================
 
-# 1. EFICIENCIA DOS TROCADORES
+# EFICIENCIA EVAPORADOR
 delta_evap = t_suc_tubo - ts_suc
 if delta_evap < 2:
-    registrar("Baixa troca térmica no Evaporador", "Sujeira ou Obstrução no Fluxo de Ar (Evap)", 60)
+    registrar(
+        "Baixa transferencia de calor no evaporador",
+        "Fluxo de ar insuficiente",
+        60
+    )
 
+# EFICIENCIA CONDENSADOR
 delta_cond = ts_liq - t_liq_tubo
 if delta_cond < 2:
-    registrar("Baixa troca térmica no Condensador", "Sujeira ou Má Ventilação (Cond)", 55)
+    registrar(
+        "Condensacao ineficiente",
+        "Ventilacao insuficiente",
+        55
+    )
 
-# 2. ANÁLISE DO COMPRESSOR E CARGA
+# COMPRESSOR
 if rla_comp > 0:
     carga_pct = (a_med / rla_comp) * 100
     if carga_pct > 120:
-        registrar("Alta corrente detectada (Sobrecapacidate)", "Sobrecarga Elétrica ou Mecânica", 65)
-    elif carga_pct < 40 and carga_pct > 0:
-        registrar("Baixo consumo de corrente", "Operação em Baixa Carga Térmica", 40)
+        registrar(
+            "Compressor sobrecarregado",
+            "Alta pressao ou excesso refrigerante",
+            65
+        )
+    elif carga_pct < 40:
+        registrar(
+            "Compressor operando com carga muito baixa",
+            "Baixa carga termica",
+            60
+        )
 
-# 3. FALHAS CRÍTICAS DE COMPRESSÃO
+# COMPRESSOR FRACO
 if p_suc > 140 and p_liq < 300:
-    registrar("Pressões equalizadas/anormais", "Perda de Eficiência do Compressor", 75)
+    registrar(
+        "Possivel perda de compressao",
+        "Compressor desgastado",
+        70
+    )
 
-# 4. REDE ELÉTRICA
+# TENSAO ELETRICA
 if abs(diff_v) > 10:
-    registrar("Instabilidade na tensão de alimentação", "Falha na Rede Elétrica", 80)
+    registrar(
+        "Variacao significativa de tensao",
+        "Problema na rede eletrica",
+        80
+    )
 
-# 5. AJUSTES PARA TECNOLOGIA INVERTER
+# INVERTER
 if tecnologia == "Inverter":
     if sh_val < 2:
-        registrar("Superaquecimento muito baixo", "Instabilidade na Expansão/Inverter", 45)
+        registrar(
+            "Controle inverter possivelmente modulando excessivamente",
+            "Ajuste de controle do compressor",
+            40
+        )
     if p_liq > 420:
-        registrar("Pressão de alta crítica", "Limitação de Frequência por Alta Pressão", 50)
+        registrar(
+            "Possivel limitacao de frequencia por alta pressao",
+            "Alta pressao de condensacao",
+            50
+        )
 
-# 6. CÁLCULO DE EFICIÊNCIA (COP)
+# CALCULO EFICIENCIA (COP APROX)
 try:
-    cop_aprox = round((delta_cond + 1) / (delta_evap + 1), 2)
+    delta_cond_calc = ts_liq - t_liq_tubo
+    delta_evap_calc = t_suc_tubo - ts_suc
+    cop_aprox = round((delta_cond_calc + 1) / (delta_evap_calc + 1), 2)
+
     if cop_aprox < 1.5:
-        registrar("Desempenho energético abaixo do esperado")
-    elif cop_aprox > 4.5:
-        registrar("Desempenho energético otimizado")
+        diagnostico.append("Baixa eficiencia energetica do sistema")
+    elif cop_aprox > 4:
+        diagnostico.append("Sistema operando com alta eficiencia")
 except:
     cop_aprox = 0
 
-# =============================
-# CONSOLIDACAO DOS TEXTOS (SEM ALTERAR LAYOUT)
-# =============================
-
+# RESULTADO FINAL DIAGNOSTICO
 if not diagnostico:
-    diagnostico.append("Sistema operando dentro dos parâmetros ideais")
+    diagnostico.append("Sistema operando dentro dos parametros")
 
 diag_ia = " | ".join(diagnostico)
 
+# PROBABILIDADE DE FALHAS
 if probabilidades:
     ranking = sorted(probabilidades.items(), key=lambda x: x[1], reverse=True)
-    prob_txt = " | ".join([f"{f}: {p}%" for f, p in ranking])
+    prob_txt = " | ".join([f"{f} ({p}%)" for f, p in ranking])
 else:
-    prob_txt = "Nenhuma anomalia crítica identificada"
+    prob_txt = "Nenhuma falha critica detectada"
 
-# CONTRAMEDIDAS BASEADAS NAS FALHAS
+# CONTRAMEDIDAS AUTOMATICAS
 contramedidas = []
 for falha in probabilidades:
-    f_lower = falha.lower()
-    if "refrigerante" in f_lower: contramedidas.append("Checar carga de fluido e estanqueidade")
-    if "cond" in f_lower: contramedidas.append("Limpeza química do condensador e teste do ventilador")
-    if "evap" in f_lower: contramedidas.append("Limpeza de filtros/serpentina e checagem de duto")
-    if "compressor" in f_lower: contramedidas.append("Avaliar válvulas internas e isolamento do motor")
-    if "eletrica" in f_lower: contramedidas.append("Revisar conexões e medir tensão de entrada")
+    if "refrigerante" in falha.lower():
+        contramedidas.append("Verificar carga de refrigerante e possiveis vazamentos")
+    if "condensador" in falha.lower():
+        contramedidas.append("Limpar condensador e verificar ventilacao")
+    if "evaporador" in falha.lower():
+        contramedidas.append("Limpar evaporador e verificar fluxo de ar")
+    if "compressor" in falha.lower():
+        contramedidas.append("Verificar eficiencia mecanica do compressor")
+    if "rede eletrica" in falha.lower():
+        contramedidas.append("Verificar tensao da rede e conexoes eletricas")
 
 if not contramedidas:
-    contramedidas.append("Manter plano de manutenção preventiva")
+    contramedidas.append("Nenhuma acao corretiva necessaria no momento")
 
-contramedidas_txt = " | ".join(list(set(contramedidas))) # Remove duplicatas nas contramedidas
+contramedidas_txt = " | ".join(contramedidas)
 
+# RELATORIO TECNICO
 relatorio_txt = f"""
 RELATORIO TECNICO HVAC
 
@@ -439,6 +481,7 @@ Eficiencia do Sistema (COP aproximado):
 # =============================
 
 st.header("DIAGNÓSTICO")
+
 st.subheader("🤖 Diagnóstico IA")
 
 st.write("### 🔎 Análise do Sistema")
@@ -446,6 +489,30 @@ st.write(diag_ia)
 
 st.write("### 📊 Probabilidade de Falhas")
 st.write(prob_txt)
+
+st.write("### 🛠️ Contramedidas Recomendadas")
+st.write(contramedidas_txt)
+
+st.write("### ⚡ Eficiência do Sistema (COP aproximado)")
+st.write(cop_aprox)
+
+st.write("### 📄 Relatório Técnico")
+
+st.text_area(
+    "Conteúdo do Relatório",
+    relatorio_txt,
+    height=220
+)
+
+st.markdown(
+f"""
+<button onclick="navigator.clipboard.writeText(`{relatorio_txt}`)"
+style="padding:10px;font-size:16px;border-radius:6px;">
+📋 Copiar Relatório
+</button>
+""",
+unsafe_allow_html=True
+)
 
 st.write("### 🛠️ Contramedidas Recomendadas")
 st.write(contramedidas_txt)
