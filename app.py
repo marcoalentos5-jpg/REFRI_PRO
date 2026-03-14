@@ -503,10 +503,10 @@ st.text_area(
     "Conteúdo do Relatório",
     relatorio_txt,
     height=220,
-    key="area_diagnostico_final"
+    key="area_texto_final_limpa"
 )
 
-# BOTÃO DE COPIAR (RENDERIZADO COMO INTERFACE ABAIXO DO TEXTO)
+# A CORREÇÃO: Usamos markdown para que o código vire um botão e o texto suma da tela
 st.markdown(
     f"""
     <div style="text-align: left;">
