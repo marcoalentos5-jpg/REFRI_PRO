@@ -422,43 +422,65 @@ Contramedidas Recomendadas: {contramedidas_txt}
 Eficiencia do Sistema (COP aproximado): {cop_aprox}"""
 
 # =============================
-# EXIBICAO NA ABA DIAGNOSTICO (LAYOUT BLOQUEADO)
+# EXIBICAO NA ABA DIAGNOSTICO (LAYOUT BLOQUEADO - VISUAL MELHORADO)
 # =============================
 
 st.header("DIAGNÓSTICO")
+
 st.subheader("🤖 Diagnóstico IA")
 
+# --- SEÇÃO: ANÁLISE DO SISTEMA ---
 st.write("### 🔎 Análise do Sistema")
-st.write(diag_ia)
+if "dentro dos parametros" in diag_ia.lower():
+    st.success(diag_ia)
+else:
+    st.info(diag_ia)
 
+# --- SEÇÃO: PROBABILIDADE DE FALHAS ---
 st.write("### 📊 Probabilidade de Falhas")
-st.write(prob_txt)
+if "Nenhuma falha" in prob_txt:
+    st.write(prob_txt)
+else:
+    st.warning(prob_txt)
 
+# --- SEÇÃO: CONTRAMEDIDAS RECOMENDADAS ---
 st.write("### 🛠️ Contramedidas Recomendadas")
-st.write(contramedidas_txt)
+# Apresentação em lista para melhor leitura, mantendo o conteúdo original
+for medida in contramedidas:
+    st.markdown(f"- {medida}")
 
+# --- SEÇÃO: EFICIÊNCIA DO SISTEMA ---
 st.write("### ⚡ Eficiência do Sistema (COP aproximado)")
-st.write(cop_aprox)
+col_cop, col_status = st.columns([1, 3])
+with col_cop:
+    st.metric("COP", cop_aprox)
+with col_status:
+    if cop_aprox < 1.5:
+        st.error("Eficiência Crítica")
+    elif cop_aprox > 4:
+        st.success("Eficiência Otimizada")
+    else:
+        st.info("Eficiência Nominal")
 
+# --- SEÇÃO: RELATÓRIO TÉCNICO ---
 st.write("### 📄 Relatório Técnico")
 
 st.text_area(
     "Conteúdo do Relatório",
     relatorio_txt,
     height=220,
-    key="area_texto_final_fix_v5"
+    key="area_texto_final_visual_pro"
 )
 
-# PREPARAÇÃO DA STRING PARA O JAVASCRIPT (Remove quebras de linha para não quebrar o botão)
+# PREPARAÇÃO E RENDERIZAÇÃO DO BOTÃO DE COPIAR
 relatorio_js = relatorio_txt.replace("\n", "\\n").replace("'", "\\'")
 
-# RENDERIZAÇÃO DO BOTÃO
 st.markdown(
     f"""
     <div style="text-align: left;">
         <button onclick="navigator.clipboard.writeText('{relatorio_js}')" 
-        style="padding:10px 20px; font-size:16px; border-radius:6px; background-color: #007bff; color: white; border: none; cursor: pointer; margin-top: 10px;">
-        📋 Copiar Relatório
+        style="padding:12px 24px; font-size:16px; border-radius:8px; background-color: #007bff; color: white; border: none; cursor: pointer; margin-top: 10px; font-weight: bold; box-shadow: 0px 2px 5px rgba(0,0,0,0.1);">
+        📋 Copiar Relatório Técnico
         </button>
     </div>
     """, 
