@@ -591,3 +591,70 @@ if probabilidades:
     prob_txt = " | ".join([f"{f} ({p}%)" for f, p in ranking])
 else:
     prob_txt = "Nenhuma falha critica detectada"
+
+# 1. Crie as abas no início da interface
+tab_ident, tab_elet, tab_termo, tab_diag, tab_hist = st.tabs([
+    "📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico", "📜 Histórico"
+])
+
+# 2. Nas abas de entrada, coloque APENAS os inputs
+with tab_ident:
+    st.subheader("Dados do Cliente")
+    # ... coloque apenas os campos de identificação aqui ...
+
+with tab_elet:
+    st.subheader("Medições Elétricas")
+    # ... coloque apenas os campos de elétrica aqui ...
+
+with tab_termo:
+    st.subheader("Parâmetros Térmicos")
+    # ... coloque apenas os campos de temperatura e pressão aqui ...
+
+# 3. NA ABA DE DIAGNÓSTICO, cole o código completo
+with tab_diag:
+    # --- Primeiro: O bloco de Problemas e Observações ---
+    col_prob, col_obs = st.columns(2)
+
+    with col_prob:
+        st.subheader("⚠️ Problemas Encontrados")
+        pi1, pi2 = st.columns(2)
+        p_sel = []
+        opcoes = [
+            "Ar/Incondensaveis no Ciclo", "Baixa Carga de Fluido", "Colmeia Congelando",
+            "Compressor Sem Compressao", "Evaporadora Pingando", "Excesso de Fluido",
+            "Falha na Placa Inverter", "Falha na Ventilacao", "Filtro Secador Obstruido",
+            "Instabilidade na Rede Eletrica", "Linha de Descarga Congelando",
+            "Linha de Liquido Congelando", "Obstrucao Dispositivo Expansao", "Vazamento de Fluido"
+        ]
+        for i, opt in enumerate(opcoes):
+            chave = f"diag_chk_{opt.replace(' ', '_').lower()}"
+            if i % 2 == 0:
+                if pi1.checkbox(opt, key=chave): p_sel.append(opt)
+            else:
+                if pi2.checkbox(opt, key=chave): p_sel.append(opt)
+
+    with col_obs:
+        st.subheader("📝 Observações do Técnico")
+        obs_tecnico = st.text_area("", placeholder="Parecer técnico...", height=215, label_visibility="collapsed", key="obs_diag_final")
+
+    # --- Segundo: A Exibição dos Resultados da IA ---
+    st.markdown("---")
+    st.header("RESULTADO DO DIAGNÓSTICO")
+    
+    st.info(f"**🔎 Análise do Sistema:** {diag_ia}")
+    
+    c1, c2 = st.columns(2)
+    with c1:
+        st.warning(f"**📊 Probabilidade:** {prob_txt}")
+    with c2:
+        st.success(f"**🛠️ Contramedidas:** {contramedidas_txt}")
+    
+    st.metric("Eficiência (COP)", cop_aprox)
+    
+    st.write("### 📄 Relatório Técnico")
+    st.text_area("Conteúdo", relatorio_txt, height=200, key="txt_relatorio_final")
+
+# 4. Na aba de histórico, coloque apenas a tabela/lista de registros
+with tab_hist:
+    st.subheader("Registros Anteriores")
+    # ... coloque apenas a lógica do histórico aqui ...
