@@ -422,14 +422,13 @@ Contramedidas Recomendadas: {contramedidas_txt}
 Eficiencia do Sistema (COP aproximado): {cop_aprox}"""
 
 # =============================
-# EXIBICAO NA ABA DIAGNOSTICO (LAYOUT PROFISSIONAL)
+# EXIBICAO NA ABA DIAGNOSTICO (LAYOUT COM MOLDURA COLORIDA)
 # =============================
 
 st.header("DIAGNÓSTICO")
 st.subheader("🤖 Inteligência de Diagnóstico HVAC")
 
 # --- LINHA 1: STATUS DO SISTEMA ---
-# Organiza a análise e a probabilidade lado a lado
 col1, col2 = st.columns([3, 2])
 
 with col1:
@@ -446,25 +445,41 @@ with col2:
     else:
         st.warning(f"⚠️ {prob_txt}")
 
-st.markdown("---") # Divisor sutil
+st.markdown("---")
 
-# --- LINHA 2: AÇÕES E PERFORMANCE ---
-# Coloca contramedidas ao lado da métrica de eficiência
+# --- LINHA 2: CONTRAMEDIDAS (COM MOLDURA) E PERFORMANCE ---
 col3, col4 = st.columns([3, 2])
 
 with col3:
     st.markdown("#### 🛠️ Contramedidas Recomendadas")
+    
+    # Formatação das medidas em texto para o bloco colorido
     if not contramedidas or "Nenhuma" in contramedidas_txt:
-        st.write("✅ Nenhuma ação corretiva necessária no momento.")
+        texto_medidas = "✅ Nenhuma ação corretiva necessária no momento."
     else:
-        # Exibe como lista de tópicos (bullet points) para clareza
-        for item in contramedidas:
-            st.markdown(f"- {item}")
+        texto_medidas = "".join([f"<div style='margin-bottom:5px;'>• {item}</div>" for item in contramedidas])
+
+    # Criação da moldura com fundo colorido (Azul suave com borda destacada)
+    st.markdown(
+        f"""
+        <div style="
+            background-color: #e1f5fe; 
+            padding: 15px; 
+            border-radius: 10px; 
+            border-left: 5px solid #0288d1;
+            color: #01579b;
+            font-size: 15px;
+            line-height: 1.5;
+        ">
+            {texto_medidas}
+        </div>
+        """, 
+        unsafe_allow_html=True
+    )
 
 with col4:
     st.markdown("#### ⚡ Eficiência (COP)")
-    # Componente de métrica para destaque numérico
-    st.metric(label="Coeficiente de Performance", value=f"{cop_aprox}", delta=None)
+    st.metric(label="Coeficiente de Performance", value=f"{cop_aprox}")
     
     if cop_aprox < 1.5:
         st.error("🔴 **EFICIÊNCIA CRÍTICA**")
@@ -481,17 +496,16 @@ st.text_area(
     "Preview do relatório (editável):",
     relatorio_txt,
     height=150,
-    key="relatorio_final_estilizado"
+    key="relatorio_final_moldura"
 )
 
-# PREPARAÇÃO DO BOTÃO DE COPIAR (Sem vazar código na tela)
+# BOTÃO DE COPIAR
 relatorio_js = relatorio_txt.replace("\n", "\\n").replace("'", "\\'")
-
 st.markdown(
     f"""
     <div style="text-align: left;">
         <button onclick="navigator.clipboard.writeText('{relatorio_js}')" 
-        style="padding:15px 30px; font-size:16px; border-radius:10px; background-color: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; width: 100%; box-shadow: 0px 4px 6px rgba(0,0,0,0.1);">
+        style="padding:15px 30px; font-size:16px; border-radius:10px; background-color: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; width: 100%;">
         📋 Copiar Diagnóstico para o Relatório
         </button>
     </div>
