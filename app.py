@@ -499,18 +499,18 @@ st.text_area(
     "Conteúdo do Relatório",
     relatorio_txt,
     height=220,
-    key="relatorio_final_v3"
+    key="relatorio_final_v4"
 )
 
-# Definindo o HTML separadamente para evitar erro de sintaxe com f-strings
-botao_js = f"navigator.clipboard.writeText(`{relatorio_txt}`)"
-botao_html = f"""
-<div style="text-align: left; margin-top: 10px;">
-    <button onclick="{botao_js}" 
-    style="padding:10px 20px; font-size:16px; border-radius:6px; background-color: #007bff; color: white; border: none; cursor: pointer;">
+# Bloco de código para renderizar o botão corretamente
+html_botao_copiar = f"""
+<div style="text-align: left;">
+    <button onclick="navigator.clipboard.writeText(`{relatorio_txt}`)" 
+    style="padding:10px 20px; font-size:16px; border-radius:6px; background-color: #007bff; color: white; border: none; cursor: pointer; margin-top: 10px;">
     📋 Copiar Relatório
     </button>
 </div>
 """
 
-st.markdown(botao_html, unsafe_allow_html=True)
+# Esta linha é essencial para o botão aparecer como botão e não como texto
+st.markdown(html_botao_copiar, unsafe_allow_html=True)
