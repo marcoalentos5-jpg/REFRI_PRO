@@ -422,57 +422,58 @@ Contramedidas Recomendadas: {contramedidas_txt}
 Eficiencia do Sistema (COP aproximado): {cop_aprox}"""
 
 # =============================
-# EXIBICAO NA ABA DIAGNOSTICO (LAYOUT BLOQUEADO - VISUAL PRO)
+# EXIBICAO NA ABA DIAGNOSTICO (LAYOUT BLOQUEADO - COLUNAS ORGANIZADAS)
 # =============================
 
 st.header("DIAGNÓSTICO")
-
-# --- CABEÇALHO PRINCIPAL ---
 st.subheader("🤖 Diagnóstico IA")
 
-# --- 1. ANÁLISE DO SISTEMA (Destaque de Alerta) ---
-st.write("### 🔎 Análise do Sistema")
-if "baixo" in diag_ia.lower() or "baixa" in diag_ia.lower():
-    st.error(f"**Atenção:** {diag_ia}")
-else:
-    st.success(f"**Status:** {diag_ia}")
+# --- LINHA 1: ANÁLISE E PROBABILIDADE ---
+col1, col2 = st.columns(2)
 
-# --- 2. PROBABILIDADE DE FALHAS (Destaque Visual) ---
-st.write("### 📊 Probabilidade de Falhas")
-if "Nenhuma" in prob_txt:
-    st.info(prob_txt)
-else:
-    st.warning(f"**Detectado:** {prob_txt}")
-
-# --- 3. CONTRAMEDIDAS RECOMENDADAS (Organização em Lista) ---
-st.write("### 🛠️ Contramedidas Recomendadas")
-if not contramedidas or "Nenhuma" in contramedidas_txt:
-    st.write("✅ Nenhuma ação corretiva necessária no momento.")
-else:
-    for item in contramedidas:
-        st.markdown(f"- {item}")
-
-# --- 4. EFICIÊNCIA DO SISTEMA (Uso de Métrica) ---
-st.write("### ⚡ Eficiência do Sistema (COP aproximado)")
-col_m1, col_m2 = st.columns([1, 2])
-with col_m1:
-    st.metric(label="COP", value=cop_aprox, delta=None)
-with col_m2:
-    if cop_aprox < 1.5:
-        st.markdown("🔴 **EFICIÊNCIA CRÍTICA** (Abaixo do padrão)")
-    elif cop_aprox > 4:
-        st.markdown("🟢 **EFICIÊNCIA EXCELENTE** (Otimizado)")
+with col1:
+    st.write("### 🔎 Análise do Sistema")
+    if "baixo" in diag_ia.lower() or "baixa" in diag_ia.lower():
+        st.error(f"**Atenção:** {diag_ia}")
     else:
-        st.markdown("🔵 **EFICIÊNCIA NOMINAL** (Dentro da média)")
+        st.success(f"**Status:** {diag_ia}")
 
-# --- 5. RELATÓRIO TÉCNICO E AÇÃO ---
+with col2:
+    st.write("### 📊 Probabilidade de Falhas")
+    if "Nenhuma" in prob_txt:
+        st.info(prob_txt)
+    else:
+        st.warning(f"**Detectado:** {prob_txt}")
+
+# --- LINHA 2: CONTRAMEDIDAS E EFICIÊNCIA ---
+col3, col4 = st.columns(2)
+
+with col3:
+    st.write("### 🛠️ Contramedidas Recomendadas")
+    if not contramedidas or "Nenhuma" in contramedidas_txt:
+        st.write("✅ Nenhuma ação corretiva necessária no momento.")
+    else:
+        for item in contramedidas:
+            st.markdown(f"- {item}")
+
+with col4:
+    st.write("### ⚡ Eficiência do Sistema (COP aproximado)")
+    st.metric(label="COP", value=cop_aprox)
+    if cop_aprox < 1.5:
+        st.error("🔴 EFICIÊNCIA CRÍTICA")
+    elif cop_aprox > 4:
+        st.success("🟢 EFICIÊNCIA EXCELENTE")
+    else:
+        st.info("🔵 EFICIÊNCIA NOMINAL")
+
+# --- LINHA 3: RELATÓRIO TÉCNICO ---
 st.write("### 📄 Relatório Técnico")
 
 st.text_area(
     "Conteúdo do Relatório",
     relatorio_txt,
     height=200,
-    key="area_texto_final_organizada"
+    key="area_texto_final_colunas"
 )
 
 # PREPARAÇÃO DA CÓPIA (JavaScript seguro)
@@ -483,7 +484,7 @@ st.markdown(
     <div style="text-align: left;">
         <button onclick="navigator.clipboard.writeText('{relatorio_js}')" 
         style="padding:12px 24px; font-size:16px; border-radius:8px; background-color: #007bff; color: white; border: none; cursor: pointer; margin-top: 10px; font-weight: bold;">
-        📋 Copiar Relatório para o WhatsApp/E-mail
+        📋 Copiar Relatório Técnico
         </button>
     </div>
     """, 
