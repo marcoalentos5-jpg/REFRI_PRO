@@ -214,12 +214,8 @@ with tab_diag:
         pdf.set_font("Arial", 'B', 10); pdf.cell(190, 7, " 3. ANALISE TECNICA E PERFORMANCE", 1, 1, 'L', True)
         pdf.set_font("Arial", '', 9); pdf.set_fill_color(240, 240, 240)
         pdf.cell(38, 6, clean(f"Rede: {v_rede}V"), 1, 0)
-        ppdf.set_font("Arial", 'B', 9)
-        pdf.cell(38, 6, clean(f"Med: {v_med}V"), border=1, ln=0, align='L', fill=True)
-        pdf.set_font("Arial", '', 9)
-        pdf.cell(38, 6, clean(f"Dif: {diff_v}V"), border=1, ln=0, align='L')
-        pdf.cell(38, 6, clean(f"RLA: {rla_comp}A"), border=1, ln=0, align='L')
-        pdf.cell(38, 6, clean(f"LRA: {lra_comp}A"), border=1, ln=1, align='L')
+        pdf.set_font("Arial", 'B', 9); pdf.cell(38, 6, clean(f"Med: {v_med}V"), 1, 0, True); pdf.set_font("Arial", '', 9)
+        pdf.cell(38, 6, clean(f"Dif: {diff_v}V"), 1, 0); pdf.cell(38, 6, clean(f"RLA: {rla_comp}A"), 1, 0); pdf.cell(38, 6, clean(f"LRA: {lra_comp}A"), 1, 1)
         pdf.set_font("Arial", 'B', 9); pdf.cell(95, 6, clean(f"Corrente Medida: {a_med} A"), 1, 0, True); pdf.set_font("Arial", '', 9)
         pdf.cell(95, 6, clean(f"Diferenca Corrente: {diff_a} A"), 1, 1)
         pdf.cell(63, 6, clean(f"P-Suc: {p_suc} PSI"), 1, 0)
@@ -316,17 +312,24 @@ def seguro(v):
     except:
         return 0
 
+
 sh_val = seguro(sh_val)
 sc_val = seguro(sc_val)
+
 p_suc = seguro(p_suc)
 p_liq = seguro(p_liq)
+
 t_suc_tubo = seguro(t_suc_tubo)
 ts_suc = seguro(ts_suc)
+
 t_liq_tubo = seguro(t_liq_tubo)
 ts_liq = seguro(ts_liq)
+
 a_med = seguro(a_med)
 rla_comp = seguro(rla_comp)
+
 diff_v = seguro(diff_v)
+
 
 # =============================
 # MOTOR DE DIAGNOSTICO HVAC
@@ -335,103 +338,256 @@ diff_v = seguro(diff_v)
 diagnostico = []
 probabilidades = {}
 
+
 def registrar(msg, falha=None, prob=0):
     diagnostico.append(msg)
     if falha:
         probabilidades[falha] = prob
 
+
 # =============================
-# PROCESSAMENTO DOS DIAGNÓSTICOS
+# CALCULO EFICIENCIA (COP APROX)
 # =============================
 
-# (Sua lógica de cálculos delta_evap, delta_cond, etc permanece aqui acima)
+try:
 
-if rla_comp > 0:
-    carga_pct = (a_med / rla_comp) * 100
-    if 10 < carga_pct < 30 and tecnologia == "Inverter":
-        registrar("Compressor desarmando após alguns minutos", "Atuação do protetor térmico ou superaquecimento", 85)
-    elif a_med < 0.2 and v_med > 100:
-        registrar("Compressor não parte", "Falha no capacitor, protetor térmico ou bobina", 95)
-    elif carga_pct > 120:
-        registrar("Compressor sobrecarregado", "Alta pressao ou excesso refrigerante", 65)
+    delta_cond = ts_liq - t_liq_tubo
+    delta_evap = t_suc_tubo - ts_suc
 
-# ... (restante das suas validações de p_suc, diff_v, etc)
+    cop_aprox = round((delta_cond + 1) / (delta_evap + 1), 2)
 
-# 1. MONTAR DIAGNÓSTICO IA
-diag_ia = " | ".join(diagnostico) if diagnostico else "Sistema operando dentro dos parametros"
+    if cop_aprox < 1.5:
+        diagnostico.append("Baixa eficiencia energetica do sistema")
 
-# 2. MONTAR PROBLEMAS ENCONTRADOS (ORDEM ALFABÉTICA)
+    elif cop_aprox > 4:
+        diagnostico.append("Sistema operando com alta eficiencia")
+
+except:
+    cop_aprox = 0
+
+
+# =============================
+# RESULTADO FINAL DIAGNOSTICO
+# =============================
+
+if not diagnostico:
+    diagnostico.append("Sistema operando dentro dos parametros")
+
+diag_ia = " | ".join(diagnostico)
+
+
+# =============================
+# PROBABILIDADE DE FALHAS
+# =============================
+
 if probabilidades:
-    itens_ordenados = sorted(probabilidades.items()) 
-    prob_txt = " | ".join([f"{f} ({p}%)" for f, p in itens_ordenados])
+    ranking = sorted(probabilidades.items(), key=lambda x: x[1], reverse=True)
+    prob_txt = " | ".join([f"{f} ({p}%)" for f, p in ranking])
 else:
     prob_txt = "Nenhuma falha critica detectada"
 
-# 3. MONTAR CONTRAMEDIDAS (ORDEM ALFABÉTICA)
-contramedidas_lista = []
-for falha in probabilidades:
-    f_low = falha.lower()
-    if "compressor" in f_low: contramedidas_lista.append("Verificar eficiencia mecanica do compressor")
-    if "condensador" in f_low: contramedidas_lista.append("Limpar condensador e verificar ventilacao")
-    if "evaporador" in f_low: contramedidas_lista.append("Limpar evaporador e verificar fluxo de ar")
-    if "rede eletrica" in f_low: contramedidas_lista.append("Verificar tensao da rede e conexoes eletricas")
-    if "refrigerante" in f_low: contramedidas_lista.append("Verificar carga de refrigerante e possiveis vazamentos")
-
-contramedidas_lista = sorted(list(set(contramedidas_lista)))
-contramedidas_txt = " | ".join(contramedidas_lista) if contramedidas_lista else "Nenhuma acao corretiva necessaria no momento"
-
-# --- A CORREÇÃO: DEFINIR A VARIÁVEL ANTES DO LAYOUT ---
-relatorio_txt = f"""RELATORIO TECNICO HVAC
-Diagnostico IA: {diag_ia}
-Problemas Encontrados: {prob_txt}
-Contramedidas Recomendadas: {contramedidas_txt}
-Eficiencia do Sistema (COP aproximado): {cop_aprox}"""
 
 # =============================
-# EXIBICAO NA ABA DIAGNOSTICO (LAYOUT PROTEGIDO)
+# CONTRAMEDIDAS AUTOMATICAS
+# =============================
+
+contramedidas = []
+
+for falha in probabilidades:
+
+    if "refrigerante" in falha.lower():
+        contramedidas.append("Verificar carga de refrigerante e possiveis vazamentos")
+
+    if "condensador" in falha.lower():
+        contramedidas.append("Limpar condensador e verificar ventilacao")
+
+    if "evaporador" in falha.lower():
+        contramedidas.append("Limpar evaporador e verificar fluxo de ar")
+
+    if "compressor" in falha.lower():
+        contramedidas.append("Verificar eficiencia mecanica do compressor")
+
+    if "rede eletrica" in falha.lower():
+        contramedidas.append("Verificar tensao da rede e conexoes eletricas")
+
+if not contramedidas:
+    contramedidas.append("Nenhuma acao corretiva necessaria no momento")
+
+contramedidas_txt = " | ".join(contramedidas)
+
+
+# =============================
+# RELATORIO TECNICO
+# =============================
+
+relatorio_txt = f"""
+RELATORIO TECNICO HVAC
+
+Diagnostico IA:
+{diag_ia}
+
+Probabilidade de Falhas:
+{prob_txt}
+
+Contramedidas Recomendadas:
+{contramedidas_txt}
+
+Eficiencia do Sistema (COP aproximado):
+{cop_aprox}
+"""
+
+
+# =============================
+# EXIBICAO NA ABA DIAGNOSTICO
 # =============================
 
 st.header("DIAGNÓSTICO")
-st.subheader("🤖 Inteligência de Diagnóstico HVAC")
 
-col1, col2 = st.columns([3, 2])
-with col1:
-    st.markdown("#### 🔎 Análise do Sistema")
-    if any(x in diag_ia.lower() for x in ["baixa", "não", "desarmando", "sobrecarga"]):
-        st.error(f"**ALERTA:** {diag_ia}")
-    else:
-        st.success(f"**STATUS:** {diag_ia}")
+st.subheader("🤖 Diagnóstico IA")
 
-with col2:
-    st.markdown("#### ⚠️ Problemas Encontrados")
-    st.warning(f"⚠️ {prob_txt}") if probabilidades else st.info(f"✅ {prob_txt}")
+st.write("### 🔎 Análise do Sistema")
+st.write(diag_ia)
 
-st.markdown("---")
+st.write("### 📊 Probabilidade de Falhas")
+st.write(prob_txt)
 
-col3, col4 = st.columns([3, 2])
-with col3:
-    st.markdown("#### 🛠️ Contramedidas Recomendadas")
-    # Moldura Verde
-    texto_html = "".join([f"<div style='margin-bottom:4px;'>• {item}</div>" for item in contramedidas_lista]) if contramedidas_lista else "✅ Nenhuma ação necessária."
-    st.markdown(f"""
-        <div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; border-left: 5px solid #4caf50; color: #2e7d32; border: 1px solid #c8e6c9;">
-            {texto_html}
-        </div>
-    """, unsafe_allow_html=True)
+st.write("### 🛠️ Contramedidas Recomendadas")
+st.write(contramedidas_txt)
 
-    st.write("") 
-    
-    # RELATÓRIO AGORA POSSUI A VARIÁVEL DEFINIDA
-    st.markdown("#### 📄 Relatório Consolidado")
-    st.text_area("Preview:", relatorio_txt, height=180, key="relat_consolidado_az")
+st.write("### ⚡ Eficiência do Sistema (COP aproximado)")
+st.write(cop_aprox)
 
-with col4:
-    st.markdown("#### ⚡ Eficiência (COP)")
-    st.metric(label="COP", value=f"{cop_aprox}")
-    st.error("🔴 EFICIÊNCIA CRÍTICA") if cop_aprox < 1.5 else st.info("🔵 EFICIÊNCIA NOMINAL")
+st.write("### 📄 Relatório Técnico")
 
-st.markdown("---")
+st.text_area(
+    "Conteúdo do Relatório",
+    relatorio_txt,
+    height=220
+)
 
-# BOTÃO DE CÓPIA
-relatorio_js = relatorio_txt.replace("\n", "\\n").replace("'", "\\'")
-st.markdown(f"""<button onclick="navigator.clipboard.writeText('{relatorio_js}')" style="width: 100%; padding:15px; border-radius:10px; background-color: #007bff; color: white; border: none; cursor: pointer; font-weight: bold;">📋 Copiar Diagnóstico Completo</button>""", unsafe_allow_html=True)
+st.markdown(
+f"""
+<button onclick="navigator.clipboard.writeText(`{relatorio_txt}`)"
+style="padding:10px;font-size:16px;border-radius:6px;">
+📋 Copiar Relatório
+</button>
+""",
+unsafe_allow_html=True
+)
+
+
+# =============================
+# EFICIENCIA EVAPORADOR
+# =============================
+
+delta_evap = t_suc_tubo - ts_suc
+
+if delta_evap < 2:
+    registrar(
+        "Baixa transferencia de calor no evaporador",
+        "Fluxo de ar insuficiente",
+        60
+    )
+
+
+# =============================
+# EFICIENCIA CONDENSADOR
+# =============================
+
+delta_cond = ts_liq - t_liq_tubo
+
+if delta_cond < 2:
+    registrar(
+        "Condensacao ineficiente",
+        "Ventilacao insuficiente",
+        55
+    )
+
+
+# =============================
+# COMPRESSOR
+# =============================
+
+if rla_comp > 0:
+
+    carga_pct = (a_med / rla_comp) * 100
+
+    if carga_pct > 120:
+        registrar(
+            "Compressor sobrecarregado",
+            "Alta pressao ou excesso refrigerante",
+            65
+        )
+
+    elif carga_pct < 40:
+        registrar(
+            "Compressor operando com carga muito baixa",
+            "Baixa carga termica",
+            60
+        )
+
+
+# =============================
+# COMPRESSOR FRACO
+# =============================
+
+if p_suc > 140 and p_liq < 300:
+    registrar(
+        "Possivel perda de compressao",
+        "Compressor desgastado",
+        70
+    )
+
+
+# =============================
+# TENSAO ELETRICA
+# =============================
+
+if abs(diff_v) > 10:
+    registrar(
+        "Variacao significativa de tensao",
+        "Problema na rede eletrica",
+        80
+    )
+
+
+# =============================
+# INVERTER
+# =============================
+
+if tecnologia == "Inverter":
+
+    if sh_val < 2:
+        registrar(
+            "Controle inverter possivelmente modulando excessivamente",
+            "Ajuste de controle do compressor",
+            40
+        )
+
+    if p_liq > 420:
+        registrar(
+            "Possivel limitacao de frequencia por alta pressao",
+            "Alta pressao de condensacao",
+            50
+        )
+
+
+# =============================
+# RESULTADO FINAL
+# =============================
+
+if not diagnostico:
+    diagnostico.append("Sistema operando dentro dos parametros")
+
+diag_ia = " | ".join(diagnostico)
+
+
+# =============================
+# PROBABILIDADE DE FALHAS
+# =============================
+
+if probabilidades:
+    ranking = sorted(probabilidades.items(), key=lambda x: x[1], reverse=True)
+    prob_txt = " | ".join([f"{f} ({p}%)" for f, p in ranking])
+else:
+    prob_txt = "Nenhuma falha critica detectada"
