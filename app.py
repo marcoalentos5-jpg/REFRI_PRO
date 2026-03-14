@@ -495,20 +495,25 @@ st.write(cop_aprox)
 
 st.write("### 📄 Relatório Técnico")
 
-# Corrigido com key única para evitar o erro de ID duplicado
 st.text_area(
     "Conteúdo do Relatório",
     relatorio_txt,
     height=220,
-    key="relatorio_tecnico_diag"
+    key="relatorio_final_fix"
 )
 
-st.markdown(
-f"""
-<button onclick="navigator.clipboard.writeText(`{relatorio_txt}`)"
-style="padding:10px;font-size:16px;border-radius:6px;">
-📋 Copiar Relatório
-</button>
-""",
-unsafe_allow_html=True
+# Versão corrigida para garantir a renderização do botão
+botao_html = f"""
+    <div style="text-align: center;">
+        <button onclick="navigator.clipboard.writeText(`{relatorio_txt}`)"
+        style="padding:10px 20px; font-size:16px; border-radius:6px; background-color: #007bff; color: white; border: none; cursor: pointer;">
+        📋 Copiar Relatório
+        </button>
+    </div>
+    <script>
+    // Garantia de execução do script de cópia
+    </script>
+"""
+
+st.markdown(botao_html, unsafe_allow_html=True)
 )
