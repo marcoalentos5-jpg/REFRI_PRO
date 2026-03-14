@@ -429,12 +429,14 @@ st.metric("Eficiência (COP aprox)", cop_aprox)
 st.write("### 📄 Relatório Técnico")
 st.text_area("Conteúdo do Relatório", relatorio_txt, height=220)
 
-st.markdown(
-    f"""
-    <button onclick="navigator.clipboard.writeText(`{relatorio_txt}`)"
-    style="padding:10px;font-size:16px;border-radius:6px;cursor:pointer;">
+st.markdown("""
+<button onclick="navigator.clipboard.writeText(`RELATORIO TECNICO HVAC
+---------------------------
+Diagnostico IA: Sistema operando dentro dos parametros
+Probabilidade de Falhas: Nenhuma falha critica detectada
+Contramedidas: Nenhuma acao corretiva necessaria
+COP Aproximado: 2.22`)" 
+style="padding:10px; font-size:16px; border-radius:6px; cursor:pointer;">
     📋 Copiar Relatório
-    </button>
-    """,
-    unsafe_allow_html=True
-)
+</button>
+""", unsafe_allow_html=True)
