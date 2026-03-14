@@ -346,7 +346,7 @@ def registrar(msg, falha=None, prob=0):
 
 
 # =============================
-# PROCESSAMENTO DOS DIAGNÓSTICOS (RESTAURADO)
+# PROCESSAMENTO DOS DIAGNÓSTICOS
 # =============================
 
 # EFICIENCIA EVAPORADOR
@@ -416,14 +416,11 @@ if tecnologia == "Inverter":
 
 # CALCULO EFICIENCIA (COP APROX)
 try:
-    delta_cond_calc = ts_liq - t_liq_tubo
-    delta_evap_calc = t_suc_tubo - ts_suc
-    cop_aprox = round((delta_cond_calc + 1) / (delta_evap_calc + 1), 2)
-
+    cop_aprox = round((delta_cond + 1) / (delta_evap + 1), 2)
     if cop_aprox < 1.5:
         diagnostico.append("Baixa eficiencia energetica do sistema")
     elif cop_aprox > 4:
-        diagnostico.append("Sistema operando com alta eficiencia")
+        diagnostico.append("Sistema operando with alta eficiencia")
 except:
     cop_aprox = 0
 
@@ -498,34 +495,12 @@ st.write(cop_aprox)
 
 st.write("### 📄 Relatório Técnico")
 
+# Corrigido com key única para evitar o erro de ID duplicado
 st.text_area(
     "Conteúdo do Relatório",
     relatorio_txt,
-    height=220
-)
-
-st.markdown(
-f"""
-<button onclick="navigator.clipboard.writeText(`{relatorio_txt}`)"
-style="padding:10px;font-size:16px;border-radius:6px;">
-📋 Copiar Relatório
-</button>
-""",
-unsafe_allow_html=True
-)
-
-st.write("### 🛠️ Contramedidas Recomendadas")
-st.write(contramedidas_txt)
-
-st.write("### ⚡ Eficiência do Sistema (COP aproximado)")
-st.write(cop_aprox)
-
-st.write("### 📄 Relatório Técnico")
-
-st.text_area(
-    "Conteúdo do Relatório",
-    relatorio_txt,
-    height=220
+    height=220,
+    key="relatorio_tecnico_diag"
 )
 
 st.markdown(
