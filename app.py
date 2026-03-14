@@ -499,11 +499,17 @@ st.text_area(
     "Conteúdo do Relatório",
     relatorio_txt,
     height=220,
-    key="relatorio_final_operacional"
+    key="area_relatorio_final"
 )
 
-# A CORREÇÃO ESTÁ AQUI: 
-# Usamos st.markdown com unsafe_allow_html=True para o Streamlit 'desenhar' o botão
+# O BOTÃO DEVE FICAR ABAIXO DO "GERAR RELATÓRIO PROFISSIONAL" 
+# ESTE BLOCO DEVE SER COLOCADO IMEDIATAMENTE ABAIXO DO SEU BOTÃO DE GERAÇÃO
+
+if st.button("GERAR RELATÓRIO PROFISSIONAL"):
+    # (Sua lógica de geração de PDF ou relatório profissional aqui)
+    pass
+
+# BOTÃO DE COPIAR (RENDERIZADO COMO INTERFACE)
 st.markdown(
     f"""
     <div style="text-align: left;">
