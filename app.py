@@ -499,21 +499,18 @@ st.text_area(
     "Conteúdo do Relatório",
     relatorio_txt,
     height=220,
-    key="relatorio_final_fix"
+    key="relatorio_final_v3"
 )
 
-# Versão corrigida para garantir a renderização do botão
+# Definindo o HTML separadamente para evitar erro de sintaxe com f-strings
+botao_js = f"navigator.clipboard.writeText(`{relatorio_txt}`)"
 botao_html = f"""
-    <div style="text-align: center;">
-        <button onclick="navigator.clipboard.writeText(`{relatorio_txt}`)"
-        style="padding:10px 20px; font-size:16px; border-radius:6px; background-color: #007bff; color: white; border: none; cursor: pointer;">
-        📋 Copiar Relatório
-        </button>
-    </div>
-    <script>
-    // Garantia de execução do script de cópia
-    </script>
+<div style="text-align: left; margin-top: 10px;">
+    <button onclick="{botao_js}" 
+    style="padding:10px 20px; font-size:16px; border-radius:6px; background-color: #007bff; color: white; border: none; cursor: pointer;">
+    📋 Copiar Relatório
+    </button>
+</div>
 """
 
 st.markdown(botao_html, unsafe_allow_html=True)
-)
