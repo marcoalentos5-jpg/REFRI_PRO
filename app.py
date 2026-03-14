@@ -503,17 +503,10 @@ st.text_area(
     "Conteúdo do Relatório",
     relatorio_txt,
     height=220,
-    key="area_relatorio_final"
+    key="area_diagnostico_final"
 )
 
-# O BOTÃO DEVE FICAR ABAIXO DO "GERAR RELATÓRIO PROFISSIONAL" 
-# ESTE BLOCO DEVE SER COLOCADO IMEDIATAMENTE ABAIXO DO SEU BOTÃO DE GERAÇÃO
-
-if st.button("GERAR RELATÓRIO PROFISSIONAL"):
-    # (Sua lógica de geração de PDF ou relatório profissional aqui)
-    pass
-
-# BOTÃO DE COPIAR (RENDERIZADO COMO INTERFACE)
+# BOTÃO DE COPIAR (RENDERIZADO COMO INTERFACE ABAIXO DO TEXTO)
 st.markdown(
     f"""
     <div style="text-align: left;">
