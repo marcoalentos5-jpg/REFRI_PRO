@@ -341,9 +341,10 @@ def registrar(msg, falha=None, prob=0):
         probabilidades[falha] = prob
 
 # =============================
-# PROCESSAMENTO DOS DIAGNÓSTICOS
+# PROCESSAMENTO DOS DIAGNÓSTICOS (COM OPÇÕES ALFABÉTICAS)
 # =============================
 
+# 1. EFICIÊNCIA CONDENSADOR / EVAPORADOR
 delta_evap = t_suc_tubo - ts_suc
 if delta_evap < 2:
     registrar("Baixa transferencia de calor no evaporador", "Fluxo de ar insuficiente", 60)
@@ -352,16 +353,17 @@ delta_cond = ts_liq - t_liq_tubo
 if delta_cond < 2:
     registrar("Condensacao ineficiente", "Ventilacao insuficiente", 55)
 
+# 2. LÓGICA DO COMPRESSOR E ELÉTRICA
 if rla_comp > 0:
     carga_pct = (a_med / rla_comp) * 100
     
-    # NOVA OPÇÃO: Compressor não Parte
-    if a_med < 0.2 and v_med > 100:
-        registrar("Compressor não Parte", "Falha no capacitor, protetor térmico ou bobina", 95)
+    # OPÇÃO: Compressor desarmando após alguns minutos
+    if 10 < carga_pct < 30 and tecnologia == "Inverter":
+        registrar("Compressor desarmando após alguns minutos", "Atuação do protetor térmico ou superaquecimento", 85)
     
-    # NOVA OPÇÃO: Compressor desarma após alguns minutos
-    elif carga_pct < 10 and a_med < 0.5:
-        registrar("Compressor desarma após alguns minutos", "Atuação do protetor térmico ou falha de partida", 90)
+    # OPÇÃO: Compressor não parte
+    elif a_med < 0.2 and v_med > 100:
+        registrar("Compressor não parte", "Falha no capacitor, protetor térmico ou bobina", 95)
         
     elif carga_pct > 120:
         registrar("Compressor sobrecarregado", "Alta pressao ou excesso refrigerante", 65)
@@ -374,66 +376,57 @@ if p_suc > 140 and p_liq < 300:
 if abs(diff_v) > 10:
     registrar("Variacao significativa de tensao", "Problema na rede eletrica", 80)
 
-if tecnologia == "Inverter":
-    if sh_val < 2:
-        registrar("Controle inverter possivelmente modulando excessivamente", "Ajuste de controle do compressor", 40)
-    if p_liq > 420:
-        registrar("Possivel limitacao de frequencia por alta pressao", "Alta pressao de condensacao", 50)
-
+# 3. CÁLCULO DE EFICIÊNCIA
 try:
     cop_aprox = round((delta_cond + 1) / (delta_evap + 1), 2)
     if cop_aprox < 1.5:
         diagnostico.append("Baixa eficiencia energetica do sistema")
-    elif cop_aprox > 4:
-        diagnostico.append("Sistema operando com alta eficiencia")
 except:
     cop_aprox = 0
 
 if not diagnostico:
     diagnostico.append("Sistema operando dentro dos parametros")
 
+# UNIFICAÇÃO DO DIAGNÓSTICO IA
 diag_ia = " | ".join(diagnostico)
 
+# --- ORGANIZAÇÃO EM ORDEM ALFABÉTICA DOS PROBLEMAS ---
 if probabilidades:
-    ranking = sorted(probabilidades.items(), key=lambda x: x[1], reverse=True)
-    prob_txt = " | ".join([f"{f} ({p}%)" for f, p in ranking])
+    # Ordena as chaves do dicionário alfabeticamente
+    itens_ordenados = sorted(probabilidades.items()) 
+    prob_txt = " | ".join([f"{f} ({p}%)" for f, p in itens_ordenados])
 else:
     prob_txt = "Nenhuma falha critica detectada"
 
+# --- CONTRAMEDIDAS (Também em ordem alfabética) ---
 contramedidas = []
 for falha in probabilidades:
     f_low = falha.lower()
-    if "refrigerante" in f_low: contramedidas.append("Verificar carga de refrigerante e possiveis vazamentos")
+    if "compressor" in f_low: contramedidas.append("Verificar eficiencia mecanica do compressor")
     if "condensador" in f_low: contramedidas.append("Limpar condensador e verificar ventilacao")
     if "evaporador" in f_low: contramedidas.append("Limpar evaporador e verificar fluxo de ar")
-    if "compressor" in f_low: contramedidas.append("Verificar eficiencia mecanica do compressor")
     if "rede eletrica" in f_low: contramedidas.append("Verificar tensao da rede e conexoes eletricas")
+    if "refrigerante" in f_low: contramedidas.append("Verificar carga de refrigerante e possiveis vazamentos")
+
+contramedidas = sorted(list(set(contramedidas))) # Remove duplicados e ordena A-Z
 
 if not contramedidas:
     contramedidas.append("Nenhuma acao corretiva necessaria no momento")
 
 contramedidas_txt = " | ".join(contramedidas)
 
-relatorio_txt = f"""RELATORIO TECNICO HVAC
-Diagnostico IA: {diag_ia}
-Probabilidade de Falhas: {prob_txt}
-Contramedidas Recomendadas: {contramedidas_txt}
-Eficiencia do Sistema (COP aproximado): {cop_aprox}"""
-
 # =============================
-# EXIBICAO NA ABA DIAGNOSTICO (LAYOUT ATUALIZADO)
+# EXIBICAO NA ABA DIAGNOSTICO
 # =============================
 
 st.header("DIAGNÓSTICO")
 st.subheader("🤖 Inteligência de Diagnóstico HVAC")
 
-# --- LINHA 1: STATUS DO SISTEMA ---
+# --- LINHA 1: ANÁLISE E PROBLEMAS (ALFABÉTICO) ---
 col1, col2 = st.columns([3, 2])
-
 with col1:
     st.markdown("#### 🔎 Análise do Sistema")
-    # Alerta vermelho se houver falhas críticas ou baixa carga
-    if any(x in diag_ia.lower() for x in ["baixa", "não", "desarma", "sobrecarga"]):
+    if any(x in diag_ia.lower() for x in ["baixa", "não", "desarmando", "sobrecarga"]):
         st.error(f"**ALERTA:** {diag_ia}")
     else:
         st.success(f"**STATUS:** {diag_ia}")
@@ -449,68 +442,38 @@ st.markdown("---")
 
 # --- LINHA 2: CONTRAMEDIDAS E PERFORMANCE ---
 col3, col4 = st.columns([3, 2])
-
 with col3:
     st.markdown("#### 🛠️ Contramedidas Recomendadas")
     
-    if not contramedidas or "Nenhuma" in contramedidas_txt:
-        texto_medidas = "✅ Nenhuma ação corretiva necessária no momento."
-    else:
-        texto_medidas = "".join([f"<div style='margin-bottom:4px;'>• {item}</div>" for item in contramedidas])
-
-    # Moldura Verde (Layout Prioritário)
-    st.markdown(
-        f"""
-        <div style="
-            background-color: #e8f5e9; 
-            padding: 15px; 
-            border-radius: 8px; 
-            border-left: 5px solid #4caf50;
-            color: #2e7d32;
-            font-size: 14px;
-            line-height: 1.6;
-            border: 1px solid #c8e6c9;
-        ">
+    # Moldura Verde com Lista Alfabética
+    texto_medidas = "".join([f"<div style='margin-bottom:4px;'>• {item}</div>" for item in contramedidas])
+    st.markdown(f"""
+        <div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; border-left: 5px solid #4caf50; color: #2e7d32; border: 1px solid #c8e6c9;">
             {texto_medidas}
         </div>
-        """, 
-        unsafe_allow_html=True
-    )
+    """, unsafe_allow_html=True)
 
-    st.write("") # Espaçador
+    st.write("") 
     
-    # --- RELATÓRIO CONSOLIDADO (Abaixo das Contramedidas) ---
+    # RELATÓRIO CONSOLIDADO ABAIXO DAS CONTRAMEDIDAS
     st.markdown("#### 📄 Relatório Consolidado")
-    st.text_area(
-        "Preview do relatório (editável):",
-        relatorio_txt,
-        height=180,
-        key="relatorio_consolidado_vFinal"
-    )
+    st.text_area("Preview:", relatorio_txt, height=180, key="relat_consolidado_az")
 
 with col4:
     st.markdown("#### ⚡ Eficiência (COP)")
-    st.metric(label="Coeficiente de Performance", value=f"{cop_aprox}")
-    
-    if cop_aprox < 1.5 or "não parte" in diag_ia.lower():
+    st.metric(label="COP", value=f"{cop_aprox}")
+    if cop_aprox < 1.5:
         st.error("🔴 **EFICIÊNCIA CRÍTICA**")
-    elif cop_aprox > 4:
-        st.success("🟢 **EFICIÊNCIA OTIMIZADA**")
     else:
         st.info("🔵 **EFICIÊNCIA NOMINAL**")
 
 st.markdown("---")
 
-# --- BOTÃO DE COPIAR (Largura Total) ---
+# --- BOTÃO DE CÓPIA ---
 relatorio_js = relatorio_txt.replace("\n", "\\n").replace("'", "\\'")
-st.markdown(
-    f"""
-    <div style="text-align: left;">
-        <button onclick="navigator.clipboard.writeText('{relatorio_js}')" 
-        style="padding:15px 30px; font-size:16px; border-radius:10px; background-color: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; width: 100%; box-shadow: 0px 4px 6px rgba(0,0,0,0.1);">
-        📋 Copiar Diagnóstico Completo
-        </button>
-    </div>
-    """, 
-    unsafe_allow_html=True
-)
+st.markdown(f"""
+    <button onclick="navigator.clipboard.writeText('{relatorio_js}')" 
+    style="width: 100%; padding:15px; border-radius:10px; background-color: #007bff; color: white; border: none; cursor: pointer; font-weight: bold;">
+    📋 Copiar Diagnóstico Completo
+    </button>
+""", unsafe_allow_html=True)
