@@ -422,65 +422,68 @@ Contramedidas Recomendadas: {contramedidas_txt}
 Eficiencia do Sistema (COP aproximado): {cop_aprox}"""
 
 # =============================
-# EXIBICAO NA ABA DIAGNOSTICO (LAYOUT BLOQUEADO - VISUAL MELHORADO)
+# EXIBICAO NA ABA DIAGNOSTICO (LAYOUT BLOQUEADO - VISUAL PRO)
 # =============================
 
 st.header("DIAGNÓSTICO")
 
+# --- CABEÇALHO PRINCIPAL ---
 st.subheader("🤖 Diagnóstico IA")
 
-# --- SEÇÃO: ANÁLISE DO SISTEMA ---
+# --- 1. ANÁLISE DO SISTEMA (Destaque de Alerta) ---
 st.write("### 🔎 Análise do Sistema")
-if "dentro dos parametros" in diag_ia.lower():
-    st.success(diag_ia)
+if "baixo" in diag_ia.lower() or "baixa" in diag_ia.lower():
+    st.error(f"**Atenção:** {diag_ia}")
 else:
-    st.info(diag_ia)
+    st.success(f"**Status:** {diag_ia}")
 
-# --- SEÇÃO: PROBABILIDADE DE FALHAS ---
+# --- 2. PROBABILIDADE DE FALHAS (Destaque Visual) ---
 st.write("### 📊 Probabilidade de Falhas")
-if "Nenhuma falha" in prob_txt:
-    st.write(prob_txt)
+if "Nenhuma" in prob_txt:
+    st.info(prob_txt)
 else:
-    st.warning(prob_txt)
+    st.warning(f"**Detectado:** {prob_txt}")
 
-# --- SEÇÃO: CONTRAMEDIDAS RECOMENDADAS ---
+# --- 3. CONTRAMEDIDAS RECOMENDADAS (Organização em Lista) ---
 st.write("### 🛠️ Contramedidas Recomendadas")
-# Apresentação em lista para melhor leitura, mantendo o conteúdo original
-for medida in contramedidas:
-    st.markdown(f"- {medida}")
+if not contramedidas or "Nenhuma" in contramedidas_txt:
+    st.write("✅ Nenhuma ação corretiva necessária no momento.")
+else:
+    for item in contramedidas:
+        st.markdown(f"- {item}")
 
-# --- SEÇÃO: EFICIÊNCIA DO SISTEMA ---
+# --- 4. EFICIÊNCIA DO SISTEMA (Uso de Métrica) ---
 st.write("### ⚡ Eficiência do Sistema (COP aproximado)")
-col_cop, col_status = st.columns([1, 3])
-with col_cop:
-    st.metric("COP", cop_aprox)
-with col_status:
+col_m1, col_m2 = st.columns([1, 2])
+with col_m1:
+    st.metric(label="COP", value=cop_aprox, delta=None)
+with col_m2:
     if cop_aprox < 1.5:
-        st.error("Eficiência Crítica")
+        st.markdown("🔴 **EFICIÊNCIA CRÍTICA** (Abaixo do padrão)")
     elif cop_aprox > 4:
-        st.success("Eficiência Otimizada")
+        st.markdown("🟢 **EFICIÊNCIA EXCELENTE** (Otimizado)")
     else:
-        st.info("Eficiência Nominal")
+        st.markdown("🔵 **EFICIÊNCIA NOMINAL** (Dentro da média)")
 
-# --- SEÇÃO: RELATÓRIO TÉCNICO ---
+# --- 5. RELATÓRIO TÉCNICO E AÇÃO ---
 st.write("### 📄 Relatório Técnico")
 
 st.text_area(
     "Conteúdo do Relatório",
     relatorio_txt,
-    height=220,
-    key="area_texto_final_visual_pro"
+    height=200,
+    key="area_texto_final_organizada"
 )
 
-# PREPARAÇÃO E RENDERIZAÇÃO DO BOTÃO DE COPIAR
+# PREPARAÇÃO DA CÓPIA (JavaScript seguro)
 relatorio_js = relatorio_txt.replace("\n", "\\n").replace("'", "\\'")
 
 st.markdown(
     f"""
     <div style="text-align: left;">
         <button onclick="navigator.clipboard.writeText('{relatorio_js}')" 
-        style="padding:12px 24px; font-size:16px; border-radius:8px; background-color: #007bff; color: white; border: none; cursor: pointer; margin-top: 10px; font-weight: bold; box-shadow: 0px 2px 5px rgba(0,0,0,0.1);">
-        📋 Copiar Relatório Técnico
+        style="padding:12px 24px; font-size:16px; border-radius:8px; background-color: #007bff; color: white; border: none; cursor: pointer; margin-top: 10px; font-weight: bold;">
+        📋 Copiar Relatório para o WhatsApp/E-mail
         </button>
     </div>
     """, 
