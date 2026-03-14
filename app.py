@@ -422,7 +422,7 @@ Contramedidas Recomendadas: {contramedidas_txt}
 Eficiencia do Sistema (COP aproximado): {cop_aprox}"""
 
 # =============================
-# EXIBICAO NA ABA DIAGNOSTICO (LAYOUT COM MOLDURA DISCRETA)
+# EXIBICAO NA ABA DIAGNOSTICO (LAYOUT COM MOLDURA VERDE)
 # =============================
 
 st.header("DIAGNÓSTICO")
@@ -447,7 +447,7 @@ with col2:
 
 st.markdown("---")
 
-# --- LINHA 2: CONTRAMEDIDAS (MOLDURA DISCRETA) E PERFORMANCE ---
+# --- LINHA 2: CONTRAMEDIDAS (MOLDURA VERDE) E PERFORMANCE ---
 col3, col4 = st.columns([3, 2])
 
 with col3:
@@ -456,23 +456,22 @@ with col3:
     if not contramedidas or "Nenhuma" in contramedidas_txt:
         texto_medidas = "✅ Nenhuma ação corretiva necessária no momento."
     else:
-        # Formatação em tópicos
         texto_medidas = "".join([f"<div style='margin-bottom:4px;'>• {item}</div>" for item in contramedidas])
 
-    # Moldura com fundo Cinza Discreto (F9F9F9) e Borda Cinza Médio
+    # Moldura com fundo VERDE SUAVE (E8F5E9) e Borda Verde Médio
     st.markdown(
         f"""
         <div style="
-            background-color: #f9f9f9; 
+            background-color: #e8f5e9; 
             padding: 15px; 
             border-radius: 8px; 
-            border-left: 5px solid #d1d1d1;
-            color: #333333;
+            border-left: 5px solid #4caf50;
+            color: #2e7d32;
             font-size: 14px;
             line-height: 1.6;
-            border-top: 1px solid #eeeeee;
-            border-right: 1px solid #eeeeee;
-            border-bottom: 1px solid #eeeeee;
+            border-top: 1px solid #c8e6c9;
+            border-right: 1px solid #c8e6c9;
+            border-bottom: 1px solid #c8e6c9;
         ">
             {texto_medidas}
         </div>
@@ -499,7 +498,7 @@ st.text_area(
     "Preview do relatório (editável):",
     relatorio_txt,
     height=150,
-    key="relatorio_final_discreto"
+    key="relatorio_final_verde"
 )
 
 # BOTÃO DE COPIAR
