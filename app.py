@@ -422,7 +422,7 @@ Contramedidas Recomendadas: {contramedidas_txt}
 Eficiencia do Sistema (COP aproximado): {cop_aprox}"""
 
 # =============================
-# EXIBICAO NA ABA DIAGNOSTICO (LAYOUT COM MOLDURA COLORIDA)
+# EXIBICAO NA ABA DIAGNOSTICO (LAYOUT COM MOLDURA DISCRETA)
 # =============================
 
 st.header("DIAGNÓSTICO")
@@ -447,29 +447,32 @@ with col2:
 
 st.markdown("---")
 
-# --- LINHA 2: CONTRAMEDIDAS (COM MOLDURA) E PERFORMANCE ---
+# --- LINHA 2: CONTRAMEDIDAS (MOLDURA DISCRETA) E PERFORMANCE ---
 col3, col4 = st.columns([3, 2])
 
 with col3:
     st.markdown("#### 🛠️ Contramedidas Recomendadas")
     
-    # Formatação das medidas em texto para o bloco colorido
     if not contramedidas or "Nenhuma" in contramedidas_txt:
         texto_medidas = "✅ Nenhuma ação corretiva necessária no momento."
     else:
-        texto_medidas = "".join([f"<div style='margin-bottom:5px;'>• {item}</div>" for item in contramedidas])
+        # Formatação em tópicos
+        texto_medidas = "".join([f"<div style='margin-bottom:4px;'>• {item}</div>" for item in contramedidas])
 
-    # Criação da moldura com fundo colorido (Azul suave com borda destacada)
+    # Moldura com fundo Cinza Discreto (F9F9F9) e Borda Cinza Médio
     st.markdown(
         f"""
         <div style="
-            background-color: #e1f5fe; 
+            background-color: #f9f9f9; 
             padding: 15px; 
-            border-radius: 10px; 
-            border-left: 5px solid #0288d1;
-            color: #01579b;
-            font-size: 15px;
-            line-height: 1.5;
+            border-radius: 8px; 
+            border-left: 5px solid #d1d1d1;
+            color: #333333;
+            font-size: 14px;
+            line-height: 1.6;
+            border-top: 1px solid #eeeeee;
+            border-right: 1px solid #eeeeee;
+            border-bottom: 1px solid #eeeeee;
         ">
             {texto_medidas}
         </div>
@@ -496,7 +499,7 @@ st.text_area(
     "Preview do relatório (editável):",
     relatorio_txt,
     height=150,
-    key="relatorio_final_moldura"
+    key="relatorio_final_discreto"
 )
 
 # BOTÃO DE COPIAR
