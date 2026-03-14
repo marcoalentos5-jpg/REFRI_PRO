@@ -215,6 +215,10 @@ with tab_diag:
         pdf.set_font("Arial", '', 9); pdf.set_fill_color(240, 240, 240)
         pdf.cell(38, 6, clean(f"Rede: {v_rede}V"), 1, 0)
         pdf.set_font("Arial", 'B', 9); pdf.cell(38, 6, clean(f"Med: {v_med}V"), 1, 0, True); pdf.set_font("Arial", '', 9)
+        # Versão corrigida da linha 217
+pdf.set_font("Arial", 'B', 9)
+pdf.cell(38, 6, clean(f"Med: {v_med}V"), border=1, ln=0, align='L', fill=True)
+pdf.set_font("Arial", '', 9)
         pdf.cell(38, 6, clean(f"Dif: {diff_v}V"), 1, 0); pdf.cell(38, 6, clean(f"RLA: {rla_comp}A"), 1, 0); pdf.cell(38, 6, clean(f"LRA: {lra_comp}A"), 1, 1)
         pdf.set_font("Arial", 'B', 9); pdf.cell(95, 6, clean(f"Corrente Medida: {a_med} A"), 1, 0, True); pdf.set_font("Arial", '', 9)
         pdf.cell(95, 6, clean(f"Diferenca Corrente: {diff_a} A"), 1, 1)
