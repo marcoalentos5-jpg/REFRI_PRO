@@ -591,9 +591,18 @@ if probabilidades:
     prob_txt = " | ".join([f"{f} ({p}%)" for f, p in ranking])
 else:
     prob_txt = "Nenhuma falha critica detectada"
+
 # =========================================================
 # 5. MOTOR DE INTELIGÊNCIA HVAC (PROCESSAMENTO)
 # =========================================================
+
+# Inicialização de listas para evitar erros de persistência
+diagnostico = []
+probabilidades = {}
+
+def registrar(falha, causa, peso):
+    diagnostico.append(falha)
+    probabilidades[causa] = peso
 
 # --- EFICIENCIA EVAPORADOR ---
 delta_evap = t_suc_tubo - ts_suc
@@ -605,7 +614,7 @@ delta_cond = ts_liq - t_liq_tubo
 if delta_cond < 2 and a_med > 0.5:
     registrar("Condensação ineficiente", "Ventilação obstruída ou condensador sujo", 55)
 
-# --- ANÁLISE DO COMPRESSOR (CARGA) ---
+# --- ANÁLISE DO COMPRESSOR (CARGA E PERFORMANCE) ---
 if rla_comp > 0 and a_med > 0:
     carga_pct = (a_med / rla_comp) * 100
     if carga_pct > 120:
@@ -613,11 +622,20 @@ if rla_comp > 0 and a_med > 0:
     elif carga_pct < 40:
         registrar("Compressor operando em subcarga", "Baixa carga térmica ou falta de fluido", 60)
 
-# --- ANÁLISE DE COMPRESSÃO MECÂNICA ---
+# --- ANÁLISE DE COMPRESSÃO MECÂNICA (COMPRESSOR FRACO) ---
+# Lógica específica para R-410A/R-32 (Pressão de sucção alta e descarga baixa)
 if p_suc > 140 and p_liq < 300 and fluido in ["R-410A", "R-32"]:
-    registrar("Baixa performance de compressão", "Compressor com desgaste mecânico", 70)
+    registrar("Baixa performance de compressão", "Compressor com desgaste mecânico (Válvulas/Scroll)", 70)
+
+# --- LOGICA ESPECIFICA INVERTER ---
+if tecnologia == "Inverter":
+    if sh_val < 2:
+        registrar("Modulação excessiva do Inverter", "Ajuste de controle do compressor/EEV", 40)
+    if p_liq > 420:
+        registrar("Limitação de frequência por alta pressão", "Proteção térmica/pressostática ativa", 50)
 
 # --- TENSAO ELETRICA ---
+diff_v = v_med - v_rede
 if abs(diff_v) > 15:
     registrar("Variação crítica de tensão detectada", "Instabilidade na Rede Elétrica", 85)
 
@@ -636,22 +654,23 @@ if probabilidades:
 else:
     prob_txt = "Nenhuma falha crítica detectada"
 
+# Geração automática de contramedidas baseada nas falhas registradas
 contramedidas = []
-for falha in probabilidades:
-    falha_l = falha.lower()
-    if "refrigerante" in falha_l or "fluido" in falha_l:
-        contramedidas.append("Verificar carga de fluido e buscar vazamentos")
-    if "condensador" in falha_l:
-        contramedidas.append("Realizar limpeza química do condensador")
-    if "evaporador" in falha_l or "fluxo de ar" in falha_l:
-        contramedidas.append("Limpar filtros e serpentina da evaporadora")
-    if "compressor" in falha_l:
-        contramedidas.append("Medir isolamento e pressões de descarga")
-    if "rede eletrica" in falha_l:
-        contramedidas.append("Revisar aperto de bornes e tensão de entrada")
+falhas_detectadas_str = " ".join(diagnostico).lower() + " " + " ".join(probabilidades.keys()).lower()
+
+if any(x in falhas_detectadas_str for x in ["refrigerante", "fluido", "vazamento"]):
+    contramedidas.append("Verificar carga de fluido e buscar vazamentos com detector/nitrogênio")
+if "condensador" in falhas_detectadas_str or "condensação" in falhas_detectadas_str:
+    contramedidas.append("Realizar limpeza química e desobstrução das aletas do condensador")
+if any(x in falhas_detectadas_str for x in ["evaporador", "fluxo de ar", "sujeira"]):
+    contramedidas.append("Limpar filtros, turbina e serpentina da unidade evaporadora")
+if "compressor" in falhas_detectadas_str:
+    contramedidas.append("Medir isolamento ôhmico (megômetro) e testar capacitor/inverter")
+if "rede eletrica" in falhas_detectadas_str or "tensão" in falhas_detectadas_str:
+    contramedidas.append("Revisar aperto de bornes, quadro elétrico e estabilidade da fase")
 
 if not contramedidas:
-    contramedidas.append("Manter plano de manutenção preventiva mensal")
+    contramedidas.append("Manter plano de manutenção preventiva mensal (PMOC)")
 
 contramedidas_txt = " | ".join(list(set(contramedidas)))
 
@@ -662,12 +681,10 @@ contramedidas_txt = " | ".join(list(set(contramedidas)))
 with tab_diag:
     st.header("🤖 DIAGNÓSTICO FINAL")
 
-    # --- GARANTIA DE VARIÁVEIS (Correção do erro de lógica) ---
-    # Caso as variáveis não tenham sido calculadas no motor de IA, 
-    # definimos valores padrão para evitar o NameError.
+    # Garantia de segurança contra variáveis nulas
     d_ia = diag_ia if 'diag_ia' in locals() else "Análise não disponível"
     p_txt = prob_txt if 'prob_txt' in locals() else "Nenhuma falha detectada"
-    c_txt = contramedidas_txt if 'contramedidas_txt' in locals() else "Manutenção preventiva padrão"
+    c_txt = contramedidas_txt if 'contramedidas_txt' in locals() else "Manutenção padrão"
 
     c1, c2 = st.columns(2)
     with c1:
@@ -675,9 +692,9 @@ with tab_diag:
         st.warning(f"### 📊 Probabilidades\n{p_txt}")
     with c2:
         st.success(f"### 🛠️ Contramedidas\n{c_txt}")
-        # Garantindo que o COP seja exibido como número
         st.metric("Eficiência Estimada (COP)", f"{cop_aprox}")
 
+    st.divider()
     st.write("### 📄 Relatório Consolidado")
     
     relatorio_txt = f"""RELATÓRIO TÉCNICO HVAC - MPN
@@ -685,73 +702,55 @@ with tab_diag:
 CLIENTE: {cliente}
 DIAGNÓSTICO: {d_ia}
 FALHAS: {p_txt}
-MEDIDAS: {c_txt}
-COP: {cop_aprox}
+MEDIDAS SUGERIDAS: {c_txt}
+COP ESTIMADO: {cop_aprox}
 -------------------------------------------
 Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M')}"""
 
-    st.text_area("Texto para Copiar/Colar", relatorio_txt, height=200, key="rel_final_area")
+    st.text_area("Texto para WhatsApp", relatorio_txt, height=200, key="rel_final_area")
 
     col_btn1, col_btn2 = st.columns(2)
     
     with col_btn1:
-        # Botão de cópia via JS
+        # JS seguro para cópia (escapando quebras de linha)
+        js_copia = relatorio_txt.replace("\n", "\\n").replace("'", "\\'")
         st.markdown(
-            f"""<button onclick="navigator.clipboard.writeText(`{relatorio_txt}`)" 
+            f"""<button onclick="navigator.clipboard.writeText('{js_copia}')" 
             style="width:100%; padding:12px; background-color:#2e7d32; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">
-            📋 Copiar Texto para WhatsApp</button>""", 
+            📋 Copiar para WhatsApp</button>""", 
             unsafe_allow_html=True
         )
 
     with col_btn2:
-        if st.button("📄 Gerar Relatório PDF Profissional", use_container_width=True):
+        if st.button("📄 Gerar PDF Profissional", use_container_width=True):
             try:
                 pdf = FPDF()
                 pdf.add_page()
-                
-                # Cabeçalho
                 pdf.set_font("Courier", 'B', 16)
                 pdf.set_text_color(0, 51, 102)
                 pdf.cell(0, 10, clean("MPN ENGENHARIA - RELATORIO TECNICO"), 0, 1, 'C')
                 pdf.ln(5)
 
-                # Seção 1
-                pdf.set_fill_color(240, 240, 240)
-                pdf.set_font("Courier", 'B', 11)
-                pdf.cell(0, 8, clean(" 1. DADOS DO ATENDIMENTO"), 0, 1, 'L', fill=True)
-                pdf.set_font("Courier", '', 10)
-                pdf.set_text_color(0, 0, 0)
-                pdf.cell(0, 7, clean(f"Cliente: {cliente}"), 0, 1)
-                # Correção: strftime direto na data_visita
-                pdf.cell(0, 7, clean(f"Data: {data_visita.strftime('%d/%m/%Y')}"), 0, 1)
-                pdf.ln(5)
+                # Seções do PDF
+                def add_section(titulo, conteudo):
+                    pdf.set_fill_color(240, 240, 240)
+                    pdf.set_font("Courier", 'B', 11)
+                    pdf.cell(0, 8, clean(f" {titulo}"), 0, 1, 'L', fill=True)
+                    pdf.set_font("Courier", '', 10)
+                    pdf.set_text_color(0, 0, 0)
+                    pdf.multi_cell(0, 7, clean(conteudo), 0, 'L')
+                    pdf.ln(4)
 
-                # Seção 2
-                pdf.set_fill_color(240, 240, 240)
-                pdf.set_font("Courier", 'B', 11)
-                pdf.cell(0, 8, clean(" 2. DIAGNOSTICO IA E PERFORMANCE"), 0, 1, 'L', fill=True)
-                pdf.set_font("Courier", '', 10)
-                pdf.multi_cell(0, 7, clean(f"Analise: {d_ia}"), 0, 'L')
-                pdf.cell(0, 7, clean(f"Eficiencia (COP): {cop_aprox}"), 0, 1)
-                pdf.ln(5)
+                add_section("1. DADOS DO ATENDIMENTO", f"Cliente: {cliente}\nData: {data_visita.strftime('%d/%m/%Y')}")
+                add_section("2. DIAGNÓSTICO E PERFORMANCE", f"Análise: {d_ia}\nCOP: {cop_aprox}")
+                add_section("3. PROBABILIDADE DE FALHAS", p_txt)
+                add_section("4. RECOMENDAÇÕES", c_txt)
 
-                # Seção 3
-                pdf.set_fill_color(240, 240, 240)
-                pdf.set_font("Courier", 'B', 11)
-                pdf.cell(0, 8, clean(" 3. MEDIDAS E CONTRAMEDIDAS"), 0, 1, 'L', fill=True)
-                pdf.set_font("Courier", '', 10)
-                pdf.multi_cell(0, 7, clean(f"Recomendacoes: {c_txt}"), 0, 'L')
-                
-                # Assinatura
-                pdf.ln(20)
+                pdf.ln(10)
                 pdf.cell(0, 0, "", "T", 1, 'C')
-                pdf.set_font("Courier", 'B', 10)
                 pdf.cell(0, 10, clean("Responsavel Tecnico - MPN Engenharia"), 0, 1, 'C')
 
-                # Geração segura do PDF
                 pdf_output = pdf.output(dest='S').encode('latin-1', 'replace')
-                
-                # O botão de download aparece apenas após a geração
                 st.download_button(
                     label="📥 BAIXAR RELATÓRIO PDF",
                     data=pdf_output,
@@ -759,6 +758,5 @@ Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M')}"""
                     mime="application/pdf",
                     use_container_width=True
                 )
-                st.success("Relatório pronto para download!")
             except Exception as e:
-                st.error(f"Erro ao gerar PDF: {e}")
+                st.error(f"Erro na geração: {e}")
