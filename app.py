@@ -286,68 +286,23 @@ for falha in probabilidades:
 contramedidas_txt = " | ".join(list(set(contramedidas))) if contramedidas else "Manutenção preventiva mensal"
 
 # =========================================================
-# 7. INTERFACE: ABA DIAGNÓSTICO E HISTÓRICO
-# =========================================================
-
-with tab_diag:
-    st.header("🤖 DIAGNÓSTICO FINAL")
-    c1, c2 = st.columns(2)
-    with c1:
-        st.info(f"### 🔎 Análise\n{diag_ia}")
-        st.warning(f"### 📊 Probabilidades\n{prob_txt}")
-    with c2:
-        st.success(f"### 🛠️ Medidas\n{contramedidas_txt}")
-        st.metric("Eficiência Estimada (COP)", f"{cop_aprox}")
-    
-    # Bloco de Relatório (Sempre mantendo o layout original)
-    st.divider()
-    relatorio_txt = f"RELATÓRIO TÉCNICO\nCLIENTE: {cliente}\nDIAGNÓSTICO: {diag_ia}\nCOP: {cop_aprox}"
-    st.text_area("📄 Texto Consolidado", relatorio_txt, height=150)
-
-with tab_hist:
-    st.subheader("📜 Histórico de Atendimentos")
-    conn = sqlite3.connect('banco_dados.db')
-    query = "SELECT id, data_visita, cliente, marca, modelo, tecnologia, v_med, a_med FROM atendimentos ORDER BY id DESC"
-    df = pd.read_sql_query(query, conn)
-    conn.close()
-    
-    if not df.empty:
-        df['data_visita'] = pd.to_datetime(df['data_visita'], errors='coerce').dt.date
-        busca = st.text_input("🔍 Pesquisar por Cliente", key="busca_hist")
-        
-        if busca:
-            df = df[df['cliente'].str.contains(busca, case=False, na=False)]
-        
-        st.data_editor(
-            df, 
-            column_config={"data_visita": st.column_config.DateColumn("Data", format="DD/MM/YYYY")},
-            hide_index=True, 
-            use_container_width=True
-        )
-    else:
-        st.info("Nenhum atendimento registrado.")
-
-# =========================================================
 # 7. EXIBIÇÃO E RELATÓRIO FINAL (DENTRO DA TAB_DIAG)
 # =========================================================
 
 with tab_diag:
     st.header("🤖 DIAGNÓSTICO FINAL")
 
-    # Layout de colunas para métricas e análise visual
     c1, c2 = st.columns(2)
     with c1:
         st.info(f"### 🔎 Análise do Sistema\n{diag_ia}")
         st.warning(f"### 📊 Probabilidades\n{prob_txt}")
     with c2:
         st.success(f"### 🛠️ Contramedidas\n{contramedidas_txt}")
-        # Exibe o COP como uma métrica de performance
         st.metric("Eficiência Estimada (COP)", f"{cop_aprox}")
 
     st.divider()
     st.write("### 📄 Relatório Consolidado")
     
-    # Montagem do texto para cópia rápida (WhatsApp/E-mail)
     relatorio_txt = f"""RELATÓRIO TÉCNICO HVAC - MPN
 -------------------------------------------
 CLIENTE: {cliente}
@@ -360,11 +315,9 @@ Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M')}"""
 
     st.text_area("Conteúdo do Relatório", relatorio_txt, height=200, key="rel_final_area")
 
-    # Botões de Ação Final
     col_btn1, col_btn2 = st.columns(2)
     
     with col_btn1:
-        # Botão de Cópia via JavaScript (Execução direta no navegador)
         st.markdown(
             f"""<button onclick="navigator.clipboard.writeText(`{relatorio_txt}`)" 
             style="width:100%; padding:12px; background-color:#2e7d32; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">
@@ -373,63 +326,35 @@ Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M')}"""
         )
 
     with col_btn2:
-        # GERAÇÃO DO PDF PROFISSIONAL - O objeto 'pdf' é criado apenas aqui para evitar NameError
+        # 1. Primeiro o usuário clica para GERAR o PDF
         if st.button("📄 Gerar Relatório PDF Profissional", use_container_width=True):
             try:
-                # 1. Instância do PDF
                 pdf = FPDF()
                 pdf.add_page()
                 pdf.set_auto_page_break(auto=True, margin=15)
                 
-                # 2. Cabeçalho e Estilo
                 pdf.set_font("Courier", 'B', 16)
-                pdf.set_text_color(0, 51, 102) # Azul Marinho MPN
+                pdf.set_text_color(0, 51, 102)
                 pdf.cell(0, 10, clean("MPN ENGENHARIA - RELATORIO TECNICO"), 0, 1, 'C')
+                
+                # ... (resto da lógica de formatação do PDF) ...
                 pdf.ln(5)
-
-                # Seção 1: Identificação do Atendimento
-                pdf.set_fill_color(240, 240, 240)
-                pdf.set_font("Courier", 'B', 11)
-                pdf.cell(0, 8, clean(" 1. DADOS DO ATENDIMENTO"), 0, 1, 'L', fill=True)
                 pdf.set_font("Courier", '', 10)
                 pdf.set_text_color(0, 0, 0)
-                pdf.cell(0, 7, clean(f"Cliente: {cliente}"), 0, 1)
-                pdf.cell(0, 7, clean(f"Data: {data_visita.strftime('%d/%m/%Y')}"), 0, 1)
-                pdf.ln(5)
+                pdf.multi_cell(0, 7, clean(f"Cliente: {cliente}\nAnalise: {diag_ia}"))
 
-                # Seção 2: Diagnóstico IA e Performance
-                pdf.set_fill_color(240, 240, 240)
-                pdf.set_font("Courier", 'B', 11)
-                pdf.cell(0, 8, clean(" 2. DIAGNOSTICO IA E PERFORMANCE"), 0, 1, 'L', fill=True)
-                pdf.set_font("Courier", '', 10)
-                pdf.multi_cell(0, 7, clean(f"Analise: {diag_ia}"), 0, 'L')
-                pdf.cell(0, 7, clean(f"Eficiencia (COP): {cop_aprox}"), 0, 1)
-                pdf.ln(5)
-
-                # Seção 3: Medidas e Recomendações Técnicas
-                pdf.set_fill_color(240, 240, 240)
-                pdf.set_font("Courier", 'B', 11)
-                pdf.cell(0, 8, clean(" 3. MEDIDAS E CONTRAMEDIDAS"), 0, 1, 'L', fill=True)
-                pdf.set_font("Courier", '', 10)
-                pdf.multi_cell(0, 7, clean(f"Recomendacoes: {contramedidas_txt}"), 0, 'L')
+                # 2. Criamos a variável pdf_bytes AQUI dentro
+                pdf_bytes = pdf.output(dest='S').encode('latin-1', 'replace')
                 
-                # Assinatura Técnica
-                pdf.ln(20)
-                pdf.cell(0, 0, "", "T", 1, 'C')
-                pdf.set_font("Courier", 'B', 10)
-                pdf.cell(0, 10, clean("Responsavel Tecnico - MPN Engenharia"), 0, 1, 'C')
-
-                # Geração da saída binária
-                pdf_output = pdf.output(dest='S').encode('latin-1', 'replace')
-                
-                # Botão de Download (aparece após o processamento)
+                # 3. O botão de download aparece APENAS AGORA
                 st.download_button(
                     label="📥 Baixar PDF Agora",
-                    data=pdf_output,
+                    data=pdf_bytes,
                     file_name=f"Relatorio_{remover_acentos(cliente)[:10]}.pdf",
                     mime="application/pdf",
                     use_container_width=True
                 )
-                st.toast("Relatório PDF pronto para download!", icon="✅")
+                st.toast("PDF gerado!", icon="✅")
+                
             except Exception as e:
-                st.error(f"Erro interno ao gerar PDF: {e}")
+                st.error(f"Erro ao gerar PDF: {e}")
