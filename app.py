@@ -341,12 +341,13 @@ with tab_diag:
         st.warning(f"### 📊 Probabilidades\n{prob_txt}")
     with c2:
         st.success(f"### 🛠️ Contramedidas\n{contramedidas_txt}")
+        # Exibe o COP como uma métrica de performance
         st.metric("Eficiência Estimada (COP)", f"{cop_aprox}")
 
     st.divider()
     st.write("### 📄 Relatório Consolidado")
     
-    # Montagem do texto para cópia rápida
+    # Montagem do texto para cópia rápida (WhatsApp/E-mail)
     relatorio_txt = f"""RELATÓRIO TÉCNICO HVAC - MPN
 -------------------------------------------
 CLIENTE: {cliente}
@@ -363,7 +364,7 @@ Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M')}"""
     col_btn1, col_btn2 = st.columns(2)
     
     with col_btn1:
-        # Botão de Cópia via JavaScript
+        # Botão de Cópia via JavaScript (Execução direta no navegador)
         st.markdown(
             f"""<button onclick="navigator.clipboard.writeText(`{relatorio_txt}`)" 
             style="width:100%; padding:12px; background-color:#2e7d32; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">
@@ -372,21 +373,21 @@ Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M')}"""
         )
 
     with col_btn2:
-        # O PDF É CRIADO APENAS QUANDO O BOTÃO É CLICADO
+        # GERAÇÃO DO PDF PROFISSIONAL - O objeto 'pdf' é criado apenas aqui para evitar NameError
         if st.button("📄 Gerar Relatório PDF Profissional", use_container_width=True):
             try:
-                # 1. Cria o objeto PDF aqui dentro (Isso mata o NameError)
+                # 1. Instância do PDF
                 pdf = FPDF()
                 pdf.add_page()
                 pdf.set_auto_page_break(auto=True, margin=15)
                 
-                # 2. Configurações de Estilo
+                # 2. Cabeçalho e Estilo
                 pdf.set_font("Courier", 'B', 16)
-                pdf.set_text_color(0, 51, 102)
+                pdf.set_text_color(0, 51, 102) # Azul Marinho MPN
                 pdf.cell(0, 10, clean("MPN ENGENHARIA - RELATORIO TECNICO"), 0, 1, 'C')
                 pdf.ln(5)
 
-                # Seção 1: Identificação
+                # Seção 1: Identificação do Atendimento
                 pdf.set_fill_color(240, 240, 240)
                 pdf.set_font("Courier", 'B', 11)
                 pdf.cell(0, 8, clean(" 1. DADOS DO ATENDIMENTO"), 0, 1, 'L', fill=True)
@@ -396,7 +397,7 @@ Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M')}"""
                 pdf.cell(0, 7, clean(f"Data: {data_visita.strftime('%d/%m/%Y')}"), 0, 1)
                 pdf.ln(5)
 
-                # Seção 2: Diagnóstico
+                # Seção 2: Diagnóstico IA e Performance
                 pdf.set_fill_color(240, 240, 240)
                 pdf.set_font("Courier", 'B', 11)
                 pdf.cell(0, 8, clean(" 2. DIAGNOSTICO IA E PERFORMANCE"), 0, 1, 'L', fill=True)
@@ -405,22 +406,23 @@ Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M')}"""
                 pdf.cell(0, 7, clean(f"Eficiencia (COP): {cop_aprox}"), 0, 1)
                 pdf.ln(5)
 
-                # Seção 3: Medidas
+                # Seção 3: Medidas e Recomendações Técnicas
                 pdf.set_fill_color(240, 240, 240)
                 pdf.set_font("Courier", 'B', 11)
                 pdf.cell(0, 8, clean(" 3. MEDIDAS E CONTRAMEDIDAS"), 0, 1, 'L', fill=True)
                 pdf.set_font("Courier", '', 10)
                 pdf.multi_cell(0, 7, clean(f"Recomendacoes: {contramedidas_txt}"), 0, 'L')
                 
-                # Assinatura
+                # Assinatura Técnica
                 pdf.ln(20)
                 pdf.cell(0, 0, "", "T", 1, 'C')
                 pdf.set_font("Courier", 'B', 10)
                 pdf.cell(0, 10, clean("Responsavel Tecnico - MPN Engenharia"), 0, 1, 'C')
 
-                # Geração Binária
+                # Geração da saída binária
                 pdf_output = pdf.output(dest='S').encode('latin-1', 'replace')
                 
+                # Botão de Download (aparece após o processamento)
                 st.download_button(
                     label="📥 Baixar PDF Agora",
                     data=pdf_output,
@@ -428,6 +430,6 @@ Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M')}"""
                     mime="application/pdf",
                     use_container_width=True
                 )
-                st.toast("Relatório PDF pronto!", icon="✅")
+                st.toast("Relatório PDF pronto para download!", icon="✅")
             except Exception as e:
                 st.error(f"Erro interno ao gerar PDF: {e}")
