@@ -407,6 +407,7 @@ with tab_diag:
         st.warning(f"### 📊 Probabilidades\n{prob_txt}")
     with c2:
         st.success(f"### 🛠️ Contramedidas\n{contramedidas_txt}")
+        # Convertendo para string para evitar erros de renderização
         st.metric("Eficiência Estimada (COP)", f"{cop_aprox}")
 
     st.divider()
@@ -429,7 +430,6 @@ Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M')}"""
     col_btn1, col_btn2 = st.columns(2)
     
     with col_btn1:
-        # Botão com JavaScript para cópia direta
         st.markdown(
             f"""<button onclick="navigator.clipboard.writeText(`{relatorio_txt}`)" 
             style="width:100%; padding:12px; background-color:#2e7d32; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">
@@ -438,16 +438,16 @@ Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M')}"""
         )
 
     with col_btn2:
-        # GERAÇÃO DO PDF PROFISSIONAL COM TRATAMENTO DE ERROS
+        # GERAÇÃO DO PDF PROFISSIONAL (O objeto 'pdf' nasce e morre aqui dentro)
         if st.button("📄 Gerar Relatório PDF Profissional", use_container_width=True):
             try:
                 pdf = FPDF()
                 pdf.add_page()
                 pdf.set_auto_page_break(auto=True, margin=15)
                 
-                # Cabeçalho do PDF
+                # --- Configuração de Estilo (Onde estava o erro antes) ---
                 pdf.set_font("Courier", 'B', 16)
-                pdf.set_text_color(0, 51, 102) # Azul Marinho
+                pdf.set_text_color(0, 51, 102) 
                 pdf.cell(0, 10, clean("MPN ENGENHARIA - RELATORIO TECNICO"), 0, 1, 'C')
                 pdf.ln(5)
 
@@ -477,16 +477,14 @@ Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M')}"""
                 pdf.set_font("Courier", '', 10)
                 pdf.multi_cell(0, 7, clean(f"Recomendacoes: {contramedidas_txt}"), 0, 'L')
                 
-                # Rodapé/Assinatura
+                # Assinatura
                 pdf.ln(20)
                 pdf.cell(0, 0, "", "T", 1, 'C')
                 pdf.set_font("Courier", 'B', 10)
                 pdf.cell(0, 10, clean("Responsavel Tecnico - MPN Engenharia"), 0, 1, 'C')
 
-                # Geração do arquivo binário
+                # Exportação
                 pdf_output = pdf.output(dest='S').encode('latin-1', 'replace')
-                
-                # Botão de Download Streamlit
                 st.download_button(
                     label="📥 Baixar PDF Agora",
                     data=pdf_output,
@@ -494,8 +492,8 @@ Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M')}"""
                     mime="application/pdf",
                     use_container_width=True
                 )
-                st.toast("Relatório PDF pronto para download!", icon="✅")
+                st.toast("Relatório gerado!", icon="✅")
             except Exception as e:
                 st.error(f"Erro ao gerar PDF: {e}")
 
-# Final do script.
+# FIM DO ARQUIVO
