@@ -400,16 +400,19 @@ contramedidas_txt = " | ".join(list(set(contramedidas)))
 with tab_diag:
     st.header("🤖 DIAGNÓSTICO FINAL")
 
+    # Layout de colunas para métricas e análise visual
     c1, c2 = st.columns(2)
     with c1:
         st.info(f"### 🔎 Análise do Sistema\n{diag_ia}")
         st.warning(f"### 📊 Probabilidades\n{prob_txt}")
     with c2:
         st.success(f"### 🛠️ Contramedidas\n{contramedidas_txt}")
-        st.metric("Eficiência Estimada (COP)", cop_aprox)
+        st.metric("Eficiência Estimada (COP)", f"{cop_aprox}")
 
+    st.divider()
     st.write("### 📄 Relatório Consolidado")
     
+    # Montagem do texto para cópia rápida
     relatorio_txt = f"""RELATÓRIO TÉCNICO HVAC - MPN
 -------------------------------------------
 CLIENTE: {cliente}
@@ -420,13 +423,13 @@ COP: {cop_aprox}
 -------------------------------------------
 Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M')}"""
 
-    st.text_area("Texto para Copiar/Colar", relatorio_txt, height=200, key="rel_final_area")
+    st.text_area("Conteúdo do Relatório", relatorio_txt, height=200, key="rel_final_area")
 
-    # Botões de Ação
+    # Botões de Ação Final
     col_btn1, col_btn2 = st.columns(2)
     
     with col_btn1:
-        # Botão de Cópia JS
+        # Botão com JavaScript para cópia direta
         st.markdown(
             f"""<button onclick="navigator.clipboard.writeText(`{relatorio_txt}`)" 
             style="width:100%; padding:12px; background-color:#2e7d32; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">
@@ -435,54 +438,64 @@ Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M')}"""
         )
 
     with col_btn2:
-        # --- NOVIDADE: GERAÇÃO DO PDF PROFISSIONAL ---
+        # GERAÇÃO DO PDF PROFISSIONAL COM TRATAMENTO DE ERROS
         if st.button("📄 Gerar Relatório PDF Profissional", use_container_width=True):
-            pdf = FPDF()
-            pdf.add_page()
-            pdf.set_auto_page_break(auto=True, margin=15)
-            
-            # Cabeçalho
-            pdf.set_font("Courier", 'B', 16)
-            pdf.set_text_color(0, 51, 102)
-            pdf.cell(0, 10, clean("MPN ENGENHARIA - RELATORIO TECNICO"), 0, 1, 'C')
-            pdf.ln(5)
+            try:
+                pdf = FPDF()
+                pdf.add_page()
+                pdf.set_auto_page_break(auto=True, margin=15)
+                
+                # Cabeçalho do PDF
+                pdf.set_font("Courier", 'B', 16)
+                pdf.set_text_color(0, 51, 102) # Azul Marinho
+                pdf.cell(0, 10, clean("MPN ENGENHARIA - RELATORIO TECNICO"), 0, 1, 'C')
+                pdf.ln(5)
 
-            # Corpo do Relatório
-            pdf.set_fill_color(240, 240, 240)
-            pdf.set_font("Courier", 'B', 11)
-            pdf.cell(0, 8, clean(" 1. DADOS DO ATENDIMENTO"), 0, 1, 'L', fill=True)
-            pdf.set_font("Courier", '', 10)
-            pdf.set_text_color(0, 0, 0)
-            pdf.cell(0, 7, clean(f"Cliente: {cliente}"), 0, 1)
-            pdf.cell(0, 7, clean(f"Data: {data_visita.strftime('%d/%m/%Y')}"), 0, 1)
-            pdf.ln(5)
+                # Seção 1: Identificação
+                pdf.set_fill_color(240, 240, 240)
+                pdf.set_font("Courier", 'B', 11)
+                pdf.cell(0, 8, clean(" 1. DADOS DO ATENDIMENTO"), 0, 1, 'L', fill=True)
+                pdf.set_font("Courier", '', 10)
+                pdf.set_text_color(0, 0, 0)
+                pdf.cell(0, 7, clean(f"Cliente: {cliente}"), 0, 1)
+                pdf.cell(0, 7, clean(f"Data: {data_visita.strftime('%d/%m/%Y')}"), 0, 1)
+                pdf.ln(5)
 
-            pdf.set_fill_color(240, 240, 240)
-            pdf.set_font("Courier", 'B', 11)
-            pdf.cell(0, 8, clean(" 2. DIAGNOSTICO IA E PERFORMANCE"), 0, 1, 'L', fill=True)
-            pdf.set_font("Courier", '', 10)
-            pdf.multi_cell(0, 7, clean(f"Analise: {diag_ia}"), 0, 'L')
-            pdf.cell(0, 7, clean(f"Eficiencia (COP): {cop_aprox}"), 0, 1)
-            pdf.ln(5)
+                # Seção 2: Diagnóstico
+                pdf.set_fill_color(240, 240, 240)
+                pdf.set_font("Courier", 'B', 11)
+                pdf.cell(0, 8, clean(" 2. DIAGNOSTICO IA E PERFORMANCE"), 0, 1, 'L', fill=True)
+                pdf.set_font("Courier", '', 10)
+                pdf.multi_cell(0, 7, clean(f"Analise: {diag_ia}"), 0, 'L')
+                pdf.cell(0, 7, clean(f"Eficiencia (COP): {cop_aprox}"), 0, 1)
+                pdf.ln(5)
 
-            pdf.set_fill_color(240, 240, 240)
-            pdf.set_font("Courier", 'B', 11)
-            pdf.cell(0, 8, clean(" 3. MEDIDAS E CONTRAMEDIDAS"), 0, 1, 'L', fill=True)
-            pdf.set_font("Courier", '', 10)
-            pdf.multi_cell(0, 7, clean(f"Recomendacoes: {contramedidas_txt}"), 0, 'L')
-            
-            # Assinatura
-            pdf.ln(20)
-            pdf.cell(0, 0, "", "T", 1, 'C')
-            pdf.set_font("Courier", 'B', 10)
-            pdf.cell(0, 10, clean("Responsavel Tecnico - MPN Engenharia"), 0, 1, 'C')
+                # Seção 3: Plano de Ação
+                pdf.set_fill_color(240, 240, 240)
+                pdf.set_font("Courier", 'B', 11)
+                pdf.cell(0, 8, clean(" 3. MEDIDAS E CONTRAMEDIDAS"), 0, 1, 'L', fill=True)
+                pdf.set_font("Courier", '', 10)
+                pdf.multi_cell(0, 7, clean(f"Recomendacoes: {contramedidas_txt}"), 0, 'L')
+                
+                # Rodapé/Assinatura
+                pdf.ln(20)
+                pdf.cell(0, 0, "", "T", 1, 'C')
+                pdf.set_font("Courier", 'B', 10)
+                pdf.cell(0, 10, clean("Responsavel Tecnico - MPN Engenharia"), 0, 1, 'C')
 
-            pdf_output = pdf.output(dest='S').encode('latin-1', 'replace')
-            st.download_button(
-                label="📥 Baixar PDF Agora",
-                data=pdf_output,
-                file_name=f"Relatorio_{remover_acentos(cliente)[:10]}.pdf",
-                mime="application/pdf",
-                use_container_width=True
-            )
-)
+                # Geração do arquivo binário
+                pdf_output = pdf.output(dest='S').encode('latin-1', 'replace')
+                
+                # Botão de Download Streamlit
+                st.download_button(
+                    label="📥 Baixar PDF Agora",
+                    data=pdf_output,
+                    file_name=f"Relatorio_{remover_acentos(cliente)[:10]}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )
+                st.toast("Relatório PDF pronto para download!", icon="✅")
+            except Exception as e:
+                st.error(f"Erro ao gerar PDF: {e}")
+
+# Final do script.
