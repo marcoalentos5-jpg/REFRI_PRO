@@ -317,7 +317,11 @@ COP: {cop_aprox}"""
                 p_suc, p_liq, sh_val, sc_val, prob_txt_resultado, contramedidas_txt, obs_tecnico
             )
             salvar_dados(dados_banco)
-            
+            endereco_completo = f"{tipo_logr} {nome_logr}, {numero} {complemento} - {bairro}"
+
+# Agora o código do PDF funcionará:
+pdf.set_font("Arial", '', 9)
+pdf.cell(190, 7, clean(f"Endereco: {endereco_completo}"), 1, 1)
             # 2. Gerar PDF Profissional (Layout Cinza/Tabelas)
             pdf = FPDF()
             pdf.add_page()
