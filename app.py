@@ -7,7 +7,7 @@ import urllib.parse
 import unicodedata
 
 # =========================================================
-# 0. NÚCLEO DE CÁLCULO E TRATAMENTO DE DADOS
+# 0. NÚCLEO TÉCNICO E TRATAMENTO DE DADOS
 # =========================================================
 def clean(txt):
     if not txt: return "N/A"
@@ -18,7 +18,6 @@ def remover_acentos(txt):
     return "".join(c for c in unicodedata.normalize('NFD', txt) if unicodedata.category(c) != 'Mn')
 
 def calcular_psicrometria(temp, ur):
-    """Calcula Umidade Absoluta (g/kg) para diagnóstico de dreno"""
     try:
         es = 6.112 * math.exp((17.67 * temp) / (temp + 243.5))
         e = es * (ur / 100)
@@ -27,18 +26,17 @@ def calcular_psicrometria(temp, ur):
     except: return 0.0
 
 def get_tsat_global(psig, gas):
-    """Tabela de Saturação para SH e SC"""
     ancoras = {
         "R-410A": {"p": [0.0, 100.0, 200.0, 300.0, 400.0, 500.0, 600.0], "t": [-51.0, -0.29, 20.93, 35.58, 47.3, 56.59, 64.59]},
         "R-32": {"p": [0.0, 100.0, 200.0, 300.0, 400.0, 500.0, 600.0], "t": [-51.7, 0.87, 20.14, 34.63, 45.96, 55.36, 63.43]},
-        "R-22": {"p": [0.0, 100.0, 200.0, 300.0, 400.0, 500.0, 600.0], "t": [-40.8, 15.80, 38.56, 54.89, 67.8, 78.0, 85.0]},
-        "R-134a": {"p": [0.0, 50.0, 100.0, 150.0, 200.0], "t": [-26.1, 12.2, 30.9, 43.6, 53.7]}
+        "R-22": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 300.0, 400.0], "t": [-40.8, -3.34, 15.80, 28.15, 38.56, 54.89, 67.8]},
+        "R-134a": {"p": [0.0, 20.0, 50.0, 80.0, 100.0, 150.0, 200.0], "t": [-26.08, -1.0, 12.23, 22.8, 30.92, 43.65, 53.74]}
     }
     if gas not in ancoras: return 0.0
     return round(float(np.interp(psig, ancoras[gas]["p"], ancoras[gas]["t"])), 2)
 
 # =========================================================
-# 1. INTERFACE E ESTRUTURA (LAYOUT BLOQUEADO)
+# 1. CONFIGURAÇÃO E INTERFACE (LAYOUT BLOQUEADO)
 # =========================================================
 st.set_page_config(page_title="MPN | Engenharia Pro", layout="wide", page_icon="❄️")
 
@@ -49,26 +47,48 @@ tab_cad, tab_ele, tab_termo, tab_diag, tab_hist = st.tabs([
     "📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico", "📜 Histórico"
 ])
 
-# --- ABA 1: IDENTIFICAÇÃO ---
+# --- ABA 1: IDENTIFICAÇÃO (COMPLETA) ---
 with tab_cad:
     st.subheader("👤 Identificação e Contato")
-    c1, c2, c3, c4 = st.columns([2.5, 1.2, 1.4, 1.0])
+    c1, c2, c3, c4, c5, c6 = st.columns([2.5, 1.2, 1.4, 1.0, 1.0, 1.0])
     cliente = c1.text_input("Cliente/Empresa", key="k_cliente")
     doc_cliente = c2.text_input("CPF/CNPJ", key="k_doc")
     data_visita = c3.date_input("📅 DATA DA VISITA", value=date.today(), format="DD/MM/YYYY")
-    whatsapp = c4.text_input("🟢 WhatsApp (Ex: 21980264217)", value="21980264217")
+    whatsapp = c4.text_input("🟢 WhatsApp", value="21980264217")
+    celular = c5.text_input("📱 Celular")
+    tel_fixo = c6.text_input("📞 Fixo")
+    
+    e1, e2, e3, e4, e5, e6, e7 = st.columns([0.6, 1.5, 0.4, 0.6, 1.0, 0.8, 1.5])
+    tipo_logr = e1.selectbox("Tipo", ["Rua", "Av.", "Trav.", "Alam.", "Estr.", "Rod."])
+    nome_logr = e2.text_input("Logradouro")
+    numero = e3.text_input("Nº")
+    complemento = e4.text_input("Comp.")
+    bairro = e5.text_input("Bairro")
+    cep = e6.text_input("CEP")
+    email_cli = e7.text_input("✉️ E-mail")
     
     st.markdown("---")
     st.subheader("⚙️ Dados do Equipamento")
     g1, g2, g3, g4 = st.columns(4)
-    fabricante = g1.text_input("Marca")
-    tecnologia = g2.selectbox("Tecnologia", ["Inverter", "WindFree", "On-Off", "VRF", "Scroll"])
-    fluido = g3.selectbox("Gás Refrigerante", ["R-410A", "R-32", "R-22", "R-134a"])
-    sistema = g4.selectbox("Sistema", ["Split", "Cassete", "Piso Teto", "Chiller", "MultiSplit"])
+    with g1:
+        fabricante = st.text_input("Marca")
+        modelo_eq = st.text_input("Modelo Geral")
+        serie_evap = st.text_input("Série Evaporadora")
+    with g2:
+        linha = st.text_input("Linha")
+        cap_btu = st.text_input("Capacidade (BTU/h)")
+        serie_cond = st.text_input("Série Condensadora")
+    with g3:
+        tecnologia = st.selectbox("Tecnologia", ["Inverter", "WindFree", "Scroll", "On-Off", "VRF"])
+        fluido = st.selectbox("Gás Refrigerante", ["R-410A", "R-32", "R-22", "R-134a"])
+        loc_evap = st.text_input("Local Evaporadora")
+    with g4:
+        sistema = st.selectbox("Sistema", ["Split", "Cassete", "Piso Teto", "VRF", "Chiller"])
+        loc_cond = st.text_input("Local Condensadora")
 
-# --- ABA 2: ELÉTRICA ---
+# --- ABA 2: ELÉTRICA (POTÊNCIAS E DELTAS INTEGRADOS) ---
 with tab_ele:
-    st.subheader("⚡ Parâmetros Elétricos e Estabilidade")
+    st.subheader("⚡ Parâmetros Elétricos")
     el1, el2, el3 = st.columns(3)
     v_rede = el1.number_input("Tensão Nominal (Rede)", value=220.0)
     v_med = el1.number_input("Tensão Medida (V)", value=220.0)
@@ -120,69 +140,86 @@ with tab_termo:
         st.metric("Remoção de Umidade", f"{dreno} g/kg")
 
 # =========================================================
-# 2. MOTOR DE INTELIGÊNCIA HVAC
+# 2. MOTOR DE DIAGNÓSTICO IA
 # =========================================================
 diag_lista = []
-if sh_val > 12: diag_lista.append("Superaquecimento elevado (Possível baixa carga)")
-if sh_val < 4: diag_lista.append("Superaquecimento baixo (Risco de golpe de líquido)")
-if sc_val < 2: diag_lista.append("Subresfriamento insuficiente (Ineficiência de condensação)")
-if fp < 0.90: diag_lista.append("Baixo Fator de Potência (Capacitor/Harmônicas)")
-if abs(diff_tensao) > (v_rede * 0.1): diag_lista.append("Instabilidade na Tensão de Rede")
-if dreno < 0.8 and sh_val < 10: diag_lista.append("Baixa Troca Térmica (Sujeira/Filtros)")
+if sh_val > 12: diag_lista.append("Superaquecimento Elevado (Baixa Carga)")
+if sh_val < 4: diag_lista.append("Superaquecimento Baixo (Risco Golpe Líquido)")
+if sc_val < 2: diag_lista.append("Subresfriamento Baixo (Ineficiência)")
+if abs(diff_tensao) > (v_rede * 0.1): diag_lista.append("Instabilidade de Tensão")
+if diff_corrente > (rla_comp * 0.15): diag_lista.append("Sobrecorrente no Compressor")
 
-diag_ia_txt = " | ".join(diag_lista) if diag_lista else "Sistema operando em conformidade técnica."
+diag_ia_txt = " | ".join(diag_lista) if diag_lista else "Sistema em Conformidade Técnica"
 cop_aprox = round((dreno + 2) / (sh_val + 0.5), 2) if sh_val > -0.5 else 0.0
-acoes_txt = "Realizar limpeza técnica e ajuste de carga." if diag_lista else "Manutenção preventiva padrão."
 
-# --- ABA 4: DIAGNÓSTICO E RELATÓRIO (RESTURADOS) ---
+# =========================================================
+# 3. ABA DIAGNÓSTICO E RELATÓRIO (FORMATO PLANILHA TÉCNICA)
+# =========================================================
 with tab_diag:
-    st.header("🤖 DIAGNÓSTICO FINAL")
-    d1, d2 = st.columns(2)
-    with d1:
-        st.info(f"### 🔎 Análise do Sistema\n{diag_ia_txt}")
-    with d2:
-        st.success(f"### 🛠️ Medidas Recomendadas\n{acoes_txt}")
-        st.metric("COP Estimado", cop_aprox)
-
-    st.divider()
-    
-    # Formatação do Relatório (Layout Protegido)
-    rel_wpp = f"*MPN ENGENHARIA - RELATÓRIO TÉCNICO*\n" \
-              f"-------------------------------------------\n" \
-              f"CLIENTE: {cliente if cliente else 'N/A'}\n" \
-              f"DIAGNÓSTICO: {diag_ia_txt}\n" \
-              f"COP: {cop_aprox} | Dif.V: {diff_tensao}V\n" \
-              f"-------------------------------------------\n" \
-              f"Data: {data_visita.strftime('%d/%m/%Y %H:%M')}"
-    
-    st.text_area("📄 Resumo do Relatório", rel_wpp, height=150)
+    st.header("🤖 DIAGNÓSTICO E RELATÓRIOS")
     
     col_btn1, col_btn2 = st.columns(2)
-    with col_btn1:
-        # Codificação correta para o WhatsApp não falhar
-        texto_codificado = urllib.parse.quote(rel_wpp)
-        link_wpp = f"https://wa.me/{whatsapp}?text={texto_codificado}"
-        st.markdown(f'<a href="{link_wpp}" target="_blank"><button style="width:100%; padding:12px; background-color:#25D366; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">🟢 ENVIAR VIA WHATSAPP</button></a>', unsafe_allow_html=True)
     
-    with col_btn2:
-        if st.button("📄 GERAR RELATÓRIO PDF", use_container_width=True):
+    with col_btn1:
+        if st.button("📄 GERAR RELATÓRIO PDF (PLANILHA)", use_container_width=True):
             pdf = FPDF()
             pdf.add_page()
-            pdf.set_font("Courier", 'B', 14)
-            pdf.cell(0, 10, clean("MPN ENGENHARIA - LAUDO TECNICO"), 0, 1, 'C')
-            pdf.ln(5)
-            pdf.set_font("Courier", '', 10)
-            corpo_pdf = f"CLIENTE: {cliente}\nDATA: {data_visita.strftime('%d/%m/%Y')}\n" \
-                        f"MARCA: {fabricante} | SISTEMA: {sistema}\n" \
-                        f"DIAGNOSTICO: {diag_ia_txt}\n" \
-                        f"COP: {cop_aprox} | F.P: {fp}\n" \
-                        f"DIF. TENSAO: {diff_tensao}V | DIF. CORRENTE: {diff_corrente}A\n" \
-                        f"DRENO: {dreno} g/kg\n\nRECOMENDACOES: {acoes_txt}"
-            pdf.multi_cell(0, 7, clean(corpo_pdf))
-            pdf_out = pdf.output(dest='S').encode('latin-1', 'replace')
-            st.download_button("📥 Baixar PDF", data=pdf_out, file_name=f"Laudo_{remover_acentos(cliente)}.pdf", mime="application/pdf")
+            pdf.set_font("Arial", 'B', 12)
+            pdf.cell(0, 10, clean("MPN ENGENHARIA - RELATÓRIO TÉCNICO DE INSPEÇÃO"), 0, 1, 'C')
+            pdf.ln(4)
+            
+            def add_row(label, value, is_header=False):
+                if is_header:
+                    pdf.set_fill_color(230, 230, 230)
+                    pdf.set_font("Arial", 'B', 9)
+                    pdf.cell(0, 7, clean(label), 1, 1, 'L', True)
+                else:
+                    pdf.set_font("Arial", 'B', 8)
+                    pdf.cell(55, 6, clean(label), 1, 0, 'L')
+                    pdf.set_font("Arial", '', 8)
+                    pdf.cell(0, 6, clean(str(value)), 1, 1, 'L')
+
+            # Tabela de Identificação
+            add_row("1. IDENTIFICAÇÃO DO CLIENTE E LOCAL", "", True)
+            add_row("Cliente", cliente)
+            add_row("Documento", doc_cliente)
+            add_row("Data Visita", data_visita.strftime('%d/%m/%Y'))
+            add_row("Endereço", f"{tipo_logr} {nome_logr}, {numero} - {bairro} (CEP: {cep})")
+            add_row("Contatos", f"Whats: {whatsapp} | Cel: {celular} | Fixo: {tel_fixo}")
+            add_row("E-mail", email_cli)
+            pdf.ln(3)
+
+            # Tabela de Equipamento
+            add_row("2. DADOS DO EQUIPAMENTO", "", True)
+            add_row("Marca/Modelo", f"{fabricante} / {modelo_eq} ({linha})")
+            add_row("Capacidade/Fluido", f"{cap_btu} BTU/h - {fluido}")
+            add_row("Série Evaporadora", serie_evap)
+            add_row("Série Condensadora", serie_cond)
+            add_row("Localização", f"Evap: {loc_evap} | Cond: {loc_cond}")
+            pdf.ln(3)
+
+            # Tabela Elétrica
+            add_row("3. ANÁLISE ELÉTRICA", "", True)
+            add_row("Tensão (V)", f"Medida: {v_med}V | Dif: {diff_tensao}V")
+            add_row("Corrente (A)", f"Medida: {a_med}A | Placa: {rla_comp}A | Dif: {diff_corrente}A")
+            add_row("Potências", f"Ativa: {p_ativa:.1f}W | Aparente: {p_aparente:.1f}VA | FP: {fp}")
+            pdf.ln(3)
+
+            # Tabela Termodinâmica e IA
+            add_row("4. CICLO E DIAGNÓSTICO", "", True)
+            add_row("SH / SC", f"{sh_val} K / {sc_val} K")
+            add_row("Dreno/COP", f"{dreno} g/kg | COP Est: {cop_aprox}")
+            pdf.set_font("Arial", 'B', 8)
+            pdf.multi_cell(0, 7, clean(f"DIAGNÓSTICO IA: {diag_ia_txt}"), 1)
+
+            st.download_button("📥 BAIXAR RELATÓRIO COMPLETO", data=pdf.output(dest='S').encode('latin-1', 'replace'), file_name=f"Relatorio_{remover_acentos(cliente)}.pdf")
+
+    with col_btn2:
+        rel_msg = f"*MPN ENGENHARIA*\nCliente: {cliente}\nDiag: {diag_ia_txt}\nCOP: {cop_aprox}\nDif.V: {diff_tensao}V"
+        link_wpp = f"https://wa.me/{whatsapp}?text={urllib.parse.quote(rel_msg)}"
+        st.markdown(f'<a href="{link_wpp}" target="_blank"><button style="width:100%; padding:12px; background-color:#25D366; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">🟢 ENVIAR VIA WHATSAPP</button></a>', unsafe_allow_html=True)
 
 # --- ABA 5: HISTÓRICO ---
 with tab_hist:
-    st.subheader("📜 Histórico")
-    st.write(f"Último diagnóstico realizado em: {datetime.now().strftime('%d/%m/%Y %H:%M')}")
+    st.subheader("📜 Histórico de Diagnósticos")
+    st.info(f"Sistema pronto. Data local: {datetime.now().strftime('%d/%m/%Y %H:%M')}")
