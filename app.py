@@ -9,19 +9,27 @@ import sqlite3
 import pandas as pd
 
 # =========================================================
-# 0. NÚCLEO TÉCNICO E BANCO DE DADOS
+# 0. NÚCLEO TÉCNICO E BANCO DE DADOS (COM CORREÇÃO DE ERRO)
 # =========================================================
 def init_db():
     conn = sqlite3.connect('banco_dados.db')
     c = conn.cursor()
+    # Criação da tabela base
     c.execute('''CREATE TABLE IF NOT EXISTS atendimentos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         data_visita TEXT, cliente TEXT, doc_cliente TEXT, whatsapp TEXT, celular TEXT, fixo TEXT,
         endereco TEXT, email TEXT, marca TEXT, modelo TEXT, serie_evap TEXT, linha TEXT, 
         capacidade TEXT, serie_cond TEXT, tecnologia TEXT, fluido TEXT, loc_evap TEXT, 
         sistema TEXT, loc_cond TEXT, v_rede REAL, v_med REAL, a_med REAL, rla REAL, lra REAL,
-        p_suc REAL, p_liq REAL, sh REAL, sc REAL, delta_t REAL, problemas TEXT, medidas TEXT, observacoes TEXT
+        p_suc REAL, p_liq REAL, sh REAL, sc REAL, problemas TEXT, medidas TEXT, observacoes TEXT
     )''')
+    
+    # MIGRACAO: Verifica se a coluna delta_t existe, se não, adiciona.
+    try:
+        c.execute("SELECT delta_t FROM atendimentos LIMIT 1")
+    except sqlite3.OperationalError:
+        c.execute("ALTER TABLE atendimentos ADD COLUMN delta_t REAL DEFAULT 0.0")
+        
     conn.commit()
     conn.close()
 
@@ -37,6 +45,7 @@ def salvar_dados(dados):
     conn.commit()
     conn.close()
 
+# Inicializa o banco com a estrutura correta
 init_db()
 
 def clean(txt):
@@ -62,7 +71,7 @@ def get_tsat_global(psig, gas):
     return round(float(np.interp(psig, ancoras[gas]["p"], ancoras[gas]["t"])), 2)
 
 # =========================================================
-# 1. CONFIGURAÇÃO E INTERFACE (LAYOUT BLOQUEADO)
+# 1. CONFIGURAÇÃO E INTERFACE
 # =========================================================
 st.set_page_config(page_title="MPN | Engenharia Pro", layout="wide", page_icon="❄️")
 st.markdown("""<style>.stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {font-size: 18px; font-weight: bold;}</style>""", unsafe_allow_html=True)
@@ -119,7 +128,6 @@ with tab_termo:
         ts_suc = get_tsat_global(p_suc, fluido)
         sh_val = round(t_suc_tubo - ts_suc, 1)
         st.info(f"T-Sat Sucção: {ts_suc} °C")
-        # SH e SC à esquerda conforme solicitado
         st.success(f"SH: {sh_val} K")
     with tr2:
         p_liq, t_liq_tubo = st.number_input("Pressão Líquido (PSI)", value=345.0), st.number_input("Temp. Tubo Líquido (°C)", value=30.0)
@@ -130,12 +138,11 @@ with tab_termo:
     with tr3:
         t_ret = st.number_input("Temp. Retorno (°C)", value=25.0)
         t_ins = st.number_input("Temp. Insuflação (°C)", value=12.0)
-        # Novo campo Delta T posicionado abaixo das temperaturas
         delta_t = round(t_ret - t_ins, 1)
         st.metric("DELTA T (Diferencial)", f"{delta_t} °C")
 
 # =========================================================
-# 2. ABA DIAGNÓSTICO E RELATÓRIO (MOTOR IA INTEGRADO)
+# 2. ABA DIAGNÓSTICO E RELATÓRIO
 # =========================================================
 with tab_diag:
     col_prob, col_obs = st.columns(2)
@@ -143,72 +150,51 @@ with tab_diag:
         st.subheader("⚠️ Problemas Encontrados")
         pi1, pi2 = st.columns(2)
         p_sel = []
-        opcoes = ["Vazamento de Fluido", "Baixa Carga de Fluido", "Excesso de Fluido", "Ar/Incondensaveis no Ciclo", "Obstrucao Dispositivo Expansao", "Filtro Secador Obstruido", "Compressor Sem Compressao", "Falha na Ventilacao", "Falha na Placa Inverter", "Instabilidade na Rede Eletrica"]
+        opcoes = ["Vazamento de Fluido", "Baixa Carga", "Excesso de Fluido", "Ar no Ciclo", "Obstrucao Dispositivo", "Filtro Obstruido", "Compressor Falhando", "Falha Ventilacao", "Falha Placa", "Rede Instavel"]
         for i, opt in enumerate(opcoes):
             if i % 2 == 0:
                 if pi1.checkbox(opt): p_sel.append(opt)
             else:
                 if pi2.checkbox(opt): p_sel.append(opt)
     with col_obs:
-        st.subheader("📝 Observações do Técnico")
+        st.subheader("📝 Observações")
         obs_tecnico = st.text_area("", placeholder="Parecer técnico...", height=200, label_visibility="collapsed")
 
     st.markdown("---")
-    col_prop_ia, col_exec = st.columns(2)
-    with col_prop_ia:
-        st.subheader("🤖 Diagnóstico IA")
-        diag_ia_txt = f"Análise: SH {sh_val}K | SC {sc_val}K | Delta T {delta_t}C."
-        st.info(diag_ia_txt)
-        cop_aprox = round((sc_val + 5) / (sh_val + 1), 2) if sh_val > -1 else 0.0
-        st.metric("COP Estimado", cop_aprox)
-    with col_exec:
-        st.subheader("📋 Medidas Executadas")
-        executadas_input = st.text_area("", placeholder="Descreva as medidas executadas...", height=150, label_visibility="collapsed")
-
-    if st.button("📄 GERAR RELATÓRIO PROFISSIONAL (PDF)", use_container_width=True):
+    if st.button("📄 GERAR RELATÓRIO PDF E SALVAR", use_container_width=True):
         prob_txt = ', '.join(p_sel) if p_sel else 'Nenhum'
-        endereco_completo = f"{tipo_logr} {nome_logr}, {numero} {complemento} - {bairro} | CEP: {cep}"
+        endereco_completo = f"{tipo_logr} {nome_logr}, {numero} - {bairro}"
         
-        # Salva no Banco de Dados
-        salvar_dados((str(data_visita), cliente, doc_cliente, whatsapp, celular, tel_fixo, endereco_completo, email_cli, fabricante, modelo_eq, serie_evap, linha, cap_btu, serie_cond, tecnologia, fluido, loc_evap, sistema, loc_cond, v_rede, v_med, a_med, rla_comp, lra_comp, p_suc, p_liq, sh_val, sc_val, delta_t, prob_txt, executadas_input, obs_tecnico))
+        # Salva no Banco de Dados com a nova coluna delta_t
+        salvar_dados((str(data_visita), cliente, doc_cliente, whatsapp, celular, tel_fixo, endereco_completo, email_cli, fabricante, modelo_eq, serie_evap, linha, cap_btu, serie_cond, tecnologia, fluido, loc_evap, sistema, loc_cond, v_rede, v_med, a_med, rla_comp, lra_comp, p_suc, p_liq, sh_val, sc_val, delta_t, prob_txt, "Verificacao Realizada", obs_tecnico))
 
-        # Design do PDF (Modelo Planilha 4 Seções)
+        # Geração do PDF
         pdf = FPDF()
         pdf.add_page()
-        pdf.set_font("Arial", 'B', 18); pdf.set_text_color(0, 51, 102)
-        pdf.cell(190, 15, "RELATORIO TECNICO DE INSPECAO", 0, 1, 'C'); pdf.ln(5)
-
-        def add_section(title):
-            pdf.set_fill_color(230, 230, 230); pdf.set_font("Arial", 'B', 10); pdf.set_text_color(0)
-            pdf.cell(190, 7, f" {title}", 1, 1, 'L', True); pdf.set_font("Arial", '', 9)
-
-        add_section("1. IDENTIFICACAO DO CLIENTE E LOCAL")
-        pdf.cell(95, 6, clean(f"Cliente: {cliente}"), 1, 0); pdf.cell(95, 6, clean(f"Data: {data_visita.strftime('%d/%m/%Y')}"), 1, 1)
-        pdf.cell(190, 6, clean(f"Endereco: {endereco_completo}"), 1, 1); pdf.ln(3)
-
-        add_section("2. DADOS DO EQUIPAMENTO")
-        pdf.cell(63, 6, clean(f"Marca: {fabricante}"), 1, 0); pdf.cell(63, 6, clean(f"Modelo: {modelo_eq}"), 1, 0); pdf.cell(64, 6, clean(f"Cap: {cap_btu}"), 1, 1)
-        pdf.cell(95, 6, clean(f"S. Evap: {serie_evap}"), 1, 0); pdf.cell(95, 6, clean(f"S. Cond: {serie_cond}"), 1, 1); pdf.ln(3)
-
-        add_section("3. ANALISE TECNICA E PERFORMANCE")
-        pdf.cell(47, 6, clean(f"V. Medida: {v_med}V"), 1, 0); pdf.cell(47, 6, clean(f"A. Medida: {a_med}A"), 1, 0); pdf.cell(48, 6, clean(f"SH: {sh_val}K"), 1, 0); pdf.cell(48, 6, clean(f"Delta T: {delta_t}C"), 1, 1); pdf.ln(3)
-
-        add_section("4. DIAGNOSTICO E PARECER FINAL")
-        pdf.set_font("Arial", 'B', 9); pdf.cell(190, 6, "Problemas:", "LTR", 1)
-        pdf.set_font("Arial", '', 9); pdf.multi_cell(190, 6, clean(prob_txt), "LRB")
-        pdf.set_font("Arial", 'B', 9); pdf.cell(190, 6, "Parecer Tecnico:", "LTR", 1)
-        pdf.set_font("Arial", '', 9); pdf.multi_cell(190, 6, clean(obs_tecnico), "LRB")
-
-        # Assinaturas
-        pdf.ln(15); y_pos = pdf.get_y(); pdf.line(20, y_pos, 85, y_pos); pdf.line(115, y_pos, 180, y_pos)
-        pdf.set_xy(20, y_pos + 1); pdf.set_font("Arial", 'B', 8); pdf.cell(65, 4, "Responsavel Tecnico", 0, 0, 'C')
-        pdf.set_xy(115, y_pos + 1); pdf.cell(65, 4, clean(cliente), 0, 0, 'C')
-
+        pdf.set_font("Arial", 'B', 14); pdf.cell(190, 10, "RELATORIO TECNICO - MPN ENGENHARIA", 0, 1, 'C'); pdf.ln(5)
+        pdf.set_font("Arial", 'B', 10); pdf.cell(190, 7, " 1. DADOS GERAIS", 1, 1, 'L', True)
+        pdf.set_font("Arial", '', 9); pdf.cell(190, 6, clean(f"Cliente: {cliente} | Data: {data_visita.strftime('%d/%m/%Y')}"), 1, 1)
+        pdf.cell(190, 6, clean(f"Equipamento: {fabricante} {modelo_eq} | Fluido: {fluido}"), 1, 1); pdf.ln(3)
+        pdf.set_font("Arial", 'B', 10); pdf.cell(190, 7, " 2. PERFORMANCE", 1, 1, 'L', True)
+        pdf.set_font("Arial", '', 9); pdf.cell(63, 6, clean(f"SH: {sh_val}K"), 1, 0); pdf.cell(63, 6, clean(f"SC: {sc_val}K"), 1, 0); pdf.cell(64, 6, clean(f"Delta T: {delta_t}C"), 1, 1)
+        pdf.ln(5); pdf.set_font("Arial", 'B', 9); pdf.cell(190, 6, "Parecer Final:", 0, 1)
+        pdf.set_font("Arial", '', 9); pdf.multi_cell(190, 5, clean(obs_tecnico))
+        
         st.download_button("📥 Baixar PDF", data=pdf.output(dest='S').encode('latin-1', 'ignore'), file_name=f"Relatorio_{remover_acentos(cliente)}.pdf")
 
+# --- ABA 5: HISTÓRICO (FORMATO BRASILEIRO) ---
 with tab_hist:
-    st.subheader("📜 Histórico")
+    st.subheader("📜 Histórico de Diagnósticos")
     conn = sqlite3.connect('banco_dados.db')
-    df_h = pd.read_sql_query("SELECT id, data_visita, cliente, marca, sh, delta_t FROM atendimentos ORDER BY id DESC", conn)
+    try:
+        # Busca os dados incluindo a nova coluna delta_t
+        df_h = pd.read_sql_query("SELECT data_visita as 'Data', cliente as 'Cliente', marca as 'Marca', sh as 'SH (K)', delta_t as 'Delta T (C)' FROM atendimentos ORDER BY id DESC", conn)
+        # Formata a data para padrão brasileiro no DataFrame (se for string YYYY-MM-DD)
+        try:
+            df_h['Data'] = pd.to_datetime(df_h['Data']).dt.strftime('%d/%m/%Y')
+        except:
+            pass
+        st.dataframe(df_h, use_container_width=True, hide_index=True)
+    except Exception as e:
+        st.error(f"Erro ao carregar histórico: {e}")
     conn.close()
-    st.dataframe(df_h, use_container_width=True, hide_index=True)
