@@ -40,13 +40,20 @@ def salvar_dados(dados):
         conn.close()
 
 init_db()
-   <style>
+   # --- 1. CONFIGURAÇÃO DE ESTILO (CORREÇÃO DE INDENTAÇÃO) ---
+st.markdown(
+    """
+    <style>
     .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
         font-size: 20px;
         font-weight: bold;
     }
     </style>
-    """, unsafe_allow_html=True)
+    """, 
+    unsafe_allow_html=True
+)
+
+# --- 2. UTILITÁRIOS E MOTOR TERMODINÂMICO ---
 
 # --- 2. UTILITÁRIOS E MOTOR TERMODINÂMICO ---
 def remover_acentos(texto):
