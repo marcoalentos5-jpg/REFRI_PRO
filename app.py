@@ -1,6 +1,6 @@
 # =============================================================
 # MPN - ENGENHARIA E DIAGNÓSTICO HVAC PRO
-# DESENVOLVIDO PARA ALTA PERFORMANCE E RELATÓRIOS TÉCNICOS
+# VERSÃO CONSOLIDADA - ALTA PERFORMANCE
 # =============================================================
 
 import streamlit as st
@@ -13,7 +13,7 @@ import pandas as pd
 import unicodedata
 import time
 
-# --- 0. CONFIGURAÇÃO DE AMBIENTE ---
+# --- 1. CONFIGURAÇÃO DE AMBIENTE (LAYOUT BLOQUEADO) ---
 st.set_page_config(
     page_title="MPN | Engenharia & Diagnóstico",
     layout="wide",
@@ -21,54 +21,33 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- 1. BANCO DE DADOS (ESTRUTURA DE 31 CAMPOS - BLOQUEADA) ---
+# --- 2. BANCO DE DADOS (ESTRUTURA DE 31 CAMPOS) ---
 def init_db():
-    """Inicializa o banco de dados SQLite garantindo a integridade dos 31 campos."""
+    """Garante a criação da tabela com todos os 31 parâmetros técnicos."""
     try:
         conn = sqlite3.connect('banco_dados_mpn.db')
         c = conn.cursor()
         c.execute('''CREATE TABLE IF NOT EXISTS atendimentos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            data_visita TEXT, 
-            cliente TEXT, 
-            doc_cliente TEXT, 
-            whatsapp TEXT, 
-            celular TEXT, 
-            fixo TEXT,
-            endereco TEXT, 
-            email TEXT, 
-            marca TEXT, 
-            modelo TEXT, 
-            serie_evap TEXT, 
-            linha TEXT, 
-            capacidade TEXT, 
-            serie_cond TEXT, 
-            tecnologia TEXT, 
-            fluido TEXT, 
-            loc_evap TEXT, 
-            sistema TEXT, 
-            loc_cond TEXT, 
-            v_rede REAL, 
-            v_med REAL, 
-            a_med REAL, 
-            rla REAL, 
-            lra REAL,
-            p_suc REAL, 
-            p_liq REAL, 
-            sh REAL, 
-            sc REAL, 
-            problemas TEXT, 
-            medidas TEXT, 
-            observacoes TEXT
+            data_visita TEXT, cliente TEXT, doc_cliente TEXT, whatsapp TEXT, 
+            celular TEXT, fixo TEXT, endereco TEXT, email TEXT, marca TEXT, 
+            modelo TEXT, serie_evap TEXT, linha TEXT, capacidade TEXT, 
+            serie_cond TEXT, tecnologia TEXT, fluido TEXT, loc_evap TEXT, 
+            sistema TEXT, loc_cond TEXT, v_rede REAL, v_med REAL, a_med REAL, 
+            rla REAL, lra REAL, p_suc REAL, p_liq REAL, sh REAL, sc REAL, 
+            problemas TEXT, medidas TEXT, observacoes TEXT
         )''')
         conn.commit()
     except Exception as e:
-        st.error(f"Erro ao inicializar banco: {e}")
+        st.error(f"Erro Crítico no Banco de Dados: {e}")
     finally:
         conn.close()
 
 def salvar_dados(dados):
-    """Insere os dados no banco com validação de tupla completa."""
+    """Sincronização rigorosa dos 31 campos para evitar erro de inconsistência."""
+    if len(dados) != 31:
+        st.error(f"Erro de Sincronização: Esperados 31 campos, recebidos {len(dados)}")
+        return False
     try:
         conn = sqlite3.connect('banco_dados_mpn.db')
         c = conn.cursor()
@@ -82,82 +61,56 @@ def salvar_dados(dados):
         conn.commit()
         return True
     except Exception as e:
-        st.error(f"Erro ao salvar: {e}")
+        st.error(f"Falha ao gravar no banco: {e}")
         return False
     finally:
         conn.close()
 
 init_db()
 
-# --- 2. MOTOR TERMODINÂMICO (TABELAS PT COMPLETAS) ---
+# --- 3. MOTOR TERMODINÂMICO (TABELAS PT COMPLETAS) ---
 def get_tsat_global(psig, gas):
-    """
-    Retorna a temperatura de saturação baseada em tabelas PT extensas.
-    Inclui interpolação linear para valores intermediários de pressão.
-    """
-    ancoras = {
+    """Interpolação linear de alta precisão para múltiplos gases."""
+    tab = {
         "R-410A": {
-            "p": [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 180, 200, 220, 250, 300, 350, 400, 450, 500, 550, 600], 
-            "t": [-51.0, -42.0, -34.0, -28.0, -22.0, -17.0, -12.5, -8.5, -5.0, -2.5, -0.3, 4.0, 8.0, 11.5, 15.0, 18.2, 21.0, 25.0, 32.0, 38.0, 44.0, 49.0, 54.0, 58.5, 63.0]
+            "p": [0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 250, 300, 350, 400, 450, 500, 550, 600], 
+            "t": [-51.0, -34.0, -22.0, -12.5, -5.0, -0.3, 4.0, 8.0, 11.5, 15.0, 18.2, 25.0, 32.0, 38.0, 44.0, 49.0, 54.0, 58.5, 63.0]
         },
         "R-32": {
-            "p": [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700], 
-            "t": [-51.7, -17.5, 0.9, 10.9, 20.1, 27.9, 34.6, 40.6, 45.9, 50.8, 55.4, 59.5, 63.4, 67.2, 70.8]
+            "p": [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600], 
+            "t": [-51.7, -17.5, 0.9, 10.9, 20.1, 27.9, 34.6, 40.6, 45.9, 50.8, 55.4, 59.5, 63.4]
         },
         "R-22": {
-            "p": [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 125, 150, 175, 200, 225, 250, 275, 300, 350, 400, 450, 500], 
-            "t": [-40.8, -32.5, -25.8, -20.0, -15.0, -10.5, -6.5, -3.0, 0.2, 3.2, 6.0, 12.5, 18.5, 24.0, 29.0, 33.5, 38.0, 42.0, 46.0, 53.0, 60.0, 66.0, 72.0]
+            "p": [0, 20, 40, 60, 80, 100, 125, 150, 175, 200, 250, 300, 350, 400, 450, 500], 
+            "t": [-40.8, -25.8, -15.0, -6.5, 0.2, 6.0, 12.5, 18.5, 24.0, 29.0, 38.0, 46.0, 53.0, 60.0, 66.0, 72.0]
         },
         "R-134a": {
-            "p": [0, 5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 180, 200, 220], 
-            "t": [-26.1, -18.5, -12.5, -7.5, -3.2, 0.5, 3.8, 9.5, 14.5, 19.0, 23.2, 27.0, 30.5, 33.8, 40.0, 45.5, 50.5, 55.2, 59.5, 63.5]
+            "p": [0, 10, 20, 30, 40, 50, 60, 80, 100, 120, 140, 160, 180, 200], 
+            "t": [-26.1, -12.5, -3.2, 3.8, 9.5, 14.5, 19.0, 27.0, 33.8, 40.0, 45.5, 50.5, 55.2, 59.5]
         }
     }
-    
-    if gas not in ancoras or psig is None:
-        return 0.0
-    
-    try:
-        val_p = float(psig)
-        if val_p < 0: val_p = 0
-        return round(float(np.interp(val_p, ancoras[gas]["p"], ancoras[gas]["t"])), 2)
-    except Exception:
-        return 0.0
+    if gas not in tab: return 0.0
+    return round(float(np.interp(max(0, psig), tab[gas]["p"], tab[gas]["t"])), 2)
 
 def clean(txt):
-    """Limpa caracteres especiais para compatibilidade com PDF FPDF (latin-1)."""
+    """Sanitização de strings para PDF."""
     if not txt: return "N/A"
-    txt = str(txt)
-    txt = txt.replace('°', 'C').replace('º', '.').replace('ª', '.')
-    nfkd_form = unicodedata.normalize('NFKD', txt)
-    return "".join([c for c in nfkd_form if not unicodedata.category(c) == 'Mn'])
+    res = str(txt).replace('°', 'C').replace('º', '.').replace('ª', '.')
+    return "".join(c for c in unicodedata.normalize('NFKD', res) if not unicodedata.category(c) == 'Mn')
 
 def seguro(v, default=0.0):
-    """Conversão segura de tipos para evitar quebras de interface."""
-    try:
-        return float(v)
-    except (ValueError, TypeError):
-        return default
+    """Validador de entrada numérica."""
+    try: return float(v)
+    except: return default
 
-# --- 3. ESTILIZAÇÃO E TABS ---
+# --- 4. CSS CUSTOMIZADO ---
 st.markdown("""
     <style>
-    .main { background-color: #f5f7f9; }
-    .stTabs [data-baseweb="tab-list"] { gap: 8px; }
-    .stTabs [data-baseweb="tab-list"] button {
-        background-color: #e1e4e8;
-        border-radius: 4px 4px 0px 0px;
-        padding: 10px 20px;
-        height: 50px;
-    }
-    .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] {
-        background-color: #004a99;
-        color: white;
-    }
+    .stTabs [data-baseweb="tab-list"] button p { font-size: 18px; font-weight: bold; }
+    div[data-testid="stMetricValue"] { font-size: 24px; color: #004a99; }
+    .stButton>button { width: 100%; border-radius: 5px; height: 3em; background-color: #004a99; color: white; }
     </style>
 """, unsafe_allow_html=True)
-
-# ... (Continua com as abas de interface)
 # --- 5. INTERFACE PRINCIPAL E TABS ---
 st.title("❄️ MPN | Engenharia & Diagnóstico HVAC")
 
