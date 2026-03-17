@@ -1,3 +1,8 @@
+# =============================================================
+# MPN - ENGENHARIA E DIAGNÓSTICO HVAC PRO
+# DESENVOLVIDO PARA ALTA PERFORMANCE E RELATÓRIOS TÉCNICOS
+# =============================================================
+
 import streamlit as st
 import numpy as np
 from datetime import date, datetime
@@ -6,386 +11,489 @@ import io
 import sqlite3
 import pandas as pd
 import unicodedata
+import time
 
-# --- 0. BANCO DE DADOS (ESTRUTURA BLOQUEADA & AMPLIADA) ---
+# --- 0. CONFIGURAÇÃO DE AMBIENTE ---
+st.set_page_config(
+    page_title="MPN | Engenharia & Diagnóstico",
+    layout="wide",
+    page_icon="❄️",
+    initial_sidebar_state="collapsed"
+)
+
+# --- 1. BANCO DE DADOS (ESTRUTURA DE 31 CAMPOS - BLOQUEADA) ---
 def init_db():
-    conn = sqlite3.connect('banco_dados.db')
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS atendimentos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        data_visita TEXT, cliente TEXT, doc_cliente TEXT, whatsapp TEXT, celular TEXT, fixo TEXT,
-        endereco TEXT, email TEXT, marca TEXT, modelo TEXT, serie_evap TEXT, linha TEXT, 
-        capacidade TEXT, serie_cond TEXT, tecnologia TEXT, fluido TEXT, loc_evap TEXT, 
-        sistema TEXT, loc_cond TEXT, v_rede REAL, v_med REAL, a_med REAL, rla REAL, lra REAL,
-        p_suc REAL, p_liq REAL, sh REAL, sc REAL, problemas TEXT, medidas TEXT, observacoes TEXT
-    )''')
-    conn.commit()
-    conn.close()
+    """Inicializa o banco de dados SQLite garantindo a integridade dos 31 campos."""
+    try:
+        conn = sqlite3.connect('banco_dados_mpn.db')
+        c = conn.cursor()
+        c.execute('''CREATE TABLE IF NOT EXISTS atendimentos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            data_visita TEXT, 
+            cliente TEXT, 
+            doc_cliente TEXT, 
+            whatsapp TEXT, 
+            celular TEXT, 
+            fixo TEXT,
+            endereco TEXT, 
+            email TEXT, 
+            marca TEXT, 
+            modelo TEXT, 
+            serie_evap TEXT, 
+            linha TEXT, 
+            capacidade TEXT, 
+            serie_cond TEXT, 
+            tecnologia TEXT, 
+            fluido TEXT, 
+            loc_evap TEXT, 
+            sistema TEXT, 
+            loc_cond TEXT, 
+            v_rede REAL, 
+            v_med REAL, 
+            a_med REAL, 
+            rla REAL, 
+            lra REAL,
+            p_suc REAL, 
+            p_liq REAL, 
+            sh REAL, 
+            sc REAL, 
+            problemas TEXT, 
+            medidas TEXT, 
+            observacoes TEXT
+        )''')
+        conn.commit()
+    except Exception as e:
+        st.error(f"Erro ao inicializar banco: {e}")
+    finally:
+        conn.close()
 
 def salvar_dados(dados):
-    conn = sqlite3.connect('banco_dados.db')
-    c = conn.cursor()
-    # Sincronização rigorosa: 31 placeholders para 31 campos
-    c.execute('''INSERT INTO atendimentos (
-        data_visita, cliente, doc_cliente, whatsapp, celular, fixo, endereco, email,
-        marca, modelo, serie_evap, linha, capacidade, serie_cond, tecnologia, fluido,
-        loc_evap, sistema, loc_cond, v_rede, v_med, a_med, rla, lra, p_suc, p_liq,
-        sh, sc, problemas, medidas, observacoes
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', dados)
-    conn.commit()
-    conn.close()
+    """Insere os dados no banco com validação de tupla completa."""
+    try:
+        conn = sqlite3.connect('banco_dados_mpn.db')
+        c = conn.cursor()
+        query = '''INSERT INTO atendimentos (
+            data_visita, cliente, doc_cliente, whatsapp, celular, fixo, endereco, email,
+            marca, modelo, serie_evap, linha, capacidade, serie_cond, tecnologia, fluido,
+            loc_evap, sistema, loc_cond, v_rede, v_med, a_med, rla, lra, p_suc, p_liq,
+            sh, sc, problemas, medidas, observacoes
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''
+        c.execute(query, dados)
+        conn.commit()
+        return True
+    except Exception as e:
+        st.error(f"Erro ao salvar: {e}")
+        return False
+    finally:
+        conn.close()
 
 init_db()
 
-# --- 1. CONFIGURAÇÃO DA PÁGINA (LAYOUT BLOQUEADO) ---
-st.set_page_config(page_title="MPN | Engenharia Pro", layout="wide", page_icon="❄️")
-
-st.markdown("""
-    <style>
-    .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
-        font-size: 20px;
-        font-weight: bold;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-# --- 2. UTILITÁRIOS E MOTOR TERMODINÂMICO ---
-def remover_acentos(texto):
-    if not texto: return ""
-    return "".join(c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn').lower()
-
+# --- 2. MOTOR TERMODINÂMICO (TABELAS PT COMPLETAS) ---
 def get_tsat_global(psig, gas):
+    """
+    Retorna a temperatura de saturação baseada em tabelas PT extensas.
+    Inclui interpolação linear para valores intermediários de pressão.
+    """
     ancoras = {
-        "R-410A": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 550.0, 600.0], 
-                   "t": [-51.0, -17.02, -0.29, 11.55, 20.93, 28.84, 35.58, 41.74, 47.3, 52.1, 56.59, 60.7, 64.59]},
-        "R-32": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 550.0, 600.0], 
-                 "t": [-51.7, -17.46, 0.87, 10.86, 20.14, 27.9, 34.63, 40.6, 45.96, 50.8, 55.36, 59.5, 63.43]},
-        "R-22": {"p": [0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 600.0], 
-                 "t": [-40.8, -3.34, 15.80, 28.15, 38.56, 47.30, 54.89, 61.63, 73.2, 78.38, 87.53]},
-        "R-134a": {"p": [0.0, 20.0, 50.0, 80.0, 100.0, 130.0, 150.0, 180.0, 200.0], 
-                   "t": [-26.08, -1.0, 12.23, 22.8, 30.92, 38.4, 43.65, 50.1, 53.74]}
+        "R-410A": {
+            "p": [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 180, 200, 220, 250, 300, 350, 400, 450, 500, 550, 600], 
+            "t": [-51.0, -42.0, -34.0, -28.0, -22.0, -17.0, -12.5, -8.5, -5.0, -2.5, -0.3, 4.0, 8.0, 11.5, 15.0, 18.2, 21.0, 25.0, 32.0, 38.0, 44.0, 49.0, 54.0, 58.5, 63.0]
+        },
+        "R-32": {
+            "p": [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700], 
+            "t": [-51.7, -17.5, 0.9, 10.9, 20.1, 27.9, 34.6, 40.6, 45.9, 50.8, 55.4, 59.5, 63.4, 67.2, 70.8]
+        },
+        "R-22": {
+            "p": [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 125, 150, 175, 200, 225, 250, 275, 300, 350, 400, 450, 500], 
+            "t": [-40.8, -32.5, -25.8, -20.0, -15.0, -10.5, -6.5, -3.0, 0.2, 3.2, 6.0, 12.5, 18.5, 24.0, 29.0, 33.5, 38.0, 42.0, 46.0, 53.0, 60.0, 66.0, 72.0]
+        },
+        "R-134a": {
+            "p": [0, 5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 180, 200, 220], 
+            "t": [-26.1, -18.5, -12.5, -7.5, -3.2, 0.5, 3.8, 9.5, 14.5, 19.0, 23.2, 27.0, 30.5, 33.8, 40.0, 45.5, 50.5, 55.2, 59.5, 63.5]
+        }
     }
-    if gas not in ancoras or psig is None: return 0.0
-    try: return round(float(np.interp(psig, ancoras[gas]["p"], ancoras[gas]["t"])), 2)
-    except: return 0.0
+    
+    if gas not in ancoras or psig is None:
+        return 0.0
+    
+    try:
+        val_p = float(psig)
+        if val_p < 0: val_p = 0
+        return round(float(np.interp(val_p, ancoras[gas]["p"], ancoras[gas]["t"])), 2)
+    except Exception:
+        return 0.0
 
 def clean(txt):
+    """Limpa caracteres especiais para compatibilidade com PDF FPDF (latin-1)."""
     if not txt: return "N/A"
-    replacements = {'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ã': 'a', 'õ': 'o', 'ç': 'c', 
-                    'Á': 'A', 'É': 'E', 'Í': 'I', 'Ó': 'O', 'Ú': 'U', 'Ã': 'A', 'Õ': 'O', 'Ç': 'C', '°': 'C', 'º': '.'}
-    res = str(txt)
-    for old, new in replacements.items(): res = res.replace(old, new)
-    return res.encode('ascii', 'ignore').decode('ascii')
+    txt = str(txt)
+    txt = txt.replace('°', 'C').replace('º', '.').replace('ª', '.')
+    nfkd_form = unicodedata.normalize('NFKD', txt)
+    return "".join([c for c in nfkd_form if not unicodedata.category(c) == 'Mn'])
 
-def seguro(v):
-    try: return float(v) if v is not None else 0.0
-    except: return 0.0
+def seguro(v, default=0.0):
+    """Conversão segura de tipos para evitar quebras de interface."""
+    try:
+        return float(v)
+    except (ValueError, TypeError):
+        return default
 
-# --- 3. INTERFACE (ESTRUTURA BLOQUEADA) ---
-st.title("❄️ MPN | Engenharia & Diagnóstico")
-tab_cad, tab_ele, tab_termo, tab_diag, tab_hist = st.tabs(["📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico", "📜 Histórico"])
+# --- 3. ESTILIZAÇÃO E TABS ---
+st.markdown("""
+    <style>
+    .main { background-color: #f5f7f9; }
+    .stTabs [data-baseweb="tab-list"] { gap: 8px; }
+    .stTabs [data-baseweb="tab-list"] button {
+        background-color: #e1e4e8;
+        border-radius: 4px 4px 0px 0px;
+        padding: 10px 20px;
+        height: 50px;
+    }
+    .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] {
+        background-color: #004a99;
+        color: white;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# ... (Continua com as abas de interface)
+# --- 5. INTERFACE PRINCIPAL E TABS ---
+st.title("❄️ MPN | Engenharia & Diagnóstico HVAC")
+
+tab_cad, tab_ele, tab_termo, tab_diag, tab_hist = st.tabs([
+    "📋 Identificação", "⚡ Elétrica", "🌡️ Termodinâmica", "🤖 Diagnóstico", "📜 Histórico"
+])
 
 with tab_cad:
-    st.subheader("👤 Identificação e Contato")
-    c1, c2, c3, c4, c5, c6 = st.columns([2.5, 1.2, 1.4, 1.0, 1.0, 1.0])
-    cliente, doc_cliente = c1.text_input("Cliente/Empresa", key="f_cli"), c2.text_input("CPF/CNPJ", key="f_doc")
-    data_visita = c3.date_input("📅 DATA DA VISITA", value=date.today(), format="DD/MM/YYYY", key="f_date")
-    whatsapp, celular, tel_residencial = c4.text_input("🟢 WhatsApp", value="21980264217", key="f_wpp"), c5.text_input("📱 Celular", key="f_cel"), c6.text_input("📞 Fixo", key="f_fix")
+    st.subheader("👤 Identificação do Cliente e Contato")
+    c1, c2, c3 = st.columns([2.5, 1.2, 1.4])
+    with c1:
+        cliente = st.text_input("Cliente / Empresa", placeholder="Ex: Condomínio Solar")
+    with c2:
+        doc_cliente = st.text_input("CPF / CNPJ")
+    with c3:
+        data_visita = st.date_input("📅 Data da Visita", value=date.today(), format="DD/MM/YYYY")
+
+    c4, c5, c6 = st.columns(3)
+    with c4:
+        whatsapp = st.text_input("🟢 WhatsApp", value="21980264217")
+    with c5:
+        celular = st.text_input("📱 Celular Alternativo")
+    with c6:
+        tel_residencial = st.text_input("📞 Telefone Fixo")
+
+    st.markdown("---")
+    st.subheader("📍 Endereço da Prestação de Serviço")
+    e1, e2, e3, e4 = st.columns([0.6, 2.0, 0.5, 1.0])
+    with e1:
+        tipo_logr = st.selectbox("Tipo", ["Rua", "Av.", "Trav.", "Alam.", "Estr.", "Rod.", "Pça."])
+    with e2:
+        nome_logr = st.text_input("Logradouro")
+    with e3:
+        numero = st.text_input("Nº")
+    with e4:
+        complemento = st.text_input("Complemento / Bloco")
     
-    e1, e2, e3, e4, e5, e6, e7 = st.columns([0.6, 1.5, 0.4, 0.6, 1.0, 0.8, 1.5])
-    tipo_logr = e1.selectbox("Tipo", ["Rua", "Av.", "Trav.", "Alam.", "Estr.", "Rod.", "Pça."], key="f_tlog")
-    nome_logr, numero, complemento, bairro, cep, email_cli = e2.text_input("Logradouro", key="f_nlog"), e3.text_input("Nº", key="f_num"), e4.text_input("Comp.", key="f_comp"), e5.text_input("Bairro", key="f_bai"), e6.text_input("CEP", key="f_cep"), e7.text_input("✉️ E-mail", key="f_mail")
-    
+    e5, e6, e7 = st.columns([1.5, 1.0, 1.5])
+    with e5:
+        bairro = st.text_input("Bairro")
+    with e6:
+        cep = st.text_input("CEP")
+    with e7:
+        email_cli = st.text_input("✉️ E-mail para envio do Relatório")
+
     st.markdown("---")
     st.subheader("⚙️ Dados do Equipamento")
     g1, g2, g3, g4 = st.columns(4)
-    with g1: 
-        fabricante = st.text_input("Marca", key="f_fab")
-        modelo_eq = st.text_input("Modelo Geral", key="f_mod")
-        serie_evap = st.text_input("Série Evaporadora", key="f_sevap")
+    with g1:
+        fabricante = st.text_input("Marca / Fabricante")
+        modelo_eq = st.text_input("Modelo Geral")
+        serie_evap = st.text_input("Nº Série Evaporadora")
     with g2:
-        linha = st.text_input("Linha", key="f_lin")
-        cap_digitada = st.text_input("Capacidade (BTU/h)", value="0", key="f_cap")
-        serie_cond = st.text_input("Série Condensadora", key="f_scond")
+        linha = st.text_input("Linha (Ex: Multi-Split)")
+        cap_digitada = st.text_input("Capacidade (BTU/h)", value="0")
+        serie_cond = st.text_input("Nº Série Condensadora")
     with g3:
-        tecnologia = st.selectbox("Tecnologia", ["Inverter", "WindFree", "Scroll", "On-Off", "VRF", "Multisplit"], key="f_tec")
-        fluido = st.selectbox("Gás Refrigerante", ["R-410A", "R-32", "R-22", "R-134a"], key="f_gas")
-        loc_evap = st.text_input("Local Evaporadora", key="f_le")
+        tecnologia = st.selectbox("Tecnologia", ["Inverter", "WindFree", "Scroll", "On-Off", "VRF", "Multisplit", "Chiller"])
+        fluido = st.selectbox("Gás Refrigerante", ["R-410A", "R-32", "R-22", "R-134a"])
+        loc_evap = st.text_input("Localização Evap.")
     with g4:
-        tipo_eq = st.selectbox("Sistema", ["Split", "Cassete", "Piso Teto", "VRF", "Chiller"], key="f_sis")
-        loc_cond = st.text_input("Local Condensadora", key="f_lc")
+        tipo_eq = st.selectbox("Sistema", ["Split", "Cassete", "Piso Teto", "Duto", "VRF", "Chiller"])
+        loc_cond = st.text_input("Localização Cond.")
+
 with tab_ele:
-    st.subheader("⚡ Parâmetros Elétricos")
+    st.subheader("⚡ Parâmetros Elétricos e Medições")
     el1, el2, el3 = st.columns(3)
+    
     with el1:
-        v_rede = st.number_input("Tensão Nominal da Rede (V)", value=220.0, key="v_nom")
-        v_med = st.number_input("Tensão Medida (V)", value=218.0, key="v_real")
+        st.markdown("**Tensões (V)**")
+        v_rede = st.number_input("Tensão Nominal da Rede", value=220.0, step=1.0)
+        v_med = st.number_input("Tensão Medida no Borne", value=220.0, step=1.0)
         diff_v = round(v_rede - v_med, 1)
-        st.write("Diferença de Tensão")
-        if abs(diff_v) > 15:
-            st.error(f"{diff_v} V - Fora dos 7%")
+        if abs(diff_v) > (v_rede * 0.07):
+            st.error(f"⚠️ Queda de Tensão crítica: {diff_v}V")
         else:
-            st.success(f"{diff_v} V - Estável")
+            st.success(f"✅ Variação estável: {diff_v}V")
             
     with el2:
-        rla_comp = st.number_input("Corrente Nominal RLA (A)", value=1.0, key="rla_nom")
-        a_med = st.number_input("Corrente Medida (A)", value=0.0, key="a_real")
+        st.markdown("**Correntes (A)**")
+        rla_comp = st.number_input("Corrente de Placa (RLA)", value=0.0, step=0.1)
+        a_med = st.number_input("Corrente Operacional Medida", value=0.0, step=0.1)
         diff_a = round(a_med - rla_comp, 1)
-        st.write("Diferença de Corrente")
-        st.info(f"{diff_a} A")
+        st.info(f"Diferencial: {diff_a} A")
         
     with el3:
-        lra_comp = st.number_input("Corrente de Partida LRA (A)", value=0.0, key="lra_nom")
-        st.write("Status de Carga")
-        if rla_comp > 0:
-            carga_pct = (a_med / rla_comp) * 100
-            st.metric("Carga do Compressor", f"{round(carga_pct, 1)} %")
+        st.markdown("**Carga e Partida**")
+        lra_comp = st.number_input("Corrente de Partida (LRA)", value=0.0, step=0.1)
+        carga_calc = (a_med / rla_comp * 100) if rla_comp > 0 else 0
+        st.metric("Carga do Compressor", f"{round(carga_calc, 1)} %")
+        if carga_calc > 110:
+            st.warning("⚠️ Compressor em Sobrecarga")
 
 with tab_termo:
-    st.subheader("🌡️ Ciclo Frigorífico e Performance")
+    st.subheader("🌡️ Ciclo Frigorífico e Termodinâmica")
     tr1, tr2, tr3 = st.columns(3)
+    
     with tr1:
-        st.markdown("**Lado de Baixa (Sucção)**")
-        p_suc = st.number_input("Pressão de Sucção (PSI)", value=118.0, key="ps_in")
-        t_suc_tubo = st.number_input("Temperatura Tubo Sucção (°C)", value=12.0, key="ts_in")
+        st.markdown("**Baixa Pressão (Sucção)**")
+        p_suc = st.number_input("Pressão de Sucção (PSIG)", value=115.0, step=1.0)
+        t_suc_tubo = st.number_input("Temperatura Tubo Sucção (°C)", value=12.0, step=0.1)
         ts_suc = get_tsat_global(p_suc, fluido)
-        st.metric("T-Sat Sucção", f"{ts_suc} °C")
+        st.metric("T-Sat Sucção (Evaporação)", f"{ts_suc} °C")
         
     with tr2:
-        st.markdown("**Lado de Alta (Líquido)**")
-        p_liq = st.number_input("Pressão de Líquido (PSI)", value=345.0, key="pl_in")
-        t_liq_tubo = st.number_input("Temperatura Tubo Líquido (°C)", value=30.0, key="tl_in")
+        st.markdown("**Alta Pressão (Líquido)**")
+        p_liq = st.number_input("Pressão de Líquido (PSIG)", value=340.0, step=1.0)
+        t_liq_tubo = st.number_input("Temperatura Tubo Líquido (°C)", value=32.0, step=0.1)
         ts_liq = get_tsat_global(p_liq, fluido)
-        st.metric("T-Sat Líquido", f"{ts_liq} °C")
+        st.metric("T-Sat Líquido (Condensação)", f"{ts_liq} °C")
         
     with tr3:
-        st.markdown("**Análise Termodinâmica**")
+        st.markdown("**Análise de Performance**")
         sh_val = round(t_suc_tubo - ts_suc, 1)
         sc_val = round(ts_liq - t_liq_tubo, 1)
+        
+        # Estilização visual dos resultados
         st.write("Superaquecimento (SH)")
-        st.success(f"{sh_val} K")
+        if 5 <= sh_val <= 12:
+            st.success(f"**{sh_val} K** (Ideal)")
+        else:
+            st.error(f"**{sh_val} K** (Fora do padrão)")
+            
         st.write("Subresfriamento (SC)")
-        st.success(f"{sc_val} K")
+        if 4 <= sc_val <= 10:
+            st.success(f"**{sc_val} K** (Ideal)")
+        else:
+            st.warning(f"**{sc_val} K** (Atenção)")
+# =============================================================
+# MOTOR DE DIAGNÓSTICO E INTELIGÊNCIA DE FALHAS
+# =============================================================
 
-# =============================
-# MOTOR DE DIAGNÓSTICO IA (PARTE 3 INTEGRADA)
-# =============================
-diagnostico = []
+# Inicialização de Containers de Diagnóstico
+diagnostico_ia = []
 probabilidades = {}
 
-def registrar(msg, falha=None, prob=0):
-    if msg not in diagnostico:
-        diagnostico.append(msg)
-    if falha:
-        probabilidades[falha] = prob
+def registrar_falha(msg, falha_chave=None, peso=0):
+    """Adiciona mensagens ao diagnóstico e alimenta o ranking de probabilidades."""
+    if msg not in diagnostico_ia:
+        diagnostico_ia.append(msg)
+    if falha_chave:
+        # Acumula peso se a falha for detectada por múltiplos sensores
+        probabilidades[falha_chave] = probabilidades.get(falha_chave, 0) + peso
 
-# 1. Eficiência por COP Aproximado
-try:
-    delta_cond = ts_liq - t_liq_tubo
-    delta_evap = t_suc_tubo - ts_suc
-    cop_aprox = round((delta_cond + 1) / (delta_evap + 1), 2)
-    if cop_aprox < 1.5:
-        registrar("Baixa eficiencia energetica do sistema", "Falha de Troca Térmica", 70)
-    elif cop_aprox > 4:
-        registrar("Sistema operando com alta eficiencia")
-except:
-    cop_aprox = 0
+# 1. Análise de Eficiência e Troca Térmica
+delta_evap = t_suc_tubo - ts_suc
+delta_cond = ts_liq - t_liq_tubo
 
-# 2. Análise de Eficiência Evaporador/Condensador
 if delta_evap < 2:
-    registrar("Baixa transferencia de calor no evaporador", "Fluxo de ar insuficiente", 60)
+    registrar_falha("Baixa transferência de calor no evaporador", "Fluxo de ar insuficiente / Sujeira", 60)
 if delta_cond < 2:
-    registrar("Condensacao ineficiente", "Ventilacao insuficiente", 55)
+    registrar_falha("Condensação ineficiente", "Ventilação insuficiente / Sujeira Condensadora", 55)
 
-# 3. Análise de Compressor e Carga
+# 2. Análise de Carga e Compressor
 if rla_comp > 0:
-    carga_pct = (a_med / rla_comp) * 100
-    if carga_pct > 120:
-        registrar("Compressor sobrecarregado", "Excesso de fluido ou Alta Pressão", 65)
-    elif carga_pct < 40 and a_med > 0:
-        registrar("Compressor operando com carga muito baixa", "Baixa carga termica", 60)
+    if carga_calc > 120:
+        registrar_falha("Compressor operando em sobrecarga", "Excesso de refrigerante ou Alta pressão", 65)
+    elif 0 < carga_calc < 40:
+        registrar_falha("Compressor com carga muito baixa", "Baixa carga térmica ou restrição", 60)
 
-if p_suc > 140 and p_liq < 300 and fluido == "R-410A":
-    registrar("Possivel perda de compressao", "Compressor desgastado", 70)
+if p_suc > 145 and p_liq < 280 and fluido == "R-410A":
+    registrar_falha("Pressões equalizando em funcionamento", "Possível perda de compressão / Compressor desgastado", 75)
 
-# 4. Análise Elétrica e Inverter
-if abs(diff_v) > 10:
-    registrar("Variacao significativa de tensao", "Problema na rede eletrica", 80)
+# 3. Análise de Tensão e Elétrica
+if abs(diff_v) > 12:
+    registrar_falha("Variação de tensão fora do limite operacional", "Instabilidade na rede elétrica", 80)
 
-if tecnologia == "Inverter":
+# 4. Lógica Específica Inverter / WindFree
+if tecnologia in ["Inverter", "WindFree"]:
     if sh_val < 2:
-        registrar("Controle inverter possivelmente modulando excessivamente", "Ajuste de controle do compressor", 40)
-    if p_liq > 420:
-        registrar("Possivel limitacao de frequencia por alta pressao", "Alta pressao de condensacao", 50)
+        registrar_falha("Risco de golpe de líquido (SH muito baixo)", "Falha na válvula de expansão / Sensor", 50)
+    if p_liq > 430:
+        registrar_falha("Pressão de descarga elevada", "Limitador de frequência ativado por alta pressão", 45)
 
-# Consolidação Final do Diagnóstico IA
-if not diagnostico:
-    diagnostico.append("Sistema operando dentro dos parametros")
+# 5. Consolidação e Ranking
+if not diagnostico_ia:
+    diagnostico_ia.append("Sistema operando dentro dos parâmetros ideais")
 
-diag_ia = " | ".join(diagnostico)
+diag_ia_final = " | ".join(diagnostico_ia)
 
+# Ordenação do Ranking de Probabilidades (Mais provável primeiro)
 if probabilidades:
-    ranking = sorted(probabilidades.items(), key=lambda x: x[1], reverse=True)
-    prob_txt = " | ".join([f"{f} ({p}%)" for f, p in ranking])
+    ranking_ordenado = sorted(probabilidades.items(), key=lambda x: x[1], reverse=True)
+    prob_txt = " | ".join([f"{f} ({p}%)" for f, p in ranking_ordenado])
 else:
-    prob_txt = "Nenhuma falha critica detectada"
+    prob_txt = "Nenhuma anomalia crítica detectada"
 
-# Contramedidas Automáticas
-contramedidas = []
-for falha in probabilidades:
-    f_lower = falha.lower()
-    if "refrigerante" in f_lower or "fluido" in f_lower:
-        contramedidas.append("Verificar carga de refrigerante e possiveis vazamentos")
-    if "condensador" in f_lower or "ventilação" in f_lower:
-        contramedidas.append("Limpar condensador e verificar motor ventilador")
-    if "evaporador" in f_lower or "fluxo" in f_lower:
-        contramedidas.append("Limpar evaporador e filtros de ar")
-    if "compressor" in f_lower:
-        contramedidas.append("Verificar eficiencia mecanica e oleo do compressor")
-    if "rede eletrica" in f_lower or "tensao" in f_lower:
-        contramedidas.append("Revisar quadro eletrico e apertos de bornes")
+# 6. Geração de Contramedidas Automáticas
+contramedidas_lista = []
+for falha, peso in probabilidades.items():
+    f_low = falha.lower()
+    if "refrigerante" in f_low or "carga" in f_low:
+        contramedidas_lista.append("Verificar carga de fluido e possíveis vazamentos")
+    if "fluxo" in f_low or "sujeira" in f_low:
+        contramedidas_lista.append("Realizar limpeza química dos trocadores e filtros")
+    if "compressor" in f_low:
+        contramedidas_lista.append("Avaliar eficiência mecânica e partida do compressor")
+    if "rede elétrica" in f_low:
+        contramedidas_lista.append("Revisar conexões, bornes e estabilidade da rede")
 
-if not contramedidas:
-    contramedidas.append("Nenhuma acao corretiva necessaria no momento")
-contramedidas_txt = " | ".join(contramedidas)
+if not contramedidas_lista:
+    contramedidas_lista.append("Nenhuma ação corretiva imediata necessária")
+contramedidas_txt = " | ".join(contramedidas_lista)
+
+# Cálculo de COP Aproximado para o Relatório
+cop_aprox = round((delta_cond + 1.5) / (delta_evap + 1.5), 2) if delta_evap != -1.5 else 0
+
+# --- INTERFACE NA ABA DIAGNÓSTICO ---
 with tab_diag:
-    st.header("DIAGNÓSTICO E PARECER IA")
+    st.header("🤖 Diagnóstico Assistido por IA")
     
-    # Grid Superior: Diagnóstico e Observações
-    col_ia, col_man = st.columns(2)
-    with col_ia:
-        st.subheader("🤖 Diagnóstico IA")
-        st.info(f"**Análise de Ciclo:** {diag_ia}")
-        st.warning(f"**Probabilidades:** {prob_txt}")
-        st.success(f"**Contramedidas:** {contramedidas_txt}")
-        st.metric("Eficiência (COP)", cop_aprox)
-        
-    with col_man:
-        st.subheader("📝 Observações e Problemas (Manual)")
-        p_sel = []
-        opcoes = ["Vazamento de Fluido", "Baixa Carga de Fluido", "Excesso de Fluido", "Ar/Incondensaveis no Ciclo", 
-                  "Obstrucao Dispositivo Expansao", "Colmeia Congelando", "Filtro Secador Obstruido", 
-                  "Compressor Sem Compressao", "Falha na Ventilacao", "Falha na Placa Inverter", 
-                  "Instabilidade na Rede Eletrica", "Evaporadora Pingando"]
-        
-        # Checkbox em 2 colunas internas
-        pi1, pi2 = st.columns(2)
-        for i, opt in enumerate(opcoes):
-            if i % 2 == 0:
-                if pi1.checkbox(opt, key=f"chk_{i}"): p_sel.append(opt)
-            else:
-                if pi2.checkbox(opt, key=f"chk_{i}"): p_sel.append(opt)
+    col_res1, col_res2 = st.columns(2)
+    with col_res1:
+        st.info(f"**Análise do Sistema:**\n\n{diag_ia_final}")
+        st.warning(f"**Probabilidade de Falhas:**\n\n{prob_txt}")
+    with col_res2:
+        st.success(f"**Contramedidas Recomendadas:**\n\n{contramedidas_txt}")
+        st.metric("Eficiência Estável (COP)", cop_aprox)
 
     st.markdown("---")
+    st.subheader("📄 Relatório Técnico para Cópia")
     
-    # Seção de Texto Livre e Relatório Rápido
-    col_exec, col_relat = st.columns(2)
-    with col_exec:
-        st.subheader("📋 Medidas Executadas")
-        executadas_input = st.text_area("Descreva o que foi feito no local:", height=150, key="exec_txt")
-        obs_tecnico = st.text_area("Parecer Técnico Final:", height=100, key="obs_final")
-        
-    with col_relat:
-        st.subheader("📄 Relatório para Cópia (WhatsApp)")
-        relatorio_txt = f"""*RELATÓRIO TÉCNICO HVAC*
-        
-*Diagnóstico IA:* {diag_ia}
-*Falhas:* {prob_txt}
-*Recomendação:* {contramedidas_txt}
-*COP:* {cop_aprox}"""
-        
-        st.text_area("Conteúdo do Relatório", relatorio_txt, height=180, key="rel_area")
-        st.markdown(f"""
-            <button onclick="navigator.clipboard.writeText(`{relatorio_txt}`)"
-            style="width:100%; padding:10px; background-color:#25d366; color:white; border:none; border-radius:5px; cursor:pointer;">
-            📋 Copiar para WhatsApp
-            </button>
-        """, unsafe_allow_html=True)
+    relatorio_whats = f"""*RELATÓRIO TÉCNICO HVAC - MPN*
+    
+*Diagnóstico IA:* {diag_ia_final}
+*Principais Suspeitas:* {prob_txt}
+*Ações Sugeridas:* {contramedidas_txt}
+*Eficiência (COP):* {cop_aprox}
+*SH/SC:* {sh_val}K / {sc_val}K"""
 
-    # Botão de Gerar PDF e Salvar no Banco
-    if st.button("💾 SALVAR ATENDIMENTO E GERAR PDF"):
-        prob_manual = ', '.join(p_sel) if p_sel else 'Nenhum'
-        endereco_completo = f"{tipo_logr} {nome_logr}, {numero} {complemento} - {bairro} | CEP: {cep}"
+    st.text_area("Conteúdo (WhatsApp / E-mail)", relatorio_whats, height=180)
+    
+    st.markdown(f"""
+        <button onclick="navigator.clipboard.writeText(`{relatorio_whats}`)"
+        style="width:100%; padding:12px; background-color:#25d366; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">
+        📋 Copiar Relatório Completo
+        </button>
+    """, unsafe_allow_html=True)
+st.markdown("---")
+    col_man1, col_man2 = st.columns(2)
+    with col_man1:
+        st.subheader("📝 Medidas Executadas")
+        executadas_input = st.text_area("Descreva os serviços realizados:", height=150)
+    with col_man2:
+        st.subheader("💡 Parecer do Técnico")
+        obs_tecnico = st.text_area("Observações adicionais ou recomendações ao cliente:", height=150)
+
+    # --- BOTÃO DE SALVAMENTO E PDF ---
+    if st.button("💾 FINALIZAR, SALVAR E GERAR PDF"):
+        # Preparação dos dados para o Banco (31 campos exatos)
+        endereco_full = f"{tipo_logr} {nome_logr}, {numero} {complemento} - {bairro} | CEP: {cep}"
         
-        # Consolidação dos 31 campos (Ordem idêntica ao init_db)
-        dados_banco = (
+        dados_final = (
             str(data_visita), cliente, doc_cliente, whatsapp, celular, tel_residencial,
-            endereco_completo, email_cli, fabricante, modelo_eq, serie_evap, linha,
+            endereco_full, email_cli, fabricante, modelo_eq, serie_evap, linha,
             cap_digitada, serie_cond, tecnologia, fluido, loc_evap, tipo_eq, loc_cond,
             v_rede, v_med, a_med, rla_comp, lra_comp, p_suc, p_liq, sh_val, sc_val,
-            f"IA: {diag_ia} | Manual: {prob_manual}", executadas_input, obs_tecnico
+            f"IA: {diag_ia_final} | Prob: {prob_txt}", executadas_input, obs_tecnico
         )
         
-        salvar_dados(dados_banco)
-        
-        # GERAÇÃO DO PDF (LAYOUT BLOQUEADO)
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_font("Arial", 'B', 20); pdf.set_text_color(0, 51, 102)
-        pdf.cell(190, 15, "Relatorio Tecnico de Manutencao", 0, 1, 'C'); pdf.ln(5)
+        if salvar_dados(dados_final):
+            # Geração do PDF Blindado
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_font("Arial", 'B', 18)
+            pdf.set_text_color(0, 74, 153)
+            pdf.cell(190, 15, "RELATORIO TECNICO DE MANUTENCAO HVAC", 0, 1, 'C')
+            
+            # 1. Dados do Cliente
+            pdf.set_fill_color(240, 240, 240)
+            pdf.set_font("Arial", 'B', 10)
+            pdf.cell(190, 8, " 1. IDENTIFICACAO DO CLIENTE", 1, 1, 'L', True)
+            pdf.set_font("Arial", '', 9); pdf.set_text_color(0)
+            pdf.cell(40, 7, clean(f"Data: {data_visita.strftime('%d/%m/%Y')}"), 1)
+            pdf.cell(100, 7, clean(f"Cliente: {cliente}"), 1)
+            pdf.cell(50, 7, clean(f"Doc: {doc_cliente}"), 1, 1)
+            pdf.cell(190, 7, clean(f"Endereco: {endereco_full}"), 1, 1)
+            
+            # 2. Dados Técnicos
+            pdf.ln(3)
+            pdf.set_font("Arial", 'B', 10)
+            pdf.cell(190, 8, " 2. ESPECIFICACOES E MEDICOES", 1, 1, 'L', True)
+            pdf.set_font("Arial", '', 9)
+            pdf.cell(63, 7, clean(f"Marca: {fabricante}"), 1); pdf.cell(63, 7, clean(f"Cap: {cap_digitada} BTU"), 1); pdf.cell(64, 7, clean(f"Fluido: {fluido}"), 1, 1)
+            pdf.cell(47, 7, clean(f"V. Rede: {v_rede}V"), 1); pdf.cell(48, 7, clean(f"V. Med: {v_med}V"), 1); pdf.cell(47, 7, clean(f"A. Med: {a_med}A"), 1); pdf.cell(48, 7, clean(f"RLA: {rla_comp}A"), 1, 1)
+            pdf.cell(95, 7, clean(f"Superaquecimento: {sh_val} K"), 1); pdf.cell(95, 7, clean(f"Subresfriamento: {sc_val} K"), 1, 1)
+            
+            # 3. Diagnóstico IA e Parecer
+            pdf.ln(3)
+            pdf.set_font("Arial", 'B', 10)
+            pdf.cell(190, 8, " 3. PARECER TECNICO E DIAGNOSTICO", 1, 1, 'L', True)
+            pdf.set_font("Arial", 'B', 9); pdf.cell(190, 6, "Diagnostico Assistido:", "LTR", 1)
+            pdf.set_font("Arial", '', 8); pdf.multi_cell(190, 5, clean(f"{diag_ia_final} | Suspeitas: {prob_txt}"), "LRB")
+            pdf.set_font("Arial", 'B', 9); pdf.cell(190, 6, "Medidas Executadas:", "LTR", 1)
+            pdf.set_font("Arial", '', 8); pdf.multi_cell(190, 5, clean(executadas_input), "LRB")
+            pdf.set_font("Arial", 'B', 9); pdf.cell(190, 6, "Observacoes:", "LTR", 1)
+            pdf.set_font("Arial", '', 8); pdf.multi_cell(190, 5, clean(obs_tecnico), "LRB")
 
-        # 1. IDENTIFICAÇÃO
-        pdf.set_fill_color(230, 230, 230); pdf.set_font("Arial", 'B', 10)
-        pdf.cell(190, 7, " 1. IDENTIFICACAO DO CLIENTE E CONTATO", 1, 1, 'L', True)
-        pdf.set_font("Arial", '', 9); pdf.set_text_color(0)
-        pdf.cell(45, 6, clean(f"Data: {data_visita.strftime('%d/%m/%Y')}"), 1, 0)
-        pdf.cell(100, 6, clean(f"Cliente: {cliente}"), 1, 0)
-        pdf.cell(45, 6, clean(f"CPF/CNPJ: {doc_cliente}"), 1, 1)
-        pdf.cell(190, 6, clean(f"Endereco: {endereco_completo}"), 1, 1); pdf.ln(4)
+            # Assinaturas
+            pdf.ln(15)
+            y_pos = pdf.get_y()
+            pdf.line(20, y_pos, 85, y_pos); pdf.line(105, y_pos, 170, y_pos)
+            pdf.set_font("Arial", 'B', 7)
+            pdf.set_xy(20, y_pos + 1); pdf.cell(65, 4, "MARCOS ALEXANDRE ALMEIDA DO NASCIMENTO", 0, 0, 'C')
+            pdf.set_xy(105, y_pos + 1); pdf.cell(65, 4, clean(cliente.upper()), 0, 0, 'C')
 
-        # 2. ESPECIFICAÇÕES
-        pdf.set_font("Arial", 'B', 10); pdf.cell(190, 7, " 2. ESPECIFICACOES DO EQUIPAMENTO", 1, 1, 'L', True)
-        pdf.set_font("Arial", '', 9)
-        pdf.cell(63, 6, clean(f"Marca: {fabricante}"), 1, 0); pdf.cell(63, 6, clean(f"Modelo: {modelo_eq}"), 1, 0); pdf.cell(64, 6, clean(f"Linha: {linha}"), 1, 1)
-        pdf.cell(63, 6, clean(f"Cap: {cap_digitada} BTU/h"), 1, 0); pdf.cell(63, 6, clean(f"Tec: {tecnologia}"), 1, 0); pdf.cell(64, 6, clean(f"Gas: {fluido}"), 1, 1); pdf.ln(4)
-
-        # 3. ANÁLISE TÉCNICA
-        pdf.set_font("Arial", 'B', 10); pdf.cell(190, 7, " 3. ANALISE TECNICA E PERFORMANCE", 1, 1, 'L', True)
-        pdf.set_font("Arial", '', 9); pdf.set_fill_color(240, 240, 240)
-        pdf.cell(95, 6, clean(f"Corrente Medida: {a_med} A"), 1, 0, True); pdf.cell(95, 6, clean(f"Diferenca Corrente: {diff_a} A"), 1, 1)
-        pdf.cell(95, 7, clean(f"SUPERAQUECIMENTO (SH): {sh_val} K"), 1, 0); pdf.cell(95, 7, clean(f"SUBRESFRIAMENTO (SC): {sc_val} K"), 1, 1); pdf.ln(4)
-
-        # 4. DIAGNÓSTICO
-        pdf.set_font("Arial", 'B', 10); pdf.cell(190, 7, " 4. DIAGNOSTICO E PARECER FINAL", 1, 1, 'L', True)
-        pdf.set_font("Arial", 'B', 9); pdf.cell(190, 6, "Problemas Encontrados:", "LTR", 1); pdf.set_font("Arial", '', 9)
-        pdf.multi_cell(190, 6, clean(f"{diag_ia} | {prob_manual}"), "LRB")
-        pdf.set_font("Arial", 'B', 9); pdf.cell(190, 6, "Medidas Executadas:", "LTR", 1); pdf.set_font("Arial", '', 9)
-        pdf.multi_cell(190, 6, clean(executadas_input), "LRB")
-
-        # ASSINATURAS
-        pdf.ln(20); y_pos = pdf.get_y(); pdf.line(20, y_pos, 90, y_pos); pdf.line(120, y_pos, 190, y_pos)
-        pdf.set_xy(20, y_pos + 1); pdf.set_font("Arial", 'B', 8); pdf.cell(70, 4, "Marcos Alexandre Almeida do Nascimento", 0, 1, 'C')
-        pdf.set_xy(120, y_pos + 1); pdf.cell(70, 4, clean(cliente), 0, 1, 'C')
-
-        pdf_bytes = pdf.output(dest='S').encode('latin-1', 'ignore')
-        st.download_button("📥 Baixar Relatório PDF", data=pdf_bytes, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
-        st.toast("✅ Relatório gerado e salvo no banco!")
+            pdf_output = pdf.output(dest='S').encode('latin-1', 'ignore')
+            st.download_button("📥 Baixar Relatório PDF Profissional", data=pdf_output, file_name=f"Relatorio_{cliente}.pdf", mime="application/pdf")
+            st.success("✅ Dados salvos e PDF gerado!")
 
 with tab_hist:
-    st.subheader("📜 Histórico de Atendimentos")
-    conn = sqlite3.connect('banco_dados.db')
-    df_h = pd.read_sql_query("SELECT id, data_visita, cliente, marca, modelo, tecnologia, sh, sc FROM atendimentos ORDER BY id DESC", conn)
+    st.subheader("📜 Histórico de Atendimentos Realizados")
+    conn = sqlite3.connect('banco_dados_mpn.db')
+    df = pd.read_sql_query("SELECT id, data_visita, cliente, marca, modelo, sh, sc FROM atendimentos ORDER BY id DESC", conn)
     conn.close()
     
-    if not df_h.empty:
-        df_h['data_visita'] = pd.to_datetime(df_h['data_visita']).dt.strftime('%d/%m/%Y')
-        df_h.insert(0, "Selecionar", False)
+    if not df.empty:
+        # Formatação Brasileira da Data no DataFrame
+        df['data_visita'] = pd.to_datetime(df['data_visita']).dt.strftime('%d/%m/%Y')
+        df.insert(0, "Selecionar", False)
         
-        # Filtros de Busca
-        f_c1, f_c2 = st.columns(2)
-        with f_c1: busca_h = st.text_input("🔍 Pesquisar Cliente", key="search_h")
-        if busca_h: df_h = df_h[df_h['cliente'].str.contains(busca_h, case=False)]
+        busca = st.text_input("🔍 Filtrar por Cliente ou Data", placeholder="Digite para buscar...")
+        if busca:
+            df = df[df['cliente'].str.contains(busca, case=False) | df['data_visita'].str.contains(busca)]
 
-        editado = st.data_editor(df_h, hide_index=True, use_container_width=True, 
-                                 column_config={"Selecionar": st.column_config.CheckboxColumn("Excluir?", default=False),
-                                                "id": None}, key="editor_h")
+        editor = st.data_editor(df, hide_index=True, use_container_width=True, 
+                                 column_config={"Selecionar": st.column_config.CheckboxColumn("Excluir", default=False), "id": None})
         
-        if st.button("🗑️ Excluir Selecionados"):
-            ids_del = editado[editado["Selecionar"] == True]["id"].tolist()
-            if ids_del:
-                conn = sqlite3.connect('banco_dados.db')
-                for d in ids_del: conn.execute("DELETE FROM atendimentos WHERE id = ?", (d,))
-                conn.commit(); conn.close()
+        if st.button("🗑️ Excluir Registros Selecionados"):
+            ids_para_excluir = editor[editor["Selecionar"] == True]["id"].tolist()
+            if ids_para_excluir:
+                conn = sqlite3.connect('banco_dados_mpn.db')
+                for idx in ids_para_excluir:
+                    conn.execute("DELETE FROM atendimentos WHERE id = ?", (idx,))
+                conn.commit()
+                conn.close()
                 st.rerun()
     else:
-        st.info("Nenhum atendimento registrado.")
+        st.info("Nenhum atendimento encontrado no banco de dados.")
