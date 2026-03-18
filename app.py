@@ -445,22 +445,18 @@ st.sidebar.write(f"📅 **Acesso em:** {datetime.now().strftime('%d/%m/%Y')}")
     
     # BOTÕES DE EXPORTAÇÃO (Diferenciados: Cliente vs Interno)
     c_pdf1, c_pdf2, c_wa1, c_wa2 = st.columns(4)
-    
-    with c_pdf1:
+        with c_pdf1:
         if st.button("📄 LAUDO CLIENTE (PDF)"):
             st.toast("Gerando Laudo Simplificado...")
             # Aqui chamaria a função GeradorRelatorio(tipo="CLIENTE")
-            
-    with c_pdf2:
+                with c_pdf2:
         if st.button("📋 PRONTUÁRIO INTERNO"):
             st.toast("Gerando Relatório Técnico Completo...")
-            
-    with c_wa1:
+                with c_wa1:
         # Link WhatsApp Cliente (Instrução 9)
         msg_cli = urllib.parse.quote(f"Olá! Segue o laudo técnico do seu equipamento {st.session_state.get('eq_modelo', '')}.")
         link_cli = f"https://wa.me/{st.session_state.get('contato_cliente', '')}?text={msg_cli}"
         st.markdown(f'<a href="{link_cli}" target="_blank"><button style="width:100%; background-color:#25D366; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer;">📲 WHATSAPP CLIENTE</button></a>', unsafe_allow_html=True)
-
     with c_wa2:
         # Link WhatsApp Empresa (Instrução 9: Número Fixo do Marcos)
         msg_int = urllib.parse.quote(f"LOGÍSTICA: Novo prontuário disponível para {st.session_state.get('cli_nome', '')}. Modelo: {st.session_state.get('eq_modelo', '')}.")
