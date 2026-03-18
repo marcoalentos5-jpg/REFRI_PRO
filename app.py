@@ -2007,8 +2007,7 @@ st.info("📊 Análise de performance concluída com sucesso.")
 # LINHA 1783
 # LINHA 1784
 # LINHA 1785
-# --- LINHA 2010: INÍCIO DO CONTAINER DE RESULTADOS ---
-  # --- LINHA 2010: DENTRO DA ABA6 (ALINHAMENTO RIGOROSO) ---
+# --- LINHA 2010: DENTRO DA ABA6 (ALINHAMENTO RIGOROSO) ---
     st.markdown("---") 
     
     with st.container(): # LINHA 2011: CORRIGIDA (Alinhada com o bloco da aba)
@@ -2025,9 +2024,6 @@ st.info("📊 Análise de performance concluída com sucesso.")
             
         with col_res4:
             st.metric("Pressão de Baixa", f"{p_baixa} PSI")
-# LINHA 1877: Finalização do bloco de resultados
-st.markdown("---")
-
 # --- CONTINUAÇÃO PARA O BLOCO 11 (LINHA 2001+) ---
 # O restante do seu código das Abas 5 e 6 já segue a lógica correta de 
 # diagnóstico e geração de PDFs que você postou acima.
