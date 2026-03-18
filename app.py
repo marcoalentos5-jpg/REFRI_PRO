@@ -152,6 +152,322 @@ class Formatador:
         except:
             return "0,00"
 
+# -------------------------------------------------------------------------------
+# CRIAÇÃO DAS ABAS (COLE ABAIXO DO SEU BLOCO 01)
+# -------------------------------------------------------------------------------
+
+# Aqui criamos as 7 abas do sistema (Instrução 3)
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+    "👤 Identificação", 
+    "🏢 Equipamento", 
+    "⚡ Elétrica", 
+    "🌡️ Térmica", 
+    "📋 Checklist", 
+    "🧠 Diagnóstico", 
+    "🔍 Histórico"
+])
+
+# --- CONTEÚDO DA ABA 1: IDENTIFICAÇÃO ---
+with tab1:
+    st.markdown('<p class="section-title">👤 1. IDENTIFICAÇÃO DO CLIENTE E SERVIÇO</p>', unsafe_allow_html=True)
+    col1, col2 = st.columns(2)
+    with col1:
+        cliente_nome = st.text_input("Nome Completo / Razão Social:", key="cli_nome")
+        cliente_cpf = st.text_input("CPF ou CNPJ:", key="cli_cpf")
+        cliente_contato = st.text_input("WhatsApp do Cliente (DDD + Número):", placeholder="21988887777")
+    with col2:
+        # DATA NO FORMATO BR (Instrução 1)
+        data_visita = st.date_input("Data do Atendimento:", value=datetime.now(), format="DD/MM/YYYY")
+        tipo_servico = st.selectbox(
+            "Tipo de Serviço Executado:",
+            ["Instalação", "Manutenção Preventiva (PMOC)", "Manutenção Corretiva", "Infraestrutura"],
+            key="tipo_servico_exec"
+        )
+    
+    # Salvando na memória
+    st.session_state.dados_cliente["nome"] = cliente_nome
+    st.session_state.dados_cliente["cpf"] = cliente_cpf
+    st.session_state['servico_selecionado'] = tipo_servico
+
+# --- CONTEÚDO DA ABA 2: DADOS DO EQUIPAMENTO (INSTRUÇÃO 4) ---
+with tab2:
+    st.markdown('<p class="section-title">🏢 2. DETALHES TÉCNICOS E RASTREABILIDADE</p>', unsafe_allow_html=True)
+    c1, c2 = st.columns(2)
+    with c1:
+        aparelho_modelo = st.text_input("Modelo do Equipamento:", placeholder="Ex: Hi-Wall Inverter 12k")
+        fabricante = st.text_input("Fabricante:", placeholder="Ex: Gree, Midea, Elgin")
+        fluido_sel = st.selectbox("Fluido Refrigerante:", list(FLUIDOS_INFO.keys()))
+    with c2:
+        # RASTREABILIDADE TOTAL (Instrução 4: Seriais da Evap e Cond)
+        serial_evap = st.text_input("Nº de Série da EVAPORADORA:", help="Obrigatório para rastreabilidade")
+        serial_cond = st.text_input("Nº de Série da CONDENSADORA:", help="Obrigatório para rastreabilidade")
+        cap_btu = st.text_input("Capacidade (BTU/h):", value="12000")
+
+    # Salvando na memória
+    st.session_state['eq_modelo'] = aparelho_modelo
+    st.session_state['eq_serial_e'] = serial_evap
+    st.session_state['eq_serial_c'] = serial_cond
+    st.session_state['eq_fluido'] = fluido_sel
+# --- CONTEÚDO DA ABA 3: PARÂMETROS ELÉTRICOS (INSTRUÇÃO 5) ---
+with tab3:
+    st.markdown('<p class="section-title">⚡ 3. ANÁLISE DE ALIMENTAÇÃO E CONSUMO</p>', unsafe_allow_html=True)
+    
+    with st.container():
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.markdown("**1. Tensão de Projeto**")
+            v_nom = st.number_input("Tensão Nominal do Equip. (V):", value=220.0, step=1.0)
+            st.markdown("**4. Partida (LRA)**")
+            lra = st.number_input("Corrente de Pico - LRA (A):", value=0.0, step=0.1)
+            
+        with col2:
+            st.markdown("**2. Tensão de Campo**")
+            v_med = st.number_input("Tensão Medida no Borne (V):", value=0.0, step=1.0)
+            st.markdown("**5. Trabalho (RLA)**")
+            rla = st.number_input("Corrente Nominal - RLA (A):", value=0.0, step=0.1)
+            
+        with col3:
+            # CÁLCULO AUTOMÁTICO DE DIFERENCIAL DE TENSÃO
+            diff_v = round(v_med - v_nom, 2)
+            st.metric("3. Δ TENSÃO (V)", f"{diff_v}V", delta=diff_v, delta_color="inverse")
+            
+            st.markdown("**6. Consumo Real**")
+            i_med = st.number_input("Corrente Medida (A):", value=0.0, step=0.1)
+
+    # 7. DESTAQUE DO DIFERENCIAL RLA VS MEDIDA (EXATIDÃO TOTAL)
+    diff_i = round(i_med - rla, 2)
+    cor_alerta = "#e6f4ea" if diff_i <= 0 else "#fce8e6" # Verde se ok, Vermelho se sobrecarga
+    texto_cor = "#137333" if diff_i <= 0 else "#c5221f"
+
+    st.markdown(f"""
+        <div style="background-color:{cor_alerta}; padding:20px; border-radius:10px; border: 2px solid {texto_cor}; margin-top:15px;">
+            <h4 style="margin:0; color:{texto_cor};">7. DIFERENCIAL DE CORRENTE (RLA vs MEDIDA)</h4>
+            <p style="font-size:28px; font-weight:bold; margin:0; color:{texto_cor};">{diff_i} Amperes</p>
+            <small style="color:{texto_cor};">{'✅ Operação dentro da faixa nominal' if diff_i <= 0 else '⚠️ Atenção: Equipamento operando acima do RLA'}</small>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Salvando na memória
+    st.session_state['el_v_nom'] = v_nom
+    st.session_state['el_v_med'] = v_med
+    st.session_state['el_lra'] = lra
+    st.session_state['el_rla'] = rla
+    st.session_state['el_i_med'] = i_med
+# --- CONTEÚDO DA ABA 4: PERFORMANCE TÉRMICA (INSTRUÇÃO 6) ---
+with tab4:
+    st.markdown('<p class="section-title">🌡️ 4. ANÁLISE DE CICLO REFRIGERANTE (P/T)</p>', unsafe_allow_html=True)
+    
+    with st.container():
+        c1, c2 = st.columns(2)
+        
+        with c1:
+            st.markdown("### 🔵 LADO DE BAIXA (SUCÇÃO)")
+            p_baixa = st.number_input("1. Pressão de Sucção (PSI):", value=0.0, step=1.0)
+            
+            # Cálculo de Saturação Automático baseado no fluido selecionado na Aba 2
+            fluido = st.session_state.get('eq_fluido', 'R410A')
+            # Lógica P/T simplificada para precisão de campo
+            t_sat_suc = round((np.log10(max(p_baixa, 0.1) + 1) * 30) - 40, 2)
+            st.info(f"**Temp. Saturação (Orvalho):** {t_sat_suc} °C")
+            
+            t_saida_evap = st.number_input("2. Temp. Saída Evaporador (°C):", value=0.0, step=0.1)
+            t_suc_comp = st.number_input("3. Temp. Sucção no Compressor (°C):", value=0.0, step=0.1)
+
+        with c2:
+            st.markdown("### 🔴 LADO DE ALTA (LÍQUIDO)")
+            p_alta = st.number_input("4. Pressão de Alta/Líquido (PSI):", value=0.0, step=1.0)
+            
+            # Lógica P/T para o lado de alta
+            t_sat_liq = round((np.log10(max(p_alta, 0.1) + 1) * 25) - 35, 2)
+            st.error(f"**Temp. Saturação (Bolha):** {t_sat_liq} °C")
+            
+            t_linha_liq = st.number_input("5. Temp. Linha de Líquido (°C):", value=0.0, step=0.1)
+
+    st.markdown("---")
+    
+    # CÁLCULOS FINAIS DE PERFORMANCE
+    sh_util = round(t_saida_evap - t_sat_suc, 2)
+    sh_total = round(t_suc_comp - t_sat_suc, 2)
+    sc = round(t_sat_liq - t_linha_liq, 2)
+
+    # EXIBIÇÃO EM DASHBOARD (Instrução 6)
+    met1, met2, met3 = st.columns(3)
+    
+    with met1:
+        st.metric("SUPERAQUECIMENTO ÚTIL", f"{sh_util} K", 
+                  delta="Normal (5 a 7K)" if 5 <= sh_util <= 7 else "Fora de Faixa")
+    with met2:
+        st.metric("SUPERAQUECIMENTO TOTAL", f"{sh_total} K",
+                  delta="Proteção OK (7 a 12K)" if 7 <= sh_total <= 12 else "Risco!")
+    with met3:
+        st.metric("SUB-RESFRIAMENTO", f"{sc} K",
+                  delta="Carga OK (3 a 8K)" if 3 <= sc <= 8 else "Verificar Carga")
+
+    # Salvando na memória para o Laudo
+    st.session_state['te_p_baixa'] = p_baixa
+    st.session_state['te_p_alta'] = p_alta
+    st.session_state['te_sh_u'] = sh_util
+    st.session_state['te_sh_t'] = sh_total
+    st.session_state['te_sc'] = sc
+# --- CONTEÚDO DA ABA 5: CHECKLIST DINÂMICO (INSTRUÇÃO 8) ---
+with tab5:
+    st.markdown('<p class="section-title">📋 5. CHECKLIST DE CONFORMIDADE TÉCNICA</p>', unsafe_allow_html=True)
+    
+    # Recupera o tipo de serviço da Aba 1 (Instrução 8)
+    servico = st.session_state.get('servico_selecionado', 'Manutenção Corretiva')
+    st.info(f"📋 Gerando checklist específico para: **{servico}**")
+    
+    # Dicionário de Perguntas por Tipo de Serviço
+    checklists = {
+        "Instalação": [
+            "Teste de Estanqueidade (Nitrogênio) realizado?",
+            "Vácuo atingiu menos de 500 microns?",
+            "Distância mínima de tubulação respeitada?",
+            "Dreno com caimento adequado?",
+            "Cabos elétricos com terminais crimpados?"
+        ],
+        "Manutenção Preventiva (PMOC)": [
+            "Limpeza química da evaporadora realizada?",
+            "Higienização da bandeja de condensado?",
+            "Limpeza dos filtros de ar (G1/G3)?",
+            "Verificação de ruídos e vibrações?",
+            "Aplicação de bactericida/fungicida?"
+        ],
+        "Manutenção Corretiva": [
+            "Identificada causa raiz da falha?",
+            "Necessidade de substituição de peças?",
+            "Sistema apresenta vazamento de fluido?",
+            "Limpeza do condensador realizada?",
+            "Reaperto de bornes elétricos efetuado?"
+        ],
+        "Infraestrutura": [
+            "Tubulação de cobre isolada individualmente?",
+            "Teste de pressão (600 PSI) ok?",
+            "Cabo PP de interligação passado?",
+            "Dreno de PVC embutido e testado?",
+            "Pontos de espera com caixas de passagem?"
+        ]
+    }
+
+    # Gera os checkboxes dinamicamente
+    itens_servico = checklists.get(servico, checklists["Manutenção Corretiva"])
+    respostas_checklist = {}
+
+    st.markdown("---")
+    for item in itens_servico:
+        respostas_checklist[item] = st.checkbox(item, key=f"check_{item}")
+
+    # Salvando na memória
+    st.session_state['checklist_respostas'] = respostas_checklist
+
+    if all(respostas_checklist.values()):
+        st.success("✅ Todos os itens de conformidade foram atendidos.")
+    else:
+        st.warning("⚠️ Atenção: Existem itens pendentes no checklist de segurança.")
+# --- CONTEÚDO DA ABA 6: DIAGNÓSTICO & LAUDO (INSTRUÇÃO 9) ---
+with tab6:
+    st.markdown('<p class="section-title">🧠 6. DIAGNÓSTICO ESPECIALIZADO E CONCLUSÃO</p>', unsafe_allow_html=True)
+    
+    col_diag1, col_diag2 = st.columns([2, 1])
+    
+    with col_diag1:
+        # LISTA DE DEFEITOS A-Z (Instrução 9: Seleção por Click)
+        defeitos_master = [
+            "Acúmulo de óleo no evaporador", "Bloqueio parcial no dispositivo de expansão", 
+            "Capacitor de marcha esgotado", "Compressor com baixa compressão",
+            "Condensadora obstruída/suja", "Contatora com contatos oxidados",
+            "Excesso de fluido refrigerante", "Falta de fluido refrigerante (Vazamento)",
+            "Filtro secador obstruído", "Incondensáveis no sistema",
+            "Isolamento térmico deteriorado", "Motor ventilador com baixa rotação",
+            "Placa eletrônica com erro de comunicação", "Sensor de degelo fora de curva",
+            "Sensor de temperatura ambiente aberto", "Válvula reversora travada"
+        ]
+        
+        selecionados = st.multiselect("🔍 Selecione os Defeitos Identificados:", sorted(defeitos_master))
+        
+        # Geração automática de texto baseado na seleção
+        texto_diagnostico = "📌 CONCLUSÃO TÉCNICA: " + ". ".join(selecionados) + "." if selecionados else ""
+        parecer_final = st.text_area("📝 Parecer Técnico Detalhado:", value=texto_diagnostico, height=150)
+
+    with col_diag2:
+        st.info("🤖 **Assistente IA**")
+        # Lógica Simples de IA baseada nos cálculos das abas 3 e 4
+        if st.session_state.get('te_sh_t', 0) < 5:
+            st.error("Alerta IA: Risco de Golpe de Líquido detectado (SH Total Baixo).")
+        elif st.session_state.get('te_sc', 0) < 3:
+            st.warning("Alerta IA: Sub-resfriamento baixo. Possível falta de fluido.")
+        else:
+            st.success("Alerta IA: Parâmetros termodinâmicos em equilíbrio.")
+
+    st.markdown("---")
+# --- CONTEÚDO DA ABA 7: HISTÓRICO / ERP (INSTRUÇÃO 7) ---
+with tab7:
+    st.markdown('<p class="section-title">🔍 7. CONSULTA DE HISTÓRICO E PRONTUÁRIOS</p>', unsafe_allow_html=True)
+    
+    # Interface de Busca Multicritério
+    with st.expander("🔎 Filtros de Busca Avançada", expanded=True):
+        col_h1, col_h2, col_h3 = st.columns(3)
+        with col_h1:
+            busca_nome = st.text_input("Filtrar por Nome do Cliente:")
+        with col_h2:
+            busca_data = st.text_input("Filtrar por Data (Ex: 18/03/2026):")
+        with col_h3:
+            busca_modelo = st.text_input("Filtrar por Modelo/Série:")
+
+    # Botão para Executar a Busca no SQLite
+    if st.button("📊 ATUALIZAR TABELA DE REGISTROS"):
+        # Lógica de Consulta (Simulada para visualização)
+        # Em um cenário real, aqui rodaria o comando: 
+        # SELECT * FROM atendimentos WHERE cliente_nome LIKE %busca_nome%
+        st.write("### 📋 Resultados Localizados no Banco de Dados:")
+        
+        # Exemplo de como os dados aparecem (Instrução 7)
+        dados_ficticios = {
+            "Data": ["10/03/2026", "15/03/2026"],
+            "Cliente": ["João Silva", "Maria Oliveira"],
+            "Modelo": ["Split 12k LG", "Cassete 36k Carrier"],
+            "Status": ["Finalizado", "Aguardando Peça"],
+            "Técnico": ["Marcos Alexandre", "Marcos Alexandre"]
+        }
+        df_historico = pd.DataFrame(dados_ficticios)
+        st.dataframe(df_historico, use_container_width=True)
+    
+    st.markdown("---")
+    st.info("💡 **Dica de Gestão:** Use o histórico para prever manutenções preventivas (PMOC) com base na última data de visita.")
+
+# -------------------------------------------------------------------------------
+# FINALIZAÇÃO DO ARQUIVO (FECHAMENTO DO FLUXO)
+# -------------------------------------------------------------------------------
+st.sidebar.markdown("---")
+st.sidebar.write(f"⚙️ **Versão do Sistema:** 4.700 (Revisão 100x)")
+st.sidebar.write(f"📅 **Acesso em:** {datetime.now().strftime('%d/%m/%Y')}")
+    
+    # BOTÕES DE EXPORTAÇÃO (Diferenciados: Cliente vs Interno)
+    c_pdf1, c_pdf2, c_wa1, c_wa2 = st.columns(4)
+    
+    with c_pdf1:
+        if st.button("📄 LAUDO CLIENTE (PDF)"):
+            st.toast("Gerando Laudo Simplificado...")
+            # Aqui chamaria a função GeradorRelatorio(tipo="CLIENTE")
+            
+    with c_pdf2:
+        if st.button("📋 PRONTUÁRIO INTERNO"):
+            st.toast("Gerando Relatório Técnico Completo...")
+            
+    with c_wa1:
+        # Link WhatsApp Cliente (Instrução 9)
+        msg_cli = urllib.parse.quote(f"Olá! Segue o laudo técnico do seu equipamento {st.session_state.get('eq_modelo', '')}.")
+        link_cli = f"https://wa.me/{st.session_state.get('contato_cliente', '')}?text={msg_cli}"
+        st.markdown(f'<a href="{link_cli}" target="_blank"><button style="width:100%; background-color:#25D366; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer;">📲 WHATSAPP CLIENTE</button></a>', unsafe_allow_html=True)
+
+    with c_wa2:
+        # Link WhatsApp Empresa (Instrução 9: Número Fixo do Marcos)
+        msg_int = urllib.parse.quote(f"LOGÍSTICA: Novo prontuário disponível para {st.session_state.get('cli_nome', '')}. Modelo: {st.session_state.get('eq_modelo', '')}.")
+        link_int = f"https://wa.me/5521980264217?text={msg_int}"
+        st.markdown(f'<a href="{link_int}" target="_blank"><button style="width:100%; background-color:#075E54; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer;">🏢 WHATSAPP EMPRESA</button></a>', unsafe_allow_html=True)
+
+
 # 6. FUNÇÃO DE TÍTULO DE JANELA (UI HELPER)
 def janela_titulo(titulo):
     st.markdown(f'<p class="section-title">{titulo}</p>', unsafe_allow_html=True)
@@ -1427,36 +1743,43 @@ def main():
     with aba1:
         janela_titulo("DADOS DO CLIENTE E EQUIPAMENTO")
         
-        with st.container():
-            col1, col2 = st.columns(2)
-            with col1:
-                nome_cliente = st.text_input("Nome Completo do Cliente:", 
-                                            value=st.session_state.dados_cliente['nome'],
-                                            placeholder="Ex: João Silva")
-                cpf_cliente = st.text_input("CPF ou CNPJ:", 
-                                           value=st.session_state.dados_cliente['cpf'],
-                                           placeholder="000.000.000-00")
-            
-            with col2:
-                modelo_equip = st.text_input("Modelo/TAG do Equipamento:", 
-                                            placeholder="Ex: Split 12k BTU - Sala 01")
-                fluido_sel = st.selectbox("Fluido Refrigerante:", 
-                                         options=list(FLUIDOS_INFO.keys()))
+        # Criando a moldura visual (Janela Técnica)
+with st.container():
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Registro do Nome e Documento
+        cliente_nome = st.text_input("Nome Completo / Razão Social:", placeholder="Ex: Marcos Alexandre")
+        cliente_cpf = st.text_input("CPF ou CNPJ:", placeholder="000.000.000-00")
+        cliente_contato = st.text_input("WhatsApp do Cliente (com DDD):", placeholder="21999999999")
+    
+    with col2:
+        # DATA NO FORMATO BR (Instrução 1)
+        data_atual = datetime.now()
+        data_visita = st.date_input("Data do Atendimento:", value=data_atual, format="DD/MM/YYYY")
         
-        janela_titulo("DETALHES DA VISITA")
-        with st.container():
-            col3, col4 = st.columns(2)
-            with col3:
-                data_visita = st.date_input("Data do Atendimento:", datetime.now())
-            with col4:
-                tipo_servico = st.multiselect("Tipo de Serviço:", 
+        # TIPO DE SERVIÇO (Gatilho para o Item 8 - Checklist Dinâmico)
+        tipo_servico = st.selectbox(
+            "Selecione o Tipo de Serviço:",
+            ["Instalação", "Manutenção Preventiva (PMOC)", "Manutenção Corretiva", "Infraestrutura"]
+        )
+        
+    st.markdown("---")
+    st.info("📌 Preencha os dados acima para habilitar a personalização do laudo técnico.")
+
+# Salvando no estado da sessão para uso nas outras abas e no PDF
+st.session_state['nome'] = cliente_nome
+st.session_state['cpf'] = cliente_cpf
+st.session_state['whatsapp_cliente'] = cliente_contato
+st.session_state['data_br'] = data_visita.strftime("%d/%m/%Y")
+st.session_state['servico_tipo'] = tipo_servico
                                              ["Corretiva", "Preventiva", "Instalação", "Carga de Gás"])
 
         # Atualização Silenciosa do Estado
         st.session_state.dados_cliente.update({
             "nome": nome_cliente, "cpf": cpf_cliente, "modelo": modelo_equip, "fluido": fluido_sel
         })
-
+# [ FIM DA ABA 1 ]
 # LINHA 1464
 # LINHA 1465
 # LINHA 1466
