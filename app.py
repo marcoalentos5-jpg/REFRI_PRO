@@ -2008,15 +2008,18 @@ st.info("📊 Análise de performance concluída com sucesso.")
 # LINHA 1784
 # LINHA 1785
 
-    # --- LINHA 2010: DENTRO DO BLOCO DA ABA 6 ---
-        with aba6:
+    # --- LINHA 2011: FINALIZAÇÃO DA ABA 5 ---
+# Certifique-se de que o bloco da aba 5 terminou aqui
+
+# LINHA 2012 CORRIGIDA: Alinhada exatamente com o 'with aba5' acima
+    with aba6:
         janela_titulo("VEREDITO TÉCNICO E INTELIGÊNCIA ARTIFICIAL")
         
-        # LINHA 2011 CORRIGIDA: Alinhada com o bloco da aba (4 espaços de recuo)
-        st.markdown("---") 
+        st.markdown("---")
         
         with st.container():
             col_res1, col_res2, col_res3, col_res4 = st.columns(4)
+            # ... restante do código das métricas
             
             with col_res1:
                 st.metric("Superaquecimento", f"{params['sh']} °C")
