@@ -2124,11 +2124,11 @@ with aba1:
 # LINHA 1787
 # LINHA 1788
 # LINHA 1789
+
+# BLOCO 10 DE 12-INTERFACE:HISTÓRICO E BUSCA ABA 4                  
+# STATUS: TESTADO 100X | VERSÃO: 4.700                                        
 ###############################################################################
-# BLOCO 10 DE 12-INTERFACE:HISTÓRICO E BUSCA ABA 4                  #
-# STATUS: TESTADO 100X | VERSÃO: 4.700                                        #
-###############################################################################
-# --- ABA 4: HISTÓRICO / BUSCA DE ATENDIMENTOS ---
+--- ABA 4: HISTÓRICO / BUSCA DE ATENDIMENTOS ---
 with aba4:
     janela_titulo("CONSULTA DE HISTÓRICO NO BANCO DE DADOS")
     
