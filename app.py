@@ -2008,10 +2008,10 @@ st.info("📊 Análise de performance concluída com sucesso.")
 # LINHA 1784
 # LINHA 1785
 
-    # --- LINHA 2011: FINALIZAÇÃO DA ABA 5 ---
-# Certifique-se de que o bloco da aba 5 terminou aqui
+    # --- FINALIZAÇÃO DO BLOCO DA ABA 5 ---
+# Certifique-se de que não sobrou nenhum comando 'solto' aqui
 
-# LINHA 2012 CORRIGIDA: Alinhada exatamente com o 'with aba5' acima
+    # LINHA 2015 CORRIGIDA: Alinhada exatamente com o 'with aba5' acima
     with aba6:
         janela_titulo("VEREDITO TÉCNICO E INTELIGÊNCIA ARTIFICIAL")
         
@@ -2019,10 +2019,12 @@ st.info("📊 Análise de performance concluída com sucesso.")
         
         with st.container():
             col_res1, col_res2, col_res3, col_res4 = st.columns(4)
-            # ... restante do código das métricas
             
             with col_res1:
                 st.metric("Superaquecimento", f"{params['sh']} °C")
+            
+            with col_res2:
+                st.metric("Sub-resfriamento", f"{params['sc']} °C")
                 
 # --- CONTINUAÇÃO PARA O BLOCO 11 (LINHA 2001+) ---
 # O restante do seu código das Abas 5 e 6 já segue a lógica correta de 
