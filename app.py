@@ -2012,7 +2012,7 @@ st.info("📊 Análise de performance concluída com sucesso.")
 # Certifique-se de que não sobrou nenhum comando 'solto' aqui
 
     # LINHA 2015 CORRIGIDA: Alinhada exatamente com o 'with aba5' acima
-    with aba6:
+with aba6:
         janela_titulo("VEREDITO TÉCNICO E INTELIGÊNCIA ARTIFICIAL")
         
         st.markdown("---")
