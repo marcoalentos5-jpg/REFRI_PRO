@@ -1762,45 +1762,41 @@ def main():
         "📚 Histórico", "📋 Checklist", "🧠 Diagnóstico"
     ])
 
-    # --- ABA 1: IDENTIFICAÇÃO DO CLIENTE E EQUIPAMENTO ---
-    with aba1:
-        janela_titulo("DADOS DO CLIENTE E EQUIPAMENTO")
-        
-        # Criando a moldura visual (Janela Técnica)
-with st.container():
-    col1, col2 = st.columns(2)
+   # --- ABA 1: IDENTIFICAÇÃO DO CLIENTE E EQUIPAMENTO (CORRIGIDO) ---
+with aba1:
+    janela_titulo("DADOS DO CLIENTE E EQUIPAMENTO")
     
-    with col1:
-        # Registro do Nome e Documento
-        cliente_nome = st.text_input("Nome Completo / Razão Social:", placeholder="Ex: Marcos Alexandre")
-        cliente_cpf = st.text_input("CPF ou CNPJ:", placeholder="000.000.000-00")
-        cliente_contato = st.text_input("WhatsApp do Cliente (com DDD):", placeholder="21999999999")
-    
-    with col2:
-        # DATA NO FORMATO BR (Instrução 1)
-        data_atual = datetime.now()
-        data_visita = st.date_input("Data do Atendimento:", value=data_atual, format="DD/MM/YYYY")
+    # Todo o bloco abaixo agora está identado (4 espaços para a direita)
+    with st.container():
+        col1, col2 = st.columns(2)
         
-        # TIPO DE SERVIÇO (Gatilho para o Item 8 - Checklist Dinâmico)
-        tipo_servico = st.selectbox(
-            "Selecione o Tipo de Serviço:",
-            ["Instalação", "Manutenção Preventiva (PMOC)", "Manutenção Corretiva", "Infraestrutura"]
-        )
+        with col1:
+            # Registro do Nome e Documento
+            cliente_nome = st.text_input("Nome Completo / Razão Social:", placeholder="Ex: Marcos Alexandre", key="nome_input")
+            cliente_cpf = st.text_input("CPF ou CNPJ:", placeholder="000.000.000-00", key="cpf_input")
+            cliente_contato = st.text_input("WhatsApp do Cliente (com DDD):", placeholder="21999999999", key="zap_input")
         
-    st.markdown("---")
-    st.info("📌 Preencha os dados acima para habilitar a personalização do laudo técnico.")
+        with col2:
+            # DATA NO FORMATO BR (Instrução 1)
+            data_atual = datetime.now()
+            data_visita = st.date_input("Data do Atendimento:", value=data_atual, format="DD/MM/YYYY")
+            
+            # TIPO DE SERVIÇO (Gatilho para o Item 8 - Checklist Dinâmico)
+            tipo_servico = st.selectbox(
+                "Selecione o Tipo de Serviço:",
+                ["Instalação", "Manutenção Preventiva (PMOC)", "Manutenção Corretiva", "Infraestrutura"],
+                key="servico_input"
+            )
+            
+        st.markdown("---")
+        st.info("📌 Preencha os dados acima para habilitar a personalização do laudo técnico.")
 
-# Salvando no estado da sessão para uso nas outras abas e no PDF
-st.session_state['nome'] = cliente_nome
-st.session_state['cpf'] = cliente_cpf
-st.session_state['whatsapp_cliente'] = cliente_contato
-st.session_state['data_br'] = data_visita.strftime("%d/%m/%Y")
-st.session_state['servico_tipo'] = tipo_servico
-                                             ["Corretiva", "Preventiva", "Instalação", "Carga de Gás"])
-
-        # Atualização Silenciosa do Estado
-        st.session_state.dados_cliente.update({
-            "nome": nome_cliente, "cpf": cpf_cliente, "modelo": modelo_equip, "fluido": fluido_sel
+    # Salvando no estado da sessão (DENTRO do bloco da aba ou logo após)
+    st.session_state['nome'] = cliente_nome
+    st.session_state['cpf'] = cliente_cpf
+    st.session_state['whatsapp_cliente'] = cliente_contato
+    st.session_state['data_br'] = data_visita.strftime("%d/%m/%Y")
+    st.session_state['servico_tipo'] = tipo_servico
         })
 # [ FIM DA ABA 1 ]
 # LINHA 1464
