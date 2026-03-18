@@ -2007,23 +2007,20 @@ st.info("📊 Análise de performance concluída com sucesso.")
 # LINHA 1783
 # LINHA 1784
 # LINHA 1785
-# --- LINHA 2010: DENTRO DA ABA6 (ALINHAMENTO RIGOROSO) ---
-    st.markdown("---") 
-    
-    with st.container(): # LINHA 2011: CORRIGIDA (Alinhada com o bloco da aba)
-        col_res1, col_res2, col_res3, col_res4 = st.columns(4)
-        
-        with col_res1:
-            st.metric("Superaquecimento", f"{params['sh']} °C")
-            
-        with col_res2:
-            st.metric("Sub-resfriamento", f"{params['sc']} °C")
 
-        with col_res3:
-            st.metric("Pressão de Alta", f"{p_alta} PSI")
+    # --- LINHA 2010: DENTRO DO BLOCO DA ABA 6 ---
+    with aba6:
+        janela_titulo("VEREDITO TÉCNICO E INTELIGÊNCIA ARTIFICIAL")
+        
+        # LINHA 2011 CORRIGIDA: Alinhada com o bloco da aba (4 espaços de recuo)
+        st.markdown("---") 
+        
+        with st.container():
+            col_res1, col_res2, col_res3, col_res4 = st.columns(4)
             
-        with col_res4:
-            st.metric("Pressão de Baixa", f"{p_baixa} PSI")
+            with col_res1:
+                st.metric("Superaquecimento", f"{params['sh']} °C")
+                
 # --- CONTINUAÇÃO PARA O BLOCO 11 (LINHA 2001+) ---
 # O restante do seu código das Abas 5 e 6 já segue a lógica correta de 
 # diagnóstico e geração de PDFs que você postou acima.
