@@ -2008,7 +2008,10 @@ st.info("📊 Análise de performance concluída com sucesso.")
 # LINHA 1784
 # LINHA 1785
 # --- LINHA 2010: INÍCIO DO CONTAINER DE RESULTADOS ---
-    with st.container():
+  # --- LINHA 2010: DENTRO DA ABA6 (ALINHAMENTO RIGOROSO) ---
+    st.markdown("---") 
+    
+    with st.container(): # LINHA 2011: CORRIGIDA (Alinhada com o bloco da aba)
         col_res1, col_res2, col_res3, col_res4 = st.columns(4)
         
         with col_res1:
@@ -2017,15 +2020,11 @@ st.info("📊 Análise de performance concluída com sucesso.")
         with col_res2:
             st.metric("Sub-resfriamento", f"{params['sc']} °C")
 
-        # LINHA 2014 CORRIGIDA: Alinhada perfeitamente com os 'with' acima
         with col_res3:
             st.metric("Pressão de Alta", f"{p_alta} PSI")
-            st.metric("Temp. Evaporação", f"{params['t_evap']} °C")
             
         with col_res4:
             st.metric("Pressão de Baixa", f"{p_baixa} PSI")
-            st.metric("Temp. Condensação", f"{params['t_cond']} °C")
-            
 # LINHA 1877: Finalização do bloco de resultados
 st.markdown("---")
 
