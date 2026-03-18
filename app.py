@@ -436,33 +436,60 @@ with tab7:
     st.markdown("---")
     st.info("💡 **Dica de Gestão:** Use o histórico para prever manutenções preventivas (PMOC) com base na última data de visita.")
 
-# -------------------------------------------------------------------------------
-# FINALIZAÇÃO DO ARQUIVO (FECHAMENTO DO FLUXO)
-# -------------------------------------------------------------------------------
-st.sidebar.markdown("---")
-st.sidebar.write(f"⚙️ **Versão do Sistema:** 4.700 (Revisão 100x)")
-st.sidebar.write(f"📅 **Acesso em:** {datetime.now().strftime('%d/%m/%Y')}")
+# --- CONTEÚDO DA ABA 6: DIAGNÓSTICO & LAUDO (VERSÃO CORRIGIDA) ---
+with tab6:
+    st.markdown('<p class="section-title">🧠 6. DIAGNÓSTICO ESPECIALIZADO E CONCLUSÃO</p>', unsafe_allow_html=True)
     
-    # BOTÕES DE EXPORTAÇÃO (Diferenciados: Cliente vs Interno)
-    c_pdf1, c_pdf2, c_wa1, c_wa2 = st.columns(4)
-        with c_pdf1:
-        if st.button("📄 LAUDO CLIENTE (PDF)"):
-            st.toast("Gerando Laudo Simplificado...")
-            # Aqui chamaria a função GeradorRelatorio(tipo="CLIENTE")
-                with c_pdf2:
-        if st.button("📋 PRONTUÁRIO INTERNO"):
-            st.toast("Gerando Relatório Técnico Completo...")
-                with c_wa1:
-        # Link WhatsApp Cliente (Instrução 9)
-        msg_cli = urllib.parse.quote(f"Olá! Segue o laudo técnico do seu equipamento {st.session_state.get('eq_modelo', '')}.")
-        link_cli = f"https://wa.me/{st.session_state.get('contato_cliente', '')}?text={msg_cli}"
-        st.markdown(f'<a href="{link_cli}" target="_blank"><button style="width:100%; background-color:#25D366; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer;">📲 WHATSAPP CLIENTE</button></a>', unsafe_allow_html=True)
-    with c_wa2:
-        # Link WhatsApp Empresa (Instrução 9: Número Fixo do Marcos)
-        msg_int = urllib.parse.quote(f"LOGÍSTICA: Novo prontuário disponível para {st.session_state.get('cli_nome', '')}. Modelo: {st.session_state.get('eq_modelo', '')}.")
-        link_int = f"https://wa.me/5521980264217?text={msg_int}"
-        st.markdown(f'<a href="{link_int}" target="_blank"><button style="width:100%; background-color:#075E54; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer;">🏢 WHATSAPP EMPRESA</button></a>', unsafe_allow_html=True)
+    col_diag1, col_diag2 = st.columns([2, 1])
+    
+    with col_diag1:
+        defeitos_master = [
+            "Acúmulo de óleo no evaporador", "Bloqueio parcial no dispositivo de expansão", 
+            "Capacitor de marcha esgotado", "Compressor com baixa compressão",
+            "Condensadora obstruída/suja", "Contatora com contatos oxidados",
+            "Excesso de fluido refrigerante", "Falta de fluido refrigerante (Vazamento)",
+            "Filtro secador obstruído", "Incondensáveis no sistema",
+            "Isolamento térmico deteriorado", "Motor ventilador com baixa rotação",
+            "Placa eletrônica com erro de comunicação", "Sensor de degelo fora de curva",
+            "Sensor de temperatura ambiente aberto", "Válvula reversora travada"
+        ]
+        selecionados = st.multiselect("🔍 Selecione os Defeitos Identificados:", sorted(defeitos_master))
+        texto_diagnostico = "📌 CONCLUSÃO TÉCNICA: " + ". ".join(selecionados) + "." if selecionados else ""
+        parecer_final = st.text_area("📝 Parecer Técnico Detalhado:", value=texto_diagnostico, height=150)
 
+    with col_diag2:
+        st.info("🤖 **Assistente IA**")
+        sh_t_val = st.session_state.get('te_sh_t', 0)
+        sc_val = st.session_state.get('te_sc', 0)
+        if sh_t_val < 5 and sh_t_val != 0:
+            st.error("Alerta IA: Risco de Golpe de Líquido (SH Total Baixo).")
+        elif sc_val < 3 and sc_val != 0:
+            st.warning("Alerta IA: Sub-resfriamento baixo. Verificar carga.")
+        else:
+            st.success("Alerta IA: Parâmetros em equilíbrio.")
+
+    st.markdown("---")
+    
+    # AQUI ESTAVA O ERRO (LINHA 447) - AGORA ESTÁ ALINHADO:
+    c_pdf1, c_pdf2, c_wa1, c_wa2 = st.columns(4)
+    
+    with c_pdf1:
+        if st.button("📄 LAUDO CLIENTE (PDF)"):
+            st.toast("Gerando Laudo...")
+            
+    with c_pdf2:
+        if st.button("📋 PRONTUÁRIO INTERNO"):
+            st.toast("Gerando Prontuário...")
+            
+    with c_wa1:
+        msg_cli = urllib.parse.quote(f"Olá! Segue o laudo técnico.")
+        link_cli = f"https://wa.me/{st.session_state.get('contato_cliente', '')}?text={msg_cli}"
+        st.markdown(f'<a href="{link_cli}" target="_blank"><button style="width:100%; background-color:#25D366; color:white; border:none; padding:10px; border-radius:5px;">📲 WHATSAPP CLIENTE</button></a>', unsafe_allow_html=True)
+
+    with c_wa2:
+        msg_int = urllib.parse.quote(f"LOGÍSTICA: Novo prontuário disponível.")
+        link_int = f"https://wa.me/5521980264217?text={msg_int}"
+        st.markdown(f'<a href="{link_int}" target="_blank"><button style="width:100%; background-color:#075E54; color:white; border:none; padding:10px; border-radius:5px;">🏢 WHATSAPP EMPRESA</button></a>', unsafe_allow_html=True)
 
 # 6. FUNÇÃO DE TÍTULO DE JANELA (UI HELPER)
 def janela_titulo(titulo):
