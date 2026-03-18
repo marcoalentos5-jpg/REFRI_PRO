@@ -2130,7 +2130,6 @@ with aba1:
 ###############################################################################
 # --- ABA 4: HISTÓRICO / BUSCA DE ATENDIMENTOS ---
 with aba4:
-with aba4:
     janela_titulo("CONSULTA DE HISTÓRICO NO BANCO DE DADOS")
     
     with st.container():
