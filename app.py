@@ -2140,47 +2140,50 @@ with aba1:
 # VERSÃO: 4.700 (BLINDADA) - LINHAS: 1801 A 2000                               #
 ###############################################################################
 
-    # --- ABA 4: HISTÓRICO / BUSCA DE ATENDIMENTOS ---
-    with aba4:
-        janela_titulo("CONSULTA DE HISTÓRICO NO BANCO DE DATA")
-        
-        with st.container():
-            col_busca1, col_busca2 = st.columns([3, 1])
-            with col_busca1:
-                cpf_busca = st.text_input("Digite o CPF/CNPJ para buscar:", 
-                                         placeholder="000.000.000-00")
-            with col_busca2:
-                st.write("##")
-                btn_buscar = st.button("🔍 PESQUISAR")
+   # --- ABA 4: HISTÓRICO / BUSCA DE ATENDIMENTOS (CORRIGIDO) ---
+with aba4:
+    janela_titulo("CONSULTA DE HISTÓRICO NO BANCO DE DADOS")
+    
+    with st.container():
+        col_busca1, col_busca2 = st.columns([3, 1])
+        with col_busca1:
+            cpf_busca = st.text_input("Digite o CPF/CNPJ para buscar:", 
+                                     placeholder="000.000.000-00", key="busca_cpf_input")
+        with col_busca2:
+            st.write("##")
+            btn_buscar = st.button("🔍 PESQUISAR")
 
-        if btn_buscar and cpf_busca:
-            resultados = buscar_por_cpf(cpf_busca)
-            if not resultados.empty:
-                st.success(f"Encontrado(s) {len(resultados)} registro(s) para este cliente.")
-                
-                # Formatação da Tabela de Resultados
-                df_exibicao = resultados[['id', 'data_visita', 'aparelho_modelo', 'fluido_tipo', 'diagnostico_ia']].copy()
-                df_exibicao.columns = ['ID', 'Data', 'Equipamento', 'Gás', 'Diagnóstico Prévio']
-                
-                st.dataframe(df_exibicao, use_container_width=True, hide_index=True)
-                
-                # Opção de Detalhamento
-                id_selecionado = st.selectbox("Selecione um ID para ver detalhes ou baixar PDF:", 
-                                            options=resultados['id'].tolist())
-                
-                if id_selecionado:
-                    detalhe = resultados[resultados['id'] == id_selecionado].iloc[0]
-                    st.info(f"Visualizando Detalhes do Atendimento #{id_selecionado}")
-                    col_det1, col_det2 = st.columns(2)
-                    with col_det1:
-                        st.write(f"**Cliente:** {detalhe['cliente_nome']}")
-                        st.write(f"**Pressões:** {detalhe['pressao_alta']} / {detalhe['pressao_baixa']} PSI")
-                    with col_det2:
-                        st.write(f"**SH/SC:** {detalhe['superaquecimento']} / {detalhe['subresfriamento']} °C")
-            else:
-                st.warning("Nenhum registro encontrado para este CPF/CNPJ.")
-        elif btn_buscar and not cpf_busca:
-            st.error("Por favor, insira um CPF para realizar a busca.")
+    # AGORA ESTE BLOCO ESTÁ DENTRO DA ABA (IDENTADO)
+    if btn_buscar and cpf_busca:
+        resultados = buscar_por_cpf(cpf_busca)
+        
+        if not resultados.empty:
+            st.success(f"Encontrado(s) {len(resultados)} registro(s) para este cliente.")
+            
+            # Formatação da Tabela
+            df_exibicao = resultados[['id', 'data_visita', 'aparelho_modelo', 'fluido_tipo', 'diagnostico_ia']].copy()
+            df_exibicao.columns = ['ID', 'Data', 'Equipamento', 'Gás', 'Diagnóstico Prévio']
+            
+            st.dataframe(df_exibicao, use_container_width=True, hide_index=True)
+            
+            # Opção de Detalhamento
+            id_selecionado = st.selectbox("Selecione um ID para ver detalhes:", 
+                                        options=resultados['id'].tolist())
+            
+            if id_selecionado:
+                detalhe = resultados[resultados['id'] == id_selecionado].iloc[0]
+                st.info(f"Visualizando Detalhes do Atendimento #{id_selecionado}")
+                col_det1, col_det2 = st.columns(2)
+                with col_det1:
+                    st.write(f"**Cliente:** {detalhe['cliente_nome']}")
+                    st.write(f"**Pressões:** {detalhe['pressao_alta']} / {detalhe['pressao_baixa']} PSI")
+                with col_det2:
+                    st.write(f"**SH/SC:** {detalhe['superaquecimento']} / {detalhe['subresfriamento']} °C")
+        else:
+            st.warning("Nenhum registro encontrado para este CPF/CNPJ.")
+            
+    elif btn_buscar and not cpf_busca:
+        st.error("Por favor, insira um CPF para realizar a busca.")
 
 # LINHA 1849
 # LINHA 1850
