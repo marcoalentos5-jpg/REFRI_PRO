@@ -1868,13 +1868,17 @@ with aba3:
     st.markdown("### 📊 Resultados em Tempo Real")
     res1, res2, res3, res4 = st.columns(4)
     
-    # Exibição com Delta de Performance (Comparativo com ideal)
+  # --- LINHA 1654: INÍCIO DA EXIBIÇÃO DE MÉTRICAS ---
     res1.metric("Superaquecimento", f"{params['sh']} °C", delta=f"{params['sh']-10:.1f}K", delta_color="inverse")
     res2.metric("Sub-resfriamento", f"{params['sc']} °C", delta=f"{params['sc']-5:.1f}K")
     res3.metric("Temp. Evaporação", f"{params['t_evap']} °C")
-    res4.metric("Temp. Condensação", f"{params['t_cond']} °C")A 1655
-# LINHA 1656
-# LINHA 1657
+    res4.metric("Temp. Condensação", f"{params['t_cond']} °C")  # LINHA 1655: CORRIGIDA (Removido 'A 1655')
+
+# LINHA 1656: Espaçamento para separação visual no app
+st.markdown("---") 
+
+# LINHA 1657: Início da próxima seção de análise ou log
+st.info("📊 Análise de performance concluída com sucesso.")
 # LINHA 1658
 # LINHA 1659
 # LINHA 1660
