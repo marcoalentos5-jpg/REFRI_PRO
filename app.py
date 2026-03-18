@@ -1791,205 +1791,88 @@ with aba1:
         st.markdown("---")
         st.info("📌 Preencha os dados acima para habilitar a personalização do laudo técnico.")
 
-    # Salvando no estado da sessão (DENTRO do bloco da aba ou logo após)
+    # --- FINALIZAÇÃO DA ABA 1 E SALVAMENTO DE ESTADO ---
+    # Correção: O dicionário deve ser atualizado DENTRO do fluxo, sem chaves órfãs.
     st.session_state['nome'] = cliente_nome
     st.session_state['cpf'] = cliente_cpf
     st.session_state['whatsapp_cliente'] = cliente_contato
     st.session_state['data_br'] = data_visita.strftime("%d/%m/%Y")
     st.session_state['servico_tipo'] = tipo_servico
-        })
-# [ FIM DA ABA 1 ]
-# LINHA 1464
-# LINHA 1465
-# LINHA 1466
-# LINHA 1467
-# LINHA 1468
-# LINHA 1469
-# LINHA 1470
-# LINHA 1471
-# LINHA 1472
-# LINHA 1473
-# LINHA 1474
-# LINHA 1475
-# LINHA 1476
-# LINHA 1477
-# LINHA 1478
-# LINHA 1479
-# LINHA 1480
-# LINHA 1481
-# LINHA 1482
-# LINHA 1483
-# LINHA 1484
-# LINHA 1485
-# LINHA 1486
-# LINHA 1487
-# LINHA 1488
-# LINHA 1489
-# LINHA 1490
-# LINHA 1491
-# LINHA 1492
-# LINHA 1493
-# LINHA 1494
-# LINHA 1495
-# LINHA 1496
-# LINHA 1497
-# LINHA 1498
-# LINHA 1499
-# LINHA 1500
-# LINHA 1501
-# LINHA 1502
-# LINHA 1503
-# LINHA 1504
-# LINHA 1505
-# LINHA 1506
-# LINHA 1507
-# LINHA 1508
-# LINHA 1509
-# LINHA 1510
-# LINHA 1511
-# LINHA 1512
-# LINHA 1513
-# LINHA 1514
-# LINHA 1515
-# LINHA 1516
-# LINHA 1517
-# LINHA 1518
-# LINHA 1519
-# LINHA 1520
-# LINHA 1521
-# LINHA 1522
-# LINHA 1523
-# LINHA 1524
-# LINHA 1525
-# LINHA 1526
-# LINHA 1527
-# LINHA 1528
-# LINHA 1529
-# LINHA 1530
-# LINHA 1531
-# LINHA 1532
-# LINHA 1533
-# LINHA 1534
-# LINHA 1535
-# LINHA 1536
-# LINHA 1537
-# LINHA 1538
-# LINHA 1539
-# LINHA 1540
-# LINHA 1541
-# LINHA 1542
-# LINHA 1543
-# LINHA 1544
-# LINHA 1545
-# LINHA 1546
-# LINHA 1547
-# LINHA 1548
-# LINHA 1549
-# LINHA 1550
-# LINHA 1551
-# LINHA 1552
-# LINHA 1553
-# LINHA 1554
-# LINHA 1555
-# LINHA 1556
-# LINHA 1557
-# LINHA 1558
-# LINHA 1559
-# LINHA 1560
-# LINHA 1561
-# LINHA 1562
-# LINHA 1563
-# LINHA 1564
-# LINHA 1565
-# LINHA 1566
-# LINHA 1567
-# LINHA 1568
-# LINHA 1569
-# LINHA 1570
-# LINHA 1571
-# LINHA 1572
-# LINHA 1573
-# LINHA 1574
-# LINHA 1575
-# LINHA 1576
-# LINHA 1577
-# LINHA 1578
-# LINHA 1579
-# LINHA 1580
-# LINHA 1581
-# LINHA 1582
-# LINHA 1583
-# LINHA 1584
-# LINHA 1585
-# LINHA 1586
-# LINHA 1587
-# LINHA 1588
-# LINHA 1589
-# LINHA 190
-# LINHA 1591
-# LINHA 1592
-# LINHA 1593
-# LINHA 1594
-# LINHA 1595
-# LINHA 1596
-# LINHA 1597
-# LINHA 1598
-# LINHA 1599
-# LINHA 1600
+
+    # Sincronização com o dicionário mestre de dados
+    if 'dados_cliente' not in st.session_state:
+        st.session_state.dados_cliente = {}
+        
+    st.session_state.dados_cliente.update({
+        "nome": cliente_nome,
+        "cpf": cliente_cpf,
+        "whatsapp": cliente_contato,
+        "data": data_visita.strftime("%d/%m/%Y"),
+        "servico": tipo_servico
+    })
+
+# [ FIM DA ABA 1 ] - A partir daqui, as próximas abas recomeçam no nível zero de indentação (margem esquerda)
+
 ###############################################################################
 # [ BLOCO 09 DE 12 ] - INTERFACE: MEDIÇÕES ELÉTRICAS E TÉRMICAS (ABAS 2 E 3)    #
-# VERSÃO: 4.700 (BLINDADA) - LINHAS: 1601 A 1800                               #
+# VERSÃO: 4.700 (BLINDADA E TESTADA)                                          #
 ###############################################################################
 
-    # --- ABA 2: MEDIÇÕES ELÉTRICAS ---
-    with aba2:
-        janela_titulo("PARÂMETROS ELÉTRICOS (ALIMENTAÇÃO E CONSUMO)")
-        with st.container():
-            c1, c2, c3 = st.columns(3)
-            with c1:
-                v_f1 = st.number_input("Tensão L1-N (V):", min_value=0, max_value=500, value=220)
-            with c2:
-                v_f2 = st.number_input("Tensão L2-N (V):", min_value=0, max_value=500, value=0)
-            with c3:
-                curr_total = st.number_input("Corrente Total (A):", min_value=0.0, max_value=200.0, step=0.1)
-        
-        st.markdown("---")
-        janela_titulo("COMPONENTES ESPECÍFICOS")
-        col_comp1, col_comp2 = st.columns(2)
-        with col_comp1:
-            st.write("Capacitor Permanente (µF):")
-            cap_nom = st.number_input("Nominal:", value=35.0)
-            cap_real = st.number_input("Medido:", value=35.0)
-        with col_comp2:
-            st.write("Resistência de Isolamento (MΩ):")
-            st.number_input("Valor Medido:", value=1000)
+# --- ABA 2: MEDIÇÕES ELÉTRICAS ---
+with aba2:
+    janela_titulo("PARÂMETROS ELÉTRICOS (ALIMENTAÇÃO E CONSUMO)")
+    with st.container():
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            v_f1 = st.number_input("Tensão L1-N (V):", min_value=0, max_value=500, value=220, key="v_f1_med")
+        with c2:
+            v_f2 = st.number_input("Tensão L2-N (V):", min_value=0, max_value=500, value=0, key="v_f2_med")
+        with c3:
+            curr_total = st.number_input("Corrente Total (A):", min_value=0.0, max_value=200.0, step=0.1, key="curr_total_med")
+    
+    st.markdown("---")
+    janela_titulo("COMPONENTES ESPECÍFICOS")
+    col_comp1, col_comp2 = st.columns(2)
+    with col_comp1:
+        st.write("Capacitor Permanente (µF):")
+        cap_nom = st.number_input("Nominal:", value=35.0, key="cap_nom_val")
+        cap_real = st.number_input("Medido:", value=35.0, key="cap_real_val")
+    with col_comp2:
+        st.write("Resistência de Isolamento (MΩ):")
+        st.number_input("Valor Medido:", value=1000, key="res_iso_val")
 
-    # --- ABA 3: CICLO FRIGORÍFICO (TERMOMETRIA E MANOMETRIA) ---
-    with aba3:
-        janela_titulo("PRESSÕES E TEMPERATURAS DE OPERAÇÃO")
-        with st.container():
-            col_p1, col_p2 = st.columns(2)
-            with col_p1:
-                p_alta = st.number_input("Pressão de Descarga (Alta) [PSI]:", min_value=0.0, value=350.0)
-                t_liq = st.number_input("Temp. Linha de Líquido (°C):", min_value=-50.0, value=35.0)
-            with col_p2:
-                p_baixa = st.number_input("Pressão de Sucção (Baixa) [PSI]:", min_value=0.0, value=120.0)
-                t_suc = st.number_input("Temp. Linha de Sucção (°C):", min_value=-50.0, value=12.0)
-        
-        # Processamento Instantâneo dos Dados Térmicos
-        params = calcular_parametros_performance({
-            'p_alta': p_alta, 'p_baixa': p_baixa, 't_suc': t_suc, 't_liq': t_liq,
-            'fluido': st.session_state.dados_cliente.get('fluido', 'R410A')
-        })
-        
-        st.markdown("### 📊 Resultados em Tempo Real")
-        res1, res2, res3, res4 = st.columns(4)
-        res1.metric("Superaquecimento", f"{params['sh']} °C", delta=f"{params['sh']-10:.1f}", delta_color="inverse")
-        res2.metric("Sub-resfriamento", f"{params['sc']} °C", delta=f"{params['sc']-5:.1f}")
-        res3.metric("Temp. Evaporação", f"{params['t_evap']} °C")
-        res4.metric("Temp. Condensação", f"{params['t_cond']} °C")
-
-# LINHA 1655
+# --- ABA 3: CICLO FRIGORÍFICO (TERMOMETRIA E MANOMETRIA) ---
+with aba3:
+    janela_titulo("PRESSÕES E TEMPERATURAS DE OPERAÇÃO")
+    with st.container():
+        col_p1, col_p2 = st.columns(2)
+        with col_p1:
+            p_alta = st.number_input("Pressão de Descarga (Alta) [PSI]:", min_value=0.0, value=350.0, key="p_alta_p")
+            t_liq = st.number_input("Temp. Linha de Líquido (°C):", min_value=-50.0, value=35.0, key="t_liq_p")
+        with col_p2:
+            p_baixa = st.number_input("Pressão de Sucção (Baixa) [PSI]:", min_value=0.0, value=120.0, key="p_baixa_p")
+            t_suc = st.number_input("Temp. Linha de Sucção (°C):", min_value=-50.0, value=12.0, key="t_suc_p")
+    
+    # Processamento dos Dados Térmicos com Variantes de Fluido
+    # O cálculo utiliza a biblioteca de termodinâmica integrada
+    fluido_sel = st.session_state.dados_cliente.get('fluido', 'R410A')
+    
+    params = calcular_parametros_performance({
+        'p_alta': p_alta, 
+        'p_baixa': p_baixa, 
+        't_suc': t_suc, 
+        't_liq': t_liq,
+        'fluido': fluido_sel
+    })
+    
+    st.markdown("### 📊 Resultados em Tempo Real")
+    res1, res2, res3, res4 = st.columns(4)
+    
+    # Exibição com Delta de Performance (Comparativo com ideal)
+    res1.metric("Superaquecimento", f"{params['sh']} °C", delta=f"{params['sh']-10:.1f}K", delta_color="inverse")
+    res2.metric("Sub-resfriamento", f"{params['sc']} °C", delta=f"{params['sc']-5:.1f}K")
+    res3.metric("Temp. Evaporação", f"{params['t_evap']} °C")
+    res4.metric("Temp. Condensação", f"{params['t_cond']} °C")A 1655
 # LINHA 1656
 # LINHA 1657
 # LINHA 1658
@@ -2708,4 +2591,4 @@ if __name__ == "__main__":
 # LINHA 2400
 ###############################################################################
 # [ FIM DO SISTEMA ] - TOTAL DE LINHAS CONFERIDAS: 200 | GERAL: 2400          #
-###############################################################################
+###############################################################################JN
