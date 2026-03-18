@@ -2009,7 +2009,7 @@ st.info("📊 Análise de performance concluída com sucesso.")
 # LINHA 1785
 
     # --- LINHA 2010: DENTRO DO BLOCO DA ABA 6 ---
-    with aba6:
+        with aba6:
         janela_titulo("VEREDITO TÉCNICO E INTELIGÊNCIA ARTIFICIAL")
         
         # LINHA 2011 CORRIGIDA: Alinhada com o bloco da aba (4 espaços de recuo)
