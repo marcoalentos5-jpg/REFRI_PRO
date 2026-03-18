@@ -2007,19 +2007,24 @@ st.info("📊 Análise de performance concluída com sucesso.")
 # LINHA 1783
 # LINHA 1784
 # LINHA 1785
-# LINHA 1786
-# LINHA 1787
-# LINHA 1788
-# --- LINHA 1870 EM DIANTE (ALINHAMENTO E SINTAXE BLINDADOS) ---
+# --- LINHA 2010: INÍCIO DO CONTAINER DE RESULTADOS ---
+    with st.container():
+        col_res1, col_res2, col_res3, col_res4 = st.columns(4)
+        
+        with col_res1:
+            st.metric("Superaquecimento", f"{params['sh']} °C")
+            
+        with col_res2:
+            st.metric("Sub-resfriamento", f"{params['sc']} °C")
+
+        # LINHA 2014 CORRIGIDA: Alinhada perfeitamente com os 'with' acima
         with col_res3:
             st.metric("Pressão de Alta", f"{p_alta} PSI")
-            # Corrigido: usando st.metric dentro do contexto da coluna
             st.metric("Temp. Evaporação", f"{params['t_evap']} °C")
-
+            
         with col_res4:
             st.metric("Pressão de Baixa", f"{p_baixa} PSI")
-            # LINHA 1875: Limpa e funcional
-            st.metric("Temp. Condensação", f"{params['t_cond']} °C") 
+            st.metric("Temp. Condensação", f"{params['t_cond']} °C")
             
 # LINHA 1877: Finalização do bloco de resultados
 st.markdown("---")
