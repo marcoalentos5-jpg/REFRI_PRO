@@ -2124,11 +2124,11 @@ with aba1:
 # LINHA 1787
 # LINHA 1788
 # LINHA 1789
+# --- FINALIZAÇÃO DA ABA ANTERIOR (LIMPEZA DE RESÍDUOS) ---
+# Certifique-se de que a linha abaixo termina sem chaves extras
+st.session_state['fluxo_ativo'] = True
 
-# BLOCO 10 DE 12-INTERFACE:HISTÓRICO E BUSCA ABA 4                  
-# STATUS: TESTADO 100X | VERSÃO: 4.700                                        
-###############################################################################
---- ABA 4: HISTÓRICO / BUSCA DE ATENDIMENTOS ---
+# --- ABA 4: HISTÓRICO / BUSCA DE ATENDIMENTOS (INÍCIO DO BLOCO 10) ---
 with aba4:
     janela_titulo("CONSULTA DE HISTÓRICO NO BANCO DE DADOS")
     
@@ -2137,22 +2137,22 @@ with aba4:
         with col_busca1:
             cpf_busca = st.text_input("Digite o CPF/CNPJ para buscar:", 
                                      placeholder="000.000.000-00", 
-                                     key="input_busca_cpf_v4")
+                                     key="input_busca_cpf_final_1800")
         with col_busca2:
             st.write("##")
-            btn_buscar = st.button("🔍 PESQUISAR", key="btn_busca_v4")
+            btn_buscar = st.button("🔍 PESQUISAR", key="btn_busca_final_1800")
 
-    # Bloco de lógica com indentação rigorosa (4 espaços)
-    if btn_buscar and cpf_busca:
-        resultados = buscar_por_cpf(cpf_busca)
-        if not resultados.empty:
-            st.success(f"{len(resultados)} registros encontrados.")
-            st.dataframe(resultados, use_container_width=True)
+    # Bloco de lógica: Alinhado com exatamente 4 espaços de recuo
+    if btn_buscar:
+        if cpf_busca:
+            resultados = buscar_por_cpf(cpf_busca)
+            if not resultados.empty:
+                st.success(f"{len(resultados)} atendimentos localizados.")
+                st.dataframe(resultados, use_container_width=True, hide_index=True)
+            else:
+                st.warning("Nenhum registro encontrado para este CPF.")
         else:
-            st.warning("Nenhum registro localizado.")
-        else:
-            st.error("Por favor, informe o CPF/CNPJ para realizar a consulta.")
-# LINHA 1849
+            st.error("Por favor, digite o CPF para pesquisar.")
 # LINHA 1850
 # LINHA 1851
 # LINHA 1852
