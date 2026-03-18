@@ -2124,63 +2124,33 @@ with aba1:
 # LINHA 1787
 # LINHA 1788
 # LINHA 1789###############################################################################
-# [ BLOCO 10 DE 12 ] - INTERFACE: HISTÓRICO E BUSCA (ABA 4)                   #
+# BLOCO 10 DE 12-INTERFACE:HISTÓRICO E BUSCA ABA 4                  #
 # STATUS: TESTADO 100X | VERSÃO: 4.700                                        #
 ###############################################################################
 
 # --- ABA 4: HISTÓRICO / BUSCA DE ATENDIMENTOS ---
-# Importante: Este 'with' deve estar exatamente na margem esquerda
+with aba4:
 with aba4:
     janela_titulo("CONSULTA DE HISTÓRICO NO BANCO DE DADOS")
     
     with st.container():
         col_busca1, col_busca2 = st.columns([3, 1])
-        
         with col_busca1:
-            cpf_busca = st.text_input(
-                "Digite o CPF/CNPJ para buscar:", 
-                placeholder="000.000.000-00", 
-                key="input_cpf_busca_final"
-            )
-            
+            cpf_busca = st.text_input("Digite o CPF/CNPJ para buscar:", 
+                                     placeholder="000.000.000-00", 
+                                     key="input_busca_cpf_v4")
         with col_busca2:
             st.write("##")
-            btn_buscar = st.button("🔍 PESQUISAR", key="btn_pesquisar_final")
+            btn_buscar = st.button("🔍 PESQUISAR", key="btn_busca_v4")
 
-    # Todo este bloco IF deve ter EXATAMENTE 4 espaços de recuo
-    if btn_buscar:
-        if cpf_busca:
-            resultados = buscar_por_cpf(cpf_busca)
-            
-            if not resultados.empty:
-                st.success(f"Encontrado(s) {len(resultados)} registro(s).")
-                
-                # Seleção de colunas para a tabela
-                df_view = resultados[['id', 'data_visita', 'aparelho_modelo', 'diagnostico_ia']].copy()
-                df_view.columns = ['ID', 'Data', 'Equipamento', 'Resumo IA']
-                
-                st.dataframe(df_view, use_container_width=True, hide_index=True)
-                
-                # Detalhamento por ID
-                id_sel = st.selectbox(
-                    "Ver detalhes do atendimento:", 
-                    options=resultados['id'].tolist(), 
-                    key="select_id_detalhe"
-                )
-                
-                if id_sel:
-                    det = resultados[resultados['id'] == id_sel].iloc[0]
-                    st.info(f"Detalhes do Atendimento #{id_sel}")
-                    
-                    c1, c2 = st.columns(2)
-                    with c1:
-                        st.write(f"**Cliente:** {det['cliente_nome']}")
-                        st.write(f"**Tensão:** {det['tensao_medida']}V")
-                    with c2:
-                        st.write(f"**SH Útil:** {det['superaquecimento']}K")
-                        st.write(f"**SC:** {det['subresfriamento']}K")
-            else:
-                st.warning("Nenhum registro encontrado para este documento.")
+    # Bloco de lógica com indentação rigorosa (4 espaços)
+    if btn_buscar and cpf_busca:
+        resultados = buscar_por_cpf(cpf_busca)
+        if not resultados.empty:
+            st.success(f"{len(resultados)} registros encontrados.")
+            st.dataframe(resultados, use_container_width=True)
+        else:
+            st.warning("Nenhum registro localizado.")
         else:
             st.error("Por favor, informe o CPF/CNPJ para realizar a consulta.")
 
