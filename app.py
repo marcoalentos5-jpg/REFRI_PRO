@@ -2171,24 +2171,36 @@ with aba6:
 # [ BLOCO 12 DE 12 ] - PERSISTÊNCIA FINAL, ENCERRAMENTO E GATILHO DE EXECUÇÃO #
 # VERSÃO: 4.700 (BLINDADA) - LINHAS: 2201 A 2400                               #
 ###############################################################################
+# --- FINALIZAÇÃO DA ABA 6 (ALINHAMENTO BLINDADO) ---
+        st.markdown("---")
+        janela_titulo("EXPORTAÇÃO E ARQUIVAMENTO")
 
-       ........if st.button("💾 FINALIZAR E SALVAR ATENDIMENTO"):
-............try:
-................# Montagem do dicionário (Bloco 12)
-................dados_para_salvar = {
-....................'nome': nome_cliente, 
-....................'cpf': cpf_cliente, 
-....................'data': data_visita.strftime("%d/%m/%Y")
-................}
-................
-................# Chamada da função CRUD
-................novo_id = salvar_atendimento(dados_para_salvar)
-................
-................st.success(f"✅ Atendimento #{novo_id} salvo!")
-................st.balloons()  # LINHA 2192 CORRIGIDA: Alinhada com o st.success
-................
-............except Exception as e:
-................st.error(f"❌ Erro ao salvar: {e}")
+        # LINHA 2175: Alinhada com o st.markdown acima (geralmente 8 espaços se dentro de aba+container)
+        if st.button("💾 FINALIZAR E SALVAR ATENDIMENTO"):
+            try:
+                # Montagem do dicionário de salvamento
+                dados_para_salvar = {
+                    'nome': nome_cliente, 'cpf': cpf_cliente, 
+                    'data': data_visita.strftime("%d/%m/%Y"),
+                    'modelo': modelo_equip, 'fluido': fluido_sel, 
+                    'p_alta': p_alta, 'p_baixa': p_baixa,
+                    'sh': params['sh'], 'sc': params['sc'],
+                    'corrente': curr_total, 'checklist': st.session_state.checklist_items,
+                    'diagnostico': diag['status']
+                }
+                
+                # Chamada da função CRUD
+                novo_id = salvar_atendimento(dados_para_salvar)
+                
+                st.success(f"✅ Atendimento #{novo_id} salvo com sucesso!")
+                st.balloons()
+                
+            except Exception as e:
+                st.error(f"❌ Erro ao salvar no banco de dados: {e}")
+
+# --- SAÍDA DAS ABAS (NÍVEL ZERO DE INDENTAÇÃO) ---
+st.sidebar.markdown("---")
+st.sidebar.caption(f"Engine v4.700 | Lib: Streamlit/FPDF")
 
 # SAINDO DOS BLOCOS (VOLTA PARA A MARGEM DA ABA)
 ....st.sidebar.markdown("---")
