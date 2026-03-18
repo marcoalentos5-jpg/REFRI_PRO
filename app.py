@@ -2189,13 +2189,17 @@ with aba6:
                 novo_id = salvar_atendimento(dados_para_salvar)
                 
                 st.success(f"✅ Atendimento #{novo_id} salvo com sucesso no banco de dados!")
-                st.balloons()
+               st.balloons()
                 
             except Exception as e:
                 st.error(f"❌ Erro ao salvar no banco de dados: {e}")
 
-    # 15. RODAPÉ TÉCNICO DA INTERFACE
-    st.sidebar.markdown("---")
+    # --- LINHA 2197: SAINDO DOS BLOCOS 'WITH' (RETORNO AO NÍVEL PRINCIPAL) ---
+    # Certifique-se de que as linhas abaixo NÃO tenham espaços extras no início
+    st.markdown("---") 
+
+    # 15. RODAPÉ TÉCNICO DA INTERFACE (LINHA 2198)
+    st.sidebar.markdown("---") # CORREÇÃO: Alinhado à esquerda (0 ou 4 espaços conforme seu main)
     st.sidebar.caption(f"Engine v4.700 | Lib: Streamlit/FPDF")
     st.sidebar.write("🔒 Conexão SQL: Ativa")
 
