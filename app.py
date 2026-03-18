@@ -2123,11 +2123,11 @@ with aba1:
 # LINHA 1786
 # LINHA 1787
 # LINHA 1788
-# LINHA 1789###############################################################################
+# LINHA 1789
+###############################################################################
 # BLOCO 10 DE 12-INTERFACE:HISTÓRICO E BUSCA ABA 4                  #
 # STATUS: TESTADO 100X | VERSÃO: 4.700                                        #
 ###############################################################################
-
 # --- ABA 4: HISTÓRICO / BUSCA DE ATENDIMENTOS ---
 with aba4:
 with aba4:
@@ -2153,7 +2153,6 @@ with aba4:
             st.warning("Nenhum registro localizado.")
         else:
             st.error("Por favor, informe o CPF/CNPJ para realizar a consulta.")
-
 # LINHA 1849
 # LINHA 1850
 # LINHA 1851
