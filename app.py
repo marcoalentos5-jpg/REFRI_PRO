@@ -2010,18 +2010,18 @@ st.info("📊 Análise de performance concluída com sucesso.")
 # LINHA 1786
 # LINHA 1787
 # LINHA 1788
-# LINHA 1789# --- LINHA 1870 EM DIANTE (CORREÇÃO APLICADA) ---
-       with col_res3:
+# --- LINHA 1870 EM DIANTE (ALINHAMENTO E SINTAXE BLINDADOS) ---
+        with col_res3:
             st.metric("Pressão de Alta", f"{p_alta} PSI")
             # Corrigido: usando st.metric dentro do contexto da coluna
             st.metric("Temp. Evaporação", f"{params['t_evap']} °C")
 
         with col_res4:
             st.metric("Pressão de Baixa", f"{p_baixa} PSI")
-            # LINHA 1875 TOTALMENTE LIMPA (Removido resíduo "A 1655" e ajustado o comando)
+            # LINHA 1875: Limpa e funcional
             st.metric("Temp. Condensação", f"{params['t_cond']} °C") 
             
-# LINHA 1877: Continuação do fluxo (alinhado ao 'with' principal)
+# LINHA 1877: Finalização do bloco de resultados
 st.markdown("---")
 
 # --- CONTINUAÇÃO PARA O BLOCO 11 (LINHA 2001+) ---
