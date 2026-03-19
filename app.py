@@ -2172,7 +2172,7 @@ with aba6:
 # VERSÃO: 4.700 (BLINDADA) - LINHAS: 2201 A 2400                               #
 ###############################################################################
 # --- FINALIZAÇÃO DA ABA 6 (ALINHAMENTO BLINDADO) ---
-    st.markdown("---")
+st.markdown("---")
         janela_titulo("EXPORTAÇÃO E ARQUIVAMENTO")
 
         # LINHA 2175: Alinhada com o st.markdown acima (geralmente 8 espaços se dentro de aba+container)
