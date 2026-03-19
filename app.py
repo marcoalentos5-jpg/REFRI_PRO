@@ -5,16 +5,14 @@ import requests
 # 1. SETUP DE TELA
 st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="⚙️")
 
-# CSS para Estilização Discreta e Alertas
+# CSS: Alterando para um Verde Água Suave no campo de data
 st.markdown("""
     <style>
-    /* Fundo discreto para o campo de data */
-    div[data-baseweb="input"] {
-        border-radius: 4px;
-    }
     .stTextInput>div>div>input[aria-label="Data da Visita:"] {
-        background-color: #f0f2f6 !important;
+        background-color: #e0f2f1 !important; /* Verde Água Suave */
+        color: #004d40 !important;
         font-weight: bold;
+        border: 1px solid #b2dfdb !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -24,7 +22,7 @@ def inicializar_dados():
     if 'dados' not in st.session_state:
         st.session_state.dados = {}
     
-    campos_v13 = {
+    campos_v15 = {
         'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
         'data': datetime.now().strftime("%d/%m/%Y"),
         'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '', 'complemento': '',
@@ -34,7 +32,7 @@ def inicializar_dados():
         'tecnico_nome': '', 'tecnico_documento': '', 'tecnico_registro': '',
         'tensao': '220V', 'fase': 'Monofásico' 
     }
-    for chave, valor_padrao in campos_v13.items():
+    for chave, valor_padrao in campos_v15.items():
         if chave not in st.session_state.dados:
             st.session_state.dados[chave] = valor_padrao
 
@@ -94,8 +92,7 @@ with tab1:
     col_titulo, col_data = st.columns([3, 1])
     with col_titulo: st.subheader("⚙️ Especificações do Equipamento")
     with col_data: 
-        # CAMPO DATA COM COR DE FUNDO DISCRETA VIA CSS
-        st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'], key="data_visita", label_visibility="visible")
+        st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'])
 
     with st.expander("Detalhes Técnicos do Ativo", expanded=True):
         e1, e2, e3 = st.columns(3)
@@ -133,19 +130,20 @@ with st.sidebar:
 
     st.markdown("---")
     
-    # Lógica de Status Automática 🟢/🔴
-    pendentes = []
-    if not st.session_state.dados['nome']: pendentes.append("Nome Cliente")
-    if not st.session_state.dados['whatsapp']: pendentes.append("WhatsApp")
-    if not st.session_state.dados['serie_evap']: pendentes.append("Série Evap")
+    # Lógica de Status: Validação precisa
+    nome_val = st.session_state.dados['nome'].strip()
+    whatsapp_val = st.session_state.dados['whatsapp'].strip()
+    serie_val = st.session_state.dados['serie_evap'].strip()
     
-    if not pendentes:
-        st.subheader("📋 Status: 🟢 OK")
-        st.success("Tudo certo para o laudo!")
-    else:
+    if not nome_val or not whatsapp_val or not serie_val:
         st.subheader("📋 Status: 🔴 ALERTA")
-        st.error("Preencha os campos com (*)")
-        for p in pendentes: st.write(f"- {p}")
+        st.error("Campos obrigatórios ausentes (*)")
+        if not nome_val: st.write("- Nome do Cliente")
+        if not whatsapp_val: st.write("- WhatsApp")
+        if not serie_val: st.write("- Nº Série Evap")
+    else:
+        st.subheader("📋 Status: 🟢 OK")
+        st.success("Identificação Concluída!")
 
     st.markdown("---")
     st.subheader("👤 Técnico Responsável")
