@@ -1,38 +1,47 @@
 import streamlit as st
-from datetime import datetime
+from datetime import datetime, timedelta
 import requests
+import urllib.parse
 
 # 1. SETUP DE TELA
 st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="⚙️")
 
-# CSS: Alterando para um Verde Água Suave no campo de data
+# CSS: Cores, Estilo do Campo de Data e Botão WhatsApp
 st.markdown("""
     <style>
     .stTextInput>div>div>input[aria-label="Data da Visita:"] {
-        background-color: #e0f2f1 !important; /* Verde Água Suave */
+        background-color: #e0f2f1 !important;
         color: #004d40 !important;
         font-weight: bold;
         border: 1px solid #b2dfdb !important;
     }
+    div.stLinkButton > a {
+        background-color: #25D366 !important;
+        color: white !important;
+        border: none !important;
+        font-weight: bold !important;
+        border-radius: 8px !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
-# 2. MOTOR DE SESSÃO
+# 2. MOTOR DE SESSÃO (TODOS OS CAMPOS REINTEGRADOS)
 def inicializar_dados():
     if 'dados' not in st.session_state:
         st.session_state.dados = {}
     
-    campos_v15 = {
+    campos_completos = {
         'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
         'data': datetime.now().strftime("%d/%m/%Y"),
         'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '', 'complemento': '',
         'fabricante': 'Carrier', 'modelo': '', 'capacidade': '12.000', 'linha': 'Residencial',
         'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '',
         'tipo_servico': 'Manutenção Preventiva', 'tag_id': '',
-        'tecnico_nome': '', 'tecnico_documento': '', 'tecnico_registro': '',
-        'tensao': '220V', 'fase': 'Monofásico' 
+        'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
+        'status_maquina': '🟢 Operacional',
+        'tensao': '220V', 'fase': 'Monofásico' # Guardados para outra aba
     }
-    for chave, valor_padrao in campos_v15.items():
+    for chave, valor_padrao in campos_completos.items():
         if chave not in st.session_state.dados:
             st.session_state.dados[chave] = valor_padrao
 
@@ -60,7 +69,7 @@ st.title("🛠️ Laudo Técnico HVAC - Marcos Alexandre")
 tab1, tab2 = st.tabs(["📋 Identificação e Equipamento", "🌡️ Ciclo Térmico (Em breve)"])
 
 with tab1:
-    # --- SEÇÃO 1: CLIENTE E ENDEREÇO ---
+    # --- SEÇÃO 1: CLIENTE E ENDEREÇO (RESTAURADO) ---
     with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
         c1, c2, c3 = st.columns([2, 1, 1])
         st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'])
@@ -88,11 +97,10 @@ with tab1:
         st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'])
         st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'])
 
-    # --- SEÇÃO 2: EQUIPAMENTO ---
+    # --- SEÇÃO 2: EQUIPAMENTO (RESTAURADO) ---
     col_titulo, col_data = st.columns([3, 1])
     with col_titulo: st.subheader("⚙️ Especificações do Equipamento")
-    with col_data: 
-        st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'])
+    with col_data: st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'])
 
     with st.expander("Detalhes Técnicos do Ativo", expanded=True):
         e1, e2, e3 = st.columns(3)
@@ -100,8 +108,7 @@ with tab1:
             fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea", "Hitachi", "TCL", "Philco"])
             st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_list.index(st.session_state.dados['fabricante']) if st.session_state.dados['fabricante'] in fab_list else 0)
             st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados['modelo'])
-            lin_list = ["Residencial", "Comercial", "Industrial", "Hospitalar", "Data Center"]
-            st.session_state.dados['linha'] = st.selectbox("Linha:", lin_list, index=lin_list.index(st.session_state.dados['linha']) if st.session_state.dados['linha'] in lin_list else 0)
+            st.session_state.dados['status_maquina'] = st.radio("Condição:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado/Defeito"], horizontal=True)
 
         with e2:
             st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados['serie_evap'])
@@ -109,41 +116,46 @@ with tab1:
             st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
 
         with e3:
-            cap_list = ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000", "80.000+"]
-            st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", cap_list, index=cap_list.index(st.session_state.dados['capacidade']) if st.session_state.dados['capacidade'] in cap_list else 1)
+            cap_list = ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"]
+            st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", cap_list, index=1)
             flu_list = ["R410A", "R134a", "R22", "R404A", "R32", "R290"]
-            st.session_state.dados['fluido'] = st.selectbox("Fluido:", flu_list, index=flu_list.index(st.session_state.dados['fluido']) if st.session_state.dados['fluido'] in flu_list else 0)
+            st.session_state.dados['fluido'] = st.selectbox("Fluido:", flu_list, index=0)
             st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'])
 
         st.markdown("---")
         l1, l2 = st.columns(2)
         st.session_state.dados['tag_id'] = l1.text_input("TAG:", value=st.session_state.dados['tag_id'])
         ser_list = ["Instalação", "Manutenção Preventiva", "Manutenção Corretiva", "Infraestrutura", "PMOC"]
-        st.session_state.dados['tipo_servico'] = l2.selectbox("Serviço:", ser_list, index=ser_list.index(st.session_state.dados['tipo_servico']))
+        st.session_state.dados['tipo_servico'] = l2.selectbox("Serviço:", ser_list, index=1)
 
-# --- SIDEBAR ---
+# --- SIDEBAR (RESTAURADO E COMPLETO) ---
 with st.sidebar:
     st.title("🚀 Painel de Controle")
     if st.button("🗑️ Limpar Formulário", use_container_width=True):
-        st.session_state.dados = {}
+        st.session_state.clear()
         st.rerun()
 
     st.markdown("---")
     
-    # Lógica de Status: Validação precisa
+    # Lógica de Status Dinâmica (🟢/🔴)
     nome_val = st.session_state.dados['nome'].strip()
     whatsapp_val = st.session_state.dados['whatsapp'].strip()
     serie_val = st.session_state.dados['serie_evap'].strip()
     
     if not nome_val or not whatsapp_val or not serie_val:
         st.subheader("📋 Status: 🔴 ALERTA")
-        st.error("Campos obrigatórios ausentes (*)")
-        if not nome_val: st.write("- Nome do Cliente")
+        st.error("Campos pendentes:")
+        if not nome_val: st.write("- Nome")
         if not whatsapp_val: st.write("- WhatsApp")
-        if not serie_val: st.write("- Nº Série Evap")
+        if not serie_val: st.write("- Série Evap")
     else:
         st.subheader("📋 Status: 🟢 OK")
-        st.success("Identificação Concluída!")
+        st.success("Tudo pronto para envio!")
+        
+        # Geração do Link WhatsApp Aproveitando os Dados
+        msg = f"Olá {st.session_state.dados['nome']},\nAqui é o técnico {st.session_state.dados['tecnico_nome']}.\nO serviço de {st.session_state.dados['tipo_servico']} no equipamento {st.session_state.dados['tag_id']} foi concluído.\nStatus: {st.session_state.dados['status_maquina']}.\nData: {st.session_state.dados['data']}."
+        link_wa = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg)}"
+        st.link_button("📲 Enviar via WhatsApp", link_wa, use_container_width=True)
 
     st.markdown("---")
     st.subheader("👤 Técnico Responsável")
