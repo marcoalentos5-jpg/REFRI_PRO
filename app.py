@@ -6,7 +6,7 @@ import urllib.parse
 # 1. SETUP DE TELA (CONGELADO)
 st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="⚙️")
 
-# CSS: Estilização Verde Água e Botão WhatsApp (CONGELADO)
+# CSS: Estilização (CONGELADO)
 st.markdown("""
     <style>
     .stTextInput>div>div>input[aria-label="Data da Visita:"] {
@@ -24,12 +24,9 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. MOTOR DE SESSÃO (RESTAURADO)
-def inicializar_dados():
-    if 'dados' not in st.session_state:
-        st.session_state.dados = {}
-    
-    campos_originais = {
+# 2. MOTOR DE SESSÃO E LIMPEZA
+if 'dados' not in st.session_state:
+    st.session_state.dados = {
         'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
         'data': datetime.now().strftime("%d/%m/%Y"),
         'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '', 'complemento': '',
@@ -37,11 +34,8 @@ def inicializar_dados():
         'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '',
         'tipo_servico': 'Manutenção Preventiva', 'tag_id': 'TAG-01',
         'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
-        'status_maquina': '🟢 Operacional', 'rla': 0.0, 'lra': 0.0
+        'status_maquina': '🟢 Operacional'
     }
-    for chave, valor_padrao in campos_originais.items():
-        if chave not in st.session_state.dados:
-            st.session_state.dados[chave] = valor_padrao
 
 def buscar_cep(cep):
     cep_limpo = "".join(filter(str.isdigit, cep))
@@ -59,12 +53,11 @@ def buscar_cep(cep):
         except: pass
     return False
 
-inicializar_dados()
-
 st.title("🛠️ Laudo Técnico HVAC - Marcos Alexandre")
-tab1, tab2, tab3 = st.tabs(["📋 Identificação e Equipamento", "⚡ Engenharia Elétrica", "🌡️ Ciclo Frigorífico"])
 
-# --- ABA 01: IDENTIFICAÇÃO (RESTAURADA E BLOQUEADA) ---
+tab1, tab3 = st.tabs(["📋 Identificação e Equipamento", "🌡️ Ciclo Frigorífico"])
+
+# --- ABA 01: IDENTIFICAÇÃO (FOCO TOTAL) ---
 with tab1:
     with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
         c1, c2, c3 = st.columns([2, 1, 1])
@@ -92,6 +85,11 @@ with tab1:
         st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'])
         st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'])
         st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'])
+        
+        # BOTÃO EXCLUSIVO DADOS DO CLIENTE
+        msg_cliente = f"*DADOS DO CLIENTE*\nNome: {st.session_state.dados['nome']}\nCPF/CNPJ: {st.session_state.dados['cpf_cnpj']}\nEndereço: {st.session_state.dados['endereco']}, {st.session_state.dados['numero']} - {st.session_state.dados['cidade']}/{st.session_state.dados['uf']}\nWhatsApp: {st.session_state.dados['whatsapp']}"
+        link_cliente = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_cliente)}"
+        st.link_button("📲 Enviar Exclusivamente Dados do Cliente", link_cliente)
 
     col_titulo, col_data = st.columns([3, 1])
     with col_titulo: st.subheader("⚙️ Especificações do Equipamento")
@@ -101,51 +99,26 @@ with tab1:
         e1, e2, e3 = st.columns(3)
         with e1:
             fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
-            # Proteção contra erro de index
             fab_val = st.session_state.dados.get('fabricante', 'Carrier')
             fab_idx = fab_list.index(fab_val) if fab_val in fab_list else 0
             st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx)
             st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados['modelo'])
+            st.session_state.dados['linha'] = st.selectbox("Linha:", ["Residencial", "Comercial", "Industrial"], index=0)
             st.session_state.dados['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], horizontal=True)
 
         with e2:
             st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados['serie_evap'])
             st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND)", value=st.session_state.dados['serie_cond'])
+            st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'])
             st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
 
         with e3:
             st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], index=1)
             st.session_state.dados['fluido'] = st.selectbox("Fluido:", ["R410A", "R134a", "R22", "R32", "R290"], index=0)
+            st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
             st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
 
-# --- ABA 02: ENGENHARIA ELÉTRICA (TOTALMENTE FUNCIONAL) ---
-with tab2:
-    st.header("⚡ Diagnóstico Elétrico Avançado")
-    with st.expander("🔌 Medições Fase a Fase", expanded=True):
-        m1, m2, m3 = st.columns(3)
-        v_f1 = m1.number_input("Tensão F1 (V):", value=220.0, key="vf1_v23")
-        v_f2 = m1.number_input("Tensão F2 (V):", value=220.0, key="vf2_v23")
-        v_f3 = m1.number_input("Tensão F3 (V):", value=220.0, key="vf3_v23")
-        
-        i_f1 = m2.number_input("Corrente L1 (A):", value=0.0, key="il1_v23")
-        i_f2 = m2.number_input("Corrente L2 (A):", value=0.0, key="il2_v23")
-        i_f3 = m2.number_input("Corrente L3 (A):", value=0.0, key="il3_v23")
-        
-        st.session_state.dados['rla'] = m3.number_input("RLA (Placa):", value=st.session_state.dados['rla'])
-        st.session_state.dados['lra'] = m3.number_input("LRA (Partida):", value=st.session_state.dados['lra'])
-
-    i_med = (i_f1 + i_f2 + i_f3) / (3 if i_f3 > 0 else 2 if i_f2 > 0 else 1)
-    p_ativa = (v_f1 * i_med * 0.85 * (1.732 if i_f3 > 0 else 1.0)) / 1000
-    
-    st.subheader("📝 Resultados")
-    res1, res2 = st.columns(2)
-    res1.metric("Corrente Média", f"{i_med:.2f} A")
-    res2.metric("Potência Ativa Est.", f"{p_ativa:.2f} kW")
-
-    link_el = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text=LAUDO%20ELETRICO%20TAG%20{st.session_state.dados['tag_id']}"
-    st.link_button("📲 Enviar Somente Dados Elétricos", link_el, use_container_width=True)
-
-# --- SIDEBAR (CONGELADO - NUNCA MAIS MEXER) ---
+# --- SIDEBAR (CONGELADO) ---
 with st.sidebar:
     st.title("🚀 Painel de Controle")
     st.subheader("👤 Identificação do Técnico")
@@ -154,13 +127,10 @@ with st.sidebar:
     st.session_state.dados['tecnico_registro'] = st.text_input("Inscrição Federal (CFT/CREA):", value=st.session_state.dados['tecnico_registro'])
     
     st.markdown("---")
-    if not st.session_state.dados['nome'] or not st.session_state.dados['whatsapp']:
-        st.error("📋 Status: 🔴 PENDENTE")
-    else:
-        st.success("📋 Status: 🟢 OK")
-    
     if st.button("🗑️ Limpar Formulário", use_container_width=True):
-        st.session_state.clear()
+        for key in st.session_state.dados.keys():
+            if key not in ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']:
+                st.session_state.dados[key] = ""
         st.rerun()
         
 # --- INÍCIO DA ABA 02 (ESTA SEÇÃO ESTÁ ISOLADA DA ABA 01) ---
