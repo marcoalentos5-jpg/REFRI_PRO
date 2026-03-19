@@ -247,76 +247,96 @@ with tab1:
             st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], index=1)
             st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'])
 
-# --- ABA 02: ELÉTRICA (MÓDULO DE CAPACITORES E ENGENHARIA) ---
+# --- ABA 02: ELÉTRICA (Módulo Corrigido e Blindado - Marcos Alexandre) ---
 with tab2:
-    st.subheader("⚡ Análise Elétrica e Eficiência")
+    st.subheader("⚡ Análise Elétrica e Eficiência Energética")
     
-    with st.expander("📊 Monitoramento de Tensão e Corrente", expanded=True):
+    # 1. Inicialização de variáveis elétricas no session_state (se não existirem)
+    # Importante: Chaves únicas para evitar conflito com a Aba 1
+    if 'v_rede' not in st.session_state.dados:
+        st.session_state.dados.update({
+            'v_rede': 220.0, 'v_med': 0.0, 'lra': 0.0, 'rla': 0.0, 'i_med': 0.0,
+            'freq': 60.0, 'fp': 0.85, 'res_terra': 0.0, 'disjuntor_ok': 'Conforme',
+            'cap_c_nom': 0.0, 'cap_c_med': 0.0, 'cap_v_nom': 0.0, 'cap_v_med': 0.0
+        })
+
+    # 2. CSS para Destaque Amarelo (Apenas para medições reais)
+    st.markdown("""
+        <style>
+        .destaque-amarelo input {
+            background-color: #fff9c4 !important;
+            color: #333 !important;
+            font-weight: bold !important;
+            border: 2px solid #fbc02d !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # BLOCO A: MONITORAMENTO DE TENSÃO E CORRENTE
+    with st.expander("📊 Grandezas de Placa e Medições Reais", expanded=True):
         c1, c2, c3 = st.columns(3)
-        st.session_state.dados['v_rede'] = c1.number_input("Tensão Rede (V):", value=st.session_state.dados['v_rede'])
-        st.markdown('<div class="destaque-eletrico">', unsafe_allow_html=True)
-        st.session_state.dados['v_med'] = c2.number_input("Tensão Medida (V):", value=st.session_state.dados['v_med'])
+        st.session_state.dados['v_rede'] = c1.number_input("Tensão de Placa (V):", value=float(st.session_state.dados['v_rede']), key="elet_v_rede")
+        
+        st.markdown('<div class="destaque-amarelo">', unsafe_allow_html=True)
+        st.session_state.dados['v_med'] = c2.number_input("Tensão Medida (V):", value=float(st.session_state.dados['v_med']), key="elet_v_med", help="Valor real no multímetro")
         st.markdown('</div>', unsafe_allow_html=True)
-        st.session_state.dados['freq'] = c3.number_input("Frequência (Hz):", value=st.session_state.dados['freq'])
+        
+        st.session_state.dados['freq'] = c3.number_input("Frequência (Hz):", value=float(st.session_state.dados['freq']), key="elet_freq")
 
         d1, d2, d3 = st.columns(3)
-        st.session_state.dados['lra'] = d1.number_input("LRA (A):", value=st.session_state.dados['lra'])
-        st.session_state.dados['rla'] = d2.number_input("RLA (A):", value=st.session_state.dados['rla'])
-        st.markdown('<div class="destaque-eletrico">', unsafe_allow_html=True)
-        st.session_state.dados['i_med'] = d3.number_input("Corrente Medida (A):", value=st.session_state.dados['i_med'])
+        st.session_state.dados['lra'] = d1.number_input("LRA - Partida (A):", value=float(st.session_state.dados['lra']), key="elet_lra")
+        st.session_state.dados['rla'] = d2.number_input("RLA - Nominal (A):", value=float(st.session_state.dados['rla']), key="elet_rla")
+        
+        st.markdown('<div class="destaque-amarelo">', unsafe_allow_html=True)
+        st.session_state.dados['i_med'] = d3.number_input("Corrente Medida (A):", value=float(st.session_state.dados['i_med']), key="elet_i_med", help="Valor real no alicate")
         st.markdown('</div>', unsafe_allow_html=True)
 
-    with st.expander("🔋 Diagnóstico de Capacitores (µF)", expanded=True):
+    # BLOCO B: DIAGNÓSTICO DE CAPACITORES
+    with st.expander("🔋 Teste de Capacitores (µF)", expanded=True):
         st.write("**Capacitor do Compressor**")
         cap1, cap2, cap3 = st.columns(3)
-        nom_c = cap1.number_input("Nominal (µF):", value=st.session_state.dados['cap_c_nom'], key="cnom")
-        med_c = cap2.number_input("Medido (µF):", value=st.session_state.dados['cap_c_med'], key="cmed")
-        if nom_c > 0:
-            diff_c = ((med_c - nom_c) / nom_c) * 100
-            cor_c = "normal" if abs(diff_c) <= 5 else "inverse"
-            cap3.metric("Desvio Compressor", f"{diff_c:.1f}%", f"{'✅ OK' if abs(diff_c) <= 5 else '🚨 TROCAR'}", delta_color=cor_c)
+        st.session_state.dados['cap_c_nom'] = cap1.number_input("Nominal (µF):", value=float(st.session_state.dados['cap_c_nom']), key="elet_cap_c_nom")
+        st.session_state.dados['cap_c_med'] = cap2.number_input("Medido (µF):", value=float(st.session_state.dados['cap_c_med']), key="elet_cap_c_med")
         
+        # Cálculo de Desvio Compressor
+        if st.session_state.dados['cap_c_nom'] > 0:
+            diff_c = ((st.session_state.dados['cap_c_med'] - st.session_state.dados['cap_c_nom']) / st.session_state.dados['cap_c_nom']) * 100
+            status_c = "✅ OK" if abs(diff_c) <= 5 else "🚨 TROCAR"
+            cap3.metric("Desvio Comp.", f"{diff_c:.1f}%", status_c, delta_color="inverse" if abs(diff_c) > 5 else "normal")
+
         st.markdown("---")
         st.write("**Capacitor do Ventilador**")
         vcap1, vcap2, vcap3 = st.columns(3)
-        nom_v = vcap1.number_input("Nominal (µF):", value=st.session_state.dados['cap_v_nom'], key="vnom")
-        med_v = vcap2.number_input("Medido (µF):", value=st.session_state.dados['cap_v_med'], key="vmed")
-        if nom_v > 0:
-            diff_v = ((med_v - nom_v) / nom_v) * 100
-            cor_v = "normal" if abs(diff_v) <= 5 else "inverse"
-            vcap3.metric("Desvio Ventilador", f"{diff_v:.1f}%", f"{'✅ OK' if abs(diff_v) <= 5 else '🚨 TROCAR'}", delta_color=cor_v)
+        st.session_state.dados['cap_v_nom'] = vcap1.number_input("Nominal (µF):", value=float(st.session_state.dados['cap_v_nom']), key="elet_cap_v_nom")
+        st.session_state.dados['cap_v_med'] = vcap2.number_input("Medido (µF):", value=float(st.session_state.dados['cap_v_med']), key="elet_cap_v_med")
+        
+        # Cálculo de Desvio Ventilador
+        if st.session_state.dados['cap_v_nom'] > 0:
+            diff_v = ((st.session_state.dados['cap_v_med'] - st.session_state.dados['cap_v_nom']) / st.session_state.dados['cap_v_nom']) * 100
+            status_v = "✅ OK" if abs(diff_v) <= 5 else "🚨 TROCAR"
+            vcap3.metric("Desvio Vent.", f"{diff_v:.1f}%", status_v, delta_color="inverse" if abs(diff_v) > 5 else "normal")
 
-    with st.expander("🧬 Cálculos de Potência", expanded=True):
-        v, i, fp = st.session_state.dados['v_med'], st.session_state.dados['i_med'], st.session_state.dados['fp']
-        s = v * i 
-        p = s * fp
-        eta_calc = (p / (s if s > 0 else 1)) * 100
+    # BLOCO C: ENGENHARIA E POTÊNCIAS
+    with st.expander("🧬 Cálculos de Eficiência Energética", expanded=True):
+        v = st.session_state.dados['v_med']
+        i = st.session_state.dados['i_med']
+        fp = st.session_state.dados['fp']
+        
+        # Cálculos de Potência
+        s_aparente = v * i
+        p_ativa = s_aparente * fp
+        q_reativa = (s_aparente**2 - p_ativa**2)**0.5 if s_aparente > p_ativa else 0
+        eta_calc = (p_ativa / (s_aparente if s_aparente > 0 else 1)) * 100
+        
         p1, p2, p3 = st.columns(3)
-        p1.metric("Pot. Aparente (S)", f"{s:.1f} VA")
-        p2.metric("Pot. Ativa (P)", f"{p:.1f} W")
-        st.session_state.dados['fp'] = p3.number_input("Fator de Potência:", value=fp, step=0.01)
+        p1.metric("Pot. Aparente (S)", f"{s_aparente:.1f} VA")
+        p2.metric("Pot. Ativa (P)", f"{p_ativa:.1f} W")
+        st.session_state.dados['fp'] = p3.number_input("Fator de Potência (cos φ):", value=float(fp), step=0.01, max_value=1.0, key="elet_fp")
 
-# --- SIDEBAR (RESTAURADO E COMPLETO) ---
-with st.sidebar:
-    st.title("🚀 Painel de Controle")
-    st.session_state.dados['tecnico_nome'] = st.text_input("Técnico:", value=st.session_state.dados['tecnico_nome'])
-    st.session_state.dados['tecnico_registro'] = st.text_input("CFT/CREA:", value=st.session_state.dados['tecnico_registro'])
-    st.markdown("---")
-    
-    if st.session_state.dados['nome'] and st.session_state.dados['whatsapp']:
-        st.success("📋 STATUS: PRONTO")
-        msg_zap = (
-            f"*LAUDO TÉCNICO HVAC*\n\n"
-            f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
-            f"⚙️ *EQUIPAMENTO:* {st.session_state.dados['fabricante']} | {st.session_state.dados['capacidade']} BTU\n"
-            f"⚡ *ELÉTRICA:*\n"
-            f"🔌 Tensão: {st.session_state.dados['v_med']}V | Corrente: {st.session_state.dados['i_med']}A\n"
-            f"🔋 Cap. Comp: {st.session_state.dados['cap_c_med']}µF (Nom: {st.session_state.dados['cap_c_nom']}µF)\n"
-            f"🔋 Cap. Vent: {st.session_state.dados['cap_v_med']}µF (Nom: {st.session_state.dados['cap_v_nom']}µF)\n"
-            f"📊 Rendimento: {eta_calc:.1f}%\n\n"
-            f"👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}"
-        )
-        link = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_zap)}"
-        st.link_button("📲 Enviar via WhatsApp", link, use_container_width=True)
-    else:
-        st.error("📋 STATUS: PENDENTE")
+        e1, e2, e3 = st.columns(3)
+        e1.metric("Rendimento (η)", f"{eta_calc:.1f}%")
+        pot_hp = (p_ativa * 0.9) / 745.7
+        e2.text_input("Pot. Mecânica Estimada:", value=f"{pot_hp:.2f} HP", disabled=True, key="elet_pot_hp")
+        st.session_state.dados['res_terra'] = e3.number_input("Aterramento (Ω):", value=float(st.session_state.dados['res_terra']), key="elet_terra")
+
+    st.info("💡 Medições em amarelo são valores reais de campo. Desvios de capacitores acima de 5% exigem atenção.")
