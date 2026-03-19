@@ -166,6 +166,7 @@ with st.sidebar:
         
         # --- ABA 02: ELÉTRICA (Correção de Indentação e Escopo) ---    
     with tab2:
+    # ... miolo da aba elétrica ...
         tab1, tab2 = st.tabs(["📋 Identificação", "⚡ Elétrica"])
 
     # 1. Garantia de Dados (Inicializa se não existir)
