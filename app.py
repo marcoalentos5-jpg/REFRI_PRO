@@ -166,7 +166,7 @@ with st.sidebar:
         
 # --- ABA 02: ELÉTRICA (Correção de Indentação e Escopo) ---    
     with tab2:
-        st.subheader("⚡ Análise Elétrica e Eficiência Energética")
+        st.subheader ("⚡ Análise Elétrica e Eficiência Energética")
 
     # 1. Garantia de Dados (Inicializa se não existir)
     if 'v_med' not in st.session_state.dados:
