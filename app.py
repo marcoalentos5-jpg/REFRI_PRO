@@ -165,7 +165,8 @@ with st.sidebar:
         st.rerun()
         
 # --- ABA 02: ELÉTRICA (Correção de Indentação e Escopo) ---
-with tab2:
+    
+    with tab2:
     st.subheader("⚡ Análise Elétrica e Eficiência Energética")
 
     # 1. Garantia de Dados (Inicializa se não existir)
