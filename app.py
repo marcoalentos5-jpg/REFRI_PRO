@@ -1,3 +1,108 @@
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import cm
+from reportlab.pdfgen import canvas
+
+====================================
+def gerar_pdf(dados, eletrica):
+    file_path = "relatorio_tecnico.pdf"
+
+    doc = SimpleDocTemplate(file_path, pagesize=A4)
+    elements = []
+    styles = getSampleStyleSheet()
+
+    # TÍTULO
+    elements.append(Paragraph("RELATÓRIO TÉCNICO HVAC", styles['Title']))
+    elements.append(Spacer(1, 12))
+
+    # ================= CLIENTE =================
+    data_cliente = [
+        ["CLIENTE", ""],
+        ["Nome", dados.get('nome','')],
+        ["CPF/CNPJ", dados.get('cpf_cnpj','')],
+        ["Telefone", dados.get('whatsapp','')],
+        ["Email", dados.get('email','')],
+    ]
+
+    # ================= ENDEREÇO =================
+    data_endereco = [
+        ["ENDEREÇO", ""],
+        ["Logradouro", f"{dados.get('endereco','')}, {dados.get('numero','')}"],
+        ["Bairro", dados.get('bairro','')],
+        ["Cidade", dados.get('cidade','')],
+        ["UF", dados.get('uf','')],
+        ["CEP", dados.get('cep','')],
+    ]
+
+    # ================= EQUIPAMENTO =================
+    data_equip = [
+        ["EQUIPAMENTO", ""],
+        ["Fabricante", dados.get('fabricante','')],
+        ["Modelo", dados.get('modelo','')],
+        ["Capacidade", f"{dados.get('capacidade','')} BTU"],
+        ["Fluido", dados.get('fluido','')],
+        ["Linha", dados.get('linha','')],
+        ["Status", dados.get('status_maquina','')],
+    ]
+
+    # ================= ELÉTRICA =================
+    data_eletrica = [
+        ["DADOS ELÉTRICOS", ""],
+        ["Tensão Rede", eletrica.get('tensao_rede','')],
+        ["Tensão Medida", eletrica.get('tensao_medida','')],
+        ["Dif. Tensão", eletrica.get('dif_tensao','')],
+        ["Corrente Medida", eletrica.get('corrente_medida','')],
+        ["RLA", eletrica.get('rla','')],
+        ["LRA", eletrica.get('lra','')],
+        ["Dif. Corrente", eletrica.get('dif_corrente','')],
+        ["RS/ST/TR", f"{eletrica.get('tensao_rs','')} / {eletrica.get('tensao_st','')} / {eletrica.get('tensao_tr','')}"],
+        ["Correntes", f"{eletrica.get('corrente_r','')} / {eletrica.get('corrente_s','')} / {eletrica.get('corrente_t','')}"],
+        ["Potência", f"{eletrica.get('potencia_kw','')} kW"],
+    ]
+
+    def criar_tabela(data):
+        table = Table(data, colWidths=[7*cm, 8*cm])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.grey),
+            ('TEXTCOLOR',(0,0),(-1,0),colors.white),
+            ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ]))
+        return table
+
+    elements.append(criar_tabela(data_cliente))
+    elements.append(Spacer(1, 10))
+
+    elements.append(criar_tabela(data_endereco))
+    elements.append(Spacer(1, 10))
+
+    elements.append(criar_tabela(data_equip))
+    elements.append(Spacer(1, 10))
+
+    elements.append(criar_tabela(data_eletrica))
+    elements.append(Spacer(1, 30))
+
+    # ================= ASSINATURAS =================
+    assinatura = [
+        ["__________________________", "__________________________"],
+        [f"Técnico: {dados.get('tecnico_nome','')}", f"Cliente: {dados.get('nome','')}"],
+        [f"CREA/CFT: {dados.get('tecnico_registro','')}", f"CPF/CNPJ: {dados.get('cpf_cnpj','')}"],
+    ]
+
+    table_ass = Table(assinatura, colWidths=[8*cm, 8*cm])
+    table_ass.setStyle(TableStyle([
+        ('ALIGN',(0,0),(-1,-1),'CENTER')
+    ]))
+
+    elements.append(table_ass)
+
+    doc.build(elements)
+
+    return file_path
+=============================
+
 import streamlit as st
 from datetime import datetime
 import requests
@@ -215,6 +320,21 @@ link_identificacao = f"https://wa.me/55{zap_num}?text={urllib.parse.quote(msg_id
 
 # botão
 st.link_button("📲 Enviar Laudo de Identificação", link_identificacao, use_container_width=True)
+
+st.markdown("---")
+st.subheader("📄 Enviar Relatório Técnico")
+
+if st.button("📄 Gerar e Baixar PDF", use_container_width=True):
+    pdf_path = gerar_pdf(st.session_state.dados, st.session_state.get('eletrica', {}))
+
+    with open(pdf_path, "rb") as f:
+        st.download_button(
+            label="📥 Baixar Relatório Técnico",
+            data=f,
+            file_name="relatorio_tecnico.pdf",
+            mime="application/pdf",
+            use_container_width=True
+        )
 
 # ================== ABA 2 - ELÉTRICA (FINAL) ==================
 with tab2:
