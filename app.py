@@ -163,3 +163,75 @@ with st.sidebar:
             if key not in chaves_tecnico:
                 st.session_state.dados[key] = ""
         st.rerun()
+
+# =========================================================
+# --- ABA 02: ELÉTRICA (RECONSTRUÇÃO TOTAL) ---
+# =========================================================
+with tab2:
+    st.header("⚡ Diagnóstico Elétrico")
+    st.write("Preencha os dados abaixo para o cálculo de eficiência.")
+
+    # 1. SEGURANÇA DE DADOS (Dicionário de Inicialização)
+    # Isso garante que se o usuário mudar de aba, o app não perca o valor
+    if 'eletrica' not in st.session_state:
+        st.session_state.eletrica = {
+            'v_medida': 220.0, 'i_medida': 0.0, 'lra': 0.0, 'rla': 0.0,
+            'c_nom': 0.0, 'c_med': 0.0, 'v_nom': 0.0, 'v_med': 0.0, 'fp': 0.85
+        }
+
+    # 2. BLOCO DE MEDIÇÕES (TENSÃO E CORRENTE)
+    with st.container():
+        st.subheader("📊 Grandezas de Campo")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            v_med = st.number_input("Tensão Medida (V)", 
+                                    value=float(st.session_state.eletrica['v_medida']), 
+                                    key="v_med_input")
+            st.session_state.eletrica['v_medida'] = v_med
+            
+        with col2:
+            i_med = st.number_input("Corrente Medida (A)", 
+                                    value=float(st.session_state.eletrica['i_medida']), 
+                                    key="i_med_input")
+            st.session_state.eletrica['i_medida'] = i_med
+
+    st.markdown("---")
+
+    # 3. BLOCO DE CAPACITORES (Lógica de Diagnóstico)
+    with st.container():
+        st.subheader("🔋 Capacitores (µF)")
+        cap_col1, cap_col2, cap_col3 = st.columns(3)
+        
+        with cap_col1:
+            c_nom = st.number_input("Nominal (µF)", value=0.0, key="c_nom_key")
+        with cap_col2:
+            c_med = st.number_input("Medido (µF)", value=0.0, key="c_med_key")
+        with cap_col3:
+            if c_nom > 0:
+                desvio = ((c_med - c_nom) / c_nom) * 100
+                if abs(desvio) <= 5:
+                    st.success(f"Status: {desvio:.1f}% OK")
+                else:
+                    st.error(f"Status: {desvio:.1f}% TROCAR")
+
+    st.markdown("---")
+
+    # 4. BLOCO DE CÁLCULOS (ENGENHARIA)
+    with st.expander("🧬 Resultados de Eficiência", expanded=True):
+        # Cálculos Matemáticos
+        # P = V * I * FP
+        fp_fator = 0.85
+        potencia_w = v_med * i_med * fp_fator
+        hp_estimado = potencia_w / 745.7
+        
+        res1, res2, res3 = st.columns(3)
+        res1.metric("Potência Ativa", f"{potencia_w:.1f} W")
+        res2.metric("Potência Mecânica", f"{hp_estimado:.2f} HP")
+        res3.metric("Eficiência Est.", f"{fp_fator*100:.0f}%")
+
+    st.info("💡 Lembre-se: O aterramento deve ser medido entre Neutro e Terra (ideal < 2V).")
+
+# =========================================================
+# --- FIM DA ABA 02 ---
+# =========================================================
