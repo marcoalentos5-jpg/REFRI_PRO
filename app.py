@@ -6,31 +6,29 @@ import urllib.parse
 # 1. CONFIGURAÇÃO INICIAL
 st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="⚙️")
 
-# CSS: Estilização
+# CSS: Estilização Customizada
 st.markdown("""
     <style>
-    .stTextInput>div>div>input[aria-label="Data da Visita:"] {
-        background-color: #e0f2f1 !important;
-        color: #004d40 !important;
-        font-weight: bold;
-        border: 1px solid #b2dfdb !important;
+    /* Destaque para inputs específicos na aba elétrica */
+    div[data-testid="stNumberInput"]:has(label:contains("Tensão Medida")) input,
+    div[data-testid="stNumberInput"]:has(label:contains("Corrente Medida")) input {
+        background-color: #fff9c4 !important;
+        color: #333 !important;
+        font-weight: bold !important;
+        border: 2px solid #fbc02d !important;
     }
+    /* Estilo do botão do WhatsApp */
     div.stLinkButton > a {
         background-color: #25D366 !important;
         color: white !important;
         font-weight: bold;
         border-radius: 8px !important;
-    }
-    .destaque-eletrico {
-        background-color: #fffde7;
-        padding: 10px;
-        border-radius: 10px;
-        border-left: 5px solid #fbc02d;
+        border: none !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# 2. MOTOR DE SESSÃO (CHAVES VERIFICADAS)
+# 2. MOTOR DE SESSÃO
 if 'dados' not in st.session_state:
     st.session_state.dados = {
         'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
@@ -42,7 +40,7 @@ if 'dados' not in st.session_state:
         'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
         'status_maquina': '🟢 Operacional',
         # Chaves da Elétrica
-        'v_med': 220.0, 'i_med': 0.0, 'cap_c_nom': 0.0, 'cap_c_med': 0.0, 'res_terra': 0.0
+        'v_med': 220.0, 'i_med': 0.0, 'res_terra': 0.0, 'c_nom': 0.0, 'c_med': 0.0
     }
 
 def buscar_cep(cep):
@@ -61,17 +59,16 @@ def buscar_cep(cep):
         except: pass
     return False
 
-# --- 3. CRIAÇÃO DAS ABAS (CORREÇÃO DO NAMEERROR) ---
-# Aqui definimos as 3 abas ANTES de usá-las
+# 3. CRIAÇÃO DAS ABAS
 tab1, tab2, tab3 = st.tabs(["📋 Identificação", "⚡ Elétrica", "❄️ Ciclo Frigorífico"])
 
 # --- ABA 1: IDENTIFICAÇÃO ---
 with tab1:
     with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
         c1, c2, c3 = st.columns([2, 1, 1])
-        st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="cli_nome")
-        st.session_state.dados['cpf_cnpj'] = c2.text_input("CPF ou CNPJ", value=st.session_state.dados['cpf_cnpj'], key="cli_doc")
-        st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp (DDD) *", value=st.session_state.dados['whatsapp'], key="cli_zap")
+        st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'])
+        st.session_state.dados['cpf_cnpj'] = c2.text_input("CPF ou CNPJ", value=st.session_state.dados['cpf_cnpj'])
+        st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp (apenas números) *", value=st.session_state.dados['whatsapp'])
 
         ce1, ce2, ce3 = st.columns([1, 2, 1])
         cep_input = ce1.text_input("CEP *", value=st.session_state.dados['cep'])
@@ -86,9 +83,7 @@ with tab1:
         e1, e2, e3 = st.columns(3)
         with e1:
             fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
-            fab_val = st.session_state.dados.get('fabricante', 'Carrier')
-            fab_idx = fab_list.index(fab_val) if fab_val in fab_list else 0
-            st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx)
+            st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_list.index(st.session_state.dados['fabricante']) if st.session_state.dados['fabricante'] in fab_list else 0)
             st.session_state.dados['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], horizontal=True)
         with e2:
             st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados['serie_evap'])
@@ -97,42 +92,45 @@ with tab1:
             st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação"], index=0)
             st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
 
-# --- ABA 2: ELÉTRICA (A NOVA ABA) ---
+# --- ABA 2: ELÉTRICA ---
 with tab2:
     st.subheader("⚡ Diagnóstico Elétrico")
     
     with st.container():
-        st.markdown('<div class="destaque-eletrico">', unsafe_allow_html=True)
         col_el1, col_el2, col_el3 = st.columns(3)
-        v_med = col_el1.number_input("Tensão Medida (V)", value=float(st.session_state.dados['v_med']), key="el_v_med")
-        i_med = col_el2.number_input("Corrente Medida (A)", value=float(st.session_state.dados['i_med']), key="el_i_med")
-        t_med = col_el3.number_input("Aterramento (Ω)", value=float(st.session_state.dados['res_terra']), key="el_terra")
-        st.session_state.dados.update({'v_med': v_med, 'i_med': i_med, 'res_terra': t_med})
-        st.markdown('</div>', unsafe_allow_html=True)
+        # Os valores são salvos diretamente no session_state via parâmetros
+        st.session_state.dados['v_med'] = col_el1.number_input("Tensão Medida (V)", value=float(st.session_state.dados['v_med']))
+        st.session_state.dados['i_med'] = col_el2.number_input("Corrente Medida (A)", value=float(st.session_state.dados['i_med']))
+        st.session_state.dados['res_terra'] = col_el3.number_input("Aterramento (Ω)", value=float(st.session_state.dados['res_terra']))
 
     st.divider()
     
     with st.expander("🔋 Teste de Capacitores", expanded=True):
         cp1, cp2, cp3 = st.columns(3)
-        c_nom = cp1.number_input("Nominal (µF)", value=0.0, key="el_c_nom")
-        c_med = cp2.number_input("Medido (µF)", value=0.0, key="el_c_med")
+        st.session_state.dados['c_nom'] = cp1.number_input("Nominal (µF)", value=float(st.session_state.dados['c_nom']))
+        st.session_state.dados['c_med'] = cp2.number_input("Medido (µF)", value=float(st.session_state.dados['c_med']))
+        
+        c_nom = st.session_state.dados['c_nom']
+        c_med = st.session_state.dados['c_med']
+        
         if c_nom > 0:
             desvio = ((c_med - c_nom) / c_nom) * 100
-            cor = "normal" if abs(desvio) <= 5 else "inverse"
-            cp3.metric("Status Capacitor", f"{desvio:.1f}%", "OK" if abs(desvio) <= 5 else "TROCAR", delta_color=cor)
+            status_cap = "✅ OK" if abs(desvio) <= 5 else "❌ TROCAR"
+            cp3.metric("Desvio de Capacitância", f"{desvio:.1f}%", status_cap, delta_color="normal" if abs(desvio) <= 5 else "inverse")
 
     with st.expander("🧬 Performance Estimada", expanded=True):
-        pot_w = v_med * i_med * 0.85
+        # Cálculo básico de potência (FP sugerido de 0.85)
+        pot_w = st.session_state.dados['v_med'] * st.session_state.dados['i_med'] * 0.85
         hp_est = pot_w / 745.7
         r1, r2 = st.columns(2)
-        r1.metric("Potência Ativa", f"{pot_w:.1f} W")
-        r2.metric("Potência Mecânica", f"{hp_est:.2f} HP")
+        r1.metric("Potência Ativa Est.", f"{pot_w:.1f} W")
+        r2.metric("Potência Mecânica Est.", f"{hp_est:.2f} HP")
 
 # --- ABA 3: CICLO ---
 with tab3:
-    st.info("Aba do Ciclo Frigorífico em desenvolvimento...")
+    st.info("📊 Aba do Ciclo Frigorífico (Superaquecimento e Sub-resfriamento) em desenvolvimento...")
 
-# --- SIDEBAR (CONGELADO E PROTEGIDO) ---
+# --- SIDEBAR (RESUMO E ENVIO) ---
 with st.sidebar:
     st.title("🚀 Painel de Controle")
     st.subheader("👨‍🔧 Técnico Responsável")
@@ -141,24 +139,28 @@ with st.sidebar:
     
     st.markdown("---")
     
+    # Validação simples para liberar o botão
     if not st.session_state.dados['nome'] or not st.session_state.dados['whatsapp']:
-        st.error("📋 STATUS: PENDENTE")
+        st.warning("⚠️ Preencha o Nome e WhatsApp do cliente para liberar o envio.")
     else:
-        st.success("📋 STATUS: PRONTO")
+        st.success("✅ Laudo pronto para envio!")
         
-    # Mensagem WhatsApp incluindo dados elétricos
-    msg_zap = (
-        f"*LAUDO TÉCNICO HVAC*\n\n"
-        f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
-        f"📞 Contato: {st.session_state.dados['whatsapp']}\n\n"
-        f"⚙️ *EQUIPAMENTO:*\n"
-        f"📌 TAG: {st.session_state.dados['tag_id']} | Fab: {st.session_state.dados['fabricante']}\n"
-        f"🩺 Status: {st.session_state.dados['status_maquina']}\n\n"
-        f"⚡ *ELÉTRICA:*\n"
-        f"Tensão: {st.session_state.dados['v_med']}V | Corrente: {st.session_state.dados['i_med']}A\n"
-        f"Terra: {st.session_state.dados['res_terra']}Ω\n\n"
-        f"👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}"
-    )
-    
-    link_final = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_zap)}"
-    st.link_button("📲 Enviar via WhatsApp", link_final, use_container_width=True)
+        # Gerar mensagem do WhatsApp
+        msg_zap = (
+            f"*LAUDO TÉCNICO HVAC*\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
+            f"⚙️ *EQUIPAMENTO:* {st.session_state.dados['fabricante']} ({st.session_state.dados['capacidade']} BTU)\n"
+            f"📌 *TAG:* {st.session_state.dados['tag_id']}\n"
+            f"🩺 *STATUS:* {st.session_state.dados['status_maquina']}\n\n"
+            f"⚡ *DADOS ELÉTRICOS:*\n"
+            f"• Tensão: {st.session_state.dados['v_med']}V\n"
+            f"• Corrente: {st.session_state.dados['i_med']}A\n"
+            f"• Aterramento: {st.session_state.dados['res_terra']}Ω\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}"
+        )
+        
+        whatsapp_number = "".join(filter(str.isdigit, st.session_state.dados['whatsapp']))
+        link_final = f"https://wa.me/55{whatsapp_number}?text={urllib.parse.quote(msg_zap)}"
+        st.link_button("📲 Enviar Laudo via WhatsApp", link_final, use_container_width=True)
