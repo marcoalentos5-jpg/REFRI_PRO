@@ -2,127 +2,100 @@ import streamlit as st
 from datetime import datetime
 
 # =============================================================================
-# 1. CONFIGURAÇÃO DE AMBIENTE E ESTILO (BLINDAGEM VISUAL)
+# 1. SETUP DE TELA E ESTILO (PADRÃO ENGENHARIA)
 # =============================================================================
-st.set_page_config(page_title="RefriPro - Gestão HVAC", layout="wide", page_icon="❄️")
+st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="⚙️")
 
-# CSS para um visual de software de engenharia
 st.markdown("""
     <style>
-    .main { background-color: #f0f2f6; }
-    .stTextInput>div>div>input { font-weight: bold; color: #004a99; }
-    .ident-card { 
-        background-color: #ffffff; 
-        padding: 25px; 
-        border-radius: 15px; 
-        border-left: 8px solid #004a99;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    .main { background-color: #f4f7f9; }
+    .section-box {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 12px;
+        border-top: 5px solid #004a99;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
+    label { font-weight: bold !important; color: #333 !important; }
     </style>
 """, unsafe_allow_html=True)
 
 # =============================================================================
-# 2. MOTOR DE SESSÃO (PERSISTÊNCIA 100% TESTADA)
+# 2. MOTOR DE SESSÃO (PERSISTÊNCIA DE TODOS OS CAMPOS)
 # =============================================================================
 if 'dados' not in st.session_state:
     st.session_state.dados = {
-        'nome': '',
-        'cpf': '',
-        'data_visita': datetime.now().strftime("%d/%m/%Y"),
-        'modelo': '',
-        'tag_equip': '',
-        'localizacao': '',
-        'fluido': 'R410A',
-        'tipo_servico': 'Manutenção Preventiva',
-        'status_atendimento': 'Em Aberto'
+        # Cliente
+        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'data': datetime.now().strftime("%d/%m/%Y"),
+        # Equipamento
+        'fabricante': 'Carrier', 'modelo': '', 'capacidade': '12.000', 
+        'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A',
+        # Logística
+        'tipo_servico': 'Manutenção Preventiva', 'localizacao': '', 'tag_id': ''
     }
 
-# =============================================================================
-# 3. INTERFACE DA ABA 01 (EXECUÇÃO DIRETA)
-# =============================================================================
 def renderizar_identificacao():
-    st.title("❄️ Sistema HVAC Mestre Pro v5.0")
-    st.info("Fase 1: Identificação do Cliente e Ativo")
-    
-    st.markdown('<div class="ident-card">', unsafe_allow_html=True)
-    
-    # --- BLOCO A: DADOS DO CLIENTE ---
-    st.subheader("👤 Informações do Cliente")
-    col1, col2, col3 = st.columns([2, 1, 1])
-    
-    with col1:
-        st.session_state.dados['nome'] = st.text_input(
-            "Cliente / Razão Social:", 
-            value=st.session_state.dados['nome'],
-            placeholder="Digite o nome completo ou empresa"
-        )
-    with col2:
-        st.session_state.dados['cpf'] = st.text_input(
-            "CPF / CNPJ:", 
-            value=st.session_state.dados['cpf'],
-            placeholder="000.000.000-00"
-        )
-    with col3:
-        st.session_state.dados['data_visita'] = st.text_input(
-            "Data do Serviço:", 
-            value=st.session_state.dados['data_visita']
-        )
+    st.title("🛠️ Laudo Técnico HVAC - Marcos Alexandre")
+    st.caption("Fase 1: Identificação Detalhada do Atendimento")
 
-    st.divider()
-
-    # --- BLOCO B: DADOS DO EQUIPAMENTO (LOGÍSTICA TÉCNICA) ---
-    st.subheader("⚙️ Detalhes do Equipamento e Local")
-    col_e1, col_e2, col_e3 = st.columns(3)
+    # --- SEÇÃO 1: DADOS DO CLIENTE ---
+    st.markdown('<div class="section-box">', unsafe_allow_html=True)
+    st.subheader("👤 Identificação do Cliente")
+    c1, c2, c3, c4 = st.columns([2, 1, 1, 1])
     
-    with col_e1:
-        st.session_state.dados['modelo'] = st.text_input(
-            "Modelo do Aparelho:", 
-            value=st.session_state.dados['modelo'],
-            placeholder="Ex: Split Inverter 18k BTU"
-        )
-        st.session_state.dados['localizacao'] = st.text_input(
-            "Setor / Localização:", 
-            value=st.session_state.dados['localizacao'],
-            placeholder="Ex: Sala de Reunião, CPD, Financeiro"
-        )
+    with c1:
+        st.session_state.dados['nome'] = st.text_input("Nome / Razão Social:", value=st.session_state.dados['nome'])
+    with c2:
+        st.session_state.dados['cpf_cnpj'] = st.text_input("CPF ou CNPJ:", value=st.session_state.dados['cpf_cnpj'])
+    with c3:
+        st.session_state.dados['whatsapp'] = st.text_input("WhatsApp (com DDD):", value=st.session_state.dados['whatsapp'])
+    with c4:
+        st.session_state.dados['data'] = st.text_input("Data:", value=st.session_state.dados['data'])
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # --- SEÇÃO 2: DADOS DO EQUIPAMENTO (EXTRAÍDOS DO HISTÓRICO) ---
+    st.markdown('<div class="section-box">', unsafe_allow_html=True)
+    st.subheader("⚙️ Especificações do Equipamento")
+    e1, e2, e3 = st.columns(3)
+    
+    with e1:
+        fabricantes = ["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"]
+        st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fabricantes, 
+            index=fabricantes.index(st.session_state.dados['fabricante']))
         
-    with col_e2:
-        st.session_state.dados['tag_equip'] = st.text_input(
-            "TAG / Identificação:", 
-            value=st.session_state.dados['tag_equip'],
-            placeholder="Ex: EVAP-01 / COND-04"
-        )
-        opcoes_fluido = ["R410A", "R134a", "R22", "R404A", "R32", "R290"]
-        st.session_state.dados['fluido'] = st.selectbox(
-            "Fluido Refrigerante:", 
-            opcoes_fluido,
-            index=opcoes_fluido.index(st.session_state.dados['fluido'])
-        )
+        st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados['modelo'])
         
-    with col_e3:
-        opcoes_servico = ["Instalação", "Manutenção Preventiva", "Manutenção Corretiva", "PMOC", "Vistoria"]
-        st.session_state.dados['tipo_servico'] = st.selectbox(
-            "Tipo de Serviço:",
-            opcoes_servico,
-            index=opcoes_servico.index(st.session_state.dados['tipo_servico'])
-        )
-        st.session_state.dados['status_atendimento'] = st.selectbox(
-            "Status do Chamado:",
-            ["Em Aberto", "Em Andamento", "Urgência", "Aguardando Peças"],
-            index=["Em Aberto", "Em Andamento", "Urgência", "Aguardando Peças"].index(st.session_state.dados['status_atendimento'])
-        )
+        capacidades = ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000", "80.000+"]
+        st.session_state.dados['capacidade'] = st.selectbox("Capacidade (BTU/h):", capacidades,
+            index=capacidades.index(st.session_state.dados['capacidade']))
+
+    with e2:
+        st.session_state.dados['serie_evap'] = st.text_input("Nº de Série (EVAPORADORA):", value=st.session_state.dados['serie_evap'])
+        st.session_state.dados['serie_cond'] = st.text_input("Nº de Série (CONDENSADORA):", value=st.session_state.dados['serie_cond'])
+        
+        fluidos = ["R410A", "R134a", "R22", "R404A", "R32", "R290"]
+        st.session_state.dados['fluido'] = st.selectbox("Fluido Refrigerante:", fluidos,
+            index=fluidos.index(st.session_state.dados['fluido']))
+
+    with e3:
+        st.session_state.dados['tag_id'] = st.text_input("TAG / Identificação Técnica:", value=st.session_state.dados['tag_id'], placeholder="Ex: AC-01")
+        st.session_state.dados['localizacao'] = st.text_input("Setor/Localização:", value=st.session_state.dados['localizacao'])
+        
+        servicos = ["Instalação", "Manutenção Preventiva", "Manutenção Corretiva", "Infraestrutura", "PMOC"]
+        st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", servicos,
+            index=servicos.index(st.session_state.dados['tipo_servico']))
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # --- BARRA DE VALIDAÇÃO FINAL ---
-    st.markdown("---")
-    if st.session_state.dados['nome'] and st.session_state.dados['modelo']:
-        st.success(f"✅ Identificação Concluída: {st.session_state.dados['nome']} | {st.session_state.dados['tag_equip']}")
+    # --- STATUS DE PREENCHIMENTO ---
+    if st.session_state.dados['nome'] and st.session_state.dados['serie_evap']:
+        st.success(f"✅ Dados Iniciais Validados: {st.session_state.dados['nome']} - {st.session_state.dados['tag_id']}")
     else:
-        st.warning("⚠️ Aguardando preenchimento dos campos obrigatórios (Cliente e Modelo).")
+        st.warning("⚠️ Preencha os campos obrigatórios (Nome do Cliente e Série da Evaporadora).")
 
 # =============================================================================
-# EXECUÇÃO DO SCRIPT
+# EXECUÇÃO FINAL
 # =============================================================================
 if __name__ == "__main__":
     renderizar_identificacao()
