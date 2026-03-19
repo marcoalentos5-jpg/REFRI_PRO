@@ -5,21 +5,21 @@ import requests
 # 1. SETUP DE TELA
 st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="⚙️")
 
-# 2. MOTOR DE SESSÃO (AUTO-CORREÇÃO DE CAMPOS)
+# 2. MOTOR DE SESSÃO (AUTO-CORREÇÃO E ATUALIZAÇÃO DE CAMPOS)
 def inicializar_dados():
     if 'dados' not in st.session_state:
         st.session_state.dados = {}
     
-    # Todos os campos que você solicitou e validou até agora
-    campos_v8 = {
+    campos_v9 = {
         'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
         'data': datetime.now().strftime("%d/%m/%Y"),
         'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '', 'complemento': '',
         'fabricante': 'Carrier', 'modelo': '', 'capacidade': '12.000', 'linha': 'Residencial',
-        'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'ano_fab': '',
-        'tipo_servico': 'Manutenção Preventiva', 'localizacao': '', 'tag_id': ''
+        'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 
+        'local_evap': '', # <--- Substituiu Ano de Fabricação
+        'tipo_servico': 'Manutenção Preventiva', 'tag_id': ''
     }
-    for chave, valor_padrao in campos_v8.items():
+    for chave, valor_padrao in campos_v9.items():
         if chave not in st.session_state.dados:
             st.session_state.dados[chave] = valor_padrao
 
@@ -44,11 +44,10 @@ inicializar_dados()
 
 st.title("🛠️ Laudo Técnico HVAC - Marcos Alexandre")
 
-# CRIANDO AS ABAS PARA FORÇAR A RENDERIZAÇÃO
 tab1, tab2 = st.tabs(["📋 Identificação e Equipamento", "🌡️ Ciclo Térmico (Em breve)"])
 
 with tab1:
-    # --- SEÇÃO 1: CLIENTE E ENDEREÇO (CONGELADA) ---
+    # --- SEÇÃO 1: CLIENTE E ENDEREÇO (MANTIDA) ---
     with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
         c1, c2, c3 = st.columns([2, 1, 1])
         st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social:", value=st.session_state.dados['nome'])
@@ -76,8 +75,14 @@ with tab1:
         st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'])
         st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'])
 
-    # --- SEÇÃO 2: EQUIPAMENTO (CONGELADA) ---
-    with st.expander("⚙️ Especificações do Equipamento", expanded=True):
+    # --- SEÇÃO 2: EQUIPAMENTO (ALTERAÇÕES SOLICITADAS) ---
+    col_titulo, col_data = st.columns([3, 1])
+    with col_titulo:
+        st.subheader("⚙️ Especificações do Equipamento")
+    with col_data:
+        st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'])
+
+    with st.expander("Detalhes Técnicos do Ativo", expanded=True):
         e1, e2, e3 = st.columns(3)
         with e1:
             fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea", "Hitachi", "TCL", "Philco"])
@@ -96,14 +101,15 @@ with tab1:
             st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", cap_list, index=cap_list.index(st.session_state.dados['capacidade']) if st.session_state.dados['capacidade'] in cap_list else 1)
             flu_list = ["R410A", "R134a", "R22", "R404A", "R32", "R290"]
             st.session_state.dados['fluido'] = st.selectbox("Fluido:", flu_list, index=flu_list.index(st.session_state.dados['fluido']) if st.session_state.dados['fluido'] in flu_list else 0)
-            st.session_state.dados['ano_fab'] = st.text_input("Ano de Fabricação:", value=st.session_state.dados['ano_fab'])
+            # SUBSTITUIÇÃO: LOCAL DA EVAPORADORA NO LUGAR DE ANO DE FABRICAÇÃO
+            st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'])
 
         st.markdown("---")
-        l1, l2, l3 = st.columns(3)
+        # TAG E SERVIÇO (LOCALIZAÇÃO INTERNA REMOVIDA)
+        l1, l2 = st.columns(2)
         st.session_state.dados['tag_id'] = l1.text_input("TAG:", value=st.session_state.dados['tag_id'])
-        st.session_state.dados['localizacao'] = l2.text_input("Localização Interna:", value=st.session_state.dados['localizacao'])
         ser_list = ["Instalação", "Manutenção Preventiva", "Manutenção Corretiva", "Infraestrutura", "PMOC"]
-        st.session_state.dados['tipo_servico'] = l3.selectbox("Serviço:", ser_list, index=ser_list.index(st.session_state.dados['tipo_servico']) if st.session_state.dados['tipo_servico'] in ser_list else 1)
+        st.session_state.dados['tipo_servico'] = l2.selectbox("Serviço:", ser_list, index=ser_list.index(st.session_state.dados['tipo_servico']) if st.session_state.dados['tipo_servico'] in ser_list else 1)
 
 with tab2:
     st.warning("Aguardando configuração dos parâmetros térmicos.")
