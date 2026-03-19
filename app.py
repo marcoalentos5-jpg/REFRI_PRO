@@ -164,21 +164,33 @@ with st.sidebar:
                 st.session_state.dados[key] = ""
         st.rerun()
 
-# ================== ABA 2 - ELÉTRICA (BLINDADA) ==================
+# ================== ABA 2 - ELÉTRICA (FINAL) ==================
 with tab2:
     st.subheader("⚡ Análise Elétrica Profissional")
 
-    # ===== GARANTE ESTRUTURA SEM KEYERROR =====
+    # ===== GARANTE SESSION =====
     if 'eletrica' not in st.session_state:
         st.session_state.eletrica = {}
 
     defaults_eletrica = {
+        # CAMPOS GERAIS
+        'tensao_rede': '',
+        'tensao_medida': '',
+        'dif_tensao': '',
+        'corrente_medida': '',
+        'dif_corrente': '',
+        'rla': '',
+        'lra': '',
+
+        # TRIFÁSICO
         'tensao_rs': '', 'tensao_st': '', 'tensao_tr': '',
         'corrente_r': '', 'corrente_s': '', 'corrente_t': '',
+
+        # OUTROS
         'fp': '0.92',
         'potencia_kw': '',
-        'rla': '', 'lra': '',
-        'disjuntor': '', 'cabo': '',
+        'disjuntor': '',
+        'cabo': '',
         'aterramento': 'OK',
         'obs': ''
     }
@@ -189,28 +201,52 @@ with tab2:
 
     e = st.session_state.eletrica
 
+    # ================= TOPO - DADOS GERAIS =================
+    with st.expander("📌 Dados Gerais", expanded=True):
+        c1, c2, c3 = st.columns(3)
+        e['tensao_rede'] = c1.text_input("Tensão da Rede (V):", value=e.get('tensao_rede', ''))
+        e['tensao_medida'] = c2.text_input("Tensão Medida (V):", value=e.get('tensao_medida', ''))
+        e['dif_tensao'] = c3.text_input("Diferença (V):", value=e.get('dif_tensao', ''), disabled=True)
+
+        c4, c5, c6 = st.columns(3)
+        e['corrente_medida'] = c4.text_input("Corrente Medida (A):", value=e.get('corrente_medida', ''))
+        e['rla'] = c5.text_input("RLA (A):", value=e.get('rla', ''))
+        e['lra'] = c6.text_input("LRA (A):", value=e.get('lra', ''))
+
+        e['dif_corrente'] = st.text_input("Diferença de Corrente (A):", value=e.get('dif_corrente', ''), disabled=True)
+
+    # ===== CÁLCULOS GERAIS =====
+    try:
+        tensao_rede = float(e.get('tensao_rede') or 0)
+        tensao_medida = float(e.get('tensao_medida') or 0)
+        corrente_medida = float(e.get('corrente_medida') or 0)
+        rla = float(e.get('rla') or 0)
+
+        dif_tensao = tensao_medida - tensao_rede
+        dif_corrente = corrente_medida - rla if rla > 0 else 0
+
+        e['dif_tensao'] = f"{dif_tensao:.2f}"
+        e['dif_corrente'] = f"{dif_corrente:.2f}"
+
+    except:
+        e['dif_tensao'] = ""
+        e['dif_corrente'] = ""
+
     # ================= TENSÕES =================
-    with st.expander("📏 Tensões (V)", expanded=True):
+    with st.expander("📏 Tensões entre Fases (V)", expanded=True):
         v1, v2, v3 = st.columns(3)
         e['tensao_rs'] = v1.text_input("RS (V):", value=e.get('tensao_rs', ''))
         e['tensao_st'] = v2.text_input("ST (V):", value=e.get('tensao_st', ''))
         e['tensao_tr'] = v3.text_input("TR (V):", value=e.get('tensao_tr', ''))
 
     # ================= CORRENTES =================
-    with st.expander("🔌 Correntes (A)", expanded=True):
+    with st.expander("🔌 Correntes por Fase (A)", expanded=True):
         c1, c2, c3 = st.columns(3)
         e['corrente_r'] = c1.text_input("Fase R:", value=e.get('corrente_r', ''))
         e['corrente_s'] = c2.text_input("Fase S:", value=e.get('corrente_s', ''))
         e['corrente_t'] = c3.text_input("Fase T:", value=e.get('corrente_t', ''))
 
-    # ================= DADOS DE PLACA =================
-    with st.expander("🏷️ Dados de Placa", expanded=True):
-        p1, p2, p3 = st.columns(3)
-        e['rla'] = p1.text_input("RLA (A):", value=e.get('rla', ''))
-        e['lra'] = p2.text_input("LRA (A):", value=e.get('lra', ''))
-        e['fp'] = p3.text_input("Fator de Potência:", value=e.get('fp', '0.92'))
-
-    # ================= CÁLCULOS =================
+    # ================= CÁLCULO TRIFÁSICO =================
     try:
         v_rs = float(e.get('tensao_rs') or 0)
         v_st = float(e.get('tensao_st') or 0)
@@ -222,28 +258,22 @@ with tab2:
 
         fp = float(e.get('fp') or 0.92)
 
-        # MÉDIAS
         v_med = (v_rs + v_st + v_tr) / 3 if (v_rs + v_st + v_tr) > 0 else 0
         i_med = (i_r + i_s + i_t) / 3 if (i_r + i_s + i_t) > 0 else 0
 
-        # POTÊNCIA TRIFÁSICA
         potencia = (1.732 * v_med * i_med * fp) / 1000
         e['potencia_kw'] = f"{potencia:.2f}"
 
-        # DESEQUILÍBRIOS
+        # Desequilíbrios
         v_max = max(v_rs, v_st, v_tr)
         des_v = ((v_max - v_med) / v_med * 100) if v_med > 0 else 0
 
         i_max = max(i_r, i_s, i_t)
         des_i = ((i_max - i_med) / i_med * 100) if i_med > 0 else 0
 
-        # CARGA vs RLA
-        rla = float(e.get('rla') or 0)
-        carga_pct = (i_med / rla * 100) if rla > 0 else 0
-
     except:
-        v_med = i_med = des_v = des_i = carga_pct = 0
         e['potencia_kw'] = ""
+        v_med = i_med = des_v = des_i = 0
 
     # ================= RESULTADOS =================
     with st.expander("📊 Resultados", expanded=True):
@@ -253,30 +283,14 @@ with tab2:
         r3.metric("Desequilíbrio Corrente (%)", f"{des_i:.1f}")
 
         r4, r5 = st.columns(2)
-        r4.metric("Corrente Média (A)", f"{i_med:.2f}")
-        r5.metric("Carga vs RLA (%)", f"{carga_pct:.1f}")
+        r4.metric("Tensão Média (V)", f"{v_med:.1f}")
+        r5.metric("Corrente Média (A)", f"{i_med:.2f}")
 
-    # ================= DIAGNÓSTICO =================
-    with st.expander("🧠 Diagnóstico", expanded=True):
-        if des_v > 3:
-            st.error("⚠️ Desequilíbrio de tensão alto")
-        if des_i > 10:
-            st.error("⚠️ Desequilíbrio de corrente alto")
-        if carga_pct > 110:
-            st.error("🔥 Sobrecarga no compressor")
-        if carga_pct < 50 and float(e.get('rla') or 0) > 0:
-            st.warning("⚠️ Baixa carga (possível falta de fluido)")
-        if i_r == 0 or i_s == 0 or i_t == 0:
-            st.error("🚨 Possível falta de fase")
-
-        if des_v <= 3 and des_i <= 10:
-            st.success("✅ Sistema equilibrado")
-
-    # ================= INSTALAÇÃO =================
-    with st.expander("🔧 Proteção", expanded=True):
+    # ================= PROTEÇÃO =================
+    with st.expander("🔧 Proteção Elétrica", expanded=True):
         p1, p2 = st.columns(2)
         e['disjuntor'] = p1.text_input("Disjuntor (A):", value=e.get('disjuntor', ''))
-        e['cabo'] = p2.text_input("Cabo (mm²):", value=e.get('cabo', ''))
+        e['cabo'] = p2.text_input("Seção do Cabo (mm²):", value=e.get('cabo', ''))
 
         e['aterramento'] = st.radio(
             "Aterramento:",
@@ -286,5 +300,5 @@ with tab2:
         )
 
     # ================= OBS =================
-    with st.expander("📝 Observações", expanded=True):
-        e['obs'] = st.text_area("Observações técnicas:", value=e.get('obs', ''))
+    with st.expander("📝 Observações Técnicas", expanded=True):
+        e['obs'] = st.text_area("Observações:", value=e.get('obs', ''))
