@@ -3,7 +3,7 @@ from datetime import datetime
 import requests
 import urllib.parse
 
-# 1. SETUP DE TELA (CONGELADO)
+# 1. SETUP DE TELA
 st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="⚙️")
 
 # CSS: Estilização (CONGELADO)
@@ -24,7 +24,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. MOTOR DE SESSÃO E LIMPEZA
+# 2. MOTOR DE SESSÃO
 if 'dados' not in st.session_state:
     st.session_state.dados = {
         'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
@@ -53,11 +53,10 @@ def buscar_cep(cep):
         except: pass
     return False
 
-st.title("🛠️ Laudo Técnico HVAC - Marcos Alexandre")
-
+# CORREÇÃO DO NAMEERROR: Definindo apenas as abas existentes
 tab1, tab3 = st.tabs(["📋 Identificação e Equipamento", "🌡️ Ciclo Frigorífico"])
 
-# --- ABA 01: IDENTIFICAÇÃO (FOCO TOTAL) ---
+# --- ABA 01: IDENTIFICAÇÃO E EQUIPAMENTO ---
 with tab1:
     with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
         c1, c2, c3 = st.columns([2, 1, 1])
@@ -86,10 +85,10 @@ with tab1:
         st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'])
         st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'])
         
-        # BOTÃO EXCLUSIVO DADOS DO CLIENTE
-        msg_cliente = f"*DADOS DO CLIENTE*\nNome: {st.session_state.dados['nome']}\nCPF/CNPJ: {st.session_state.dados['cpf_cnpj']}\nEndereço: {st.session_state.dados['endereco']}, {st.session_state.dados['numero']} - {st.session_state.dados['cidade']}/{st.session_state.dados['uf']}\nWhatsApp: {st.session_state.dados['whatsapp']}"
-        link_cliente = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_cliente)}"
-        st.link_button("📲 Enviar Exclusivamente Dados do Cliente", link_cliente)
+        # Botão interno para envio rápido de dados do cliente
+        msg_cli = f"*DADOS DO CLIENTE*\nNome: {st.session_state.dados['nome']}\nEndereço: {st.session_state.dados['endereco']}, {st.session_state.dados['numero']}"
+        link_cli = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_cli)}"
+        st.link_button("📲 Enviar Dados do Cliente", link_cli)
 
     col_titulo, col_data = st.columns([3, 1])
     with col_titulo: st.subheader("⚙️ Especificações do Equipamento")
@@ -118,7 +117,11 @@ with tab1:
             st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
             st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
 
-# --- SIDEBAR (CONGELADO) ---
+# --- ABA 03: CICLO FRIGORÍFICO ---
+with tab3:
+    st.info("Aba aguardando definições de Ciclo Frigorífico.")
+
+# --- SIDEBAR (CONGELADO E CORRIGIDO) ---
 with st.sidebar:
     st.title("🚀 Painel de Controle")
     st.subheader("👤 Identificação do Técnico")
@@ -127,8 +130,28 @@ with st.sidebar:
     st.session_state.dados['tecnico_registro'] = st.text_input("Inscrição Federal (CFT/CREA):", value=st.session_state.dados['tecnico_registro'])
     
     st.markdown("---")
+    
+    # STATUS DINÂMICO
+    if not st.session_state.dados['nome'] or not st.session_state.dados['whatsapp']:
+        st.error("📋 Status: 🔴 PENDENTE")
+    else:
+        st.success("📋 Status: 🟢 OK")
+        
+    # BOTÃO WHATSAPP NO SIDEBAR (RESTORED)
+    msg_zap = f"*LAUDO TÉCNICO HVAC*\n" \
+              f"Cliente: {st.session_state.dados['nome']}\n" \
+              f"Equipamento: {st.session_state.dados['fabricante']} - {st.session_state.dados['tag_id']}\n" \
+              f"Status: {st.session_state.dados['status_maquina']}\n" \
+              f"Técnico: {st.session_state.dados['tecnico_nome']}"
+    
+    link_zap = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_zap)}"
+    st.link_button("📲 Enviar Laudo via WhatsApp", link_zap, use_container_width=True)
+
+    st.markdown("---")
+    # CORREÇÃO DO BOTÃO LIMPAR
     if st.button("🗑️ Limpar Formulário", use_container_width=True):
         for key in st.session_state.dados.keys():
+            # Não limpa os dados do técnico nem a data
             if key not in ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']:
                 st.session_state.dados[key] = ""
         st.rerun()
