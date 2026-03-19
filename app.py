@@ -1,18 +1,15 @@
 ###############################################################################
 # [ BLOCO 01 DE 12 ] - NÚCLEO DE CONFIGURAÇÃO, ESTÉTICA CSS E ESTADO DO APP    #
-# VERSÃO: 4.700 (BLINDADA) - LINHAS: 001 A 200                                 #
+# VERSÃO: 4.700 (BLINDADA) - FOCO: LIMPEZA E ESTABILIDADE                     #
 ###############################################################################
 
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 from fpdf import FPDF
 import sqlite3
 from datetime import datetime
-import time
 import urllib.parse
-import json
 import os
 
 # 1. CONFIGURAÇÃO DE PÁGINA (ESTRUTURA BLOQUEADA)
@@ -23,533 +20,97 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. MOTOR DE ESTILIZAÇÃO CSS (GARANTIA DE LAYOUT CLEAN E JANELAS)
+# 2. MOTOR DE ESTILIZAÇÃO CSS (JANELAS E BOTÕES)
 st.markdown("""
     <style>
-    /* Reset e Fundo */
     .main { background-color: #f0f2f6; }
-    
-    /* Estilização das Abas (Tabs) */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 10px;
-        background-color: #ffffff;
-        padding: 15px 15px 0px 15px;
-        border-radius: 12px 12px 0px 0px;
-        border-bottom: 2px solid #004a99;
+        gap: 10px; background-color: #ffffff; padding: 15px 15px 0px 15px;
+        border-radius: 12px 12px 0px 0px; border-bottom: 2px solid #004a99;
     }
     .stTabs [data-baseweb="tab"] {
-        height: 50px;
-        white-space: pre-wrap;
-        background-color: #f8f9fa;
-        border-radius: 5px 5px 0px 0px;
-        color: #495057;
-        font-weight: 600;
-        border: 1px solid #dee2e6;
+        height: 50px; background-color: #f8f9fa; border-radius: 5px 5px 0px 0px;
+        color: #495057; font-weight: 600; border: 1px solid #dee2e6;
     }
-    .stTabs [aria-selected="true"] {
-        background-color: #004a99 !important;
-        color: white !important;
-    }
-
-    /* Janelas de Dados (Containers/Cards) */
+    .stTabs [aria-selected="true"] { background-color: #004a99 !important; color: white !important; }
+    
     div[data-testid="stVerticalBlock"] > div[style*="flex-direction: column;"] > div[data-testid="stVerticalBlock"] {
-        background-color: #ffffff;
-        padding: 25px;
-        border-radius: 12px;
-        border-left: 5px solid #004a99;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        margin-bottom: 20px;
+        background-color: #ffffff; padding: 25px; border-radius: 12px;
+        border-left: 5px solid #004a99; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px;
     }
-
-    /* Títulos de Seções dentro das Janelas */
     .section-title {
-        color: #004a99;
-        font-size: 1.2rem;
-        font-weight: bold;
-        margin-bottom: 15px;
-        border-bottom: 1px solid #eee;
-        padding-bottom: 5px;
-    }
-
-    /* Inputs e Botões */
-    .stTextInput>div>div>input, .stNumberInput>div>div>input {
-        border-radius: 5px;
+        color: #004a99; font-size: 1.2rem; font-weight: bold;
+        margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px;
     }
     .stButton>button {
-        width: 100%;
-        border-radius: 8px;
-        height: 3.5em;
-        background-color: #004a99;
-        color: white;
-        font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        border: none;
-        transition: 0.4s;
+        width: 100%; border-radius: 8px; height: 3.5em;
+        background-color: #004a99; color: white; font-weight: bold;
+        text-transform: uppercase; transition: 0.4s;
     }
-    .stButton>button:hover {
-        background-color: #002d5f;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    }
-
-    /* Tabelas de Histórico (Prioridade BR) */
-    .stDataFrame {
-        border: 1px solid #e0e6ed;
-        border-radius: 8px;
-    }
-    
-    /* Ocultar Elementos Streamlit Standard */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+    #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
-# 3. INICIALIZAÇÃO DE VARIÁVEIS DE ESTADO (BLINDAGEM DE MEMÓRIA)
-def inicializar_estado():
-    if 'atendimento_id' not in st.session_state:
-        st.session_state.atendimento_id = None
-    if 'dados_cliente' not in st.session_state:
-        st.session_state.dados_cliente = {"nome": "", "cpf": "", "data": datetime.now().strftime("%d/%m/%Y")}
-    if 'set_aba' not in st.session_state:
-        st.session_state.set_aba = "Identificação"
-    if 'historico_busca' not in st.session_state:
-        st.session_state.historico_busca = []
-    if 'medicoes_eletricas' not in st.session_state:
-        st.session_state.medicoes_eletricas = {f"v{i}": 0.0 for i in range(1, 4)}
-    if 'checklist_items' not in st.session_state:
-        st.session_state.checklist_items = {}
-    if 'graficos_renderizados' not in st.session_state:
-        st.session_state.graficos_renderizados = False
-    if 'cache_mollier' not in st.session_state:
-        st.session_state.cache_mollier = None
+# 3. INICIALIZAÇÃO DE ESTADO (BLINDAGEM DE MEMÓRIA)
+if 'dados_cliente' not in st.session_state:
+    st.session_state.dados_cliente = {"nome": "", "cpf": "", "data": datetime.now().strftime("%d/%m/%Y")}
+if 'checklist_respostas' not in st.session_state:
+    st.session_state.checklist_respostas = {}
 
-inicializar_estado()
-
-# 4. CONSTANTES TÉCNICAS E FLUIDOS (PADRÃO SENAI/ASHRAE)
+# 4. CONSTANTES TÉCNICAS
 FLUIDOS_INFO = {
-    "R410A": {"tipo": "HFC", "p_crit": 49.0, "t_crit": 71.3, "cor": "#e6194B", "nome_comercial": "Puron"},
-    "R134a": {"tipo": "HFC", "p_crit": 40.6, "t_crit": 101.1, "cor": "#3cb44b", "nome_comercial": "HFC-134a"},
-    "R22": {"tipo": "HCFC", "p_crit": 49.9, "t_crit": 96.1, "cor": "#ffe119", "nome_comercial": "HCFC-22"},
-    "R404A": {"tipo": "HFC", "p_crit": 37.3, "t_crit": 72.1, "cor": "#4363d8", "nome_comercial": "HP62"},
-    "R32": {"tipo": "HFC", "p_crit": 57.8, "t_crit": 78.1, "cor": "#f58231", "nome_comercial": "HFC-32"}
+    "R410A": {"tipo": "HFC", "cor": "#e6194B"},
+    "R134a": {"tipo": "HFC", "cor": "#3cb44b"},
+    "R22": {"tipo": "HCFC", "cor": "#ffe119"},
+    "R404A": {"tipo": "HFC", "cor": "#4363d8"},
+    "R32": {"tipo": "HFC", "cor": "#f58231"}
 }
 
-# 5. CLASSES DE UTILITÁRIOS PARA ESTÉTICA E FORMATAÇÃO BR
-class Formatador:
-    @staticmethod
-    def data_atual():
-        return datetime.now().strftime("%d/%m/%Y")
-    
-    @staticmethod
-    def hora_atual():
-        return datetime.now().strftime("%H:%M")
-    
-    @staticmethod
-    def num_br(valor, casas=2):
-        try:
-            return f"{float(valor):.{casas}f}".replace(".", ",")
-        except:
-            return "0,00"
-
-# -------------------------------------------------------------------------------
-# CRIAÇÃO DAS ABAS (COLE ABAIXO DO SEU BLOCO 01)
-# -------------------------------------------------------------------------------
-
-# Aqui criamos as 7 abas do sistema (Instrução 3)
-tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
-    "👤 Identificação", 
-    "🏢 Equipamento", 
-    "⚡ Elétrica", 
-    "🌡️ Térmica", 
-    "📋 Checklist", 
-    "🧠 Diagnóstico", 
-    "🔍 Histórico"
-])
-
-# --- CONTEÚDO DA ABA 1: IDENTIFICAÇÃO ---
-with tab1:
-    st.markdown('<p class="section-title">👤 1. IDENTIFICAÇÃO DO CLIENTE E SERVIÇO</p>', unsafe_allow_html=True)
-    col1, col2 = st.columns(2)
-    with col1:
-        cliente_nome = st.text_input("Nome Completo / Razão Social:", key="cli_nome")
-        cliente_cpf = st.text_input("CPF ou CNPJ:", key="cli_cpf")
-        cliente_contato = st.text_input("WhatsApp do Cliente (DDD + Número):", placeholder="21988887777")
-    with col2:
-        # DATA NO FORMATO BR (Instrução 1)
-        data_visita = st.date_input("Data do Atendimento:", value=datetime.now(), format="DD/MM/YYYY")
-        tipo_servico = st.selectbox(
-            "Tipo de Serviço Executado:",
-            ["Instalação", "Manutenção Preventiva (PMOC)", "Manutenção Corretiva", "Infraestrutura"],
-            key="tipo_servico_exec"
-        )
-    
-    # Salvando na memória
-    st.session_state.dados_cliente["nome"] = cliente_nome
-    st.session_state.dados_cliente["cpf"] = cliente_cpf
-    st.session_state['servico_selecionado'] = tipo_servico
-
-# --- CONTEÚDO DA ABA 2: DADOS DO EQUIPAMENTO (INSTRUÇÃO 4) ---
-with tab2:
-    st.markdown('<p class="section-title">🏢 2. DETALHES TÉCNICOS E RASTREABILIDADE</p>', unsafe_allow_html=True)
-    c1, c2 = st.columns(2)
-    with c1:
-        aparelho_modelo = st.text_input("Modelo do Equipamento:", placeholder="Ex: Hi-Wall Inverter 12k")
-        fabricante = st.text_input("Fabricante:", placeholder="Ex: Gree, Midea, Elgin")
-        fluido_sel = st.selectbox("Fluido Refrigerante:", list(FLUIDOS_INFO.keys()))
-    with c2:
-        # RASTREABILIDADE TOTAL (Instrução 4: Seriais da Evap e Cond)
-        serial_evap = st.text_input("Nº de Série da EVAPORADORA:", help="Obrigatório para rastreabilidade")
-        serial_cond = st.text_input("Nº de Série da CONDENSADORA:", help="Obrigatório para rastreabilidade")
-        cap_btu = st.text_input("Capacidade (BTU/h):", value="12000")
-
-    # Salvando na memória
-    st.session_state['eq_modelo'] = aparelho_modelo
-    st.session_state['eq_serial_e'] = serial_evap
-    st.session_state['eq_serial_c'] = serial_cond
-    st.session_state['eq_fluido'] = fluido_sel
-# --- CONTEÚDO DA ABA 3: PARÂMETROS ELÉTRICOS (INSTRUÇÃO 5) ---
-with tab3:
-    st.markdown('<p class="section-title">⚡ 3. ANÁLISE DE ALIMENTAÇÃO E CONSUMO</p>', unsafe_allow_html=True)
-    
-    with st.container():
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            st.markdown("**1. Tensão de Projeto**")
-            v_nom = st.number_input("Tensão Nominal do Equip. (V):", value=220.0, step=1.0)
-            st.markdown("**4. Partida (LRA)**")
-            lra = st.number_input("Corrente de Pico - LRA (A):", value=0.0, step=0.1)
-            
-        with col2:
-            st.markdown("**2. Tensão de Campo**")
-            v_med = st.number_input("Tensão Medida no Borne (V):", value=0.0, step=1.0)
-            st.markdown("**5. Trabalho (RLA)**")
-            rla = st.number_input("Corrente Nominal - RLA (A):", value=0.0, step=0.1)
-            
-        with col3:
-            # CÁLCULO AUTOMÁTICO DE DIFERENCIAL DE TENSÃO
-            diff_v = round(v_med - v_nom, 2)
-            st.metric("3. Δ TENSÃO (V)", f"{diff_v}V", delta=diff_v, delta_color="inverse")
-            
-            st.markdown("**6. Consumo Real**")
-            i_med = st.number_input("Corrente Medida (A):", value=0.0, step=0.1)
-
-    # 7. DESTAQUE DO DIFERENCIAL RLA VS MEDIDA (EXATIDÃO TOTAL)
-    diff_i = round(i_med - rla, 2)
-    cor_alerta = "#e6f4ea" if diff_i <= 0 else "#fce8e6" # Verde se ok, Vermelho se sobrecarga
-    texto_cor = "#137333" if diff_i <= 0 else "#c5221f"
-
-    st.markdown(f"""
-        <div style="background-color:{cor_alerta}; padding:20px; border-radius:10px; border: 2px solid {texto_cor}; margin-top:15px;">
-            <h4 style="margin:0; color:{texto_cor};">7. DIFERENCIAL DE CORRENTE (RLA vs MEDIDA)</h4>
-            <p style="font-size:28px; font-weight:bold; margin:0; color:{texto_cor};">{diff_i} Amperes</p>
-            <small style="color:{texto_cor};">{'✅ Operação dentro da faixa nominal' if diff_i <= 0 else '⚠️ Atenção: Equipamento operando acima do RLA'}</small>
-        </div>
-    """, unsafe_allow_html=True)
-
-    # Salvando na memória
-    st.session_state['el_v_nom'] = v_nom
-    st.session_state['el_v_med'] = v_med
-    st.session_state['el_lra'] = lra
-    st.session_state['el_rla'] = rla
-    st.session_state['el_i_med'] = i_med
-# --- CONTEÚDO DA ABA 4: PERFORMANCE TÉRMICA (INSTRUÇÃO 6) ---
-with tab4:
-    st.markdown('<p class="section-title">🌡️ 4. ANÁLISE DE CICLO REFRIGERANTE (P/T)</p>', unsafe_allow_html=True)
-    
-    with st.container():
-        c1, c2 = st.columns(2)
-        
-        with c1:
-            st.markdown("### 🔵 LADO DE BAIXA (SUCÇÃO)")
-            p_baixa = st.number_input("1. Pressão de Sucção (PSI):", value=0.0, step=1.0)
-            
-            # Cálculo de Saturação Automático baseado no fluido selecionado na Aba 2
-            fluido = st.session_state.get('eq_fluido', 'R410A')
-            # Lógica P/T simplificada para precisão de campo
-            t_sat_suc = round((np.log10(max(p_baixa, 0.1) + 1) * 30) - 40, 2)
-            st.info(f"**Temp. Saturação (Orvalho):** {t_sat_suc} °C")
-            
-            t_saida_evap = st.number_input("2. Temp. Saída Evaporador (°C):", value=0.0, step=0.1)
-            t_suc_comp = st.number_input("3. Temp. Sucção no Compressor (°C):", value=0.0, step=0.1)
-
-        with c2:
-            st.markdown("### 🔴 LADO DE ALTA (LÍQUIDO)")
-            p_alta = st.number_input("4. Pressão de Alta/Líquido (PSI):", value=0.0, step=1.0)
-            
-            # Lógica P/T para o lado de alta
-            t_sat_liq = round((np.log10(max(p_alta, 0.1) + 1) * 25) - 35, 2)
-            st.error(f"**Temp. Saturação (Bolha):** {t_sat_liq} °C")
-            
-            t_linha_liq = st.number_input("5. Temp. Linha de Líquido (°C):", value=0.0, step=0.1)
-
-    st.markdown("---")
-    
-    # CÁLCULOS FINAIS DE PERFORMANCE
-    sh_util = round(t_saida_evap - t_sat_suc, 2)
-    sh_total = round(t_suc_comp - t_sat_suc, 2)
-    sc = round(t_sat_liq - t_linha_liq, 2)
-
-    # EXIBIÇÃO EM DASHBOARD (Instrução 6)
-    met1, met2, met3 = st.columns(3)
-    
-    with met1:
-        st.metric("SUPERAQUECIMENTO ÚTIL", f"{sh_util} K", 
-                  delta="Normal (5 a 7K)" if 5 <= sh_util <= 7 else "Fora de Faixa")
-    with met2:
-        st.metric("SUPERAQUECIMENTO TOTAL", f"{sh_total} K",
-                  delta="Proteção OK (7 a 12K)" if 7 <= sh_total <= 12 else "Risco!")
-    with met3:
-        st.metric("SUB-RESFRIAMENTO", f"{sc} K",
-                  delta="Carga OK (3 a 8K)" if 3 <= sc <= 8 else "Verificar Carga")
-
-    # Salvando na memória para o Laudo
-    st.session_state['te_p_baixa'] = p_baixa
-    st.session_state['te_p_alta'] = p_alta
-    st.session_state['te_sh_u'] = sh_util
-    st.session_state['te_sh_t'] = sh_total
-    st.session_state['te_sc'] = sc
-# --- CONTEÚDO DA ABA 5: CHECKLIST DINÂMICO (INSTRUÇÃO 8) ---
-with tab5:
-    st.markdown('<p class="section-title">📋 5. CHECKLIST DE CONFORMIDADE TÉCNICA</p>', unsafe_allow_html=True)
-    
-    # Recupera o tipo de serviço da Aba 1 (Instrução 8)
-    servico = st.session_state.get('servico_selecionado', 'Manutenção Corretiva')
-    st.info(f"📋 Gerando checklist específico para: **{servico}**")
-    
-    # Dicionário de Perguntas por Tipo de Serviço
-    checklists = {
-        "Instalação": [
-            "Teste de Estanqueidade (Nitrogênio) realizado?",
-            "Vácuo atingiu menos de 500 microns?",
-            "Distância mínima de tubulação respeitada?",
-            "Dreno com caimento adequado?",
-            "Cabos elétricos com terminais crimpados?"
-        ],
-        "Manutenção Preventiva (PMOC)": [
-            "Limpeza química da evaporadora realizada?",
-            "Higienização da bandeja de condensado?",
-            "Limpeza dos filtros de ar (G1/G3)?",
-            "Verificação de ruídos e vibrações?",
-            "Aplicação de bactericida/fungicida?"
-        ],
-        "Manutenção Corretiva": [
-            "Identificada causa raiz da falha?",
-            "Necessidade de substituição de peças?",
-            "Sistema apresenta vazamento de fluido?",
-            "Limpeza do condensador realizada?",
-            "Reaperto de bornes elétricos efetuado?"
-        ],
-        "Infraestrutura": [
-            "Tubulação de cobre isolada individualmente?",
-            "Teste de pressão (600 PSI) ok?",
-            "Cabo PP de interligação passado?",
-            "Dreno de PVC embutido e testado?",
-            "Pontos de espera com caixas de passagem?"
-        ]
-    }
-
-    # Gera os checkboxes dinamicamente
-    itens_servico = checklists.get(servico, checklists["Manutenção Corretiva"])
-    respostas_checklist = {}
-
-    st.markdown("---")
-    for item in itens_servico:
-        respostas_checklist[item] = st.checkbox(item, key=f"check_{item}")
-
-    # Salvando na memória
-    st.session_state['checklist_respostas'] = respostas_checklist
-
-    if all(respostas_checklist.values()):
-        st.success("✅ Todos os itens de conformidade foram atendidos.")
-    else:
-        st.warning("⚠️ Atenção: Existem itens pendentes no checklist de segurança.")
-# --- CONTEÚDO DA ABA 6: DIAGNÓSTICO & LAUDO (INSTRUÇÃO 9) ---
-with tab6:
-    st.markdown('<p class="section-title">🧠 6. DIAGNÓSTICO ESPECIALIZADO E CONCLUSÃO</p>', unsafe_allow_html=True)
-    
-    col_diag1, col_diag2 = st.columns([2, 1])
-    
-    with col_diag1:
-        # LISTA DE DEFEITOS A-Z (Instrução 9: Seleção por Click)
-        defeitos_master = [
-            "Acúmulo de óleo no evaporador", "Bloqueio parcial no dispositivo de expansão", 
-            "Capacitor de marcha esgotado", "Compressor com baixa compressão",
-            "Condensadora obstruída/suja", "Contatora com contatos oxidados",
-            "Excesso de fluido refrigerante", "Falta de fluido refrigerante (Vazamento)",
-            "Filtro secador obstruído", "Incondensáveis no sistema",
-            "Isolamento térmico deteriorado", "Motor ventilador com baixa rotação",
-            "Placa eletrônica com erro de comunicação", "Sensor de degelo fora de curva",
-            "Sensor de temperatura ambiente aberto", "Válvula reversora travada"
-        ]
-        
-        selecionados = st.multiselect("🔍 Selecione os Defeitos Identificados:", sorted(defeitos_master))
-        
-        # Geração automática de texto baseado na seleção
-        texto_diagnostico = "📌 CONCLUSÃO TÉCNICA: " + ". ".join(selecionados) + "." if selecionados else ""
-        parecer_final = st.text_area("📝 Parecer Técnico Detalhado:", value=texto_diagnostico, height=150)
-
-    with col_diag2:
-        st.info("🤖 **Assistente IA**")
-        # Lógica Simples de IA baseada nos cálculos das abas 3 e 4
-        if st.session_state.get('te_sh_t', 0) < 5:
-            st.error("Alerta IA: Risco de Golpe de Líquido detectado (SH Total Baixo).")
-        elif st.session_state.get('te_sc', 0) < 3:
-            st.warning("Alerta IA: Sub-resfriamento baixo. Possível falta de fluido.")
-        else:
-            st.success("Alerta IA: Parâmetros termodinâmicos em equilíbrio.")
-
-    st.markdown("---")
-# --- CONTEÚDO DA ABA 7: HISTÓRICO / ERP (INSTRUÇÃO 7) ---
-with tab7:
-    st.markdown('<p class="section-title">🔍 7. CONSULTA DE HISTÓRICO E PRONTUÁRIOS</p>', unsafe_allow_html=True)
-    
-    # Interface de Busca Multicritério
-    with st.expander("🔎 Filtros de Busca Avançada", expanded=True):
-        col_h1, col_h2, col_h3 = st.columns(3)
-        with col_h1:
-            busca_nome = st.text_input("Filtrar por Nome do Cliente:")
-        with col_h2:
-            busca_data = st.text_input("Filtrar por Data (Ex: 18/03/2026):")
-        with col_h3:
-            busca_modelo = st.text_input("Filtrar por Modelo/Série:")
-
-    # Botão para Executar a Busca no SQLite
-    if st.button("📊 ATUALIZAR TABELA DE REGISTROS"):
-        # Lógica de Consulta (Simulada para visualização)
-        # Em um cenário real, aqui rodaria o comando: 
-        # SELECT * FROM atendimentos WHERE cliente_nome LIKE %busca_nome%
-        st.write("### 📋 Resultados Localizados no Banco de Dados:")
-        
-        # Exemplo de como os dados aparecem (Instrução 7)
-        dados_ficticios = {
-            "Data": ["10/03/2026", "15/03/2026"],
-            "Cliente": ["João Silva", "Maria Oliveira"],
-            "Modelo": ["Split 12k LG", "Cassete 36k Carrier"],
-            "Status": ["Finalizado", "Aguardando Peça"],
-            "Técnico": ["Marcos Alexandre", "Marcos Alexandre"]
-        }
-        df_historico = pd.DataFrame(dados_ficticios)
-        st.dataframe(df_historico, use_container_width=True)
-    
-    st.markdown("---")
-    st.info("💡 **Dica de Gestão:** Use o histórico para prever manutenções preventivas (PMOC) com base na última data de visita.")
-
-# --- CONTEÚDO DA ABA 6: DIAGNÓSTICO & LAUDO (VERSÃO CORRIGIDA) ---
-with tab6:
-    st.markdown('<p class="section-title">🧠 6. DIAGNÓSTICO ESPECIALIZADO E CONCLUSÃO</p>', unsafe_allow_html=True)
-    
-    col_diag1, col_diag2 = st.columns([2, 1])
-    
-    with col_diag1:
-        defeitos_master = [
-            "Acúmulo de óleo no evaporador", "Bloqueio parcial no dispositivo de expansão", 
-            "Capacitor de marcha esgotado", "Compressor com baixa compressão",
-            "Condensadora obstruída/suja", "Contatora com contatos oxidados",
-            "Excesso de fluido refrigerante", "Falta de fluido refrigerante (Vazamento)",
-            "Filtro secador obstruído", "Incondensáveis no sistema",
-            "Isolamento térmico deteriorado", "Motor ventilador com baixa rotação",
-            "Placa eletrônica com erro de comunicação", "Sensor de degelo fora de curva",
-            "Sensor de temperatura ambiente aberto", "Válvula reversora travada"
-        ]
-        selecionados = st.multiselect("🔍 Selecione os Defeitos Identificados:", sorted(defeitos_master))
-        texto_diagnostico = "📌 CONCLUSÃO TÉCNICA: " + ". ".join(selecionados) + "." if selecionados else ""
-        parecer_final = st.text_area("📝 Parecer Técnico Detalhado:", value=texto_diagnostico, height=150)
-
-    with col_diag2:
-        st.info("🤖 **Assistente IA**")
-        sh_t_val = st.session_state.get('te_sh_t', 0)
-        sc_val = st.session_state.get('te_sc', 0)
-        if sh_t_val < 5 and sh_t_val != 0:
-            st.error("Alerta IA: Risco de Golpe de Líquido (SH Total Baixo).")
-        elif sc_val < 3 and sc_val != 0:
-            st.warning("Alerta IA: Sub-resfriamento baixo. Verificar carga.")
-        else:
-            st.success("Alerta IA: Parâmetros em equilíbrio.")
-
-    st.markdown("---")
-    
-    # AQUI ESTAVA O ERRO (LINHA 447) - AGORA ESTÁ ALINHADO:
-    c_pdf1, c_pdf2, c_wa1, c_wa2 = st.columns(4)
-    
-    with c_pdf1:
-        if st.button("📄 LAUDO CLIENTE (PDF)"):
-            st.toast("Gerando Laudo...")
-            
-    with c_pdf2:
-        if st.button("📋 PRONTUÁRIO INTERNO"):
-            st.toast("Gerando Prontuário...")
-            
-    with c_wa1:
-        msg_cli = urllib.parse.quote(f"Olá! Segue o laudo técnico.")
-        link_cli = f"https://wa.me/{st.session_state.get('contato_cliente', '')}?text={msg_cli}"
-        st.markdown(f'<a href="{link_cli}" target="_blank"><button style="width:100%; background-color:#25D366; color:white; border:none; padding:10px; border-radius:5px;">📲 WHATSAPP CLIENTE</button></a>', unsafe_allow_html=True)
-
-    with c_wa2:
-        msg_int = urllib.parse.quote(f"LOGÍSTICA: Novo prontuário disponível.")
-        link_int = f"https://wa.me/5521980264217?text={msg_int}"
-        st.markdown(f'<a href="{link_int}" target="_blank"><button style="width:100%; background-color:#075E54; color:white; border:none; padding:10px; border-radius:5px;">🏢 WHATSAPP EMPRESA</button></a>', unsafe_allow_html=True)
-
-# 6. FUNÇÃO DE TÍTULO DE JANELA (UI HELPER)
+# 5. CLASSES UTILITÁRIAS
 def janela_titulo(titulo):
     st.markdown(f'<p class="section-title">{titulo}</p>', unsafe_allow_html=True)
 
-# ESPAÇADORES TÉCNICOS PARA MANTER A INTEGRIDADE DE 200 LINHAS POR BLOCO
-# LINHA 161
-# LINHA 162
-# LINHA 163
-# LINHA 164
-# LINHA 165
-# LINHA 166
-# LINHA 167
-# LINHA 168
-# LINHA 169
-# LINHA 170
-# LINHA 171
-# LINHA 172
-# LINHA 173
-# LINHA 174
-# LINHA 175
-# LINHA 176
-# LINHA 177
-# LINHA 178
-# LINHA 179
-# LINHA 180
-# LINHA 181
-# LINHA 182
-# LINHA 183
-# LINHA 184
-# LINHA 185
-# LINHA 186
-# LINHA 187
-# LINHA 188
-# LINHA 189
-# LINHA 190
-# LINHA 191
-# LINHA 192
-# LINHA 193
-# LINHA 194
-# LINHA 195
-# LINHA 196
-# LINHA 197
-# LINHA 198
-# LINHA 199
+# 6. CRIAÇÃO DAS ABAS (INTERFACE PRINCIPAL)
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+    "👤 Identificação", "🏢 Equipamento", "⚡ Elétrica", "🌡️ Térmica", "📋 Checklist", "🧠 Diagnóstico", "🔍 Histórico"
+])
+
+# --- CONTEÚDO DA ABA 1 ---
+with tab1:
+    janela_titulo("👤 1. IDENTIFICAÇÃO DO CLIENTE")
+    c1, c2 = st.columns(2)
+    with c1:
+        cliente_nome = st.text_input("Nome/Razão Social:", key="cli_nome")
+        cliente_cpf = st.text_input("CPF ou CNPJ:", key="cli_cpf")
+    with c2:
+        data_visita = st.date_input("Data do Atendimento:", format="DD/MM/YYYY")
+        tipo_servico = st.selectbox("Tipo de Serviço:", ["Instalação", "Preventiva", "Corretiva"], key="tipo_serv_idx")
+    st.session_state.dados_cliente.update({"nome": cliente_nome, "cpf": cliente_cpf, "servico": tipo_servico})
+
+# --- CONTEÚDO DA ABA 6 (RESUMIDA E SEM DUPLICIDADE) ---
+with tab6:
+    janela_titulo("🧠 6. DIAGNÓSTICO E LAUDO")
+    defeitos_master = ["Falta de Fluido", "Compressor em Curto", "Capacitor Esgotado", "Obstrução no Filtro"]
+    # CHAVE ÚNICA PARA EVITAR O ERRO StreamlitDuplicateElementId
+    selecionados = st.multiselect("🔍 Defeitos Identificados:", sorted(defeitos_master), key="diag_multiselect_final")
+    parecer = st.text_area("📝 Parecer Técnico:", value="📌 CONCLUSÃO: " + ", ".join(selecionados), height=150)
+    
+    c_pdf1, c_pdf2, c_wa1, c_wa2 = st.columns(4)
+    with c_pdf1: st.button("📄 GERAR LAUDO PDF", key="btn_pdf_laudo")
+    with c_wa1: st.button("📲 WHATSAPP CLIENTE", key="btn_wa_cli")
 # LINHA 200
 ###############################################################################
 # [ BLOCO 02 DE 12 ] - BANCO DE DADOS SQLITE E PERSISTÊNCIA DE DADOS           #
-# VERSÃO: 4.700 (BLINDADA) - LINHAS: 201 A 400                                 #
+# VERSÃO: 4.700 (BLINDADA) - FOCO: SEGURANÇA E INTEGRIDADE                     #
 ###############################################################################
 
 # 7. MOTOR DE BANCO DE DADOS (SQLITE3)
 def conectar_db():
-    conn = sqlite3.connect('hvac_master_db.sqlite', check_same_thread=False)
-    return conn
+    return sqlite3.connect('hvac_master_db.sqlite', check_same_thread=False)
 
 def criar_tabelas():
     conn = conectar_db()
     cursor = conn.cursor()
-    # Tabela Principal de Atendimentos
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS atendimentos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -573,7 +134,6 @@ def criar_tabelas():
     conn.commit()
     conn.close()
 
-# Inicialização automática do Banco
 criar_tabelas()
 
 # 8. FUNÇÕES DE MANIPULAÇÃO DE DADOS (CRUD)
@@ -589,10 +149,10 @@ def salvar_atendimento(dados):
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
     params = (
-        dados['nome'], dados['cpf'], dados['data'], dados['modelo'],
-        dados['fluido'], dados['p_alta'], dados['p_baixa'], dados['t_suc'],
-        dados['t_liq'], dados['sh'], dados['sc'], dados['corrente'],
-        json.dumps(dados['checklist']), dados['diagnostico']
+        dados.get('nome'), dados.get('cpf'), dados.get('data'), dados.get('modelo'),
+        dados.get('fluido'), dados.get('p_alta'), dados.get('p_baixa'), dados.get('t_suc'),
+        dados.get('t_liq'), dados.get('sh'), dados.get('sc'), dados.get('corrente'),
+        json.dumps(dados.get('checklist', {})), dados.get('diagnostico')
     )
     cursor.execute(query, params)
     conn.commit()
@@ -602,741 +162,175 @@ def salvar_atendimento(dados):
 
 def buscar_por_cpf(cpf):
     conn = conectar_db()
-    df = pd.read_sql_query(f"SELECT * FROM atendimentos WHERE cliente_cpf = '{cpf}' ORDER BY id DESC", conn)
+    # BLINDAGEM: Uso de parâmetros '?' para evitar ataques de SQL Injection
+    query = "SELECT * FROM atendimentos WHERE cliente_cpf = ? ORDER BY id DESC"
+    df = pd.read_sql_query(query, conn, params=(cpf,))
     conn.close()
     return df
 
-# ESPAÇADORES TÉCNICOS PARA MANTER A INTEGRIDADE DE 200 LINHAS POR BLOCO
-# LINHA 271
-# LINHA 272
-# LINHA 273
-# LINHA 274
-# LINHA 275
-# LINHA 276
-# LINHA 277
-# LINHA 278
-# LINHA 279
-# LINHA 280
-# LINHA 281
-# LINHA 282
-# LINHA 283
-# LINHA 284
-# LINHA 285
-# LINHA 286
-# LINHA 287
-# LINHA 288
-# LINHA 289
-# LINHA 290
-# LINHA 291
-# LINHA 292
-# LINHA 293
-# LINHA 294
-# LINHA 295
-# LINHA 296
-# LINHA 297
-# LINHA 298
-# LINHA 299
-# LINHA 300
-# LINHA 301
-# LINHA 302
-# LINHA 303
-# LINHA 304
-# LINHA 305
-# LINHA 306
-# LINHA 307
-# LINHA 308
-# LINHA 309
-# LINHA 310
-# LINHA 311
-# LINHA 312
-# LINHA 313
-# LINHA 314
-# LINHA 315
-# LINHA 316
-# LINHA 317
-# LINHA 318
-# LINHA 319
-# LINHA 320
-# LINHA 321
-# LINHA 322
-# LINHA 323
-# LINHA 324
-# LINHA 325
-# LINHA 326
-# LINHA 327
-# LINHA 328
-# LINHA 329
-# LINHA 330
-# LINHA 331
-# LINHA 332
-# LINHA 333
-# LINHA 334
-# LINHA 335
-# LINHA 336
-# LINHA 337
-# LINHA 338
-# LINHA 339
-# LINHA 340
-# LINHA 341
-# LINHA 342
-# LINHA 343
-# LINHA 344
-# LINHA 345
-# LINHA 346
-# LINHA 347
-# LINHA 348
-# LINHA 349
-# LINHA 350
-# LINHA 351
-# LINHA 352
-# LINHA 353
-# LINHA 354
-# LINHA 355
-# LINHA 356
-# LINHA 357
-# LINHA 358
-# LINHA 359
-# LINHA 360
-# LINHA 361
-# LINHA 362
-# LINHA 363
-# LINHA 364
-# LINHA 365
-# LINHA 366
-# LINHA 367
-# LINHA 368
-# LINHA 369
-# LINHA 370
-# LINHA 371
-# LINHA 372
-# LINHA 373
-# LINHA 374
-# LINHA 375
-# LINHA 376
-# LINHA 377
-# LINHA 378
-# LINHA 379
-# LINHA 380
-# LINHA 381
-# LINHA 382
-# LINHA 383
-# LINHA 384
-# LINHA 385
-# LINHA 386
-# LINHA 387
-# LINHA 388
-# LINHA 389
-# LINHA 390
-# LINHA 391
-# LINHA 392
-# LINHA 393
-# LINHA 394
-# LINHA 395
-# LINHA 396
-# LINHA 397
-# LINHA 398
-# LINHA 399
-# LINHA 400
 ###############################################################################
 # [ BLOCO 03 DE 12 ] - MOTOR DE CÁLCULOS TÉRMICOS E TERMODINÂMICA              #
-# VERSÃO: 4.700 (BLINDADA) - LINHAS: 401 A 600                                 #
+# VERSÃO: 4.700 (BLINDADA) - FOCO: PRECISÃO E ESTABILIDADE                     #
 ###############################################################################
 
 # 9. MOTOR DE CÁLCULO DE PROPRIEDADES (PADRÃO ASHRAE)
 def calcular_temperatura_saturacao(pressao_psi, fluido):
-    """Converte Pressão (PSI) em Temperatura de Saturação (°C) via Regressão"""
-    # Coeficientes simplificados para demonstração de lógica de campo
+    """Converte Pressão (PSI) em Temp. de Saturação (°C) via Regressão"""
     coefs = {
         "R410A": {"a": 0.0001, "b": 0.15, "c": -30.0},
         "R134a": {"a": 0.0002, "b": 0.25, "c": -20.0},
-        "R22": {"a": 0.00015, "b": 0.20, "c": -25.0}
+        "R22":   {"a": 0.00015, "b": 0.20, "c": -25.0}
     }
+    
     if fluido in coefs:
         c = coefs[fluido]
-        # Cálculo parabólico aproximado para resposta instantânea no App
+        # Cálculo parabólico para resposta instantânea
         temp_sat = (c['a'] * (pressao_psi**2)) + (c['b'] * pressao_psi) + c['c']
         return round(temp_sat, 2)
     return 0.0
 
 def calcular_parametros_performance(dados):
-    """Calcula SH, SC e delta de entalpia aproximado"""
+    """Calcula SH, SC e Temperaturas de Saturação"""
     p_baixa = dados.get('p_baixa', 0)
     p_alta = dados.get('p_alta', 0)
     t_suc = dados.get('t_suc', 0)
     t_liq = dados.get('t_liq', 0)
     fluido = dados.get('fluido', 'R410A')
     
-    # 1. Temperaturas de Saturação
     t_evap = calcular_temperatura_saturacao(p_baixa, fluido)
     t_cond = calcular_temperatura_saturacao(p_alta, fluido)
     
-    # 2. Superaquecimento (SH = T_sucção - T_evaporação)
-    sh = t_suc - t_evap
-    
-    # 3. Sub-resfriamento (SC = T_condensação - T_líquido)
-    sc = t_cond - t_liq
-    
+    # SH = T_sucção - T_evaporação | SC = T_condensação - T_líquido
     return {
         "t_evap": t_evap,
         "t_cond": t_cond,
-        "sh": round(sh, 2),
-        "sc": round(sc, 2)
+        "sh": round(t_suc - t_evap, 2),
+        "sc": round(t_cond - t_liq, 2)
     }
 
 def calcular_cop_estimado(corrente, voltagem, p_alta, p_baixa):
-    """Estima o COP baseado na potência elétrica e razão de pressão"""
-    if corrente <= 0: return 0.0
-    potencia_w = voltagem * corrente * 0.92 # Considerado FP médio de 0.92
-    razao_pressao = p_alta / max(p_baixa, 1)
-    # Lógica inversa: quanto maior a razão, menor a eficiência
+    """Estima o COP baseado na potência e razão de pressão"""
+    # BLINDAGEM: Evita divisão por zero e valores negativos
+    if corrente <= 0 or p_baixa <= 0: 
+        return 0.0
+        
+    razao_pressao = p_alta / p_baixa
+    # Lógica: Eficiência inversamente proporcional à razão de compressão
     cop = 4.5 / (razao_pressao * 0.8)
-    return round(min(cop, 6.0), 2)
+    return round(min(max(cop, 1.0), 6.0), 2)
 
-# LINHA 458
-# LINHA 459
-# LINHA 460
-# LINHA 461
-# LINHA 462
-# LINHA 463
-# LINHA 464
-# LINHA 465
-# LINHA 466
-# LINHA 467
-# LINHA 468
-# LINHA 469
-# LINHA 470
-# LINHA 471
-# LINHA 472
-# LINHA 473
-# LINHA 474
-# LINHA 475
-# LINHA 476
-# LINHA 477
-# LINHA 478
-# LINHA 479
-# LINHA 480
-# LINHA 481
-# LINHA 482
-# LINHA 483
-# LINHA 484
-# LINHA 485
-# LINHA 486
-# LINHA 487
-# LINHA 488
-# LINHA 489
-# LINHA 490
-# LINHA 491
-# LINHA 492
-# LINHA 493
-# LINHA 494
-# LINHA 495
-# LINHA 496
-# LINHA 497
-# LINHA 498
-# LINHA 499
-# LINHA 500
-# LINHA 501
-# LINHA 502
-# LINHA 503
-# LINHA 504
-# LINHA 505
-# LINHA 506
-# LINHA 507
-# LINHA 508
-# LINHA 509
-# LINHA 510
-# LINHA 511
-# LINHA 512
-# LINHA 513
-# LINHA 514
-# LINHA 515
-# LINHA 516
-# LINHA 517
-# LINHA 518
-# LINHA 519
-# LINHA 520
-# LINHA 521
-# LINHA 522
-# LINHA 523
-# LINHA 524
-# LINHA 525
-# LINHA 526
-# LINHA 527
-# LINHA 528
-# LINHA 529
-# LINHA 530
-# LINHA 531
-# LINHA 532
-# LINHA 533
-# LINHA 534
-# LINHA 535
-# LINHA 536
-# LINHA 537
-# LINHA 538
-# LINHA 539
-# LINHA 540
-# LINHA 541
-# LINHA 542
-# LINHA 543
-# LINHA 544
-# LINHA 545
-# LINHA 546
-# LINHA 547
-# LINHA 548
-# LINHA 549
-# LINHA 550
-# LINHA 551
-# LINHA 552
-# LINHA 553
-# LINHA 554
-# LINHA 555
-# LINHA 556
-# LINHA 557
-# LINHA 558
-# LINHA 559
-# LINHA 560
-# LINHA 561
-# LINHA 562
-# LINHA 563
-# LINHA 564
-# LINHA 565
-# LINHA 566
-# LINHA 567
-# LINHA 568
-# LINHA 569
-# LINHA 570
-# LINHA 571
-# LINHA 572
-# LINHA 573
-# LINHA 574
-# LINHA 575
-# LINHA 576
-# LINHA 577
-# LINHA 578
-# LINHA 579
-# LINHA 580
-# LINHA 581
-# LINHA 582
-# LINHA 583
-# LINHA 584
-# LINHA 585
-# LINHA 586
-# LINHA 587
-# LINHA 588
-# LINHA 589
-# LINHA 590
-# LINHA 591
-# LINHA 592
-# LINHA 593
-# LINHA 594
-# LINHA 595
-# LINHA 596
-# LINHA 597
-# LINHA 598
-# LINHA 599
-# LINHA 600
 ###############################################################################
 # [ BLOCO 04 DE 12 ] - MOTOR GRÁFICO E DIAGRAMAS TERMODINÂMICOS                #
-# VERSÃO: 4.700 (BLINDADA) - LINHAS: 601 A 800                                 #
+# VERSÃO: 4.700 (BLINDADA) - FOCO: VISUALIZAÇÃO E ESTABILIDADE                 #
 ###############################################################################
+
+import matplotlib.pyplot as plt
+import numpy as np
 
 # 10. MOTOR DE GERAÇÃO DE DIAGRAMAS (MATPLOTLIB)
 def gerar_diagrama_mollier(fluido, p_alta, p_baixa, t_suc, t_liq):
-    """Gera o gráfico de Pressão vs Entalpia (P-h) para análise interna"""
+    """Gera o gráfico P-h (Pressão vs Entalpia) simplificado para o laudo"""
     fig, ax = plt.subplots(figsize=(8, 6))
     
-    # Simulação da Curva de Saturação (Sino)
-    h_liq = np.linspace(150, 250, 50)
-    h_vap = np.linspace(250, 450, 50)
-    p_sino = 100 * np.sin(np.linspace(0, np.pi, 50)) + 50
+    # Curva de Saturação (Sino) - Simulação técnica
+    h_sino = np.linspace(150, 450, 100)
+    p_sino = 100 * np.sin(np.pi * (h_sino - 150) / 300) + 50
     
-    ax.plot(h_liq, p_sino, color='blue', label='Líquido Saturado')
-    ax.plot(h_vap, p_sino, color='red', label='Vapor Saturado')
+    ax.plot(h_sino[:50], p_sino[:50], 'b-', label='Líquido Saturado')
+    ax.plot(h_sino[50:], p_sino[50:], 'r-', label='Vapor Saturado')
     
-    # Plotagem do Ciclo Atual
-    # Ponto 1 (Sucção), Ponto 2 (Descarga), Ponto 3 (Líquido), Ponto 4 (Expansão)
+    # Plotagem do Ciclo (Ponto 1 ao 4)
+    # Proteção: Pressões mínimas para evitar erro em escala LOG
+    p_alta_safe = max(p_alta, 1.1)
+    p_baixa_safe = max(p_baixa, 1.0)
+    
     pontos_h = [400, 450, 200, 200, 400]
-    pontos_p = [p_baixa, p_alta, p_alta, p_baixa, p_baixa]
+    pontos_p = [p_baixa_safe, p_alta_safe, p_alta_safe, p_baixa_safe, p_baixa_safe]
     
-    ax.plot(pontos_h, pontos_p, 'k-o', linewidth=2, label='Ciclo Real')
-    
+    ax.plot(pontos_h, pontos_p, 'k-o', linewidth=2, label='Ciclo de Refrigeração')
     ax.set_yscale('log')
+    
     ax.set_title(f"Diagrama P-h: {fluido}", fontsize=12, fontweight='bold')
     ax.set_xlabel("Entalpia (kJ/kg)")
-    ax.set_ylabel("Pressão (PSI) - Escala Log")
-    ax.grid(True, which="both", ls="-", alpha=0.5)
-    ax.legend()
+    ax.set_ylabel("Pressão (PSI)")
+    ax.grid(True, which="both", ls="-", alpha=0.3)
+    ax.legend(loc='upper right', fontsize='small')
     
     plt.tight_layout()
     return fig
 
 def gerar_grafico_sh_sc(sh, sc):
-    """Gera gráfico de barras comparativo para diagnóstico rápido"""
+    """Gera gráfico de barras para diagnóstico rápido de SH e SC"""
     fig, ax = plt.subplots(figsize=(6, 4))
     categorias = ['Superaq. (SH)', 'Subresf. (SC)']
-    valores = [sh, sc]
-    cores = ['orange', 'cyan']
+    valores = [max(sh, 0), max(sc, 0)] # Evita barras negativas no visual
     
-    bars = ax.bar(categorias, valores, color=cores, edgecolor='black', width=0.6)
-    ax.axhline(0, color='black', linewidth=0.8)
+    bars = ax.bar(categorias, valores, color=['#FF9800', '#00BCD4'], edgecolor='black', width=0.5)
     
-    # Adiciona os valores no topo das barras
+    # Rótulos automáticos no topo das barras
     for bar in bars:
         yval = bar.get_height()
-        ax.text(bar.get_x() + bar.get_width()/2, yval + 0.1, f"{yval}°C", ha='center', va='bottom', fontweight='bold')
+        ax.text(bar.get_x() + bar.get_width()/2, yval + 0.2, f"{yval:.1f}°C", 
+                ha='center', va='bottom', fontweight='bold')
     
     ax.set_ylim(0, max(max(valores) + 5, 15))
-    ax.set_ylabel("Temperatura (°C)")
-    ax.set_title("Diagnóstico Térmico", fontsize=10)
+    ax.set_ylabel("Diferencial de Temp. (°C)")
+    ax.set_title("Diagnóstico de Performance Térmica", fontsize=10)
     
     plt.tight_layout()
     return fig
 
-# LINHA 660
-# LINHA 661
-# LINHA 662
-# LINHA 663
-# LINHA 664
-# LINHA 665
-# LINHA 666
-# LINHA 667
-# LINHA 668
-# LINHA 669
-# LINHA 670
-# LINHA 671
-# LINHA 672
-# LINHA 673
-# LINHA 674
-# LINHA 675
-# LINHA 676
-# LINHA 677
-# LINHA 678
-# LINHA 679
-# LINHA 680
-# LINHA 681
-# LINHA 682
-# LINHA 683
-# LINHA 684
-# LINHA 685
-# LINHA 686
-# LINHA 687
-# LINHA 688
-# LINHA 689
-# LINHA 690
-# LINHA 691
-# LINHA 692
-# LINHA 693
-# LINHA 694
-# LINHA 695
-# LINHA 696
-# LINHA 697
-# LINHA 698
-# LINHA 699
-# LINHA 700
-# LINHA 701
-# LINHA 702
-# LINHA 703
-# LINHA 704
-# LINHA 705
-# LINHA 706
-# LINHA 707
-# LINHA 708
-# LINHA 709
-# LINHA 710
-# LINHA 711
-# LINHA 712
-# LINHA 713
-# LINHA 714
-# LINHA 715
-# LINHA 716
-# LINHA 717
-# LINHA 718
-# LINHA 719
-# LINHA 720
-# LINHA 721
-# LINHA 722
-# LINHA 723
-# LINHA 724
-# LINHA 725
-# LINHA 726
-# LINHA 727
-# LINHA 728
-# LINHA 729
-# LINHA 730
-# LINHA 731
-# LINHA 732
-# LINHA 733
-# LINHA 734
-# LINHA 735
-# LINHA 736
-# LINHA 737
-# LINHA 738
-# LINHA 739
-# LINHA 740
-# LINHA 741
-# LINHA 742
-# LINHA 743
-# LINHA 744
-# LINHA 745
-# LINHA 746
-# LINHA 747
-# LINHA 748
-# LINHA 749
-# LINHA 750
-# LINHA 751
-# LINHA 752
-# LINHA 753
-# LINHA 754
-# LINHA 755
-# LINHA 756
-# LINHA 757
-# LINHA 758
-# LINHA 759
-# LINHA 760
-# LINHA 761
-# LINHA 762
-# LINHA 763
-# LINHA 764
-# LINHA 765
-# LINHA 766
-# LINHA 767
-# LINHA 768
-# LINHA 769
-# LINHA 770
-# LINHA 771
-# LINHA 772
-# LINHA 773
-# LINHA 774
-# LINHA 775
-# LINHA 776
-# LINHA 777
-# LINHA 778
-# LINHA 779
-# LINHA 780
-# LINHA 781
-# LINHA 782
-# LINHA 783
-# LINHA 784
-# LINHA 785
-# LINHA 786
-# LINHA 787
-# LINHA 788
-# LINHA 789
-# LINHA 790
-# LINHA 791
-# LINHA 792
-# LINHA 793
-# LINHA 794
-# LINHA 795
-# LINHA 796
-# LINHA 797
-# LINHA 798
-# LINHA 799
-# LINHA 800
 ###############################################################################
 # [ BLOCO 05 DE 12 ] - MOTOR DE DIAGNÓSTICO E INTELIGÊNCIA DE CAMPO            #
-# VERSÃO: 4.700 (BLINDADA) - LINHAS: 801 A 1000                                #
+# VERSÃO: 4.700 (BLINDADA) - FOCO: LÓGICA TÉCNICA E PERFORMANCE                #
 ###############################################################################
 
 # 11. MOTOR DE DIAGNÓSTICO (IA DE REFRIGERAÇÃO)
 def gerar_diagnostico_hvac(sh, sc, corrente, p_alta, p_baixa):
-    """Analisa os parâmetros térmicos e elétricos para sugerir falhas"""
-    diagnostico = []
-    medidas = []
+    """Analisa parâmetros térmicos/elétricos para sugerir falhas reais"""
+    diag, reco = [], []
     
-    # Lógica de Falta de Fluido Refrigerante
+    # 1. Baixa Carga de Fluido (SH Alto + SC Baixo)
     if sh > 12 and sc < 3:
-        diagnostico.append("SINTOMA: Baixa carga de fluido refrigerante detectada.")
-        medidas.append("- Realizar teste de estanqueidade com nitrogênio.")
-        medidas.append("- Verificar pontos de vazamento em flanges e soldas.")
+        diag.append("SINTOMA: Baixa carga de fluido refrigerante detectada.")
+        reco.extend(["- Realizar teste de estanqueidade com nitrogênio.", 
+                     "- Verificar vazamentos em flanges e soldas."])
         
-    # Lógica de Excesso de Carga ou Condensadora Suja
+    # 2. Excesso de Carga ou Condensadora Suja (SC Alto + P. Alta)
     elif sc > 10 and p_alta > 400:
-        diagnostico.append("SINTOMA: Alta pressão de condensação / Excesso de fluido.")
-        medidas.append("- Limpar a serpentina da unidade condensadora.")
-        medidas.append("- Verificar funcionamento do ventilador externo.")
+        diag.append("SINTOMA: Alta pressão de condensação / Excesso de fluido.")
+        reco.extend(["- Limpar a serpentina da unidade condensadora.", 
+                     "- Verificar ventilador da unidade externa."])
         
-    # Lógica de Ineficiência do Compressor
+    # 3. Ineficiência do Compressor (P. Baixa Alta + P. Alta Baixa + Corrente Baixa)
     elif p_baixa > 150 and p_alta < 300 and corrente < 5:
-        diagnostico.append("SINTOMA: Compressor apresentando baixa compressão (bypass).")
-        medidas.append("- Medir pressões com compressor desligado e em partida.")
-        medidas.append("- Verificar válvulas internas do compressor.")
+        diag.append("SINTOMA: Compressor com baixa compressão (bypass).")
+        reco.extend(["- Comparar pressões com compressor parado/partida.", 
+                     "- Avaliar substituição das válvulas ou compressor."])
 
-    # Lógica de Evaporadora Obstruída
+    # 4. Evaporadora Obstruída / Baixo Fluxo (SH Baixo + P. Baixa Baixa)
     elif sh < 4 and p_baixa < 100:
-        diagnostico.append("SINTOMA: Baixo fluxo de ar na evaporadora ou congelamento.")
-        medidas.append("- Limpar filtros de ar e serpentina interna.")
-        medidas.append("- Checar motor ventilador da evaporadora.")
+        diag.append("SINTOMA: Baixo fluxo de ar ou congelamento na evaporadora.")
+        reco.extend(["- Limpar filtros de ar e serpentina interna.", 
+                     "- Checar motor ventilador da evaporadora."])
 
-    if not diagnostico:
-        diagnostico.append("SISTEMA OPERANDO EM PARÂMETROS NOMINAIS.")
-        medidas.append("- Realizar apenas manutenção preventiva de rotina.")
+    # 5. Sistema em Equilíbrio
+    if not diag:
+        diag.append("SISTEMA OPERANDO EM PARÂMETROS NOMINAIS.")
+        reco.append("- Realizar apenas manutenção preventiva de rotina.")
 
-    resultado_final = {
-        "status": "\n".join(diagnostico),
-        "recomendacoes": "\n".join(medidas)
+    return {
+        "status": "\n".join(diag),
+        "recomendacoes": "\n".join(reco)
     }
-    return resultado_final
 
-# LINHA 850
-# LINHA 851
-# LINHA 852
-# LINHA 853
-# LINHA 854
-# LINHA 855
-# LINHA 856
-# LINHA 857
-# LINHA 858
-# LINHA 859
-# LINHA 860
-# LINHA 861
-# LINHA 862
-# LINHA 863
-# LINHA 864
-# LINHA 865
-# LINHA 866
-# LINHA 867
-# LINHA 868
-# LINHA 869
-# LINHA 870
-# LINHA 871
-# LINHA 872
-# LINHA 873
-# LINHA 874
-# LINHA 875
-# LINHA 876
-# LINHA 877
-# LINHA 878
-# LINHA 879
-# LINHA 880
-# LINHA 881
-# LINHA 882
-# LINHA 883
-# LINHA 884
-# LINHA 885
-# LINHA 886
-# LINHA 887
-# LINHA 888
-# LINHA 889
-# LINHA 890
-# LINHA 891
-# LINHA 892
-# LINHA 893
-# LINHA 894
-# LINHA 895
-# LINHA 896
-# LINHA 897
-# LINHA 898
-# LINHA 899
-# LINHA 900
-# LINHA 901
-# LINHA 902
-# LINHA 903
-# LINHA 904
-# LINHA 905
-# LINHA 906
-# LINHA 907
-# LINHA 908
-# LINHA 909
-# LINHA 910
-# LINHA 911
-# LINHA 912
-# LINHA 913
-# LINHA 914
-# LINHA 915
-# LINHA 916
-# LINHA 917
-# LINHA 918
-# LINHA 919
-# LINHA 920
-# LINHA 921
-# LINHA 922
-# LINHA 923
-# LINHA 924
-# LINHA 925
-# LINHA 926
-# LINHA 927
-# LINHA 928
-# LINHA 929
-# LINHA 930
-# LINHA 931
-# LINHA 932
-# LINHA 933
-# LINHA 934
-# LINHA 935
-# LINHA 936
-# LINHA 937
-# LINHA 938
-# LINHA 939
-# LINHA 940
-# LINHA 941
-# LINHA 942
-# LINHA 943
-# LINHA 944
-# LINHA 945
-# LINHA 946
-# LINHA 947
-# LINHA 948
-# LINHA 949
-# LINHA 950
-# LINHA 951
-# LINHA 952
-# LINHA 953
-# LINHA 954
-# LINHA 955
-# LINHA 956
-# LINHA 957
-# LINHA 958
-# LINHA 959
-# LINHA 960
-# LINHA 961
-# LINHA 962
-# LINHA 963
-# LINHA 964
-# LINHA 965
-# LINHA 966
-# LINHA 967
-# LINHA 968
-# LINHA 969
-# LINHA 970
-# LINHA 971
-# LINHA 972
-# LINHA 973
-# LINHA 974
-# LINHA 975
-# LINHA 976
-# LINHA 977
-# LINHA 978
-# LINHA 979
-# LINHA 980
-# LINHA 981
-# LINHA 982
-# LINHA 983
-# LINHA 984
-# LINHA 985
-# LINHA 986
-# LINHA 987
-# LINHA 988
-# LINHA 989
-# LINHA 990
-# LINHA 991
-# LINHA 992
-# LINHA 993
-# LINHA 994
-# LINHA 995
-# LINHA 996
-# LINHA 997
-# LINHA 998
-# LINHA 999
-# LINHA 1000
 ###############################################################################
 # [ BLOCO 06 DE 12 ] - MOTOR DE PDF E RELATÓRIO DO CLIENTE                    #
-# VERSÃO: 4.700 (BLINDADA) - LINHAS: 1001 A 1200                               #
+# VERSÃO: 4.700 (BLINDADA) - FOCO: DOCUMENTAÇÃO E COMPATIBILIDADE             #
 ###############################################################################
 
 class GeradorPDF(FPDF):
     def header(self):
-        # Cabeçalho Padrão Profissional
         self.set_font('Arial', 'B', 15)
         self.cell(0, 10, 'RELATÓRIO TÉCNICO DE MANUTENÇÃO HVAC', 0, 1, 'C')
         self.set_font('Arial', 'I', 10)
@@ -1344,405 +338,122 @@ class GeradorPDF(FPDF):
         self.ln(10)
 
     def footer(self):
-        # Rodapé com Numeração e Data
         self.set_y(-15)
         self.set_font('Arial', 'I', 8)
-        self.cell(0, 10, f'Página {self.page_no()} | Gerado em: {datetime.now().strftime("%d/%m/%Y %H:%M")}', 0, 0, 'C')
+        data_geracao = datetime.now().strftime("%d/%m/%Y %H:%M")
+        self.cell(0, 10, f'Página {self.page_no()} | Gerado em: {data_geracao}', 0, 0, 'C')
 
 def gerar_pdf_cliente(dados):
+    # Inicialização do documento
     pdf = GeradorPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=11)
+    fill_color = (230, 230, 230)
     
-    # Seção 1: Dados do Cliente e Equipamento
-    pdf.set_fill_color(230, 230, 230)
+    # 1. IDENTIFICAÇÃO (Estrutura Simplificada)
+    pdf.set_fill_color(*fill_color)
     pdf.cell(0, 8, "1. IDENTIFICAÇÃO DO ATENDIMENTO", 1, 1, 'L', 1)
     pdf.ln(2)
-    pdf.cell(0, 7, f"Cliente: {dados['nome']}", 0, 1)
-    pdf.cell(0, 7, f"CPF/CNPJ: {dados['cpf']}", 0, 1)
-    pdf.cell(0, 7, f"Modelo do Aparelho: {dados['modelo']}", 0, 1)
-    pdf.cell(0, 7, f"Fluido Refrigerante: {dados['fluido']}", 0, 1)
+    
+    # Mapeamento de campos para evitar repetição de código
+    campos = [
+        f"Cliente: {dados.get('nome', 'N/A')}",
+        f"CPF/CNPJ: {dados.get('cpf', 'N/A')}",
+        f"Modelo: {dados.get('modelo', 'N/A')}",
+        f"Fluido: {dados.get('fluido', 'R410A')}"
+    ]
+    for campo in campos:
+        pdf.cell(0, 7, campo, 0, 1)
     pdf.ln(5)
 
-    # Seção 2: Parâmetros Técnicos de Operação
-    pdf.set_fill_color(230, 230, 230)
+    # 2. PARÂMETROS TÉCNICOS
+    pdf.set_fill_color(*fill_color)
     pdf.cell(0, 8, "2. PARÂMETROS DE FUNCIONAMENTO", 1, 1, 'L', 1)
     pdf.ln(2)
     
-    # Tabela Simples para o Cliente
-    pdf.cell(95, 7, f"Pressão de Alta: {dados['p_alta']} PSI", 1)
-    pdf.cell(95, 7, f"Pressão de Baixa: {dados['p_baixa']} PSI", 1, 1)
-    pdf.cell(95, 7, f"Temp. de Sucção: {dados['t_suc']} °C", 1)
-    pdf.cell(95, 7, f"Corrente Total: {dados['corrente']} A", 1, 1)
+    # Tabela 2x2 Otimizada
+    pdf.cell(95, 7, f"P. Alta: {dados.get('p_alta', 0)} PSI", 1)
+    pdf.cell(95, 7, f"P. Baixa: {dados.get('p_baixa', 0)} PSI", 1, 1)
+    pdf.cell(95, 7, f"T. Sucção: {dados.get('t_suc', 0)} °C", 1)
+    pdf.cell(95, 7, f"Corrente: {dados.get('corrente', 0)} A", 1, 1)
     pdf.ln(10)
 
-    # Seção 3: Conclusão e Assinatura
-    pdf.multi_cell(0, 7, "CONCLUSÃO TÉCNICA:\nEquipamento vistoriado e testado sob condições de carga nominal. Os parâmetros coletados foram registrados para fins de garantia e histórico de manutenção.")
+    # 3. CONCLUSÃO E ASSINATURA
+    conclusao = ("Equipamento vistoriado e testado sob condições de carga nominal. "
+                 "Os parâmetros coletados foram registrados para fins de garantia e histórico.")
+    pdf.multi_cell(0, 7, conclusao)
+    
     pdf.ln(20)
     pdf.line(60, pdf.get_y(), 150, pdf.get_y())
     pdf.cell(0, 10, "Responsável Técnico", 0, 1, 'C')
     
-    return pdf.output(dest='S').encode('latin-1')
+    # Retorno seguro (Tratamento de acentuação para o navegador)
+    return pdf.output(dest='S').encode('latin-1', errors='replace')
 
-# LINHA 1058
-# LINHA 1059
-# LINHA 1060
-# LINHA 1061
-# LINHA 1062
-# LINHA 1063
-# LINHA 1064
-# LINHA 1065
-# LINHA 1066
-# LINHA 1067
-# LINHA 1068
-# LINHA 1069
-# LINHA 1070
-# LINHA 1071
-# LINHA 1072
-# LINHA 1073
-# LINHA 1074
-# LINHA 1075
-# LINHA 1076
-# LINHA 1077
-# LINHA 1078
-# LINHA 1079
-# LINHA 1080
-# LINHA 1081
-# LINHA 1082
-# LINHA 1083
-# LINHA 1084
-# LINHA 1085
-# LINHA 1086
-# LINHA 1087
-# LINHA 1088
-# LINHA 1089
-# LINHA 1090
-# LINHA 1091
-# LINHA 1092
-# LINHA 1093
-# LINHA 1094
-# LINHA 1095
-# LINHA 1096
-# LINHA 1097
-# LINHA 1098
-# LINHA 1099
-# LINHA 1100
-# LINHA 1101
-# LINHA 1102
-# LINHA 1103
-# LINHA 1104
-# LINHA 1105
-# LINHA 1106
-# LINHA 1107
-# LINHA 1108
-# LINHA 1109
-# LINHA 1110
-# LINHA 1111
-# LINHA 1112
-# LINHA 1113
-# LINHA 1114
-# LINHA 1115
-# LINHA 1116
-# LINHA 1117
-# LINHA 1118
-# LINHA 1119
-# LINHA 1120
-# LINHA 1121
-# LINHA 1122
-# LINHA 1123
-# LINHA 1124
-# LINHA 1125
-# LINHA 1126
-# LINHA 1127
-# LINHA 1128
-# LINHA 1129
-# LINHA 1130
-# LINHA 1131
-# LINHA 1132
-# LINHA 1133
-# LINHA 1134
-# LINHA 1135
-# LINHA 1136
-# LINHA 1137
-# LINHA 1138
-# LINHA 1139
-# LINHA 1140
-# LINHA 1141
-# LINHA 1142
-# LINHA 1143
-# LINHA 1144
-# LINHA 1145
-# LINHA 1146
-# LINHA 1147
-# LINHA 1148
-# LINHA 1149
-# LINHA 1150
-# LINHA 1151
-# LINHA 1152
-# LINHA 1153
-# LINHA 1154
-# LINHA 1155
-# LINHA 1156
-# LINHA 1157
-# LINHA 1158
-# LINHA 1159
-# LINHA 1160
-# LINHA 1161
-# LINHA 1162
-# LINHA 1163
-# LINHA 1164
-# LINHA 1165
-# LINHA 1166
-# LINHA 1167
-# LINHA 1168
-# LINHA 1169
-# LINHA 1170
-# LINHA 1171
-# LINHA 1172
-# LINHA 1173
-# LINHA 1174
-# LINHA 1175
-# LINHA 1176
-# LINHA 1177
-# LINHA 1178
-# LINHA 1179
-# LINHA 1180
-# LINHA 1181
-# LINHA 1182
-# LINHA 1183
-# LINHA 1184
-# LINHA 1185
-# LINHA 1186
-# LINHA 1187
-# LINHA 1188
-# LINHA 1189
-# LINHA 1190
-# LINHA 1191
-# LINHA 1192
-# LINHA 1193
-# LINHA 1194
-# LINHA 1195
-# LINHA 1196
-# LINHA 1197
-# LINHA 1198
-# LINHA 1199
-# LINHA 1200
+
 ###############################################################################
 # [ BLOCO 07 DE 12 ] - PRONTUÁRIO TÉCNICO INTERNO (ESTRATÉGICO)                #
-# VERSÃO: 4.700 (BLINDADA) - LINHAS: 1201 A 1400                               #
+# VERSÃO: 4.700 (BLINDADA) - FOCO: ANÁLISE AVANÇADA E PERFORMANCE              #
 ###############################################################################
 
+import io
+
 def gerar_pdf_interno(dados, fig_mollier, fig_sh_sc):
-    """Gera o relatório completo com diagnósticos e gráficos para uso interno"""
+    """Gera o relatório avançado com gráficos para uso da engenharia"""
     pdf = GeradorPDF()
     pdf.add_page()
-    pdf.set_font("Arial", 'B', 12)
     
-    # Cabeçalho de Sigilo
+    # Cabeçalho de Alerta (Cor Vermelha para Sigilo)
+    pdf.set_font("Arial", 'B', 12)
     pdf.set_text_color(200, 0, 0)
     pdf.cell(0, 10, "DOCUMENTO INTERNO - PROPRIEDADE TÉCNICA", 0, 1, 'C')
     pdf.set_text_color(0, 0, 0)
     pdf.ln(5)
 
-    # Dados Técnicos Avançados
+    # 1. Seção Termodinâmica (Azul Suave)
     pdf.set_fill_color(200, 220, 255)
     pdf.cell(0, 8, "ANÁLISE TERMODINÂMICA AVANÇADA", 1, 1, 'L', 1)
     pdf.set_font("Arial", size=10)
     
-    col_w = 47.5
-    pdf.cell(col_w, 8, f"SH: {dados['sh']} °C", 1)
-    pdf.cell(col_w, 8, f"SC: {dados['sc']} °C", 1)
-    pdf.cell(col_w, 8, f"T. Evap: {dados['t_evap']} °C", 1)
-    pdf.cell(col_w, 8, f"T. Cond: {dados['t_cond']} °C", 1, 1)
+    w = 47.5
+    pdf.cell(w, 8, f"SH: {dados.get('sh', 0)} °C", 1)
+    pdf.cell(w, 8, f"SC: {dados.get('sc', 0)} °C", 1)
+    pdf.cell(w, 8, f"T. Evap: {dados.get('t_evap', 0)} °C", 1)
+    pdf.cell(w, 8, f"T. Cond: {dados.get('t_cond', 0)} °C", 1, 1)
     pdf.ln(5)
 
-    # Inserção do Diagnóstico da IA
+    # 2. Diagnóstico IA
     pdf.set_font("Arial", 'B', 11)
-    pdf.cell(0, 8, "DIAGNÓSTICO DO SISTEMA (IA):", 0, 1)
+    pdf.cell(0, 8, "DIAGNÓSTICO E PLANO DE AÇÃO (IA):", 0, 1)
     pdf.set_font("Arial", size=10)
-    pdf.multi_cell(0, 6, dados['diagnostico_status'], border=1)
-    pdf.ln(5)
-    
-    pdf.set_font("Arial", 'B', 11)
-    pdf.cell(0, 8, "PLANO DE AÇÃO SUGERIDO:", 0, 1)
-    pdf.set_font("Arial", size=10)
-    pdf.multi_cell(0, 6, dados['diagnostico_recomenda'], border=1)
+    pdf.multi_cell(0, 6, f"STATUS: {dados.get('diagnostico_status', 'Sem dados')}", border=1)
+    pdf.ln(2)
+    pdf.multi_cell(0, 6, f"RECOMENDAÇÃO: {dados.get('diagnostico_recomenda', 'N/A')}", border=1)
     pdf.ln(10)
 
-    # Salvamento temporário dos gráficos para inserção no PDF
-    fig_mollier.savefig("temp_mollier.png", dpi=100)
-    fig_sh_sc.savefig("temp_sh_sc.png", dpi=100)
-
-    # Posicionamento dos Gráficos no PDF
-    pdf.image("temp_mollier.png", x=10, y=pdf.get_y(), w=90)
-    pdf.image("temp_sh_sc.png", x=105, y=pdf.get_y(), w=90)
+    # 3. Inserção de Gráficos (Otimização via BytesIO)
+    # Evita salvar arquivos físicos no servidor (mais rápido e limpo)
+    for fig, name, pos_x in [(fig_mollier, "mollier", 10), (fig_sh_sc, "shsc", 105)]:
+        buf = io.BytesIO()
+        fig.savefig(buf, format='png', dpi=100)
+        buf.seek(0)
+        pdf.image(buf, x=pos_x, y=pdf.get_y(), w=95)
     
-    # Limpeza de arquivos temporários após renderização
-    if os.path.exists("temp_mollier.png"): os.remove("temp_mollier.png")
-    if os.path.exists("temp_sh_sc.png"): os.remove("temp_sh_sc.png")
+    pdf.ln(60) # Espaço para os gráficos renderizados
 
-    return pdf.output(dest='S').encode('latin-1')
+    return pdf.output(dest='S').encode('latin-1', errors='replace')
 
-# LINHA 1253
-# LINHA 1254
-# LINHA 1255
-# LINHA 1256
-# LINHA 1257
-# LINHA 1258
-# LINHA 1259
-# LINHA 1260
-# LINHA 1261
-# LINHA 1262
-# LINHA 1263
-# LINHA 1264
-# LINHA 1265
-# LINHA 1266
-# LINHA 1267
-# LINHA 1268
-# LINHA 1269
-# LINHA 1270
-# LINHA 1271
-# LINHA 1272
-# LINHA 1273
-# LINHA 1274
-# LINHA 1275
-# LINHA 1276
-# LINHA 1277
-# LINHA 1278
-# LINHA 1279
-# LINHA 1280
-# LINHA 1281
-# LINHA 1282
-# LINHA 1283
-# LINHA 1284
-# LINHA 1285
-# LINHA 1286
-# LINHA 1287
-# LINHA 1288
-# LINHA 1289
-# LINHA 1290
-# LINHA 1291
-# LINHA 1292
-# LINHA 1293
-# LINHA 1294
-# LINHA 1295
-# LINHA 1296
-# LINHA 1297
-# LINHA 1298
-# LINHA 1299
-# LINHA 1300
-# LINHA 1301
-# LINHA 1302
-# LINHA 1303
-# LINHA 1304
-# LINHA 1305
-# LINHA 1306
-# LINHA 1307
-# LINHA 1308
-# LINHA 1309
-# LINHA 1310
-# LINHA 1311
-# LINHA 1312
-# LINHA 1313
-# LINHA 1314
-# LINHA 1315
-# LINHA 1316
-# LINHA 1317
-# LINHA 1318
-# LINHA 1319
-# LINHA 1320
-# LINHA 1321
-# LINHA 1322
-# LINHA 1323
-# LINHA 1324
-# LINHA 1325
-# LINHA 1326
-# LINHA 1327
-# LINHA 1328
-# LINHA 1329
-# LINHA 1330
-# LINHA 1331
-# LINHA 1332
-# LINHA 1333
-# LINHA 1334
-# LINHA 1335
-# LINHA 1336
-# LINHA 1337
-# LINHA 1338
-# LINHA 1339
-# LINHA 1340
-# LINHA 1341
-# LINHA 1342
-# LINHA 1343
-# LINHA 1344
-# LINHA 1345
-# LINHA 1346
-# LINHA 1347
-# LINHA 1348
-# LINHA 1349
-# LINHA 1350
-# LINHA 1351
-# LINHA 1352
-# LINHA 1353
-# LINHA 1354
-# LINHA 1355
-# LINHA 1356
-# LINHA 1357
-# LINHA 1358
-# LINHA 1359
-# LINHA 1360
-# LINHA 1361
-# LINHA 1362
-# LINHA 1363
-# LINHA 1364
-# LINHA 1365
-# LINHA 1366
-# LINHA 1367
-# LINHA 1368
-# LINHA 1369
-# LINHA 1370
-# LINHA 1371
-# LINHA 1372
-# LINHA 1373
-# LINHA 1374
-# LINHA 1375
-# LINHA 1376
-# LINHA 1377
-# LINHA 1378
-# LINHA 1379
-# LINHA 1380
-# LINHA 1381
-# LINHA 1382
-# LINHA 1383
-# LINHA 1384
-# LINHA 1385
-# LINHA 1386
-# LINHA 1387
-# LINHA 1388
-# LINHA 1389
-# LINHA 1390
-# LINHA 1391
-# LINHA 1392
-# LINHA 1393
-# LINHA 1394
-# LINHA 1395
-# LINHA 1396
-# LINHA 1397
-# LINHA 1398
-# LINHA 1399
-# LINHA 1400
 ###############################################################################
-# [ BLOCO 08 DE 12 ] - INTERFACE: NAVEGAÇÃO E IDENTIFICAÇÃO (ABA 1)            #
-# VERSÃO: 4.700 (BLINDADA) - LINHAS: 1401 A 1600                               #
+# [ BLOCO 08 DE 12 ] - INTERFACE: NAVEGAÇÃO E IDENTIFICAÇÃO (ABA 1)           #
+# VERSÃO: 4.700 (BLINDADA) - FOCO: FLUXO DE DADOS E UX                         #
 ###############################################################################
 
 def main():
-    # 12. BARRA LATERAL (SIDEBAR) - NAVEGAÇÃO E LOGO
+    # 12. BARRA LATERAL (SIDEBAR) - NAVEGAÇÃO
     with st.sidebar:
         st.markdown(f"### ❄️ HVAC MESTRE v4.700")
-        st.info(f"📅 Data: {Formatador.data_atual()} | 🕒 {Formatador.hora_atual()}")
+        st.info(f"📅 {datetime.now().strftime('%d/%m/%Y')} | 🕒 {datetime.now().strftime('%H:%M')}")
         
-        # Menu de Seleção de Abas
         selecao = st.radio(
             "NAVEGAÇÃO PRINCIPAL:",
             ["1. Identificação", "2. Medições Elétricas", "3. Ciclo Frigorífico", 
@@ -1751,126 +462,77 @@ def main():
         )
         
         st.markdown("---")
-        st.caption("Desenvolvido para: Marcos Alexandre")
         if st.button("Limpar Sessão Atual"):
             st.session_state.clear()
             st.rerun()
+        st.caption("Desenvolvido para: Marcos Alexandre")
 
-    # 13. CONSTRUÇÃO DAS ABAS NA ÁREA PRINCIPAL
+    # 13. CONSTRUÇÃO DAS ABAS PRINCIPAIS
     aba1, aba2, aba3, aba4, aba5, aba6 = st.tabs([
         "🆔 Identificação", "⚡ Elétrica", "🌡️ Térmica", 
         "📚 Histórico", "📋 Checklist", "🧠 Diagnóstico"
     ])
 
-   # --- ABA 1: IDENTIFICAÇÃO DO CLIENTE E EQUIPAMENTO (CORRIGIDO) ---
-with aba1:
-    janela_titulo("DADOS DO CLIENTE E EQUIPAMENTO")
-    
-    # Todo o bloco abaixo agora está identado (4 espaços para a direita)
-    with st.container():
-        col1, col2 = st.columns(2)
+    # --- ABA 1: IDENTIFICAÇÃO ---
+    with aba1:
+        st.subheader("DADOS DO CLIENTE E EQUIPAMENTO")
         
-        with col1:
-            # Registro do Nome e Documento
-            cliente_nome = st.text_input("Nome Completo / Razão Social:", placeholder="Ex: Marcos Alexandre", key="nome_input")
-            cliente_cpf = st.text_input("CPF ou CNPJ:", placeholder="000.000.000-00", key="cpf_input")
-            cliente_contato = st.text_input("WhatsApp do Cliente (com DDD):", placeholder="21999999999", key="zap_input")
+        with st.container():
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                cliente_nome = st.text_input("Nome / Razão Social:", placeholder="Ex: Marcos Alexandre", key="nome_in")
+                cliente_cpf = st.text_input("CPF ou CNPJ:", placeholder="000.000.000-00", key="cpf_in")
+                cliente_zap = st.text_input("WhatsApp (com DDD):", placeholder="21999999999", key="zap_in")
+            
+            with col2:
+                data_visita = st.date_input("Data do Atendimento:", value=datetime.now(), format="DD/MM/YYYY")
+                tipo_servico = st.selectbox(
+                    "Tipo de Serviço:",
+                    ["Instalação", "Manutenção Preventiva (PMOC)", "Manutenção Corretiva", "Infraestrutura"],
+                    key="serv_in"
+                )
         
-        with col2:
-            # DATA NO FORMATO BR (Instrução 1)
-            data_atual = datetime.now()
-            data_visita = st.date_input("Data do Atendimento:", value=data_atual, format="DD/MM/YYYY")
-            
-            # TIPO DE SERVIÇO (Gatilho para o Item 8 - Checklist Dinâmico)
-            tipo_servico = st.selectbox(
-                "Selecione o Tipo de Serviço:",
-                ["Instalação", "Manutenção Preventiva (PMOC)", "Manutenção Corretiva", "Infraestrutura"],
-                key="servico_input"
-            )
-            
+        # Sincronização Automática com Session State (Sem redundância)
+        st.session_state.update({
+            "nome": cliente_nome,
+            "cpf": cliente_cpf,
+            "whatsapp": cliente_zap,
+            "data": data_visita.strftime("%d/%m/%Y"),
+            "servico": tipo_servico
+        })
+        
         st.markdown("---")
-        st.info("📌 Preencha os dados acima para habilitar a personalização do laudo técnico.")
+        st.info("📌 Preencha os dados acima para habilitar a personalização do laudo.")
 
-    # --- FINALIZAÇÃO DA ABA 1 E SALVAMENTO DE ESTADO ---
-    # Correção: O dicionário deve ser atualizado DENTRO do fluxo, sem chaves órfãs.
-    st.session_state['nome'] = cliente_nome
-    st.session_state['cpf'] = cliente_cpf
-    st.session_state['whatsapp_cliente'] = cliente_contato
-    st.session_state['data_br'] = data_visita.strftime("%d/%m/%Y")
-    st.session_state['servico_tipo'] = tipo_servico
-
-    # Sincronização com o dicionário mestre de dados
-    if 'dados_cliente' not in st.session_state:
-        st.session_state.dados_cliente = {}
-        
-    st.session_state.dados_cliente.update({
-        "nome": cliente_nome,
-        "cpf": cliente_cpf,
-        "whatsapp": cliente_contato,
-        "data": data_visita.strftime("%d/%m/%Y"),
-        "servico": tipo_servico
-    })
-
-# [ FIM DA ABA 1 ] - A partir daqui, as próximas abas recomeçam no nível zero de indentação (margem esquerda)
-
-# --- ABA 3: CICLO FRIGORÍFICO (CONTINUAÇÃO) ---
-    st.markdown("### 📊 Resultados em Tempo Real")
-    res1, res2, res3, res4 = st.columns(4)
-    
-    # Exibição das Métricas de Performance
-    res1.metric("Superaquecimento", f"{params['sh']} °C", delta=f"{params['sh']-10:.1f}K", delta_color="inverse")
-    res2.metric("Sub-resfriamento", f"{params['sc']} °C", delta=f"{params['sc']-5:.1f}K")
-    res3.metric("Temp. Evaporação", f"{params['t_evap']} °C")
-    res4.metric("Temp. Condensação", f"{params['t_cond']} °C")
-
-# --- LINHA 2015: INÍCIO DA ABA 6 (VEREDITO E SALVAMENTO) ---
-with aba6:
-    janela_titulo("VEREDITO TÉCNICO E INTELIGÊNCIA ARTIFICIAL")
-    
-    # Exibição de Resumo de métricas na aba de fechamento
-    with st.container():
-        st.write("### 📝 Resumo do Diagnóstico")
-        # (Aqui entraria a lógica de diagnóstico baseada nos params)
-        
-    st.markdown("---")
-    janela_titulo("EXPORTAÇÃO E ARQUIVAMENTO")
-
-    # Bloco de Salvamento (8 espaços de recuo)
-    if st.button("💾 FINALIZAR E SALVAR ATENDIMENTO"):
-        try:
-            dados_para_salvar = {
-                'nome': nome_cliente, 
-                'cpf': cpf_cliente, 
-                'data': data_visita.strftime("%d/%m/%Y"),
-                'modelo': modelo_equip, 
-                'fluido': fluido_sel, 
-                'p_alta': p_alta, 
-                'p_baixa': p_baixa,
-                'sh': params['sh'], 
-                'sc': params['sc'],
-                'corrente': curr_total, 
-                'checklist': st.session_state.checklist_items,
-                'diagnostico': "Concluído" # diag['status']
-            }
+    # --- ABA 3: CICLO FRIGORÍFICO (MÉTRICAS) ---
+    with aba3:
+        if 'params' in st.session_state:
+            p = st.session_state.params
+            st.markdown("### 📊 Resultados em Tempo Real")
+            res1, res2, res3, res4 = st.columns(4)
             
-            novo_id = salvar_atendimento(dados_para_salvar)
-            st.success(f"✅ Atendimento #{novo_id} salvo com sucesso no banco!")
-            st.balloons()
-            
-        except Exception as e:
-            st.error(f"❌ Erro ao salvar no banco de dados: {e}")
+            res1.metric("Superaquecimento", f"{p['sh']} °C", delta=f"{p['sh']-10:.1f}K", delta_color="inverse")
+            res2.metric("Sub-resfriamento", f"{p['sc']} °C", delta=f"{p['sc']-5:.1f}K")
+            res3.metric("Temp. Evaporação", f"{p['t_evap']} °C")
+            res4.metric("Temp. Condensação", f"{p['t_cond']} °C")
 
-# --- ENCERRAMENTO (FORA DAS ABAS, DENTRO DA MAIN - 4 espaços) ---
+    # --- ABA 6: FINALIZAÇÃO E SALVAMENTO ---
+    with aba6:
+        st.subheader("VEREDITO TÉCNICO E ARQUIVAMENTO")
+        
+        if st.button("💾 FINALIZAR E SALVAR ATENDIMENTO"):
+            try:
+                # Coleta centralizada de dados para o banco
+                sucesso = salvar_atendimento(st.session_state)
+                st.success(f"✅ Atendimento #{sucesso} salvo com sucesso!")
+                st.balloons()
+            except Exception as e:
+                st.error(f"❌ Erro ao salvar: {e}")
+
+    # RODAPÉ SIDEBAR
     st.sidebar.markdown("---")
-    st.sidebar.caption(f"Engine v4.700 | Lib: Streamlit/FPDF")
     st.sidebar.write("🔒 Conexão SQL: Ativa")
 
-# --- GATILHO DE EXECUÇÃO (ZERO ESPAÇOS - MARGEM ESQUERDA) ---
 if __name__ == "__main__":
-    import os
-    if not os.path.exists("temp"):
-        try:
-            os.makedirs("temp")
-        except:
-            pass
     main()
