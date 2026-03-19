@@ -118,76 +118,90 @@ with tab1:
             st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
             st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
 
-# --- ABA 02: ELÉTRICA (MÓDULO NOVO) ---
+# --- ABA 02: ELÉTRICA (Módulo Blindado - Definição Marcos Alexandre) ---
 with tab2:
-    st.subheader("⚡ Análise de Grandezas Elétricas")
-    col_v, col_i = st.columns(2)
-    with col_v:
-        with st.expander("📊 Tensão de Alimentação (V)", expanded=True):
-            v1, v2, v3 = st.columns(3)
-            st.session_state.dados['v_ab'] = v1.number_input("L1-L2 (V):", min_value=0.0, step=1.0)
-            st.session_state.dados['v_bc'] = v2.number_input("L2-L3 (V):", min_value=0.0, step=1.0)
-            st.session_state.dados['v_ca'] = v3.number_input("L3-L1 (V):", min_value=0.0, step=1.0)
-    with col_i:
-        with st.expander("📉 Corrente de Operação (A)", expanded=True):
-            i1, i2, i3 = st.columns(3)
-            st.session_state.dados['i_r'] = i1.number_input("L1 (A):", min_value=0.0, step=0.1)
-            st.session_state.dados['i_s'] = i2.number_input("L2 (A):", min_value=0.0, step=0.1)
-            st.session_state.dados['i_t'] = i3.number_input("L3 (A):", min_value=0.0, step=0.1)
+    st.subheader("⚡ Análise Elétrica e Eficiência Energética")
     
-    ce1, ce2 = st.columns(2)
-    with ce1:
-        with st.expander("🔋 Capacitores", expanded=True):
-            c_nom = st.number_input("Cap. Nominal (µF):", min_value=0.0)
-            c_real = st.number_input("Cap. Medido (µF):", min_value=0.0)
-            st.session_state.dados['cap_nominal'], st.session_state.dados['cap_real'] = c_nom, c_real
-    with ce2:
-        with st.expander("🛡️ Proteção", expanded=True):
-            st.session_state.dados['res_isolamento'] = st.text_input("Isolação (MΩ):")
-            st.session_state.dados['disjuntor_ok'] = st.radio("Componentes OK?", ["Sim", "Não"], horizontal=True)
-    
-    st.session_state.dados['obs_eletrica'] = st.text_area("Observações Elétricas:")
+    # Inicialização de variáveis elétricas no session_state (se não existirem)
+    if 'v_rede' not in st.session_state.dados:
+        st.session_state.dados.update({
+            'v_rede': 220.0, 'v_med': 0.0, 'lra': 0.0, 'rla': 0.0, 'i_med': 0.0,
+            'freq': 60.0, 'fp': 0.85, 'eta': 0.0, 'pot_ativa': 0.0, 'pot_reativa': 0.0,
+            'pot_aparente': 0.0, 'pot_mecanica': 0.0, 'res_terra': 0.0
+        })
 
-# --- SIDEBAR (PROTEGIDO) ---
-with st.sidebar:
-    st.title("🚀 Painel de Controle")
-    st.subheader("👤 Técnico Responsável")
-    st.session_state.dados['tecnico_nome'] = st.text_input("Nome:", value=st.session_state.dados['tecnico_nome'])
-    st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ Técnico:", value=st.session_state.dados['tecnico_documento'])
-    st.session_state.dados['tecnico_registro'] = st.text_input("Inscrição (CFT/CREA):", value=st.session_state.dados['tecnico_registro'])
-    
-    st.markdown("---")
-    
-    if not st.session_state.dados['nome'] or not st.session_state.dados['whatsapp']:
-        st.error("📋 STATUS: PENDENTE")
-    else:
-        st.success("📋 STATUS: PRONTO")
+    # CSS para destaque de campos (Fundo diferenciado para medições)
+    st.markdown("""
+        <style>
+        div[data-baseweb="input"] { border-radius: 4px; }
+        /* Destaque para Tensão Medida e Corrente Medida */
+        .destaque-eletrico input {
+            background-color: #fff9c4 !important; /* Amarelo claro para destaque */
+            color: #333 !important;
+            font-weight: bold !important;
+            border: 2px solid #fbc02d !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # BLOCO 1: GRANDEZAS DE PLACA VS MEDIDAS
+    with st.expander("📊 Monitoramento de Tensão e Corrente", expanded=True):
+        c1, c2, c3 = st.columns(3)
+        st.session_state.dados['v_rede'] = c1.number_input("Tensão Rede (V):", value=st.session_state.dados['v_rede'])
         
-    # MENSAGEM WHATSAPP ATUALIZADA (INCLUINDO ELÉTRICA)
-    msg_zap = (
-        f"*LAUDO TÉCNICO HVAC*\n\n"
-        f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
-        f"📍 END: {st.session_state.dados['endereco']}, {st.session_state.dados['numero']}\n"
-        f"📞 Contato: {st.session_state.dados['whatsapp']}\n\n"
-        f"⚙️ *EQUIPAMENTO:*\n"
-        f"📌 TAG: {st.session_state.dados['tag_id']} | Fab: {st.session_state.dados['fabricante']}\n"
-        f"❄️ Cap: {st.session_state.dados['capacidade']} BTU | Fluido: {st.session_state.dados['fluido']}\n"
-        f"🩺 Status: {st.session_state.dados['status_maquina']}\n\n"
-        f"⚡ *ANÁLISE ELÉTRICA:*\n"
-        f"🔌 Tensões: {st.session_state.dados['v_ab']}V / {st.session_state.dados['v_bc']}V / {st.session_state.dados['v_ca']}V\n"
-        f"📉 Correntes: {st.session_state.dados['i_r']}A / {st.session_state.dados['i_s']}A / {st.session_state.dados['i_t']}A\n"
-        f"🔋 Capacitor: {st.session_state.dados['cap_real']}µF | Proteção: {st.session_state.dados['disjuntor_ok']}\n\n"
-        f"👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}\n"
-        f"📅 Data: {st.session_state.dados['data']}"
-    )
-    
-    link_final = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_zap)}"
-    st.link_button("📲 Enviar Laudo via WhatsApp", link_final, use_container_width=True)
+        # Campo com Destaque: Tensão Medida
+        st.markdown('<div class="destaque-eletrico">', unsafe_allow_html=True)
+        st.session_state.dados['v_med'] = c2.number_input("Tensão Medida (V):", value=st.session_state.dados['v_med'], help="Destaque: Valor real no multímetro")
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        st.session_state.dados['freq'] = c3.number_input("Frequência (Hz):", value=60.0)
 
-    st.markdown("---")
-    if st.button("🗑️ Limpar Formulário", use_container_width=True):
-        chaves_tecnico = ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']
-        for key in st.session_state.dados.keys():
-            if key not in chaves_tecnico:
-                st.session_state.dados[key] = ""
-        st.rerun()
+        d1, d2, d3 = st.columns(3)
+        st.session_state.dados['lra'] = d1.number_input("LRA (A):", value=st.session_state.dados['lra'], help="Corrente de Partida")
+        st.session_state.dados['rla'] = d2.number_input("RLA (A):", value=st.session_state.dados['rla'], help="Corrente Nominal")
+        
+        # Campo com Destaque: Corrente Medida
+        st.markdown('<div class="destaque-eletrico">', unsafe_allow_html=True)
+        st.session_state.dados['i_med'] = d3.number_input("Corrente Medida (A):", value=st.session_state.dados['i_med'], help="Destaque: Valor real no alicate")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # BLOCO 2: ENGENHARIA DE POTÊNCIAS (CÁLCULOS AUTOMÁTICOS)
+    with st.expander("🧬 Cálculos de Potência e Eficiência", expanded=True):
+        # Cálculos Internos
+        v = st.session_state.dados['v_med']
+        i = st.session_state.dados['i_med']
+        fp = st.session_state.dados['fp']
+        
+        s = v * i # Aparente
+        p = s * fp # Ativa
+        q = (s**2 - p**2)**0.5 if s > p else 0 # Reativa
+        
+        p1, p2, p3 = st.columns(3)
+        st.session_state.dados['pot_aparente'] = p1.metric("Pot. Aparente (S)", f"{s:.1f} VA")
+        st.session_state.dados['pot_ativa'] = p2.metric("Pot. Ativa (P)", f"{p:.1f} W")
+        st.session_state.dados['pot_reativa'] = p3.metric("Pot. Reativa (Q)", f"{q:.1f} VAr")
+
+        e1, e2, e3 = st.columns(3)
+        st.session_state.dados['fp'] = e1.number_input("Fator de Potência (cos φ):", value=0.85, step=0.01, max_value=1.0)
+        
+        # Cálculo de Eficiência (Eta) e Pot. Mecânica Estimada
+        eta_calc = (p / (s if s > 0 else 1)) * 100 # Simplificado para demonstração
+        st.session_state.dados['eta'] = e2.metric("Rendimento (η)", f"{eta_calc:.1f}%")
+        st.session_state.dados['pot_mecanica'] = e3.text_input("Pot. Mecânica Estimada:", value=f"{(p*0.9)/745.7:.2f} HP")
+
+    # BLOCO 3: PROTEÇÃO E SEGURANÇA
+    with st.expander("🛡️ Proteção e Aterramento", expanded=False):
+        g1, g2 = st.columns(2)
+        st.session_state.dados['res_terra'] = g1.number_input("Resistência Terra (Ω):", min_value=0.0)
+        st.session_state.dados['disjuntor_ok'] = g2.selectbox("Status Disjuntor/Cabos:", ["Conforme", "Não Conforme", "Requer Manutenção"])
+
+    st.info("💡 As medições destacadas em amarelo são cruciais para o diagnóstico de sobrecarga.")
+
+# --- SIDEBAR: ATUALIZAÇÃO DA MENSAGEM (Adicione este trecho na sua msg_zap original) ---
+# Copie e adicione estas linhas dentro da variável 'msg_zap' no seu Sidebar:
+# f"\n⚡ *ANÁLISE ELÉTRICA:*\n"
+# f"🔌 Tensão Medida: {st.session_state.dados['v_med']}V (Rede: {st.session_state.dados['v_rede']}V)\n"
+# f"📉 Corrente Medida: {st.session_state.dados['i_med']}A (RLA: {st.session_state.dados['rla']}A)\n"
+# f"📊 LRA (Partida): {st.session_state.dados['lra']}A | Freq: {st.session_state.dados['freq']}Hz\n"
+# f"💡 Pot. Ativa: {p:.1f}W | FP: {st.session_state.dados['fp']} | η: {eta_calc:.1f}%\n"
+# f"🛡️ Terra: {st.session_state.dados['res_terra']}Ω | Proteção: {st.session_state.dados['disjuntor_ok']}"
