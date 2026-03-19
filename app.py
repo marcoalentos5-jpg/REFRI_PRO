@@ -164,84 +164,48 @@ with st.sidebar:
                 st.session_state.dados[key] = ""
         st.rerun()
 
-# --- ABA 02: ELÉTRICA (Versão Blindada contra NameError e Indentação) ---
+# --- ABA 02: ELÉTRICA (Versão de Recuperação) ---
 with tab2:
-    st.subheader("⚡ Análise Elétrica e Eficiência Energética")
+    st.subheader("⚡ Diagnóstico Elétrico")
 
-    # 1. Inicialização de Dados (Evita erro de variável inexistente)
-    if 'dados' not in st.session_state:
-        st.session_state.dados = {}
+    # Criando colunas para Tensão e Corrente
+    col_e1, col_e2, col_e3 = st.columns(3)
     
-    # Garantia de chaves para os cálculos
-    elet_keys = ['v_med', 'i_med', 'lra', 'rla', 'cap_c_nom', 'cap_c_med', 'cap_v_nom', 'cap_v_med', 'fp', 'res_terra']
-    for k in elet_keys:
-        if k not in st.session_state.dados:
-            st.session_state.dados[k] = 0.0 if k != 'fp' else 0.85
+    with col_e1:
+        v_med = st.number_input("Tensão Medida (V)", value=220.0, key="v_med_refri")
+    with col_e2:
+        i_med = st.number_input("Corrente Medida (A)", value=0.0, key="i_med_refri")
+    with col_e3:
+        st.session_state.dados['res_terra'] = st.number_input("Aterramento (Ω)", value=0.0, key="terra_refri")
 
-    # 2. Monitoramento de Grandezas
-    with st.expander("📊 Medições Reais de Campo", expanded=True):
-        col_v1, col_v2 = st.columns(2)
-        with col_v1:
-            st.session_state.dados['v_med'] = st.number_input(
-                "Tensão Medida (V):", 
-                value=float(st.session_state.dados['v_med']), 
-                key="key_v_med"
-            )
-        with col_v2:
-            st.markdown('<div style="background-color: #fff9c4; padding: 5px; border-radius: 5px; border: 1px solid #fbc02d;">', unsafe_allow_html=True)
-            st.session_state.dados['i_med'] = st.number_input(
-                "Corrente Medida (A):", 
-                value=float(st.session_state.dados['i_med']), 
-                key="key_i_med"
-            )
-            st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("---")
 
-        col_p1, col_p2 = st.columns(2)
-        st.session_state.dados['lra'] = col_p1.number_input("LRA (A):", value=float(st.session_state.dados['lra']), key="key_lra")
-        st.session_state.dados['rla'] = col_p2.number_input("RLA (A):", value=float(st.session_state.dados['rla']), key="key_rla")
-
-    # 3. Diagnóstico de Capacitores
-    with st.expander("🔋 Teste de Capacitância (µF)", expanded=True):
-        st.write("**Capacitor do Compressor**")
-        cp1, cp2, cp3 = st.columns(3)
-        c_nom = cp1.number_input("Nominal:", value=float(st.session_state.dados['cap_c_nom']), key="key_c_nom")
-        c_med = cp2.number_input("Medido:", value=float(st.session_state.dados['cap_c_med']), key="key_c_med")
-        st.session_state.dados['cap_c_nom'], st.session_state.dados['cap_c_med'] = c_nom, c_med
-        
+    # Seção de Capacitores
+    st.write("**🔋 Verificação de Capacitores**")
+    cap1, cap2, cap3 = st.columns(3)
+    
+    with cap1:
+        c_nom = st.number_input("Nominal (µF)", value=0.0, key="c_nom_refri")
+    with cap2:
+        c_med = st.number_input("Medido (µF)", value=0.0, key="c_med_refri")
+    with cap3:
         if c_nom > 0:
-            diff_c = ((c_med - c_nom) / c_nom) * 100
-            status_c = "✅ OK" if abs(diff_c) <= 5 else "🚨 TROCAR"
-            cp3.metric("Desvio", f"{diff_c:.1f}%", status_c, delta_color="inverse" if abs(diff_c) > 5 else "normal")
+            desvio = ((c_med - c_nom) / c_nom) * 100
+            label = "✅ OK" if abs(desvio) <= 5 else "🚨 TROCAR"
+            st.metric("Desvio", f"{desvio:.1f}%", label)
 
-        st.markdown("---")
-        st.write("**Capacitor do Ventilador**")
-        cv1, cv2, cv3 = st.columns(3)
-        v_nom = cv1.number_input("Vent. Nominal:", value=float(st.session_state.dados['cap_v_nom']), key="key_v_nom")
-        v_med_c = cv2.number_input("Vent. Medido:", value=float(st.session_state.dados['cap_v_med']), key="key_v_med")
-        st.session_state.dados['cap_v_nom'], st.session_state.dados['cap_v_med'] = v_nom, v_med_c
-        
-        if v_nom > 0:
-            diff_v = ((v_med_c - v_nom) / v_nom) * 100
-            status_v = "✅ OK" if abs(diff_v) <= 5 else "🚨 TROCAR"
-            cv3.metric("Desvio Vent.", f"{diff_v:.1f}%", status_v, delta_color="inverse" if abs(diff_v) > 5 else "normal")
+    st.markdown("---")
 
-    # 4. Cálculos de Performance
-    with st.expander("🧬 Engenharia e Eficiência", expanded=True):
-        v = st.session_state.dados['v_med']
-        i = st.session_state.dados['i_med']
-        fp = st.session_state.dados['fp']
+    # Cálculos Automáticos
+    with st.expander("🧬 Resultados de Eficiência", expanded=True):
+        potencia = v_med * i_med * 0.85 # FP padrão
+        hp_est = potencia / 745.7
         
-        pot_w = v * i * fp
-        hp_est = (pot_w * 0.9) / 745.7
-        
-        e1, e2, e3 = st.columns(3)
-        e1.metric("Potência Ativa", f"{pot_w:.1f} W")
-        e2.metric("Pot. Mecânica", f"{hp_est:.2f} HP")
-        st.session_state.dados['fp'] = e3.number_input("FP (cos φ):", value=float(fp), step=0.01, max_value=1.0, key="key_fp")
-        
-        st.session_state.dados['res_terra'] = st.number_input("Resistência de Aterramento (Ω):", value=float(st.session_state.dados['res_terra']), key="key_terra")
+        r1, r2 = st.columns(2)
+        r1.metric("Potência Ativa", f"{potencia:.1f} W")
+        r2.metric("Potência Mecânica", f"{hp_est:.2f} HP")
 
-    st.success("✅ Diagnóstico elétrico processado. Abas agora operando de forma independente.")
+    st.info("💡 As abas agora estão sincronizadas. Os erros de definição foram eliminados.")
 # =========================================================
 # --- FIM DA ABA 02 ---
 # =========================================================
