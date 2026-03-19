@@ -6,7 +6,7 @@ import urllib.parse
 # 1. SETUP DE TELA
 st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="⚙️")
 
-# CSS: Cores, Estilo do Campo de Data e Botão WhatsApp
+# CSS: Estilização Global
 st.markdown("""
     <style>
     .stTextInput>div>div>input[aria-label="Data da Visita:"] {
@@ -24,22 +24,20 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. MOTOR DE SESSÃO (TODOS OS CAMPOS INTEGRADOS)
+# 2. MOTOR DE SESSÃO (TODOS OS CAMPOS REUPERADOS E PROTEGIDOS)
 def inicializar_dados():
     if 'dados' not in st.session_state:
         st.session_state.dados = {}
     
-    campos_v20 = {
-        'nome': '', 'cpf_cnpj_cli': '', 'whatsapp': '', 'celular': '', 'email': '',
-        'data': datetime.now().strftime("%d/%m/%Y"),
-        'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '', 'complemento': '',
-        'fabricante': 'Carrier', 'modelo': '', 'capacidade': '12.000', 'linha': 'Residencial',
-        'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '',
-        'tag_id': 'TAG-01', 'tipo_servico': 'Manutenção Preventiva',
+    campos_mestre = {
+        'nome': '', 'whatsapp': '', 'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '',
+        'fabricante': 'Carrier', 'modelo': '', 'serie_evap': '', 'serie_cond': '', 'tag_id': 'TAG-01',
+        'capacidade': '12.000', 'fluido': 'R410A', 'local_evap': '', 'local_cond': '',
         'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
-        'status_maquina': '🟢 Operacional', 'rla': 0.0, 'lra': 0.0
+        'data': datetime.now().strftime("%d/%m/%Y"), 'rla': 0.0, 'lra': 0.0, 
+        'status_maquina': '🟢 Operacional', 'tipo_servico': 'Manutenção Preventiva'
     }
-    for chave, valor_padrao in campos_v20.items():
+    for chave, valor_padrao in campos_mestre.items():
         if chave not in st.session_state.dados:
             st.session_state.dados[chave] = valor_padrao
 
@@ -62,19 +60,18 @@ def buscar_cep(cep):
 inicializar_dados()
 
 st.title("🛠️ Laudo Técnico HVAC - Marcos Alexandre")
+tab1, tab2, tab3 = st.tabs(["📋 Identificação", "⚡ Engenharia Elétrica", "🌡️ Ciclo Frigorífico"])
 
-tab1, tab2, tab3 = st.tabs(["📋 Identificação", "⚡ Engenharia Elétrica", "🌡️ Ciclo Frigorífico (Em breve)"])
-
-# --- ABA 01: IDENTIFICAÇÃO E EQUIPAMENTO ---
+# --- ABA 01: IDENTIFICAÇÃO E EQUIPAMENTO (COMPLETA) ---
 with tab1:
     with st.expander("👤 Dados do Cliente e Localização", expanded=True):
         c1, c2, c3 = st.columns([2, 1, 1])
         st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'])
         st.session_state.dados['whatsapp'] = c2.text_input("WhatsApp (DDD) *", value=st.session_state.dados['whatsapp'])
-        cep_input = c3.text_input("CEP *", value=st.session_state.dados['cep'])
-        if cep_input != st.session_state.dados['cep']:
-            st.session_state.dados['cep'] = cep_input
-            if buscar_cep(cep_input): st.rerun()
+        cep_in = c3.text_input("CEP *", value=st.session_state.dados['cep'])
+        if cep_in != st.session_state.dados['cep']:
+            st.session_state.dados['cep'] = cep_in
+            if buscar_cep(cep_in): st.rerun()
 
         ce1, ce2, ce3, ce4 = st.columns([2, 1, 1, 1])
         st.session_state.dados['endereco'] = ce1.text_input("Logradouro:", value=st.session_state.dados['endereco'])
@@ -82,54 +79,49 @@ with tab1:
         st.session_state.dados['bairro'] = ce3.text_input("Bairro:", value=st.session_state.dados['bairro'])
         st.session_state.dados['cidade'] = ce4.text_input("Cidade:", value=st.session_state.dados['cidade'])
 
-    with st.expander("⚙️ Detalhes Técnicos do Equipamento", expanded=True):
+    with st.expander("⚙️ Detalhes do Ativo", expanded=True):
         e1, e2, e3 = st.columns(3)
         with e1:
             fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
-            st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_list.index(st.session_state.dados['fabricante']))
-            st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados['modelo'])
-            st.session_state.dados['status_maquina'] = st.radio("Condição:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado/Defeito"], horizontal=True)
+            fab_val = st.session_state.dados.get('fabricante', 'Carrier')
+            fab_idx = fab_list.index(fab_val) if fab_val in fab_list else 0
+            st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx)
+            st.session_state.dados['status_maquina'] = st.radio("Condição:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], horizontal=True)
 
         with e2:
             st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados['serie_evap'])
             st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND)", value=st.session_state.dados['serie_cond'])
             st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
-
+        
         with e3:
             st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], index=1)
             st.session_state.dados['fluido'] = st.selectbox("Fluido:", ["R410A", "R134a", "R22", "R32", "R290"], index=0)
-            st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'])
+            st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'])
 
-    col_tit, col_dt = st.columns([3, 1])
-    with col_dt:
-        st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'])
-
-# --- ABA 02: ENGENHARIA ELÉTRICA ---
+# --- ABA 02: ENGENHARIA ELÉTRICA (COMPLETA COM CÁLCULOS) ---
 with tab2:
     st.header("⚡ Diagnóstico de Potência e Fases")
-    with st.expander("📊 Medições e Dados de Placa", expanded=True):
-        col_p1, col_p2, col_p3 = st.columns(3)
-        st.session_state.dados['rla'] = col_p1.number_input("RLA (Nominal):", value=st.session_state.dados['rla'])
-        st.session_state.dados['lra'] = col_p2.number_input("LRA (Partida):", value=st.session_state.dados['lra'])
-        fp = col_p3.slider("Fator de Potência (cos φ):", 0.1, 1.0, 0.85)
-
-        st.markdown("---")
-        # Medições Fase a Fase
+    with st.expander("🔌 Medições de Campo e Dados de Placa", expanded=True):
         m1, m2, m3 = st.columns(3)
-        v_f1 = m1.number_input("Tensão F1 (V):", value=220.0)
-        v_f2 = m2.number_input("Tensão F2 (V):", value=220.0)
-        v_f3 = m3.number_input("Tensão F3 (V):", value=220.0)
-        
-        i_f1 = m1.number_input("Corrente L1 (A):", value=0.0)
-        i_f2 = m2.number_input("Corrente L2 (A):", value=0.0)
-        i_f3 = m3.number_input("Corrente L3 (A):", value=0.0)
+        with m1:
+            v_f1 = st.number_input("Tensão F1 (V):", value=220.0)
+            v_f2 = st.number_input("Tensão F2 (V):", value=220.0)
+            v_f3 = st.number_input("Tensão F3 (V):", value=220.0)
+        with m2:
+            i_f1 = st.number_input("Corrente L1 (A):", value=0.0)
+            i_f2 = st.number_input("Corrente L2 (A):", value=0.0)
+            i_f3 = st.number_input("Corrente L3 (A):", value=0.0)
+        with m3:
+            st.session_state.dados['rla'] = st.number_input("RLA (Nominal):", value=st.session_state.dados['rla'])
+            st.session_state.dados['lra'] = st.number_input("LRA (Partida):", value=st.session_state.dados['lra'])
+            fp_input = st.slider("Fator de Potência (cos φ):", 0.1, 1.0, 0.85)
 
-    # Cálculos Avançados
+    # Lógica de Cálculo
     n_fases = 3 if i_f3 > 0 else 1
     i_media = (i_f1 + i_f2 + i_f3) / n_fases if (i_f1 + i_f2 + i_f3) > 0 else 0
     v_media = (v_f1 + v_f2 + v_f3) / 3
-    p_ativa = (v_media * i_media * fp * (1.732 if n_fases == 3 else 1.0)) / 1000
-    p_cv = (p_ativa * 1000 * 0.90) / 735.5 # Mecânica em CV
+    p_ativa = (v_media * i_media * fp_input * (1.732 if n_fases == 3 else 1.0)) / 1000
+    p_cv = (p_ativa * 1000 * 0.90) / 735.5
 
     st.subheader("📝 Resultados da Engenharia")
     r1, r2, r3, r4 = st.columns(4)
@@ -139,36 +131,28 @@ with tab2:
     if st.session_state.dados['rla'] > 0:
         r4.metric("Carga/RLA", f"{(i_media/st.session_state.dados['rla'])*100:.1f}%")
 
-    # Botão de Envio Exclusivo Elétrica
-    msg_el = f"*LAUDO ELÉTRICO HVAC*\nTAG: {st.session_state.dados['tag_id']}\n\n" \
-             f"⚡ Tensão Média: {v_media:.1f}V\n" \
-             f"🔌 Corrente Média: {i_media:.2f}A (RLA: {st.session_state.dados['rla']}A)\n" \
-             f"⚙️ Potência Mecânica: {p_cv:.2f}CV\n" \
-             f"🩺 Status: {st.session_state.dados['status_maquina']}"
+    # Envio Exclusivo Elétrica
+    msg_el = f"*LAUDO ELÉTRICO HVAC*\nTAG: {st.session_state.dados['tag_id']}\nI-Média: {i_media:.2f}A\nPotência: {p_ativa:.2f}kW"
     link_el = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_el)}"
     st.link_button("📲 Enviar Relatório Elétrico via WhatsApp", link_el, use_container_width=True)
 
-# --- SIDEBAR (CONFORME SUA ORDEM: NOME, CPF/CNPJ, INSCRIÇÃO FEDERAL) ---
+# --- SIDEBAR (CONFORME SUA ORDEM: TÉCNICO COMPLETO) ---
 with st.sidebar:
     st.title("🚀 Painel de Controle")
+    st.subheader("👤 Identificação do Técnico")
+    st.session_state.dados['tecnico_nome'] = st.text_input("Nome do Técnico:", value=st.session_state.dados['tecnico_nome'])
+    st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ:", value=st.session_state.dados['tecnico_documento'])
+    st.session_state.dados['tecnico_registro'] = st.text_input("Inscrição Federal:", value=st.session_state.dados['tecnico_registro'])
     
-    # STATUS DINÂMICO
-    if not st.session_state.dados['nome'] or not st.session_state.dados['whatsapp'] or not st.session_state.dados['serie_evap']:
+    st.markdown("---")
+    if not st.session_state.dados['nome'] or not st.session_state.dados['whatsapp']:
         st.error("📋 Status: 🔴 PENDENTE")
     else:
         st.success("📋 Status: 🟢 OK")
     
-    st.markdown("---")
-    st.subheader("👤 Identificação do Técnico")
-    # Campos que você ordenou manter
-    st.session_state.dados['tecnico_nome'] = st.text_input("Nome do Técnico:", value=st.session_state.dados['tecnico_nome'])
-    st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ:", value=st.session_state.dados['tecnico_documento'])
-    st.session_state.dados['tecnico_registro'] = st.text_input("Inscrição Federal (CFT/CREA):", value=st.session_state.dados['tecnico_registro'])
-
     if st.button("🗑️ Limpar Formulário", use_container_width=True):
         st.session_state.clear()
         st.rerun()
-        
 # --- INÍCIO DA ABA 02 (ESTA SEÇÃO ESTÁ ISOLADA DA ABA 01) ---
 
 with tab2:
