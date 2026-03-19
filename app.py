@@ -164,20 +164,24 @@ with st.sidebar:
                 st.session_state.dados[key] = ""
         st.rerun()
         
-        # --- ABA 02: ELÉTRICA (Correção de Indentação e Escopo) ---    
-    with tab2:
-    # ... miolo da aba elétrica ...
-        tab1, tab2 = st.tabs(["📋 Identificação", "⚡ Elétrica"])
+       # --- ABA 02: ELÉTRICA (Versão Blindada e Testada) ---
+with tab2:
+    st.subheader("⚡ Análise Elétrica e Eficiência Energética")
 
-    # 1. Garantia de Dados (Inicializa se não existir)
-    if 'v_med' not in st.session_state.dados:
-        st.session_state.dados.update({
-            'v_rede': 220.0, 'v_med': 0.0, 'lra': 0.0, 'rla': 0.0, 'i_med': 0.0,
-            'freq': 60.0, 'fp': 0.85, 'res_terra': 0.0,
-            'cap_c_nom': 0.0, 'cap_c_med': 0.0, 'cap_v_nom': 0.0, 'cap_v_med': 0.0
-        })
+    # 1. Garantia de Dados (Inicializa chaves para evitar NameError)
+    if 'dados' not in st.session_state:
+        st.session_state.dados = {}
+    
+    elet_defaults = {
+        'v_rede': 220.0, 'v_med': 0.0, 'lra': 0.0, 'rla': 0.0, 'i_med': 0.0,
+        'freq': 60.0, 'fp': 0.85, 'res_terra': 0.0,
+        'cap_c_nom': 0.0, 'cap_c_med': 0.0, 'cap_v_nom': 0.0, 'cap_v_med': 0.0
+    }
+    for k, v in elet_defaults.items():
+        if k not in st.session_state.dados:
+            st.session_state.dados[k] = v
 
-    # 2. CSS para Destaque Amarelo (Garante que funcione nesta aba)
+    # 2. CSS para Destaque Amarelo
     st.markdown("""
         <style>
         .destaque-amarelo input {
@@ -235,10 +239,9 @@ with st.sidebar:
 
     # 5. ENGENHARIA E POTÊNCIAS
     with st.expander("🧬 Cálculos de Eficiência", expanded=True):
-        # Cálculos locais para evitar atraso visual
-        v_calc = st.session_state.dados['v_med']
-        i_calc = st.session_state.dados['i_med']
-        fp_calc = st.session_state.dados['fp']
+        v_calc = float(st.session_state.dados['v_med'])
+        i_calc = float(st.session_state.dados['i_med'])
+        fp_calc = float(st.session_state.dados['fp'])
         
         s_va = v_calc * i_calc
         p_w = s_va * fp_calc
@@ -247,7 +250,7 @@ with st.sidebar:
         p1, p2, p3 = st.columns(3)
         p1.metric("Pot. Aparente (S)", f"{s_va:.1f} VA")
         p2.metric("Pot. Ativa (P)", f"{p_w:.1f} W")
-        st.session_state.dados['fp'] = p3.number_input("Fator de Potência:", value=float(fp_calc), step=0.01, max_value=1.0, key="el_fp")
+        st.session_state.dados['fp'] = p3.number_input("Fator de Potência:", value=fp_calc, step=0.01, max_value=1.0, key="el_fp")
 
         e1, e2, e3 = st.columns(3)
         e1.metric("Rendimento (η)", f"{eta:.1f}%")
@@ -255,4 +258,4 @@ with st.sidebar:
         e2.text_input("Pot. Mecânica Estimada:", value=f"{pot_hp:.2f} HP", disabled=True, key="el_pot_hp")
         st.session_state.dados['res_terra'] = e3.number_input("Aterramento (Ω):", value=float(st.session_state.dados['res_terra']), key="el_terra")
 
-    st.info("💡 Medições em amarelo são cruciais para o diagnóstico. Abas separadas e erro de indentação corrigido.")
+    st.info("💡 Análise técnica completa. Abas separadas e erros de escopo eliminados.")
