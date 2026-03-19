@@ -164,83 +164,45 @@ with st.sidebar:
                 st.session_state.dados[key] = ""
         st.rerun()
 
-# --- ABA 02: ELÉTRICA (Versão Final com Sequence[TabContainer] Fix) ---
-with tab2:
-    st.subheader("⚡ Análise Elétrica e Eficiência Energética")
+import streamlit as st
 
-    # 1. Inicialização de Dados no Session State
-    # Usamos o dicionário 'dados' que você já possui na Aba 1
-    chaves_eletricas = {
-        'v_med': 220.0, 'i_med': 0.0, 'lra': 0.0, 'rla': 0.0, 
-        'cap_c_nom': 0.0, 'cap_c_med': 0.0, 'cap_v_nom': 0.0, 'cap_v_med': 0.0,
-        'fp': 0.85, 'res_terra': 0.0
+# Simulação do session_state para o exemplo funcionar
+if 'dados' not in st.session_state:
+    st.session_state.dados = {
+        'v_rede': 220.0, 'v_med': 0.0, 'lra': 0.0, 'rla': 0.0, 'i_med': 0.0,
+        'freq': 60.0, 'fp': 0.85, 'eta': 0.0, 'pot_ativa': 0.0, 'pot_reativa': 0.0,
+        'pot_aparente': 0.0, 'pot_mecanica': 0.0, 'res_terra': 0.0
     }
-    for chave, valor in chaves_eletricas.items():
-        if chave not in st.session_state.dados:
-            st.session_state.dados[chave] = valor
 
-    # 2. Monitoramento de Tensão e Corrente
-    with st.expander("📊 Grandezas de Campo (Medições Reais)", expanded=True):
-        col_v1, col_v2 = st.columns(2)
-        with col_v1:
-            st.session_state.dados['v_med'] = st.number_input(
-                "Tensão Medida (V):", 
-                value=float(st.session_state.dados['v_med']), 
-                key="el_v_med"
-            )
-        with col_v2:
-            st.markdown('<div class="destaque-amarelo">', unsafe_allow_html=True)
-            st.session_state.dados['i_med'] = st.number_input(
-                "Corrente Medida (A):", 
-                value=float(st.session_state.dados['i_med']), 
-                key="el_i_med"
-            )
-            st.markdown('</div>', unsafe_allow_html=True)
+# --- ABA 02: ELÉTRICA ---
+# Removido 'with tab2' para o exemplo rodar direto, mas mantenha no seu código original
+st.subheader("⚡ Análise Elétrica e Eficiência Energética")
 
-        col_p1, col_p2 = st.columns(2)
-        st.session_state.dados['lra'] = col_p1.number_input("LRA (A):", value=float(st.session_state.dados['lra']), key="el_lra")
-        st.session_state.dados['rla'] = col_p2.number_input("RLA (A):", value=float(st.session_state.dados['rla']), key="el_rla")
+# CSS Corrigido: Usamos a pseudo-classe :has para identificar o input pelo label ou help
+st.markdown("""
+    <style>
+    /* Estiliza o input que contém o texto de ajuda específico da Tensão Medida */
+    div[data-testid="stNumberInput"]:has(label:contains("Tensão Medida")) input {
+        background-color: #fff9c4 !important;
+        color: #333 !important;
+        font-weight: bold !important;
+        border: 2px solid #fbc02d !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-    # 3. Diagnóstico de Capacitores
-    with st.expander("🔋 Teste de Capacitância (µF)", expanded=True):
-        st.write("**Capacitor do Compressor**")
-        cp1, cp2, cp3 = st.columns(3)
-        c_nom = cp1.number_input("Nominal:", value=float(st.session_state.dados['cap_c_nom']), key="el_c_nom")
-        c_med = cp2.number_input("Medido:", value=float(st.session_state.dados['cap_c_med']), key="el_c_med")
-        st.session_state.dados['cap_c_nom'], st.session_state.dados['cap_c_med'] = c_nom, c_med
-        
-        if c_nom > 0:
-            diff_c = ((c_med - c_nom) / c_nom) * 100
-            status_c = "✅ OK" if abs(diff_c) <= 5 else "🚨 TROCAR"
-            cp3.metric("Desvio", f"{diff_c:.1f}%", status_c, delta_color="inverse" if abs(diff_c) > 5 else "normal")
+# BLOCO 1: GRANDEZAS DE PLACA VS MEDIDAS
+with st.expander("📊 Monitoramento de Tensão e Corrente", expanded=True):
+    c1, c2, c3 = st.columns(3)
+    
+    # É necessário passar o componente para dentro da coluna usando o objeto da coluna (c1, c2...)
+    st.session_state.dados['v_rede'] = c1.number_input("Tensão Rede (V):", value=float(st.session_state.dados['v_rede']))
+    
+    # Campo que receberá o destaque via CSS
+    st.session_state.dados['v_med'] = c2.number_input("Tensão Medida (V):", value=float(st.session_state.dados['v_med']), help="Destaque: Valor real no multímetro")
+    
+    st.session_state.dados['freq'] = c3.number_input("Frequência (Hz):", value=float(st.session_state.dados['freq']))
 
-        st.divider()
-        st.write("**Capacitor do Ventilador**")
-        cv1, cv2, cv3 = st.columns(3)
-        v_nom = cv1.number_input("Vent. Nominal:", value=float(st.session_state.dados['cap_v_nom']), key="el_v_nom")
-        v_med = cv2.number_input("Vent. Medido:", value=float(st.session_state.dados['cap_v_med']), key="el_v_med")
-        st.session_state.dados['cap_v_nom'], st.session_state.dados['cap_v_med'] = v_nom, v_med
-        
-        if v_nom > 0:
-            diff_v = ((v_med - v_nom) / v_nom) * 100
-            status_v = "✅ OK" if abs(diff_v) <= 5 else "🚨 TROCAR"
-            cv3.metric("Desvio Vent.", f"{diff_v:.1f}%", status_v, delta_color="inverse" if abs(diff_v) > 5 else "normal")
-
-    # 4. Cálculos de Performance
-    with st.expander("🧬 Engenharia e Eficiência", expanded=True):
-        # Cálculos locais rápidos
-        v = st.session_state.dados['v_med']
-        i = st.session_state.dados['i_med']
-        fp = st.session_state.dados['fp']
-        
-        pot_w = v * i * fp
-        hp_est = (pot_w * 0.9) / 745.7
-        
-        e1, e2, e3 = st.columns(3)
-        e1.metric("Potência Ativa", f"{pot_w:.1f} W")
-        e2.metric("Pot. Mecânica", f"{hp_est:.2f} HP")
-        st.session_state.dados['fp'] = e3.number_input("FP (cos φ):", value=float(fp), step=0.01, max_value=1.0, key="el_fp")
-        
-        st.session_state.dados['res_terra'] = st.number_input("Resistência de Aterramento (Ω):", value=float(st.session_state.dados['res_terra']), key="el_terra")
-
-    st.success("✅ Diagnóstico elétrico processado. Os dados estão prontos para o laudo.")    
+    d1, d2, d3 = st.columns(3)
+    st.session_state.dados['lra'] = d1.number_input("LRA (A):", value=float(st.session_state.dados['lra']), help="Corrente de Partida")
+    # Adicione os outros campos d2 e d3 aqui...
