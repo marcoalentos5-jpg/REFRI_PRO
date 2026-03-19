@@ -5,26 +5,35 @@ import requests
 # 1. SETUP DE TELA
 st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="⚙️")
 
-# 2. MOTOR DE SESSÃO (AUTO-CORREÇÃO E ATUALIZAÇÃO DE CAMPOS)
+# CSS para Validação Visual e Estilo
+st.markdown("""
+    <style>
+    .stTextInput input:focus { border-color: #004a99 !important; }
+    .obrigatorio { color: #ff4b4b; font-size: 12px; }
+    </style>
+""", unsafe_allow_html=True)
+
+# 2. MOTOR DE SESSÃO (INCREMENTADO COM ELÉTRICA E FOTOS)
 def inicializar_dados():
     if 'dados' not in st.session_state:
         st.session_state.dados = {}
     
-    campos_v9 = {
+    campos_v10 = {
         'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
         'data': datetime.now().strftime("%d/%m/%Y"),
         'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '', 'complemento': '',
         'fabricante': 'Carrier', 'modelo': '', 'capacidade': '12.000', 'linha': 'Residencial',
-        'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 
-        'local_evap': '', # <--- Substituiu Ano de Fabricação
-        'tipo_servico': 'Manutenção Preventiva', 'tag_id': ''
+        'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '',
+        'tensao': '220V', 'fase': 'Monofásico', # <--- NOVO: ELÉTRICA
+        'tipo_servico': 'Manutenção Preventiva', 'tag_id': '',
+        'foto_placa': None # <--- NOVO: FOTO
     }
-    for chave, valor_padrao in campos_v9.items():
+    for chave, valor_padrao in campos_v10.items():
         if chave not in st.session_state.dados:
             st.session_state.dados[chave] = valor_padrao
 
 def buscar_cep(cep):
-    cep_limpo = cep.replace("-", "").replace(".", "").strip()
+    cep_limpo = "".join(filter(str.isdigit, cep))
     if len(cep_limpo) == 8:
         try:
             response = requests.get(f"https://viacep.com.br/ws/{cep_limpo}/json/")
@@ -39,7 +48,7 @@ def buscar_cep(cep):
         except: pass
     return False
 
-# 3. EXECUÇÃO DA INTERFACE
+# 3. EXECUÇÃO
 inicializar_dados()
 
 st.title("🛠️ Laudo Técnico HVAC - Marcos Alexandre")
@@ -47,12 +56,12 @@ st.title("🛠️ Laudo Técnico HVAC - Marcos Alexandre")
 tab1, tab2 = st.tabs(["📋 Identificação e Equipamento", "🌡️ Ciclo Térmico (Em breve)"])
 
 with tab1:
-    # --- SEÇÃO 1: CLIENTE E ENDEREÇO (MANTIDA) ---
+    # --- SEÇÃO 1: CLIENTE E ENDEREÇO (CONGELADA + MELHORIAS) ---
     with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
         c1, c2, c3 = st.columns([2, 1, 1])
-        st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social:", value=st.session_state.dados['nome'])
-        st.session_state.dados['cpf_cnpj'] = c2.text_input("CPF ou CNPJ:", value=st.session_state.dados['cpf_cnpj'])
-        st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp (DDD):", value=st.session_state.dados['whatsapp'])
+        st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'])
+        st.session_state.dados['cpf_cnpj'] = c2.text_input("CPF ou CNPJ", value=st.session_state.dados['cpf_cnpj'], placeholder="000.000.000-00")
+        st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp (DDD) *", value=st.session_state.dados['whatsapp'], placeholder="(00) 00000-0000")
 
         cx1, cx2, cx3 = st.columns([1, 1, 2])
         st.session_state.dados['celular'] = cx1.text_input("Cel.:", value=st.session_state.dados['celular'])
@@ -61,7 +70,7 @@ with tab1:
 
         st.markdown("---")
         ce1, ce2, ce3 = st.columns([1, 2, 1])
-        cep_input = ce1.text_input("CEP:", value=st.session_state.dados['cep'])
+        cep_input = ce1.text_input("CEP *", value=st.session_state.dados['cep'])
         if cep_input != st.session_state.dados['cep']:
             st.session_state.dados['cep'] = cep_input
             if buscar_cep(cep_input): st.rerun()
@@ -75,12 +84,10 @@ with tab1:
         st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'])
         st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'])
 
-    # --- SEÇÃO 2: EQUIPAMENTO (ALTERAÇÕES SOLICITADAS) ---
+    # --- SEÇÃO 2: EQUIPAMENTO (CONGELADA + ELÉTRICA) ---
     col_titulo, col_data = st.columns([3, 1])
-    with col_titulo:
-        st.subheader("⚙️ Especificações do Equipamento")
-    with col_data:
-        st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'])
+    with col_titulo: st.subheader("⚙️ Especificações do Equipamento")
+    with col_data: st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'])
 
     with st.expander("Detalhes Técnicos do Ativo", expanded=True):
         e1, e2, e3 = st.columns(3)
@@ -88,32 +95,64 @@ with tab1:
             fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea", "Hitachi", "TCL", "Philco"])
             st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_list.index(st.session_state.dados['fabricante']) if st.session_state.dados['fabricante'] in fab_list else 0)
             st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados['modelo'])
-            lin_list = ["Residencial", "Comercial", "Industrial", "Hospitalar", "Data Center"]
-            st.session_state.dados['linha'] = st.selectbox("Linha:", lin_list, index=lin_list.index(st.session_state.dados['linha']) if st.session_state.dados['linha'] in lin_list else 0)
+            
+            # ELÉTRICA ADICIONADA
+            t_list = ["127V", "220V", "380V", "440V"]
+            st.session_state.dados['tensao'] = st.selectbox("Tensão Nominal:", t_list, index=t_list.index(st.session_state.dados['tensao']))
 
         with e2:
-            st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP):", value=st.session_state.dados['serie_evap'])
-            st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND):", value=st.session_state.dados['serie_cond'])
-            st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
+            st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados['serie_evap'])
+            st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND)", value=st.session_state.dados['serie_cond'])
+            
+            # ELÉTRICA ADICIONADA
+            f_list = ["Monofásico", "Bifásico", "Trifásico"]
+            st.session_state.dados['fase'] = st.selectbox("Faseamento:", f_list, index=f_list.index(st.session_state.dados['fase']))
 
         with e3:
             cap_list = ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000", "80.000+"]
             st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", cap_list, index=cap_list.index(st.session_state.dados['capacidade']) if st.session_state.dados['capacidade'] in cap_list else 1)
             flu_list = ["R410A", "R134a", "R22", "R404A", "R32", "R290"]
             st.session_state.dados['fluido'] = st.selectbox("Fluido:", flu_list, index=flu_list.index(st.session_state.dados['fluido']) if st.session_state.dados['fluido'] in flu_list else 0)
-            # SUBSTITUIÇÃO: LOCAL DA EVAPORADORA NO LUGAR DE ANO DE FABRICAÇÃO
             st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'])
 
         st.markdown("---")
-        # TAG E SERVIÇO (LOCALIZAÇÃO INTERNA REMOVIDA)
-        l1, l2 = st.columns(2)
+        l1, l2, l3 = st.columns([1, 1, 2])
         st.session_state.dados['tag_id'] = l1.text_input("TAG:", value=st.session_state.dados['tag_id'])
         ser_list = ["Instalação", "Manutenção Preventiva", "Manutenção Corretiva", "Infraestrutura", "PMOC"]
-        st.session_state.dados['tipo_servico'] = l2.selectbox("Serviço:", ser_list, index=ser_list.index(st.session_state.dados['tipo_servico']) if st.session_state.dados['tipo_servico'] in ser_list else 1)
+        st.session_state.dados['tipo_servico'] = l2.selectbox("Serviço:", ser_list, index=ser_list.index(st.session_state.dados['tipo_servico']))
+        st.session_state.dados['local_cond'] = l3.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
 
-with tab2:
-    st.warning("Aguardando configuração dos parâmetros térmicos.")
+    # UPLOAD DE FOTO NO FINAL DA ABA 1
+    st.subheader("📸 Registro Fotográfico")
+    st.session_state.dados['foto_placa'] = st.file_uploader("Anexar foto da placa ou etiqueta de identificação", type=['png', 'jpg', 'jpeg'])
 
-if st.sidebar.button("🗑️ Limpar Formulário"):
-    st.session_state.dados = {}
-    st.rerun()
+# --- SIDEBAR (ESPAÇO APROVEITADO) ---
+with st.sidebar:
+    st.title("🚀 Painel de Controle")
+    
+    if st.button("🗑️ Limpar Formulário", use_container_width=True):
+        st.session_state.dados = {}
+        st.rerun()
+
+    st.markdown("---")
+    st.subheader("📋 Status do Laudo")
+    
+    # Validação em Tempo Real na Sidebar
+    erros = []
+    if not st.session_state.dados['nome']: erros.append("Nome do Cliente")
+    if not st.session_state.dados['whatsapp']: erros.append("WhatsApp")
+    if not st.session_state.dados['serie_evap']: erros.append("Série da Evap.")
+    
+    if not erros:
+        st.success("✅ Tudo pronto para o laudo!")
+    else:
+        st.error("❌ Campos Pendentes:")
+        for e in erros: st.write(f"- {e}")
+
+    st.markdown("---")
+    st.subheader("👤 Técnico Responsável")
+    tecnico = st.text_input("Nome do Técnico:", placeholder="Marcos Alexandre")
+    registro = st.text_input("Registro (CFT/CREA):")
+
+# VERIFICAÇÃO SE O BOTÃO DE LIMPAR ESTÁ FUNCIONAL
+# O comando 'st.session_state.dados = {}' seguido de 'st.rerun()' é a forma mais segura no Streamlit de limpar a memória.
