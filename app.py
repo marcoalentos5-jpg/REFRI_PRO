@@ -167,6 +167,7 @@ with st.sidebar:
 # =========================================================
 # --- ABA 02: ELÉTRICA (RECONSTRUÇÃO TOTAL) ---
 # =========================================================
+tab1, tab2, tab3 = st.tabs(["📋 Identificação", "⚡ Elétrica", "❄️ Ciclo Frigorífico"])
 with tab2:
     st.header("⚡ Diagnóstico Elétrico")
     st.write("Preencha os dados abaixo para o cálculo de eficiência.")
