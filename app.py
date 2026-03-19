@@ -163,3 +163,76 @@ with st.sidebar:
             if key not in chaves_tecnico:
                 st.session_state.dados[key] = ""
         st.rerun()
+
+st.subheader("❄️ Análise do Ciclo Frigorífico (Termodinâmica)")
+
+    # 1. Inicialização Segura (Somente chaves da Aba 3)
+    chaves_termo = {
+        'fluido': 'R410A', 'p_suc': 0.0, 'p_desc': 0.0, 
+        't_suc': 0.0, 't_liq': 0.0, 't_amb': 30.0, 't_insufla': 12.0
+    }
+    for k, v in chaves_termo.items():
+        if k not in st.session_state.dados:
+            st.session_state.dados[k] = v
+
+    # 2. Entrada de Pressões e Temperaturas
+    with st.expander("🌡️ Pressões e Temperaturas de Trabalho", expanded=True):
+        col_t1, col_t2 = st.columns(2)
+        
+        with col_t1:
+            st.markdown("**Lado de Baixa (Evaporação)**")
+            p_suc = st.number_input("Pressão Sucção (PSI):", value=float(st.session_state.dados['p_suc']), key="termo_p_suc")
+            t_suc = st.number_input("Temp. Linha Sucção (°C):", value=float(st.session_state.dados['t_suc']), key="termo_t_suc")
+            
+        with col_t2:
+            st.markdown("**Lado de Alta (Condensação)**")
+            p_desc = st.number_input("Pressão Descarga (PSI):", value=float(st.session_state.dados['p_desc']), key="termo_p_desc")
+            t_liq = st.number_input("Temp. Linha Líquido (°C):", value=float(st.session_state.dados['t_liq']), key="termo_t_liq")
+
+    # 3. Cálculos de Superaquecimento e Sub-resfriamento
+    st.divider()
+    col_calc1, col_calc2 = st.columns(2)
+
+    with col_calc1:
+        st.write("**🔥 Superaquecimento (SH)**")
+        # Lógica simplificada: Temp. Saturação (Exemplo R410A aproximado)
+        # Nota: Para precisão total, seriam necessárias tabelas de saturação
+        t_sat_evap = (p_suc / 3.0) - 10 # Cálculo ilustrativo aproximado
+        sh = t_suc - t_sat_evap
+        
+        if p_suc > 0:
+            cor_sh = "normal" if 5 <= sh <= 8 else "inverse"
+            st.metric("SH Atual", f"{sh:.1f} K", delta="Ideal: 5 a 8K", delta_color=cor_sh)
+        else:
+            st.info("Insira a pressão de sucção")
+
+    with col_calc2:
+        st.write("**❄️ Sub-resfriamento (SR)**")
+        t_sat_cond = (p_desc / 10.0) + 15 # Cálculo ilustrativo aproximado
+        sr = t_sat_cond - t_liq
+        
+        if p_desc > 0:
+            cor_sr = "normal" if 3 <= sr <= 7 else "inverse"
+            st.metric("SR Atual", f"{sr:.1f} K", delta="Ideal: 3 a 7K", delta_color=cor_sr)
+        else:
+            st.info("Insira a pressão de descarga")
+
+    # 4. Performance Térmica (Delta T)
+    st.divider()
+    with st.container():
+        st.write("**🌡️ Performance do Insuflamento**")
+        c_perf1, c_perf2, c_perf3 = st.columns(3)
+        
+        t_retorno = c_perf1.number_input("Temp. Retorno (°C):", value=24.0, key="termo_t_ret")
+        t_insufla = c_perf2.number_input("Temp. Insuflamento (°C):", value=float(st.session_state.dados['t_insufla']), key="termo_t_ins")
+        
+        delta_t = t_retorno - t_insufla
+        status_dt = "✅ Eficiente" if delta_t >= 10 else "⚠️ Baixa Troca"
+        c_perf3.metric("Delta T", f"{delta_t:.1f} °C", status_dt)
+
+    # Atualizando o session_state silenciosamente
+    st.session_state.dados.update({
+        'p_suc': p_suc, 'p_desc': p_desc, 't_suc': t_suc, 't_liq': t_liq, 't_insufla': t_insufla
+    })
+
+    st.success("✅ Dados termodinâmicos isolados com sucesso.")
