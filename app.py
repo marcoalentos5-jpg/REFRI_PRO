@@ -5,22 +5,36 @@ import requests
 # 1. SETUP DE TELA
 st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="⚙️")
 
+# CSS para Estilização Discreta e Alertas
+st.markdown("""
+    <style>
+    /* Fundo discreto para o campo de data */
+    div[data-baseweb="input"] {
+        border-radius: 4px;
+    }
+    .stTextInput>div>div>input[aria-label="Data da Visita:"] {
+        background-color: #f0f2f6 !important;
+        font-weight: bold;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # 2. MOTOR DE SESSÃO
 def inicializar_dados():
     if 'dados' not in st.session_state:
         st.session_state.dados = {}
     
-    campos_v12 = {
+    campos_v13 = {
         'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
         'data': datetime.now().strftime("%d/%m/%Y"),
         'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '', 'complemento': '',
         'fabricante': 'Carrier', 'modelo': '', 'capacidade': '12.000', 'linha': 'Residencial',
         'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '',
         'tipo_servico': 'Manutenção Preventiva', 'tag_id': '',
-        'tecnico_nome': '', 'tecnico_documento': '', 'tecnico_registro': '', # Registro Federal
+        'tecnico_nome': '', 'tecnico_documento': '', 'tecnico_registro': '',
         'tensao': '220V', 'fase': 'Monofásico' 
     }
-    for chave, valor_padrao in campos_v12.items():
+    for chave, valor_padrao in campos_v13.items():
         if chave not in st.session_state.dados:
             st.session_state.dados[chave] = valor_padrao
 
@@ -79,7 +93,9 @@ with tab1:
     # --- SEÇÃO 2: EQUIPAMENTO ---
     col_titulo, col_data = st.columns([3, 1])
     with col_titulo: st.subheader("⚙️ Especificações do Equipamento")
-    with col_data: st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'])
+    with col_data: 
+        # CAMPO DATA COM COR DE FUNDO DISCRETA VIA CSS
+        st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'], key="data_visita", label_visibility="visible")
 
     with st.expander("Detalhes Técnicos do Ativo", expanded=True):
         e1, e2, e3 = st.columns(3)
@@ -117,23 +133,22 @@ with st.sidebar:
 
     st.markdown("---")
     
-    # Validação e Luz de Alerta
+    # Lógica de Status Automática 🟢/🔴
     pendentes = []
     if not st.session_state.dados['nome']: pendentes.append("Nome Cliente")
     if not st.session_state.dados['whatsapp']: pendentes.append("WhatsApp")
     if not st.session_state.dados['serie_evap']: pendentes.append("Série Evap")
     
-    if pendentes:
-        st.subheader("📋 Status: 🔴 ALERTA")
-        st.error("Preencha os campos obrigatórios (*)")
-        for p in pendentes: st.write(f"- {p}")
-    else:
+    if not pendentes:
         st.subheader("📋 Status: 🟢 OK")
-        st.success("Dados básicos validados!")
+        st.success("Tudo certo para o laudo!")
+    else:
+        st.subheader("📋 Status: 🔴 ALERTA")
+        st.error("Preencha os campos com (*)")
+        for p in pendentes: st.write(f"- {p}")
 
     st.markdown("---")
     st.subheader("👤 Técnico Responsável")
     st.session_state.dados['tecnico_nome'] = st.text_input("Nome do Técnico:", value=st.session_state.dados['tecnico_nome'])
     st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ do Técnico:", value=st.session_state.dados['tecnico_documento'])
-    # NOVO CAMPO: REGISTRO FEDERAL ABAIXO DO CPF/CNPJ
     st.session_state.dados['tecnico_registro'] = st.text_input("Registro Federal (CFT/CREA):", value=st.session_state.dados['tecnico_registro'])
