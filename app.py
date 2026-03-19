@@ -163,7 +163,7 @@ with st.sidebar:
             if key not in chaves_tecnico:
                 st.session_state.dados[key] = ""
         st.rerun()
-
+        
 # --- ABA 02: ELÉTRICA (Correçao de Escopo e NameError) ---
 with tab2:
     st.subheader("⚡ Análise Elétrica e Eficiência Energética")
