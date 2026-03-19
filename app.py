@@ -157,114 +157,98 @@ with st.sidebar:
         link_wa = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg)}"
         st.link_button("📲 Enviar via WhatsApp", link_wa, use_container_width=True)
         
-# --- INÍCIO DA ABA 02 (ESTE BLOCO DEVE SER ADICIONADO AO SEU CÓDIGO) ---
+# --- INÍCIO DA ABA 02 (ESTA SEÇÃO ESTÁ ISOLADA DA ABA 01) ---
 
 with tab2:
-    st.header("⚡ Diagnóstico Elétrico e Consumo")
+    st.header("⚡ Diagnóstico de Potência e Performance Elétrica")
     
-    # 1. ENTRADA DE DADOS TÉCNICOS (MEDIÇÃO DE CAMPO)
-    with st.expander("📊 Medições de Campo (Multímetro/Alicate Amperímetro)", expanded=True):
-        col_el1, col_el2, col_el3 = st.columns(3)
-        
-        with col_el1:
-            st.markdown("**Tensão (V)**")
-            v_medida = st.number_input("Tensão Medida (V):", min_value=0.0, value=220.0, step=1.0)
-            v_nominal = st.number_input("Tensão Nominal (Placa):", min_value=0.0, value=float(st.session_state.dados.get('tensao', '220').replace('V','')), step=1.0)
-        
-        with col_el2:
-            st.markdown("**Corrente (A)**")
-            i_l1 = st.number_input("Corrente Fase L1 (A):", min_value=0.0, value=0.0, step=0.1)
-            i_l2 = st.number_input("Corrente Fase L2 (A):", min_value=0.0, value=0.0, step=0.1)
-            i_l3 = st.number_input("Corrente Fase L3 (A):", min_value=0.0, value=0.0, step=0.1)
-        
-        with col_el3:
-            st.markdown("**Parâmetros de Carga**")
-            fp = st.slider("Fator de Potência (cos φ):", 0.0, 1.0, 0.85, 0.01)
-            horas_dia = st.number_input("Uso Estimado (Horas/Dia):", 0, 24, 8)
+    # 1. DADOS DE PLACA (REFERÊNCIA)
+    with st.expander("📋 Dados de Placa do Compressor (Referência)", expanded=True):
+        col_p1, col_p2, col_p3 = st.columns(3)
+        lra = col_p1.number_input("LRA (Corrente de Partida):", min_value=0.0, value=0.0, help="Locked Rotor Amps")
+        rla = col_p2.number_input("RLA (Corrente Nominal):", min_value=0.0, value=0.0, help="Rated Load Amps")
+        v_nom_aba2 = col_p3.number_input("V Nominal (Placa):", min_value=0.0, value=220.0)
 
-    # 2. MOTOR DE CÁLCULOS ELÉTRICOS
-    # Cálculo de Potência Ativa (P = V * I_med * cos phi * raiz de 3 se trifásico)
-    corrente_media = (i_l1 + i_l2 + i_l3) / (3 if i_l3 > 0 else 2 if i_l2 > 0 else 1)
+    # 2. MEDIÇÕES DE CAMPO (DINÂMICO)
+    st.subheader("🔍 Medições em Tempo Real")
+    col_m1, col_m2, col_m3 = st.columns(3)
     
-    # Detecção automática de fases
-    num_fases = 3 if i_l3 > 0 else 1
-    raiz_3 = 1.732 if num_fases == 3 else 1.0
+    with col_m1:
+        v_med_aba2 = st.number_input("Tensão Medida (V):", min_value=0.0, value=220.0)
+        i_l1 = st.number_input("Corrente L1 (A):", min_value=0.0, value=0.0)
+        i_l2 = st.number_input("Corrente L2 (A):", min_value=0.0, value=0.0)
+        i_l3 = st.number_input("Corrente L3 (A):", min_value=0.0, value=0.0)
+
+    with col_m2:
+        fp = st.slider("Fator de Potência (cos φ):", 0.1, 1.0, 0.85)
+        rend = st.slider("Eficiência/Rendimento (η):", 0.1, 1.0, 0.90)
     
-    potencia_kw = (v_medida * corrente_media * fp * raiz_3) / 1000
-    consumo_mes = potencia_kw * horas_dia * 30
+    # --- MOTOR DE CÁLCULOS COMPLEXOS ---
+    # Identificação de Sistema
+    n_fases = 3 if i_l3 > 0 else 1
+    raiz3 = 1.732 if n_fases == 3 else 1.0
+    i_media = (i_l1 + i_l2 + i_l3) / n_fases if (i_l1 + i_l2 + i_l3) > 0 else 0
     
-    # Cálculo de Desequilíbrio (NEMA)
-    desequilibrio = 0.0
-    if num_fases == 3:
-        desequilibrio = (max(abs(i_l1-corrente_media), abs(i_l2-corrente_media), abs(i_l3-corrente_media)) / corrente_media) * 100 if corrente_media > 0 else 0
-
-    # 3. PAINEL DE ANÁLISE E PROJEÇÕES
-    st.subheader("📝 Análise Técnica e Projeções")
-    res1, res2, res3 = st.columns(3)
+    # 1. Potência Aparente (S) = V * I * raiz(3) [VA]
+    s_aparente = (v_med_aba2 * i_media * raiz3)
     
-    with res1:
-        st.metric("Potência Real", f"{potencia_kw:.2f} kW")
-        # Alerta de Queda de Tensão
-        queda_v = ((v_nominal - v_medida) / v_nominal) * 100 if v_nominal > 0 else 0
-        if queda_v > 5:
-            st.warning(f"⚠️ Queda de Tensão: {queda_v:.1f}% (Acima de 5%)")
-        else:
-            st.success(f"✅ Tensão Estável: {queda_v:.1f}% de oscilação")
+    # 2. Potência Ativa (P) = S * cos(phi) [W]
+    p_ativa = s_aparente * fp
+    
+    # 3. Potência Reativa (Q) = raiz(S² - P²) [VAr]
+    q_reativa = (s_aparente**2 - p_ativa**2)**0.5 if s_aparente > p_ativa else 0
+    
+    # 4. Potência Mecânica (Eixo) = P * Rendimento [W -> CV]
+    p_mecanica_w = p_ativa * rend
+    p_cv = p_mecanica_w / 735.5 # Conversão para Cavalos-Vapor
 
-    with res2:
-        st.metric("Consumo Mensal Est.", f"{consumo_mes:.1f} kWh")
-        if desequilibrio > 10:
-            st.error(f"🔴 Desequilíbrio: {desequilibrio:.1f}% (Crítico)")
-        elif desequilibrio > 0:
-            st.info(f"🟡 Desequilíbrio: {desequilibrio:.1f}% (Normal)")
-
-    with res3:
-        # Status de Saúde Elétrica
-        if v_medida < (v_nominal * 0.9) or desequilibrio > 15:
-            saude_eletr = "🔴 CRÍTICO"
-            cor_saude = "red"
-        elif v_medida < (v_nominal * 0.95) or desequilibrio > 5:
-            saude_eletr = "🟡 ATENÇÃO"
-            cor_saude = "orange"
-        else:
-            saude_eletr = "🟢 SAUDÁVEL"
-            cor_saude = "green"
-        st.markdown(f"**Saúde Elétrica:** <span style='color:{cor_saude}; font-weight:bold; font-size:24px;'>{saude_eletr}</span>", unsafe_allow_html=True)
-
-    # 4. SUGESTÕES AUTOMÁTICAS (IA DE CAMPO)
+    # 3. PAINEL DE RESULTADOS (ENGENHARIA)
     st.markdown("---")
-    st.subheader("💡 Sugestões Técnicas")
-    if v_medida < (v_nominal * 0.92):
-        st.info("👉 **Sugestão:** Verificar subdimensionamento de cabos ou conexões frouxas no quadro geral.")
-    if desequilibrio > 10:
-        st.info("👉 **Sugestão:** Redistribuir cargas nas fases ou verificar possível falha em enrolamento de motor/compressor.")
-    if fp < 0.8:
-        st.info("👉 **Sugestão:** Avaliar instalação de banco de capacitores para correção de reativo.")
+    res_e1, res_e2, res_e3, res_e4 = st.columns(4)
+    
+    res_e1.metric("P. Ativa (Real)", f"{p_ativa/1000:.2f} kW")
+    res_e2.metric("P. Aparente", f"{s_aparente/1000:.2f} kVA")
+    res_e3.metric("P. Reativa", f"{q_reativa/1000:.2f} kVAr")
+    res_e4.metric("P. Mecânica", f"{p_cv:.2f} CV")
 
-    # 5. BOTÃO EXCLUSIVO DE ENVIO (SÓ DADOS ELÉTRICOS)
+    # 4. ALERTAS TÉCNICOS E DIAGNÓSTICO
+    st.subheader("🚨 Diagnóstico de Segurança")
+    diag1, diag2 = st.columns(2)
+    
+    with diag1:
+        # Comparação RLA vs Medido
+        if rla > 0:
+            sobrecarga = ((i_media - rla) / rla) * 100
+            if i_media > rla:
+                st.error(f"⚠️ SOBRECARGA: Corrente {sobrecarga:.1f}% acima do RLA!")
+            else:
+                st.success(f"✅ CARGA: Operando a {100+sobrecarga:.1f}% do RLA.")
+        
+        # Desequilíbrio de Corrente
+        if n_fases == 3:
+            deseq = (max(abs(i_l1-i_media), abs(i_l2-i_media), abs(i_l3-i_media)) / i_media) * 100 if i_media > 0 else 0
+            if deseq > 10: st.warning(f"❗ Desequilíbrio de Fases: {deseq:.1f}%")
+
+    with diag2:
+        # Torque e Partida
+        if lra > 0 and i_media > 0:
+            relacao_partida = lra / i_media
+            st.info(f"ℹ️ Razão LRA/I-Med: {relacao_partida:.1f}x")
+
+    # 5. BOTÃO EXCLUSIVO: RELATÓRIO ELÉTRICO
     st.markdown("---")
-    col_zap_el = st.columns([1, 2, 1])
-    with col_zap_el[1]:
-        # Montagem da mensagem exclusiva elétrica
-        msg_el = f"*RELATÓRIO ELÉTRICO - {st.session_state.dados['tag_id']}*\n\n" \
-                 f"⚡ *Tensão Medida:* {v_medida}V\n" \
-                 f"🔌 *Corrente Média:* {corrente_media:.1f}A\n" \
-                 f"📉 *Desequilíbrio:* {desequilibrio:.1f}%\n" \
-                 f"🔋 *Potência:* {potencia_kw:.2f}kW\n" \
-                 f"🗓️ *Est. Consumo:* {consumo_mes:.1f} kWh/mês\n" \
-                 f"🩺 *Status:* {saude_eletr}\n\n" \
-                 f"Técnico: {st.session_state.dados['tecnico_nome']}"
-        
-        link_zap_el = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_el)}"
-        
-        if st.session_state.dados['whatsapp']:
-            st.link_button("📲 Enviar Laudo Elétrico via WhatsApp", link_zap_el, use_container_width=True)
-        else:
-            st.error("Preencha o WhatsApp na Aba 01 para habilitar o envio.")
+    msg_zap_eletr = f"*LAUDO ELÉTRICO HVAC*\n" \
+                    f"Identificação: {st.session_state.dados.get('tag_id', 'N/A')}\n\n" \
+                    f"⚡ *ELÉTRICA:* {n_fases}F - {v_med_aba2}V\n" \
+                    f"🔌 *CORRENTE MÉDIA:* {i_media:.2f}A (RLA: {rla}A)\n" \
+                    f"🔥 *POTÊNCIA ATIVA:* {p_ativa/1000:.2f}kW\n" \
+                    f"⚙️ *POTÊNCIA MECÂNICA:* {p_cv:.2f}CV\n" \
+                    f"📈 *FATOR POTÊNCIA:* {fp}\n" \
+                    f"🩺 *DIAGNÓSTICO:* {'SOBRECARGA' if i_media > rla and rla > 0 else 'NORMAL'}\n\n" \
+                    f"Responsável: {st.session_state.dados.get('tecnico_nome', 'Marcos Alexandre')}"
+    
+    link_zap_eletr = f"https://wa.me/55{st.session_state.dados.get('whatsapp','')}?text={urllib.parse.quote(msg_zap_eletr)}"
+    
+    st.link_button("📲 Enviar Relatório Elétrico Isolado", link_zap_eletr, use_container_width=True)
 
 # --- FIM DA ABA 02 ---
-    st.markdown("---")
-    st.subheader("👤 Técnico Responsável")
-    st.session_state.dados['tecnico_nome'] = st.text_input("Nome do Técnico:", value=st.session_state.dados['tecnico_nome'])
-    st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ do Técnico:", value=st.session_state.dados['tecnico_documento'])
-    st.session_state.dados['tecnico_registro'] = st.text_input("Registro Federal (CFT/CREA):", value=st.session_state.dados['tecnico_registro'])
