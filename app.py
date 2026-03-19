@@ -10,17 +10,17 @@ def inicializar_dados():
     if 'dados' not in st.session_state:
         st.session_state.dados = {}
     
-    campos_v11 = {
+    campos_v12 = {
         'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
         'data': datetime.now().strftime("%d/%m/%Y"),
         'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '', 'complemento': '',
         'fabricante': 'Carrier', 'modelo': '', 'capacidade': '12.000', 'linha': 'Residencial',
         'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '',
         'tipo_servico': 'Manutenção Preventiva', 'tag_id': '',
-        'tecnico_nome': '', 'tecnico_documento': '', # Dados do Técnico
-        'tensao': '220V', 'fase': 'Monofásico' # Guardados para outra aba
+        'tecnico_nome': '', 'tecnico_documento': '', 'tecnico_registro': '', # Registro Federal
+        'tensao': '220V', 'fase': 'Monofásico' 
     }
-    for chave, valor_padrao in campos_v11.items():
+    for chave, valor_padrao in campos_v12.items():
         if chave not in st.session_state.dados:
             st.session_state.dados[chave] = valor_padrao
 
@@ -93,7 +93,6 @@ with tab1:
         with e2:
             st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados['serie_evap'])
             st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND)", value=st.session_state.dados['serie_cond'])
-            # LOCAL DA CONDENSADORA AGORA ESTÁ NO LUGAR DE FASEAMENTO
             st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
 
         with e3:
@@ -117,22 +116,24 @@ with st.sidebar:
         st.rerun()
 
     st.markdown("---")
-    st.subheader("📋 Status do Laudo")
     
-    # Validação Corrigida
-    erros = []
-    if not st.session_state.dados['nome']: erros.append("Nome do Cliente")
-    if not st.session_state.dados['whatsapp']: erros.append("WhatsApp")
-    if not st.session_state.dados['serie_evap']: erros.append("Série da Evap.")
+    # Validação e Luz de Alerta
+    pendentes = []
+    if not st.session_state.dados['nome']: pendentes.append("Nome Cliente")
+    if not st.session_state.dados['whatsapp']: pendentes.append("WhatsApp")
+    if not st.session_state.dados['serie_evap']: pendentes.append("Série Evap")
     
-    if not erros:
-        st.success("✅ Campos básicos preenchidos!")
+    if pendentes:
+        st.subheader("📋 Status: 🔴 ALERTA")
+        st.error("Preencha os campos obrigatórios (*)")
+        for p in pendentes: st.write(f"- {p}")
     else:
-        st.error("❌ Pendente:")
-        for e in erros: st.write(f"- {e}")
+        st.subheader("📋 Status: 🟢 OK")
+        st.success("Dados básicos validados!")
 
     st.markdown("---")
     st.subheader("👤 Técnico Responsável")
     st.session_state.dados['tecnico_nome'] = st.text_input("Nome do Técnico:", value=st.session_state.dados['tecnico_nome'])
-    # NOVO CAMPO CPF/CNPJ ABAIXO DO NOME DO TÉCNICO
     st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ do Técnico:", value=st.session_state.dados['tecnico_documento'])
+    # NOVO CAMPO: REGISTRO FEDERAL ABAIXO DO CPF/CNPJ
+    st.session_state.dados['tecnico_registro'] = st.text_input("Registro Federal (CFT/CREA):", value=st.session_state.dados['tecnico_registro'])
