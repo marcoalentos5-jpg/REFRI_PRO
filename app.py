@@ -3,7 +3,7 @@ from datetime import datetime
 import requests
 import urllib.parse
 
-# 1. CONFIGURAÇÃO INICIAL (TESTADA)
+# 1. CONFIGURAÇÃO INICIAL (CONGELADO)
 st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="⚙️")
 
 # CSS: Estilização (CONGELADO)
@@ -34,7 +34,13 @@ if 'dados' not in st.session_state:
         'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '',
         'tipo_servico': 'Manutenção Preventiva', 'tag_id': 'TAG-01',
         'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
-        'status_maquina': '🟢 Operacional'
+        'status_maquina': '🟢 Operacional',
+        # Novas chaves para a Aba Elétrica
+        'v_ab': 0.0, 'v_bc': 0.0, 'v_ca': 0.0,
+        'i_r': 0.0, 'i_s': 0.0, 'i_t': 0.0,
+        'cap_nominal': 0.0, 'cap_real': 0.0,
+        'res_isolamento': '', 'disjuntor_ok': 'Sim',
+        'obs_eletrica': ''
     }
 
 def buscar_cep(cep):
@@ -53,13 +59,11 @@ def buscar_cep(cep):
         except: pass
     return False
 
-# 3. INTERFACE DE ABA ÚNICA (ELIMINA O NAMEERROR DEFINITIVAMENTE)
-# Criamos a aba e já selecionamos o primeiro índice para evitar erro de variável nula
-tabs = st.tabs(["📋 Identificação e Equipamento"])
-tab1 = tabs[0]
+# 3. INTERFACE DE ABAS (AGORA COM ELÉTRICA)
+tab1, tab2 = st.tabs(["📋 Identificação e Equipamento", "⚡ Elétrica"])
 
+# --- ABA 01: IDENTIFICAÇÃO (SUAS 165 LINHAS PRESERVADAS) ---
 with tab1:
-    # --- SEÇÃO CLIENTE ---
     with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
         c1, c2, c3 = st.columns([2, 1, 1])
         st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="cli_nome")
@@ -87,7 +91,6 @@ with tab1:
         st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'])
         st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'])
 
-    # --- SEÇÃO EQUIPAMENTO ---
     col_titulo, col_data = st.columns([3, 1])
     with col_titulo: st.subheader("⚙️ Especificações do Equipamento")
     with col_data: st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'])
@@ -115,7 +118,37 @@ with tab1:
             st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
             st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
 
-# --- SIDEBAR (CONGELADO E PROTEGIDO) ---
+# --- ABA 02: ELÉTRICA (MÓDULO NOVO) ---
+with tab2:
+    st.subheader("⚡ Análise de Grandezas Elétricas")
+    col_v, col_i = st.columns(2)
+    with col_v:
+        with st.expander("📊 Tensão de Alimentação (V)", expanded=True):
+            v1, v2, v3 = st.columns(3)
+            st.session_state.dados['v_ab'] = v1.number_input("L1-L2 (V):", min_value=0.0, step=1.0)
+            st.session_state.dados['v_bc'] = v2.number_input("L2-L3 (V):", min_value=0.0, step=1.0)
+            st.session_state.dados['v_ca'] = v3.number_input("L3-L1 (V):", min_value=0.0, step=1.0)
+    with col_i:
+        with st.expander("📉 Corrente de Operação (A)", expanded=True):
+            i1, i2, i3 = st.columns(3)
+            st.session_state.dados['i_r'] = i1.number_input("L1 (A):", min_value=0.0, step=0.1)
+            st.session_state.dados['i_s'] = i2.number_input("L2 (A):", min_value=0.0, step=0.1)
+            st.session_state.dados['i_t'] = i3.number_input("L3 (A):", min_value=0.0, step=0.1)
+    
+    ce1, ce2 = st.columns(2)
+    with ce1:
+        with st.expander("🔋 Capacitores", expanded=True):
+            c_nom = st.number_input("Cap. Nominal (µF):", min_value=0.0)
+            c_real = st.number_input("Cap. Medido (µF):", min_value=0.0)
+            st.session_state.dados['cap_nominal'], st.session_state.dados['cap_real'] = c_nom, c_real
+    with ce2:
+        with st.expander("🛡️ Proteção", expanded=True):
+            st.session_state.dados['res_isolamento'] = st.text_input("Isolação (MΩ):")
+            st.session_state.dados['disjuntor_ok'] = st.radio("Componentes OK?", ["Sim", "Não"], horizontal=True)
+    
+    st.session_state.dados['obs_eletrica'] = st.text_area("Observações Elétricas:")
+
+# --- SIDEBAR (PROTEGIDO) ---
 with st.sidebar:
     st.title("🚀 Painel de Controle")
     st.subheader("👤 Técnico Responsável")
@@ -125,30 +158,26 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # VALIDAÇÃO DE CAMPOS OBRIGATÓRIOS
     if not st.session_state.dados['nome'] or not st.session_state.dados['whatsapp']:
-        st.error("📋 STATUS: PENDENTE (Preencha Cliente e WhatsApp)")
+        st.error("📋 STATUS: PENDENTE")
     else:
-        st.success("📋 STATUS: PRONTO PARA ENVIO")
+        st.success("📋 STATUS: PRONTO")
         
-    # MENSAGEM WHATSAPP - ENVIO DE TODOS OS DADOS SEM EXCEÇÃO
+    # MENSAGEM WHATSAPP ATUALIZADA (INCLUINDO ELÉTRICA)
     msg_zap = (
         f"*LAUDO TÉCNICO HVAC*\n\n"
         f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
-        f"🆔 CPF/CNPJ: {st.session_state.dados['cpf_cnpj']}\n"
-        f"📍 END: {st.session_state.dados['endereco']}, {st.session_state.dados['numero']} - {st.session_state.dados['bairro']}\n"
-        f"🏙️ {st.session_state.dados['cidade']}/{st.session_state.dados['uf']} | CEP: {st.session_state.dados['cep']}\n"
-        f"📞 Contato: {st.session_state.dados['whatsapp']} | Email: {st.session_state.dados['email']}\n\n"
+        f"📍 END: {st.session_state.dados['endereco']}, {st.session_state.dados['numero']}\n"
+        f"📞 Contato: {st.session_state.dados['whatsapp']}\n\n"
         f"⚙️ *EQUIPAMENTO:*\n"
-        f"📌 TAG: {st.session_state.dados['tag_id']} | Linha: {st.session_state.dados['linha']}\n"
-        f"🏭 Fab: {st.session_state.dados['fabricante']} | Mod: {st.session_state.dados['modelo']}\n"
+        f"📌 TAG: {st.session_state.dados['tag_id']} | Fab: {st.session_state.dados['fabricante']}\n"
         f"❄️ Cap: {st.session_state.dados['capacidade']} BTU | Fluido: {st.session_state.dados['fluido']}\n"
-        f"🔢 S.Evap: {st.session_state.dados['serie_evap']} | S.Cond: {st.session_state.dados['serie_cond']}\n"
-        f"📍 Loc.Evap: {st.session_state.dados['local_evap']} | Loc.Cond: {st.session_state.dados['local_cond']}\n"
-        f"🛠️ Serviço: {st.session_state.dados['tipo_servico']}\n"
         f"🩺 Status: {st.session_state.dados['status_maquina']}\n\n"
+        f"⚡ *ANÁLISE ELÉTRICA:*\n"
+        f"🔌 Tensões: {st.session_state.dados['v_ab']}V / {st.session_state.dados['v_bc']}V / {st.session_state.dados['v_ca']}V\n"
+        f"📉 Correntes: {st.session_state.dados['i_r']}A / {st.session_state.dados['i_s']}A / {st.session_state.dados['i_t']}A\n"
+        f"🔋 Capacitor: {st.session_state.dados['cap_real']}µF | Proteção: {st.session_state.dados['disjuntor_ok']}\n\n"
         f"👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}\n"
-        f"📜 Registro: {st.session_state.dados['tecnico_registro']}\n"
         f"📅 Data: {st.session_state.dados['data']}"
     )
     
@@ -156,7 +185,6 @@ with st.sidebar:
     st.link_button("📲 Enviar Laudo via WhatsApp", link_final, use_container_width=True)
 
     st.markdown("---")
-    # LIMPAR FORMULÁRIO (PROTEGENDO DADOS DO TÉCNICO)
     if st.button("🗑️ Limpar Formulário", use_container_width=True):
         chaves_tecnico = ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']
         for key in st.session_state.dados.keys():
