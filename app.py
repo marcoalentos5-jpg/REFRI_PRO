@@ -353,3 +353,40 @@ with tab2:
     # ================= OBS =================
     with st.expander("📝 Observações Técnicas", expanded=True):
         e['obs'] = st.text_area("Observações:", value=e.get('obs', ''))
+
+# ================= WHATSAPP - ABA ELÉTRICA =================
+st.markdown("---")
+st.subheader("📲 Enviar Laudo Elétrico")
+
+# limpa número
+zap_num = "".join(filter(str.isdigit, st.session_state.dados.get('whatsapp', '')))
+
+# mensagem elétrica (somente dados da aba elétrica)
+msg_eletrica = (
+    f"*LAUDO ELÉTRICO HVAC*\n\n"
+
+    f"👤 Cliente: {st.session_state.dados.get('nome','')}\n\n"
+
+    f"⚡ *DADOS GERAIS*\n"
+    f"Tensão Rede: {e.get('tensao_rede','')} V\n"
+    f"Tensão Medida: {e.get('tensao_medida','')} V\n"
+    f"Diferença: {e.get('dif_tensao','')} V\n\n"
+
+    f"Corrente Medida: {e.get('corrente_medida','')} A\n"
+    f"RLA: {e.get('rla','')} A | LRA: {e.get('lra','')} A\n"
+    f"Diferença Corrente: {e.get('dif_corrente','')} A\n\n"
+
+    f"🔌 *TRIFÁSICO*\n"
+    f"RS: {e.get('tensao_rs','')} | ST: {e.get('tensao_st','')} | TR: {e.get('tensao_tr','')}\n"
+    f"R: {e.get('corrente_r','')} | S: {e.get('corrente_s','')} | T: {e.get('corrente_t','')}\n\n"
+
+    f"📊 Potência: {e.get('potencia_kw','')} kW\n"
+    f"FP: {e.get('fp','')}\n\n"
+
+    f"👨‍🔧 Técnico: {st.session_state.dados.get('tecnico_nome','')}\n"
+    f"📅 {st.session_state.dados.get('data','')}"
+)
+
+link_eletrica = f"https://wa.me/55{zap_num}?text={urllib.parse.quote(msg_eletrica)}"
+
+st.link_button("📲 Enviar Laudo Elétrico", link_eletrica, use_container_width=True)
