@@ -24,7 +24,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. MOTOR DE SESSÃO (CHAVES VERIFICADAS)
+# 2. MOTOR DE SESSÃO (CHAVES ORIGINAIS)
 if 'dados' not in st.session_state:
     st.session_state.dados = {
         'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
@@ -34,13 +34,7 @@ if 'dados' not in st.session_state:
         'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '',
         'tipo_servico': 'Manutenção Preventiva', 'tag_id': 'TAG-01',
         'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
-        'status_maquina': '🟢 Operacional',
-        # Novas chaves para a Aba Elétrica
-        'v_ab': 0.0, 'v_bc': 0.0, 'v_ca': 0.0,
-        'i_r': 0.0, 'i_s': 0.0, 'i_t': 0.0,
-        'cap_nominal': 0.0, 'cap_real': 0.0,
-        'res_isolamento': '', 'disjuntor_ok': 'Sim',
-        'obs_eletrica': ''
+        'status_maquina': '🟢 Operacional'
     }
 
 def buscar_cep(cep):
@@ -59,11 +53,11 @@ def buscar_cep(cep):
         except: pass
     return False
 
-# 3. INTERFACE DE ABAS (AGORA COM ELÉTRICA)
+# 3. DEFINIÇÃO DAS ABAS (Preparado para expansão)
 tab1, tab2 = st.tabs(["📋 Identificação e Equipamento", "⚡ Elétrica"])
 
-# --- ABA 01: IDENTIFICAÇÃO (SUAS 165 LINHAS PRESERVADAS) ---
 with tab1:
+    # --- SEÇÃO CLIENTE ---
     with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
         c1, c2, c3 = st.columns([2, 1, 1])
         st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="cli_nome")
@@ -91,6 +85,7 @@ with tab1:
         st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'])
         st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'])
 
+    # --- SEÇÃO EQUIPAMENTO ---
     col_titulo, col_data = st.columns([3, 1])
     with col_titulo: st.subheader("⚙️ Especificações do Equipamento")
     with col_data: st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'])
@@ -117,6 +112,43 @@ with tab1:
             st.session_state.dados['fluido'] = st.selectbox("Fluido:", ["R410A", "R134a", "R22", "R32", "R290"], index=0)
             st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
             st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
+
+# --- SIDEBAR (CONGELADO E PROTEGIDO) ---
+with st.sidebar:
+    st.title("🚀 Painel de Controle")
+    st.subheader("👤 Técnico Responsável")
+    st.session_state.dados['tecnico_nome'] = st.text_input("Nome:", value=st.session_state.dados['tecnico_nome'])
+    st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ Técnico:", value=st.session_state.dados['tecnico_documento'])
+    st.session_state.dados['tecnico_registro'] = st.text_input("Inscrição (CFT/CREA):", value=st.session_state.dados['tecnico_registro'])
+    
+    st.markdown("---")
+    
+    if not st.session_state.dados['nome'] or not st.session_state.dados['whatsapp']:
+        st.error("📋 STATUS: PENDENTE")
+    else:
+        st.success("📋 STATUS: PRONTO")
+        
+    msg_zap = (
+        f"*LAUDO TÉCNICO HVAC*\n\n"
+        f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
+        f"📍 END: {st.session_state.dados['endereco']}, {st.session_state.dados['numero']}\n\n"
+        f"⚙️ *EQUIPAMENTO:*\n"
+        f"📌 TAG: {st.session_state.dados['tag_id']} | Fab: {st.session_state.dados['fabricante']}\n"
+        f"🩺 Status: {st.session_state.dados['status_maquina']}\n\n"
+        f"👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}\n"
+        f"📅 Data: {st.session_state.dados['data']}"
+    )
+    
+    link_final = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_zap)}"
+    st.link_button("📲 Enviar Laudo via WhatsApp", link_final, use_container_width=True)
+
+    st.markdown("---")
+    if st.button("🗑️ Limpar Formulário", use_container_width=True):
+        chaves_tecnico = ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']
+        for key in st.session_state.dados.keys():
+            if key not in chaves_tecnico:
+                st.session_state.dados[key] = ""
+        st.rerun()
 
 # --- ABA 02: ELÉTRICA (Módulo Blindado - Definição Marcos Alexandre) ---
 with tab2:
