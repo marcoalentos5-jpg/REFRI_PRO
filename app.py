@@ -98,7 +98,7 @@ with tab6:
     c_pdf1, c_pdf2, c_wa1, c_wa2 = st.columns(4)
     with c_pdf1: st.button("📄 GERAR LAUDO PDF", key="btn_pdf_laudo")
     with c_wa1: st.button("📲 WHATSAPP CLIENTE", key="btn_wa_cli")
-# LINHA 200
+        
 ###############################################################################
 # [ BLOCO 02 DE 12 ] - BANCO DE DADOS SQLITE E PERSISTÊNCIA DE DADOS           #
 # VERSÃO: 4.700 (BLINDADA) - FOCO: SEGURANÇA E INTEGRIDADE                     #
@@ -106,9 +106,11 @@ with tab6:
 
 # 7. MOTOR DE BANCO DE DADOS (SQLITE3)
 def conectar_db():
+    """Estabelece conexão segura com o banco local"""
     return sqlite3.connect('hvac_master_db.sqlite', check_same_thread=False)
 
 def criar_tabelas():
+    """Garante a existência da estrutura de dados sem duplicidade"""
     conn = conectar_db()
     cursor = conn.cursor()
     cursor.execute("""
@@ -134,10 +136,12 @@ def criar_tabelas():
     conn.commit()
     conn.close()
 
+# Inicialização automática
 criar_tabelas()
 
 # 8. FUNÇÕES DE MANIPULAÇÃO DE DADOS (CRUD)
 def salvar_atendimento(dados):
+    """Insere os dados coletados no banco com proteção contra falhas de input"""
     conn = conectar_db()
     cursor = conn.cursor()
     query = """
@@ -148,11 +152,16 @@ def salvar_atendimento(dados):
             checklist_json, diagnostico_ia
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
+    # Uso de .get() para evitar KeyError se alguma aba não for preenchida
     params = (
-        dados.get('nome'), dados.get('cpf'), dados.get('data'), dados.get('modelo'),
-        dados.get('fluido'), dados.get('p_alta'), dados.get('p_baixa'), dados.get('t_suc'),
-        dados.get('t_liq'), dados.get('sh'), dados.get('sc'), dados.get('corrente'),
-        json.dumps(dados.get('checklist', {})), dados.get('diagnostico')
+        dados.get('nome'), dados.get('cpf'), dados.get('data'), 
+        dados.get('modelo', 'N/A'), dados.get('fluido', 'R410A'), 
+        dados.get('p_alta', 0.0), dados.get('p_baixa', 0.0), 
+        dados.get('t_suc', 0.0), dados.get('t_liq', 0.0), 
+        dados.get('sh', 0.0), dados.get('sc', 0.0), 
+        dados.get('corrente', 0.0), 
+        json.dumps(dados.get('checklist', {})), 
+        dados.get('diag_status', '')
     )
     cursor.execute(query, params)
     conn.commit()
@@ -161,8 +170,9 @@ def salvar_atendimento(dados):
     return novo_id
 
 def buscar_por_cpf(cpf):
+    """Busca histórico blindada contra SQL Injection"""
     conn = conectar_db()
-    # BLINDAGEM: Uso de parâmetros '?' para evitar ataques de SQL Injection
+    # Proteção com tupla de parâmetros (?) em vez de f-string
     query = "SELECT * FROM atendimentos WHERE cliente_cpf = ? ORDER BY id DESC"
     df = pd.read_sql_query(query, conn, params=(cpf,))
     conn.close()
