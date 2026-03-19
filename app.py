@@ -164,101 +164,83 @@ with st.sidebar:
                 st.session_state.dados[key] = ""
         st.rerun()
 
-    
-# --- ABA 02: ELÉTRICA (Módulo Blindado - Definição Marcos Alexandre) ---
-st.tabs
+# --- ABA 02: ELÉTRICA (Versão Final com Sequence[TabContainer] Fix) ---
 with tab2:
     st.subheader("⚡ Análise Elétrica e Eficiência Energética")
-    
-    # Inicialização de variáveis elétricas no session_state (se não existirem)
-    if 'v_rede' not in st.session_state.dados:
-        st.session_state.dados.update({
-            'v_rede': 220.0, 'v_med': 0.0, 'lra': 0.0, 'rla': 0.0, 'i_med': 0.0,
-            'freq': 60.0, 'fp': 0.85, 'eta': 0.0, 'pot_ativa': 0.0, 'pot_reativa': 0.0,
-            'pot_aparente': 0.0, 'pot_mecanica': 0.0, 'res_terra': 0.0
-        })
 
-    # CSS para destaque de campos (Fundo diferenciado para medições)
-    st.markdown("""
-        <style>
-        div[data-baseweb="input"] { border-radius: 4px; }
-        /* Destaque para Tensão Medida e Corrente Medida */
-        .destaque-eletrico input {
-            background-color: #fff9c4 !important; /* Amarelo claro para destaque */
-            color: #333 !important;
-            font-weight: bold !important;
-            border: 2px solid #fbc02d !important;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    # 1. Inicialização de Dados no Session State
+    # Usamos o dicionário 'dados' que você já possui na Aba 1
+    chaves_eletricas = {
+        'v_med': 220.0, 'i_med': 0.0, 'lra': 0.0, 'rla': 0.0, 
+        'cap_c_nom': 0.0, 'cap_c_med': 0.0, 'cap_v_nom': 0.0, 'cap_v_med': 0.0,
+        'fp': 0.85, 'res_terra': 0.0
+    }
+    for chave, valor in chaves_eletricas.items():
+        if chave not in st.session_state.dados:
+            st.session_state.dados[chave] = valor
 
-    # BLOCO 1: GRANDEZAS DE PLACA VS MEDIDAS
-    with st.expander("📊 Monitoramento de Tensão e Corrente", expanded=True):
-        c1, c2, c3 = st.columns(3)
-        st.session_state.dados['v_rede'] = c1.number_input("Tensão Rede (V):", value=st.session_state.dados['v_rede'])
+    # 2. Monitoramento de Tensão e Corrente
+    with st.expander("📊 Grandezas de Campo (Medições Reais)", expanded=True):
+        col_v1, col_v2 = st.columns(2)
+        with col_v1:
+            st.session_state.dados['v_med'] = st.number_input(
+                "Tensão Medida (V):", 
+                value=float(st.session_state.dados['v_med']), 
+                key="el_v_med"
+            )
+        with col_v2:
+            st.markdown('<div class="destaque-amarelo">', unsafe_allow_html=True)
+            st.session_state.dados['i_med'] = st.number_input(
+                "Corrente Medida (A):", 
+                value=float(st.session_state.dados['i_med']), 
+                key="el_i_med"
+            )
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        col_p1, col_p2 = st.columns(2)
+        st.session_state.dados['lra'] = col_p1.number_input("LRA (A):", value=float(st.session_state.dados['lra']), key="el_lra")
+        st.session_state.dados['rla'] = col_p2.number_input("RLA (A):", value=float(st.session_state.dados['rla']), key="el_rla")
+
+    # 3. Diagnóstico de Capacitores
+    with st.expander("🔋 Teste de Capacitância (µF)", expanded=True):
+        st.write("**Capacitor do Compressor**")
+        cp1, cp2, cp3 = st.columns(3)
+        c_nom = cp1.number_input("Nominal:", value=float(st.session_state.dados['cap_c_nom']), key="el_c_nom")
+        c_med = cp2.number_input("Medido:", value=float(st.session_state.dados['cap_c_med']), key="el_c_med")
+        st.session_state.dados['cap_c_nom'], st.session_state.dados['cap_c_med'] = c_nom, c_med
         
-        # Campo com Destaque: Tensão Medida
-        st.markdown('<div class="destaque-eletrico">', unsafe_allow_html=True)
-        st.session_state.dados['v_med'] = c2.number_input("Tensão Medida (V):", value=st.session_state.dados['v_med'], help="Destaque: Valor real no multímetro")
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        st.session_state.dados['freq'] = c3.number_input("Frequência (Hz):", value=60.0)
+        if c_nom > 0:
+            diff_c = ((c_med - c_nom) / c_nom) * 100
+            status_c = "✅ OK" if abs(diff_c) <= 5 else "🚨 TROCAR"
+            cp3.metric("Desvio", f"{diff_c:.1f}%", status_c, delta_color="inverse" if abs(diff_c) > 5 else "normal")
 
-        d1, d2, d3 = st.columns(3)
-        st.session_state.dados['lra'] = d1.number_input("LRA (A):", value=st.session_state.dados['lra'], help="Corrente de Partida")
-        st.session_state.dados['rla'] = d2.number_input("RLA (A):", value=st.session_state.dados['rla'], help="Corrente Nominal")
+        st.divider()
+        st.write("**Capacitor do Ventilador**")
+        cv1, cv2, cv3 = st.columns(3)
+        v_nom = cv1.number_input("Vent. Nominal:", value=float(st.session_state.dados['cap_v_nom']), key="el_v_nom")
+        v_med = cv2.number_input("Vent. Medido:", value=float(st.session_state.dados['cap_v_med']), key="el_v_med")
+        st.session_state.dados['cap_v_nom'], st.session_state.dados['cap_v_med'] = v_nom, v_med
         
-        # Campo com Destaque: Corrente Medida
-        st.markdown('<div class="destaque-eletrico">', unsafe_allow_html=True)
-        st.session_state.dados['i_med'] = d3.number_input("Corrente Medida (A):", value=st.session_state.dados['i_med'], help="Destaque: Valor real no alicate")
-        st.markdown('</div>', unsafe_allow_html=True)
+        if v_nom > 0:
+            diff_v = ((v_med - v_nom) / v_nom) * 100
+            status_v = "✅ OK" if abs(diff_v) <= 5 else "🚨 TROCAR"
+            cv3.metric("Desvio Vent.", f"{diff_v:.1f}%", status_v, delta_color="inverse" if abs(diff_v) > 5 else "normal")
 
-    # BLOCO 2: ENGENHARIA DE POTÊNCIAS (CÁLCULOS AUTOMÁTICOS)
-    with st.expander("🧬 Cálculos de Potência e Eficiência", expanded=True):
-        # Cálculos Internos
+    # 4. Cálculos de Performance
+    with st.expander("🧬 Engenharia e Eficiência", expanded=True):
+        # Cálculos locais rápidos
         v = st.session_state.dados['v_med']
         i = st.session_state.dados['i_med']
         fp = st.session_state.dados['fp']
         
-        s = v * i # Aparente
-        p = s * fp # Ativa
-        q = (s**2 - p**2)**0.5 if s > p else 0 # Reativa
+        pot_w = v * i * fp
+        hp_est = (pot_w * 0.9) / 745.7
         
-        p1, p2, p3 = st.columns(3)
-        st.session_state.dados['pot_aparente'] = p1.metric("Pot. Aparente (S)", f"{s:.1f} VA")
-        st.session_state.dados['pot_ativa'] = p2.metric("Pot. Ativa (P)", f"{p:.1f} W")
-        st.session_state.dados['pot_reativa'] = p3.metric("Pot. Reativa (Q)", f"{q:.1f} VAr")
-
         e1, e2, e3 = st.columns(3)
-        st.session_state.dados['fp'] = e1.number_input("Fator de Potência (cos φ):", value=0.85, step=0.01, max_value=1.0)
+        e1.metric("Potência Ativa", f"{pot_w:.1f} W")
+        e2.metric("Pot. Mecânica", f"{hp_est:.2f} HP")
+        st.session_state.dados['fp'] = e3.number_input("FP (cos φ):", value=float(fp), step=0.01, max_value=1.0, key="el_fp")
         
-        # Cálculo de Eficiência (Eta) e Pot. Mecânica Estimada
-        eta_calc = (p / (s if s > 0 else 1)) * 100 # Simplificado para demonstração
-        st.session_state.dados['eta'] = e2.metric("Rendimento (η)", f"{eta_calc:.1f}%")
-        st.session_state.dados['pot_mecanica'] = e3.text_input("Pot. Mecânica Estimada:", value=f"{(p*0.9)/745.7:.2f} HP")
+        st.session_state.dados['res_terra'] = st.number_input("Resistência de Aterramento (Ω):", value=float(st.session_state.dados['res_terra']), key="el_terra")
 
-    # BLOCO 3: PROTEÇÃO E SEGURANÇA
-    with st.expander("🛡️ Proteção e Aterramento", expanded=False):
-        g1, g2 = st.columns(2)
-        st.session_state.dados['res_terra'] = g1.number_input("Resistência Terra (Ω):", min_value=0.0)
-        st.session_state.dados['disjuntor_ok'] = g2.selectbox("Status Disjuntor/Cabos:", ["Conforme", "Não Conforme", "Requer Manutenção"])
-
-    st.info("💡 As medições destacadas em amarelo são cruciais para o diagnóstico de sobrecarga.")
-
-# --- SIDEBAR: ATUALIZAÇÃO DA MENSAGEM (Adicione este trecho na sua msg_zap original) ---
-# Copie e adicione estas linhas dentro da variável 'msg_zap' no seu Sidebar:
-# f"\n⚡ *ANÁLISE ELÉTRICA:*\n"
-# f"🔌 Tensão Medida: {st.session_state.dados['v_med']}V (Rede: {st.session_state.dados['v_rede']}V)\n"
-# f"📉 Corrente Medida: {st.session_state.dados['i_med']}A (RLA: {st.session_state.dados['rla']}A)\n"
-# f"📊 LRA (Partida): {st.session_state.dados['lra']}A | Freq: {st.session_state.dados['freq']}Hz\n"
-# f"💡 Pot. Ativa: {p:.1f}W | FP: {st.session_state.dados['fp']} | η: {eta_calc:.1f}%\n"
-# f"🛡️ Terra: {st.session_state.dados['res_terra']}Ω | Proteção: {st.session_state.dados['disjuntor_ok']}"
-    
-
-
-
-
-
-
-        
-      
+    st.success("✅ Diagnóstico elétrico processado. Os dados estão prontos para o laudo.")    
