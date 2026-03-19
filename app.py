@@ -2173,7 +2173,7 @@ with aba6:
 ###############################################################################
 # --- FINALIZAÇÃO DA ABA 6 (ALINHAMENTO BLINDADO) ---
 st.markdown("---")
-        janela_titulo("EXPORTAÇÃO E ARQUIVAMENTO")
+    janela_titulo("EXPORTAÇÃO E ARQUIVAMENTO")
 
         # LINHA 2175: Alinhada com o st.markdown acima (geralmente 8 espaços se dentro de aba+container)
         if st.button("💾 FINALIZAR E SALVAR ATENDIMENTO"):
