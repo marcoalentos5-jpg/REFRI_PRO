@@ -165,7 +165,7 @@ with st.sidebar:
         st.rerun()
         
        # --- ABA 02: ELÉTRICA (Versão Blindada e Testada) ---
-with tab2:
+        with tab2:
     st.subheader("⚡ Análise Elétrica e Eficiência Energética")
 
     # 1. Garantia de Dados (Inicializa chaves para evitar NameError)
