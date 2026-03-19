@@ -164,6 +164,58 @@ with st.sidebar:
                 st.session_state.dados[key] = ""
         st.rerun()
 
+# ================= WHATSAPP - ABA IDENTIFICAÇÃO =================
+st.markdown("---")
+st.subheader("📲 Enviar Laudo de Identificação")
+
+# limpa número
+zap_num = "".join(filter(str.isdigit, st.session_state.dados.get('whatsapp', '')))
+
+# mensagem SOMENTE da aba 1
+msg_identificacao = (
+    f"*LAUDO HVAC - IDENTIFICAÇÃO*\n\n"
+
+    f"👤 *CLIENTE*\n"
+    f"{st.session_state.dados.get('nome','')}\n"
+    f"CPF/CNPJ: {st.session_state.dados.get('cpf_cnpj','')}\n"
+    f"WhatsApp: {st.session_state.dados.get('whatsapp','')}\n"
+    f"E-mail: {st.session_state.dados.get('email','')}\n\n"
+
+    f"📍 *ENDEREÇO*\n"
+    f"{st.session_state.dados.get('endereco','')}, {st.session_state.dados.get('numero','')}\n"
+    f"{st.session_state.dados.get('bairro','')}\n"
+    f"{st.session_state.dados.get('cidade','')}/{st.session_state.dados.get('uf','')}\n"
+    f"CEP: {st.session_state.dados.get('cep','')}\n\n"
+
+    f"⚙️ *EQUIPAMENTO*\n"
+    f"Fabricante: {st.session_state.dados.get('fabricante','')}\n"
+    f"Modelo: {st.session_state.dados.get('modelo','')}\n"
+    f"Capacidade: {st.session_state.dados.get('capacidade','')} BTU\n"
+    f"Linha: {st.session_state.dados.get('linha','')}\n"
+    f"Fluido: {st.session_state.dados.get('fluido','')}\n\n"
+
+    f"🔢 Série Evap: {st.session_state.dados.get('serie_evap','')}\n"
+    f"🔢 Série Cond: {st.session_state.dados.get('serie_cond','')}\n\n"
+
+    f"📍 Locais:\n"
+    f"Evap: {st.session_state.dados.get('local_evap','')}\n"
+    f"Cond: {st.session_state.dados.get('local_cond','')}\n\n"
+
+    f"🛠️ Serviço: {st.session_state.dados.get('tipo_servico','')}\n"
+    f"🩺 Status: {st.session_state.dados.get('status_maquina','')}\n\n"
+
+    f"👨‍🔧 *TÉCNICO*\n"
+    f"{st.session_state.dados.get('tecnico_nome','')}\n"
+    f"Registro: {st.session_state.dados.get('tecnico_registro','')}\n"
+    f"📅 Data: {st.session_state.dados.get('data','')}"
+)
+
+# link
+link_identificacao = f"https://wa.me/55{zap_num}?text={urllib.parse.quote(msg_identificacao)}"
+
+# botão
+st.link_button("📲 Enviar Laudo de Identificação", link_identificacao, use_container_width=True)
+
 # ================== ABA 2 - ELÉTRICA (FINAL) ==================
 with tab2:
     st.subheader("⚡ Análise Elétrica Profissional")
