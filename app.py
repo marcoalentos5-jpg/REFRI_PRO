@@ -5,7 +5,6 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import cm
 from reportlab.pdfgen import canvas
 
-====================================
 def gerar_pdf(dados, eletrica):
     file_path = "relatorio_tecnico.pdf"
 
@@ -101,7 +100,6 @@ def gerar_pdf(dados, eletrica):
     doc.build(elements)
 
     return file_path
-=============================
 
 import streamlit as st
 from datetime import datetime
