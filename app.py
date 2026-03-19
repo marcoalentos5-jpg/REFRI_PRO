@@ -164,86 +164,81 @@ with st.sidebar:
                 st.session_state.dados[key] = ""
         st.rerun()
 
-# ================== ABA 2 - ELÉTRICA (PRO) ==================
+# ================== ABA 2 - ELÉTRICA (BLINDADA) ==================
 with tab2:
     st.subheader("⚡ Análise Elétrica Profissional")
 
-   # GARANTE TODAS AS CHAVES SEM DAR KEYERROR
-if 'eletrica' not in st.session_state:
-    st.session_state.eletrica = {}
+    # ===== GARANTE ESTRUTURA SEM KEYERROR =====
+    if 'eletrica' not in st.session_state:
+        st.session_state.eletrica = {}
 
-defaults_eletrica = {
-    'tensao_rs': '',
-    'tensao_st': '',
-    'tensao_tr': '',
-    'corrente_r': '',
-    'corrente_s': '',
-    'corrente_t': '',
-    'fp': '0.92',
-    'potencia_kw': '',
-    'rla': '',
-    'lra': '',
-    'disjuntor': '',
-    'cabo': '',
-    'aterramento': 'OK',
-    'obs': ''
-}
+    defaults_eletrica = {
+        'tensao_rs': '', 'tensao_st': '', 'tensao_tr': '',
+        'corrente_r': '', 'corrente_s': '', 'corrente_t': '',
+        'fp': '0.92',
+        'potencia_kw': '',
+        'rla': '', 'lra': '',
+        'disjuntor': '', 'cabo': '',
+        'aterramento': 'OK',
+        'obs': ''
+    }
 
-for k, v in defaults_eletrica.items():
-    if k not in st.session_state.eletrica:
-        st.session_state.eletrica[k] = v
+    for k, v in defaults_eletrica.items():
+        if k not in st.session_state.eletrica:
+            st.session_state.eletrica[k] = v
 
     e = st.session_state.eletrica
 
-    # ================= MEDIÇÕES =================
+    # ================= TENSÕES =================
     with st.expander("📏 Tensões (V)", expanded=True):
         v1, v2, v3 = st.columns(3)
-        e['tensao_rs'] = v1.text_input("RS (V):", value=e['tensao_rs'])
-        e['tensao_st'] = v2.text_input("ST (V):", value=e['tensao_st'])
-        e['tensao_tr'] = v3.text_input("TR (V):", value=e['tensao_tr'])
+        e['tensao_rs'] = v1.text_input("RS (V):", value=e.get('tensao_rs', ''))
+        e['tensao_st'] = v2.text_input("ST (V):", value=e.get('tensao_st', ''))
+        e['tensao_tr'] = v3.text_input("TR (V):", value=e.get('tensao_tr', ''))
 
+    # ================= CORRENTES =================
     with st.expander("🔌 Correntes (A)", expanded=True):
         c1, c2, c3 = st.columns(3)
-        e['corrente_r'] = c1.text_input("Fase R:", value=e['corrente_r'])
-        e['corrente_s'] = c2.text_input("Fase S:", value=e['corrente_s'])
-        e['corrente_t'] = c3.text_input("Fase T:", value=e['corrente_t'])
+        e['corrente_r'] = c1.text_input("Fase R:", value=e.get('corrente_r', ''))
+        e['corrente_s'] = c2.text_input("Fase S:", value=e.get('corrente_s', ''))
+        e['corrente_t'] = c3.text_input("Fase T:", value=e.get('corrente_t', ''))
 
+    # ================= DADOS DE PLACA =================
     with st.expander("🏷️ Dados de Placa", expanded=True):
         p1, p2, p3 = st.columns(3)
-        e['rla'] = p1.text_input("RLA (A):", value=e['rla'])
-        e['lra'] = p2.text_input("LRA (A):", value=e['lra'])
-        e['fp'] = p3.text_input("Fator de Potência:", value=e['fp'])
+        e['rla'] = p1.text_input("RLA (A):", value=e.get('rla', ''))
+        e['lra'] = p2.text_input("LRA (A):", value=e.get('lra', ''))
+        e['fp'] = p3.text_input("Fator de Potência:", value=e.get('fp', '0.92'))
 
     # ================= CÁLCULOS =================
     try:
-        v_rs = float(e['tensao_rs'] or 0)
-        v_st = float(e['tensao_st'] or 0)
-        v_tr = float(e['tensao_tr'] or 0)
+        v_rs = float(e.get('tensao_rs') or 0)
+        v_st = float(e.get('tensao_st') or 0)
+        v_tr = float(e.get('tensao_tr') or 0)
 
-        i_r = float(e['corrente_r'] or 0)
-        i_s = float(e['corrente_s'] or 0)
-        i_t = float(e['corrente_t'] or 0)
+        i_r = float(e.get('corrente_r') or 0)
+        i_s = float(e.get('corrente_s') or 0)
+        i_t = float(e.get('corrente_t') or 0)
 
-        fp = float(e['fp'] or 0.92)
+        fp = float(e.get('fp') or 0.92)
 
         # MÉDIAS
         v_med = (v_rs + v_st + v_tr) / 3 if (v_rs + v_st + v_tr) > 0 else 0
         i_med = (i_r + i_s + i_t) / 3 if (i_r + i_s + i_t) > 0 else 0
 
-        # POTÊNCIA TRIFÁSICA REAL
+        # POTÊNCIA TRIFÁSICA
         potencia = (1.732 * v_med * i_med * fp) / 1000
         e['potencia_kw'] = f"{potencia:.2f}"
 
-        # DESEQUILÍBRIO DE TENSÃO (%)
+        # DESEQUILÍBRIOS
         v_max = max(v_rs, v_st, v_tr)
         des_v = ((v_max - v_med) / v_med * 100) if v_med > 0 else 0
 
-        # DESEQUILÍBRIO DE CORRENTE (%)
         i_max = max(i_r, i_s, i_t)
         des_i = ((i_max - i_med) / i_med * 100) if i_med > 0 else 0
 
-        # RELAÇÃO COM RLA
-        rla = float(e['rla'] or 0)
+        # CARGA vs RLA
+        rla = float(e.get('rla') or 0)
         carga_pct = (i_med / rla * 100) if rla > 0 else 0
 
     except:
@@ -251,9 +246,9 @@ for k, v in defaults_eletrica.items():
         e['potencia_kw'] = ""
 
     # ================= RESULTADOS =================
-    with st.expander("📊 Resultados Calculados", expanded=True):
+    with st.expander("📊 Resultados", expanded=True):
         r1, r2, r3 = st.columns(3)
-        r1.metric("Potência (kW)", e['potencia_kw'])
+        r1.metric("Potência (kW)", e.get('potencia_kw', ''))
         r2.metric("Desequilíbrio Tensão (%)", f"{des_v:.1f}")
         r3.metric("Desequilíbrio Corrente (%)", f"{des_i:.1f}")
 
@@ -262,23 +257,26 @@ for k, v in defaults_eletrica.items():
         r5.metric("Carga vs RLA (%)", f"{carga_pct:.1f}")
 
     # ================= DIAGNÓSTICO =================
-    with st.expander("🧠 Diagnóstico Automático", expanded=True):
+    with st.expander("🧠 Diagnóstico", expanded=True):
         if des_v > 3:
-            st.error("⚠️ Alto desequilíbrio de tensão")
+            st.error("⚠️ Desequilíbrio de tensão alto")
         if des_i > 10:
-            st.error("⚠️ Alto desequilíbrio de corrente")
+            st.error("⚠️ Desequilíbrio de corrente alto")
         if carga_pct > 110:
-            st.error("🔥 Sobrecarga do compressor")
-        if carga_pct < 50 and rla > 0:
+            st.error("🔥 Sobrecarga no compressor")
+        if carga_pct < 50 and float(e.get('rla') or 0) > 0:
             st.warning("⚠️ Baixa carga (possível falta de fluido)")
+        if i_r == 0 or i_s == 0 or i_t == 0:
+            st.error("🚨 Possível falta de fase")
+
         if des_v <= 3 and des_i <= 10:
-            st.success("✅ Sistema elétrico equilibrado")
+            st.success("✅ Sistema equilibrado")
 
     # ================= INSTALAÇÃO =================
-    with st.expander("🔧 Proteção Elétrica", expanded=True):
+    with st.expander("🔧 Proteção", expanded=True):
         p1, p2 = st.columns(2)
-        e['disjuntor'] = p1.text_input("Disjuntor (A):", value=e['disjuntor'])
-        e['cabo'] = p2.text_input("Cabo (mm²):", value=e['cabo'])
+        e['disjuntor'] = p1.text_input("Disjuntor (A):", value=e.get('disjuntor', ''))
+        e['cabo'] = p2.text_input("Cabo (mm²):", value=e.get('cabo', ''))
 
         e['aterramento'] = st.radio(
             "Aterramento:",
@@ -288,5 +286,5 @@ for k, v in defaults_eletrica.items():
         )
 
     # ================= OBS =================
-    with st.expander("📝 Observações Técnicas", expanded=True):
-        e['obs'] = st.text_area("Anomalias elétricas:", value=e['obs'])
+    with st.expander("📝 Observações", expanded=True):
+        e['obs'] = st.text_area("Observações técnicas:", value=e.get('obs', ''))
