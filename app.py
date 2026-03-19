@@ -168,23 +168,30 @@ with st.sidebar:
 with tab2:
     st.subheader("⚡ Análise Elétrica Profissional")
 
-    if 'eletrica' not in st.session_state:
-        st.session_state.eletrica = {
-            'tensao_rs': '',
-            'tensao_st': '',
-            'tensao_tr': '',
-            'corrente_r': '',
-            'corrente_s': '',
-            'corrente_t': '',
-            'fp': '0.92',
-            'potencia_kw': '',
-            'rla': '',
-            'lra': '',
-            'disjuntor': '',
-            'cabo': '',
-            'aterramento': 'OK',
-            'obs': ''
-        }
+   # GARANTE TODAS AS CHAVES SEM DAR KEYERROR
+if 'eletrica' not in st.session_state:
+    st.session_state.eletrica = {}
+
+defaults_eletrica = {
+    'tensao_rs': '',
+    'tensao_st': '',
+    'tensao_tr': '',
+    'corrente_r': '',
+    'corrente_s': '',
+    'corrente_t': '',
+    'fp': '0.92',
+    'potencia_kw': '',
+    'rla': '',
+    'lra': '',
+    'disjuntor': '',
+    'cabo': '',
+    'aterramento': 'OK',
+    'obs': ''
+}
+
+for k, v in defaults_eletrica.items():
+    if k not in st.session_state.eletrica:
+        st.session_state.eletrica[k] = v
 
     e = st.session_state.eletrica
 
