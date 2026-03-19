@@ -165,7 +165,7 @@ with st.sidebar:
         st.rerun()
         
 # --- ABA 02: ELÉTRICA (Versão 100% Corrigida e Blindada) ---
-with tab2:
+    with tab2:
     st.subheader("⚡ Análise Elétrica e Eficiência Energética")
 
     # 1. Inicialização de Segurança (Garante que st.session_state.dados tenha tudo)
