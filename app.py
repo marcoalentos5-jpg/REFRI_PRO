@@ -5,89 +5,123 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import cm
 from reportlab.pdfgen import canvas
 
-def gerar_pdf(dados, eletrica):
-    file_path = "relatorio_tecnico.pdf"
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import cm
+import datetime
 
-    doc = SimpleDocTemplate(file_path, pagesize=A4)
-    elements = []
+def gerar_pdf_profissional(dados, eletrica):
+
+    doc = SimpleDocTemplate("relatorio_tecnico.pdf", pagesize=A4)
     styles = getSampleStyleSheet()
+    elements = []
 
-    # TÍTULO
-    elements.append(Paragraph("RELATÓRIO TÉCNICO HVAC", styles['Title']))
+    azul = colors.HexColor("#0b5394")
+
+    # ================= LOGO =================
+    try:
+        logo = Image("logo.png", width=6*cm, height=3*cm)
+        elements.append(logo)
+    except:
+        pass
+
+    # ================= CABEÇALHO =================
+    elements.append(Paragraph("<b>MPN SOLUÇÕES EM REFRIGERAÇÃO E CLIMATIZAÇÃO</b>", styles['Title']))
+    elements.append(Paragraph("Rio de Janeiro - RJ | CNPJ: 51.274.762/0001-17", styles['Normal']))
     elements.append(Spacer(1, 12))
 
+    # ================= FUNÇÃO TABELA =================
+    def tabela_secao(titulo, dados_tabela):
+        elements.append(Paragraph(f"<b>{titulo}</b>", styles['Heading3']))
+
+        tabela = Table(dados_tabela, colWidths=[6*cm, 10*cm])
+        tabela.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), azul),
+            ('TEXTCOLOR',(0,0),(-1,0),colors.white),
+            ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+            ('BACKGROUND', (0,1), (-1,-1), colors.whitesmoke),
+        ]))
+
+        elements.append(tabela)
+        elements.append(Spacer(1, 12))
+
     # ================= CLIENTE =================
-    data_cliente = [
-        ["CLIENTE", ""],
+    tabela_secao("CLIENTE", [
+        ["Campo", "Valor"],
         ["Nome", dados.get('nome','')],
         ["CPF/CNPJ", dados.get('cpf_cnpj','')],
         ["Telefone", dados.get('whatsapp','')],
         ["Email", dados.get('email','')],
-    ]
+    ])
 
     # ================= ENDEREÇO =================
-    data_endereco = [
-        ["ENDEREÇO", ""],
+    tabela_secao("ENDEREÇO", [
+        ["Campo", "Valor"],
         ["Logradouro", f"{dados.get('endereco','')}, {dados.get('numero','')}"],
         ["Bairro", dados.get('bairro','')],
         ["Cidade", dados.get('cidade','')],
         ["UF", dados.get('uf','')],
         ["CEP", dados.get('cep','')],
-    ]
+    ])
 
     # ================= EQUIPAMENTO =================
-    data_equip = [
-        ["EQUIPAMENTO", ""],
+    tabela_secao("EQUIPAMENTO", [
+        ["Campo", "Valor"],
         ["Fabricante", dados.get('fabricante','')],
         ["Modelo", dados.get('modelo','')],
         ["Capacidade", f"{dados.get('capacidade','')} BTU"],
         ["Fluido", dados.get('fluido','')],
         ["Linha", dados.get('linha','')],
         ["Status", dados.get('status_maquina','')],
-    ]
+    ])
 
     # ================= ELÉTRICA =================
-    data_eletrica = [
-        ["DADOS ELÉTRICOS", ""],
+    tabela_secao("ANÁLISE ELÉTRICA", [
+        ["Campo", "Valor"],
         ["Tensão Rede", eletrica.get('tensao_rede','')],
         ["Tensão Medida", eletrica.get('tensao_medida','')],
-        ["Dif. Tensão", eletrica.get('dif_tensao','')],
+        ["Diferença Tensão", eletrica.get('dif_tensao','')],
         ["Corrente Medida", eletrica.get('corrente_medida','')],
         ["RLA", eletrica.get('rla','')],
         ["LRA", eletrica.get('lra','')],
-        ["Dif. Corrente", eletrica.get('dif_corrente','')],
-        ["RS/ST/TR", f"{eletrica.get('tensao_rs','')} / {eletrica.get('tensao_st','')} / {eletrica.get('tensao_tr','')}"],
+        ["Diferença Corrente", eletrica.get('dif_corrente','')],
+        ["RS / ST / TR", f"{eletrica.get('tensao_rs','')} / {eletrica.get('tensao_st','')} / {eletrica.get('tensao_tr','')}"],
         ["Correntes", f"{eletrica.get('corrente_r','')} / {eletrica.get('corrente_s','')} / {eletrica.get('corrente_t','')}"],
         ["Potência", f"{eletrica.get('potencia_kw','')} kW"],
-    ]
+    ])
 
-    def criar_tabela(data):
-        table = Table(data, colWidths=[7*cm, 8*cm])
-        table.setStyle(TableStyle([
-            ('BACKGROUND', (0,0), (-1,0), colors.grey),
-            ('TEXTCOLOR',(0,0),(-1,0),colors.white),
-            ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-        ]))
-        return table
+    # ================= DIAGNÓSTICO AUTOMÁTICO =================
+    diagnostico = []
 
-    elements.append(criar_tabela(data_cliente))
-    elements.append(Spacer(1, 10))
+    try:
+        if float(eletrica.get('dif_tensao') or 0) > 10:
+            diagnostico.append("Sobretensão detectada")
 
-    elements.append(criar_tabela(data_endereco))
-    elements.append(Spacer(1, 10))
+        if float(eletrica.get('dif_corrente') or 0) > 5:
+            diagnostico.append("Corrente acima do nominal (sobrecarga)")
 
-    elements.append(criar_tabela(data_equip))
-    elements.append(Spacer(1, 10))
+        if not diagnostico:
+            diagnostico.append("Sistema operando dentro dos parâmetros")
 
-    elements.append(criar_tabela(data_eletrica))
+    except:
+        diagnostico.append("Dados insuficientes para diagnóstico")
+
+    tabela_secao("DIAGNÓSTICO TÉCNICO", [
+        ["Resultado", " | ".join(diagnostico)],
+        ["Observações", eletrica.get('obs','')],
+    ])
+
     elements.append(Spacer(1, 30))
 
     # ================= ASSINATURAS =================
     assinatura = [
-        ["__________________________", "__________________________"],
-        [f"Técnico: {dados.get('tecnico_nome','')}", f"Cliente: {dados.get('nome','')}"],
-        [f"CREA/CFT: {dados.get('tecnico_registro','')}", f"CPF/CNPJ: {dados.get('cpf_cnpj','')}"],
+        ["______________________________", "______________________________"],
+        ["Marcos Alexandre Almeida do Nascimento", dados.get('nome','')],
+        ["Técnico Responsável", "Cliente"],
+        ["CNPJ: 51.274.762/0001-17", f"CPF/CNPJ: {dados.get('cpf_cnpj','')}"],
     ]
 
     table_ass = Table(assinatura, colWidths=[8*cm, 8*cm])
@@ -96,6 +130,19 @@ def gerar_pdf(dados, eletrica):
     ]))
 
     elements.append(table_ass)
+
+    # ================= RODAPÉ =================
+    data_atual = datetime.datetime.now().strftime("%d/%m/%Y")
+
+    elements.append(Spacer(1, 20))
+    elements.append(Paragraph(
+        f"Relatório gerado em {data_atual} | MPN Soluções em Refrigeração e Climatização",
+        styles['Normal']
+    ))
+
+    doc.build(elements)
+
+    return "relatorio_tecnico.pdf"
 
     doc.build(elements)
 
@@ -330,6 +377,23 @@ if st.button("📄 Gerar e Baixar PDF", use_container_width=True):
             label="📥 Baixar Relatório Técnico",
             data=f,
             file_name="relatorio_tecnico.pdf",
+            mime="application/pdf",
+            use_container_width=True
+        )
+st.markdown("---")
+st.subheader("📄 Enviar Relatório Técnico")
+
+if st.button("📄 Gerar Relatório Profissional", use_container_width=True):
+    pdf = gerar_pdf_profissional(
+        st.session_state.dados,
+        st.session_state.get('eletrica', {})
+    )
+
+    with open(pdf, "rb") as f:
+        st.download_button(
+            "📥 Baixar PDF",
+            f,
+            file_name="Relatorio_Tecnico_HVAC.pdf",
             mime="application/pdf",
             use_container_width=True
         )
