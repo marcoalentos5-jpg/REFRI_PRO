@@ -275,16 +275,67 @@ with tab2:
         e['potencia_kw'] = ""
         v_med = i_med = des_v = des_i = 0
 
-    # ================= RESULTADOS =================
+        # ================= RESULTADOS =================
     with st.expander("📊 Resultados", expanded=True):
-        r1, r2, r3 = st.columns(3)
-        r1.metric("Potência (kW)", e.get('potencia_kw', ''))
-        r2.metric("Desequilíbrio Tensão (%)", f"{des_v:.1f}")
-        r3.metric("Desequilíbrio Corrente (%)", f"{des_i:.1f}")
 
-        r4, r5 = st.columns(2)
-        r4.metric("Tensão Média (V)", f"{v_med:.1f}")
-        r5.metric("Corrente Média (A)", f"{i_med:.2f}")
+        try:
+            # BASE
+            v_med = (v_rs + v_st + v_tr) / 3 if (v_rs + v_st + v_tr) > 0 else 0
+            i_med = (i_r + i_s + i_t) / 3 if (i_r + i_s + i_t) > 0 else 0
+
+            fp = float(e.get('fp') or 0.92)
+
+            # ===== POTÊNCIAS =====
+            # Aparente (S)
+            S = (1.732 * v_med * i_med) / 1000  # kVA
+
+            # Ativa (P)
+            P = S * fp  # kW
+
+            # Reativa (Q)
+            import math
+            Q = S * math.sqrt(1 - fp**2) if fp <= 1 else 0  # kVAr
+
+            # Elétrica (entrada)
+            P_eletrica = P  # kW (mesma ativa)
+
+            # Mecânica (estimativa com rendimento)
+            rendimento = 0.85  # típico compressor
+            P_mecanica = P * rendimento
+
+            # ===== OUTROS =====
+            v_max = max(v_rs, v_st, v_tr)
+            des_v = ((v_max - v_med) / v_med * 100) if v_med > 0 else 0
+
+            i_max = max(i_r, i_s, i_t)
+            des_i = ((i_max - i_med) / i_med * 100) if i_med > 0 else 0
+
+            # Eficiência estimada
+            eficiencia = (P_mecanica / P_eletrica * 100) if P_eletrica > 0 else 0
+
+        except:
+            S = P = Q = P_eletrica = P_mecanica = eficiencia = 0
+            des_v = des_i = 0
+
+        # ===== EXIBIÇÃO =====
+        r1, r2, r3 = st.columns(3)
+        r1.metric("Potência Aparente (kVA)", f"{S:.2f}")
+        r2.metric("Potência Ativa (kW)", f"{P:.2f}")
+        r3.metric("Potência Reativa (kVAr)", f"{Q:.2f}")
+
+        r4, r5, r6 = st.columns(3)
+        r4.metric("Potência Elétrica (kW)", f"{P_eletrica:.2f}")
+        r5.metric("Potência Mecânica (kW)", f"{P_mecanica:.2f}")
+        r6.metric("Fator de Potência", f"{fp:.2f}")
+
+        r7, r8, r9 = st.columns(3)
+        r7.metric("Eficiência Estimada (%)", f"{eficiencia:.1f}")
+        r8.metric("Desequilíbrio Tensão (%)", f"{des_v:.1f}")
+        r9.metric("Desequilíbrio Corrente (%)", f"{des_i:.1f}")
+
+        r10, r11 = st.columns(2)
+        r10.metric("Tensão Média (V)", f"{v_med:.1f}")
+        r11.metric("Corrente Média (A)", f"{i_med:.2f}")
 
     # ================= PROTEÇÃO =================
     with st.expander("🔧 Proteção Elétrica", expanded=True):
