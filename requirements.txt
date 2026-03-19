@@ -6,3 +6,5 @@ fpdf
 Pillow
 fpdf2
 openpyxl 
+requests
+reportlab
