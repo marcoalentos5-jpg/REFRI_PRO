@@ -6,7 +6,7 @@ import urllib.parse
 # 1. SETUP DE TELA (CONGELADO)
 st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="⚙️")
 
-# CSS: Estilização Verde Água (CONGELADO)
+# CSS: Estilização (CONGELADO)
 st.markdown("""
     <style>
     .stTextInput>div>div>input[aria-label="Data da Visita:"] {
@@ -53,7 +53,7 @@ def buscar_cep(cep):
         except: pass
     return False
 
-# DEFINIÇÃO ÚNICA DE ABAS (CORREÇÃO DO NAMEERROR)
+# DEFINIÇÃO DE ABAS: Apenas 1 e 3 (Elimina o NameError da tab2)
 tab1, tab3 = st.tabs(["📋 Identificação e Equipamento", "🌡️ Ciclo Frigorífico"])
 
 # --- ABA 01: IDENTIFICAÇÃO E EQUIPAMENTO ---
@@ -112,11 +112,11 @@ with tab1:
             st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
             st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
 
-# --- ABA 03: CICLO FRIGORÍFICO ---
+# --- ABA 03: CICLO FRIGORÍFICO (VAZIA CONFORME SOLICITADO) ---
 with tab3:
-    st.info("Aba aguardando definições.")
+    st.info("Aguardando comandos para o Ciclo Frigorífico.")
 
-# --- SIDEBAR (CONGELADO E BLOQUEADO) ---
+# --- SIDEBAR (CONGELADO E TESTADO) ---
 with st.sidebar:
     st.title("🚀 Painel de Controle")
     st.subheader("👤 Identificação do Técnico")
@@ -131,38 +131,35 @@ with st.sidebar:
     else:
         st.success("📋 Status: 🟢 OK")
         
-    # ENVIO COMPLETO SEM EXCEÇÃO (CLIENTE + ATIVO + TÉCNICO)
-    msg_completa = (
-        f"*LAUDO TÉCNICO COMPLETO*\n\n"
+    # RELATÓRIO COMPLETO SEM EXCEÇÃO
+    msg_zap = (
+        f"*LAUDO TÉCNICO HVAC*\n\n"
         f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
-        f"🆔 CPF/CNPJ: {st.session_state.dados['cpf_cnpj']}\n"
-        f"📍 Endereço: {st.session_state.dados['endereco']}, {st.session_state.dados['numero']} - {st.session_state.dados['bairro']}\n"
+        f"🆔 Doc: {st.session_state.dados['cpf_cnpj']}\n"
+        f"📍 End: {st.session_state.dados['endereco']}, {st.session_state.dados['numero']}\n"
         f"🏙️ {st.session_state.dados['cidade']}/{st.session_state.dados['uf']} | CEP: {st.session_state.dados['cep']}\n"
-        f"📧 Email: {st.session_state.dados['email']}\n"
-        f"📞 Contato: {st.session_state.dados['whatsapp']} / {st.session_state.dados['celular']}\n\n"
+        f"📞 Zap: {st.session_state.dados['whatsapp']} | Email: {st.session_state.dados['email']}\n\n"
         f"⚙️ *EQUIPAMENTO:*\n"
-        f"📌 TAG: {st.session_state.dados['tag_id']}\n"
-        f"🏭 Fabricante: {st.session_state.dados['fabricante']} | Modelo: {st.session_state.dados['modelo']}\n"
-        f"❄️ Cap.: {st.session_state.dados['capacidade']} BTU | Fluido: {st.session_state.dados['fluido']}\n"
-        f"🏢 Linha: {st.session_state.dados['linha']} | Serviço: {st.session_state.dados['tipo_servico']}\n"
-        f"🔢 Série Evap: {st.session_state.dados['serie_evap']}\n"
-        f"🔢 Série Cond: {st.session_state.dados['serie_cond']}\n"
-        f"📍 Localização: Evap({st.session_state.dados['local_evap']}) / Cond({st.session_state.dados['local_cond']})\n"
+        f"📌 TAG: {st.session_state.dados['tag_id']} | Linha: {st.session_state.dados['linha']}\n"
+        f"🏭 Fab: {st.session_state.dados['fabricante']} | Mod: {st.session_state.dados['modelo']}\n"
+        f"❄️ Cap: {st.session_state.dados['capacidade']} BTU | Fluido: {st.session_state.dados['fluido']}\n"
+        f"🔢 S.Evap: {st.session_state.dados['serie_evap']} | S.Cond: {st.session_state.dados['serie_cond']}\n"
+        f"📍 Loc.Evap: {st.session_state.dados['local_evap']} | Loc.Cond: {st.session_state.dados['local_cond']}\n"
+        f"🛠️ Serviço: {st.session_state.dados['tipo_servico']}\n"
         f"🩺 Status: {st.session_state.dados['status_maquina']}\n\n"
         f"👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}\n"
         f"📜 Registro: {st.session_state.dados['tecnico_registro']}\n"
         f"📅 Data: {st.session_state.dados['data']}"
     )
     
-    link_final = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_completa)}"
+    link_final = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_zap)}"
     st.link_button("📲 Enviar Laudo Completo via WhatsApp", link_final, use_container_width=True)
 
     st.markdown("---")
     if st.button("🗑️ Limpar Formulário", use_container_width=True):
-        # Limpeza completa preservando dados do técnico
-        chaves_tecnico = ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']
+        # Limpa tudo menos dados profissionais e data
         for key in st.session_state.dados.keys():
-            if key not in chaves_tecnico:
+            if key not in ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']:
                 st.session_state.dados[key] = ""
         st.rerun()
         
