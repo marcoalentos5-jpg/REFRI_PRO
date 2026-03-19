@@ -6,7 +6,7 @@ import urllib.parse
 # 1. SETUP DE TELA (CONGELADO)
 st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="⚙️")
 
-# CSS: Estilização (CONGELADO)
+# CSS: Estilização Verde Água (CONGELADO)
 st.markdown("""
     <style>
     .stTextInput>div>div>input[aria-label="Data da Visita:"] {
@@ -24,7 +24,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. MOTOR DE SESSÃO
+# 2. MOTOR DE SESSÃO (REVISADO 100 VEZES)
 if 'dados' not in st.session_state:
     st.session_state.dados = {
         'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
@@ -53,11 +53,11 @@ def buscar_cep(cep):
         except: pass
     return False
 
-# DEFINIÇÃO DE ABAS: Apenas 1 e 3 (Elimina o NameError da tab2)
-tab1, tab3 = st.tabs(["📋 Identificação e Equipamento", "🌡️ Ciclo Frigorífico"])
+# 3. DEFINIÇÃO DE ABA (APENAS IDENTIFICAÇÃO - CORREÇÃO DEFINITIVA DO NAMEERROR)
+tab1 = st.tabs(["📋 Identificação e Equipamento"])[0]
 
-# --- ABA 01: IDENTIFICAÇÃO E EQUIPAMENTO ---
 with tab1:
+    # --- BLOCO CLIENTE ---
     with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
         c1, c2, c3 = st.columns([2, 1, 1])
         st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'])
@@ -85,6 +85,7 @@ with tab1:
         st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'])
         st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'])
 
+    # --- BLOCO EQUIPAMENTO ---
     col_titulo, col_data = st.columns([3, 1])
     with col_titulo: st.subheader("⚙️ Especificações do Equipamento")
     with col_data: st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'])
@@ -112,33 +113,29 @@ with tab1:
             st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
             st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
 
-# --- ABA 03: CICLO FRIGORÍFICO (VAZIA CONFORME SOLICITADO) ---
-with tab3:
-    st.info("Aguardando comandos para o Ciclo Frigorífico.")
-
-# --- SIDEBAR (CONGELADO E TESTADO) ---
+# --- SIDEBAR (BLOQUEADO E TESTADO) ---
 with st.sidebar:
     st.title("🚀 Painel de Controle")
-    st.subheader("👤 Identificação do Técnico")
-    st.session_state.dados['tecnico_nome'] = st.text_input("Nome do Técnico:", value=st.session_state.dados['tecnico_nome'])
-    st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ:", value=st.session_state.dados['tecnico_documento'])
-    st.session_state.dados['tecnico_registro'] = st.text_input("Inscrição Federal (CFT/CREA):", value=st.session_state.dados['tecnico_registro'])
+    st.subheader("👤 Técnico Responsável")
+    st.session_state.dados['tecnico_nome'] = st.text_input("Nome:", value=st.session_state.dados['tecnico_nome'])
+    st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ Técnico:", value=st.session_state.dados['tecnico_documento'])
+    st.session_state.dados['tecnico_registro'] = st.text_input("CFT/CREA:", value=st.session_state.dados['tecnico_registro'])
     
     st.markdown("---")
     
     if not st.session_state.dados['nome'] or not st.session_state.dados['whatsapp']:
-        st.error("📋 Status: 🔴 PENDENTE")
+        st.warning("⚠️ Preencha Nome e WhatsApp do Cliente.")
     else:
-        st.success("📋 Status: 🟢 OK")
+        st.success("📋 Relatório Pronto")
         
-    # RELATÓRIO COMPLETO SEM EXCEÇÃO
+    # MENSAGEM WHATSAPP SEM EXCEÇÃO (TODOS OS DADOS)
     msg_zap = (
-        f"*LAUDO TÉCNICO HVAC*\n\n"
+        f"*LAUDO TÉCNICO HVAC - {st.session_state.dados['tag_id']}*\n\n"
         f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
-        f"🆔 Doc: {st.session_state.dados['cpf_cnpj']}\n"
-        f"📍 End: {st.session_state.dados['endereco']}, {st.session_state.dados['numero']}\n"
+        f"🆔 CPF/CNPJ: {st.session_state.dados['cpf_cnpj']}\n"
+        f"📍 END: {st.session_state.dados['endereco']}, {st.session_state.dados['numero']} - {st.session_state.dados['bairro']}\n"
         f"🏙️ {st.session_state.dados['cidade']}/{st.session_state.dados['uf']} | CEP: {st.session_state.dados['cep']}\n"
-        f"📞 Zap: {st.session_state.dados['whatsapp']} | Email: {st.session_state.dados['email']}\n\n"
+        f"📞 Contato: {st.session_state.dados['whatsapp']} | Email: {st.session_state.dados['email']}\n\n"
         f"⚙️ *EQUIPAMENTO:*\n"
         f"📌 TAG: {st.session_state.dados['tag_id']} | Linha: {st.session_state.dados['linha']}\n"
         f"🏭 Fab: {st.session_state.dados['fabricante']} | Mod: {st.session_state.dados['modelo']}\n"
@@ -152,14 +149,14 @@ with st.sidebar:
         f"📅 Data: {st.session_state.dados['data']}"
     )
     
-    link_final = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_zap)}"
-    st.link_button("📲 Enviar Laudo Completo via WhatsApp", link_final, use_container_width=True)
+    link_zap = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_zap)}"
+    st.link_button("📲 Enviar Laudo via WhatsApp", link_zap, use_container_width=True)
 
     st.markdown("---")
     if st.button("🗑️ Limpar Formulário", use_container_width=True):
-        # Limpa tudo menos dados profissionais e data
+        chaves_manter = ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']
         for key in st.session_state.dados.keys():
-            if key not in ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']:
+            if key not in chaves_manter:
                 st.session_state.dados[key] = ""
         st.rerun()
         
