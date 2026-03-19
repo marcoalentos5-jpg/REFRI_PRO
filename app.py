@@ -164,7 +164,7 @@ with st.sidebar:
                 st.session_state.dados[key] = ""
         st.rerun()
 
-# --- ABA 02: ELÉTRICA (Correção de Escopo e NameError) ---
+# --- ABA 02: ELÉTRICA (Correçao de Escopo e NameError) ---
 with tab2:
     st.subheader("⚡ Análise Elétrica e Eficiência Energética")
 
