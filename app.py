@@ -163,8 +163,7 @@ with st.sidebar:
             if key not in chaves_tecnico:
                 st.session_state.dados[key] = ""
         st.rerun()
-        
-# --- ABA 02: ELÉTRICA (Correção de Indentação e Escopo) ---    
+        # --- ABA 02: ELÉTRICA (Correção de Indentação e Escopo) ---    
     with tab2:
         st.subheader ("⚡ Análise Elétrica e Eficiência Energética")
 
