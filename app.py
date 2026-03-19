@@ -166,6 +166,7 @@ with st.sidebar:
 
     
 # --- ABA 02: ELÉTRICA (Módulo Blindado - Definição Marcos Alexandre) ---
+st.tabs
 with tab2:
     st.subheader("⚡ Análise Elétrica e Eficiência Energética")
     
