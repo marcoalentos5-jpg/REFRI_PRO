@@ -166,64 +166,76 @@ with st.sidebar:
 
 # ================== ABA 2 - ELÉTRICA ==================
 with tab2:
-    st.subheader("⚡ Análise Elétrica do Equipamento")
+   st.subheader("⚡ Análise Elétrica do Equipamento")
 
+    # 1. Inicialização segura no session_state (Isolado da Aba 1)
     if 'eletrica' not in st.session_state:
         st.session_state.eletrica = {
-            'tensao': '',
-            'corrente_r': '',
-            'corrente_s': '',
-            'corrente_t': '',
-            'potencia': '',
-            'disjuntor': '',
-            'cabo': '',
-            'aterramento': 'OK',
-            'obs': ''
+            'tensao': '', 'corrente_r': '', 'corrente_s': '', 'corrente_t': '',
+            'potencia': '', 'disjuntor': '', 'cabo': '', 'aterramento': 'OK', 'obs': ''
         }
 
     e = st.session_state.eletrica
 
-    # MEDIÇÕES
+    # 2. MEDIÇÕES (Com chaves exclusivas para não conflitar com Aba 1)
     with st.expander("📏 Medições", expanded=True):
         c1, c2 = st.columns(2)
-        e['tensao'] = c1.text_input("Tensão (V):", value=e['tensao'])
+        # Adicionada key="el_tensao" para blindagem
+        e['tensao'] = c1.text_input("Tensão (V):", value=e['tensao'], key="el_tensao")
 
         c3, c4, c5 = st.columns(3)
-        e['corrente_r'] = c3.text_input("Corrente R (A):", value=e['corrente_r'])
-        e['corrente_s'] = c4.text_input("Corrente S (A):", value=e['corrente_s'])
-        e['corrente_t'] = c5.text_input("Corrente T (A):", value=e['corrente_t'])
+        e['corrente_r'] = c3.text_input("Corrente R (A):", value=e['corrente_r'], key="el_curr_r")
+        e['corrente_s'] = c4.text_input("Corrente S (A):", value=e['corrente_s'], key="el_curr_s")
+        e['corrente_t'] = c5.text_input("Corrente T (A):", value=e['corrente_t'], key="el_curr_t")
 
-    # CÁLCULO AUTOMÁTICO
+    # 3. CÁLCULO AUTOMÁTICO (Blindado contra erro de digitação)
     try:
-        v = float(e['tensao'] or 0)
-        ir = float(e['corrente_r'] or 0)
-        is_ = float(e['corrente_s'] or 0)
-        it = float(e['corrente_t'] or 0)
+        # Substitui vírgula por ponto para o cálculo não falhar
+        v = float(str(e['tensao']).replace(',', '.') or 0)
+        ir = float(str(e['corrente_r']).replace(',', '.') or 0)
+        is_ = float(str(e['corrente_s']).replace(',', '.') or 0)
+        it = float(str(e['corrente_t']).replace(',', '.') or 0)
 
-        i_med = (ir + is_ + it) / 3 if (ir + is_ + it) > 0 else 0
-        pot = (1.732 * v * i_med) / 1000
+        if (ir + is_ + it) > 0:
+            i_med = (ir + is_ + it) / 3
+            # Fórmula Trifásica: P = √3 * V * I / 1000
+            pot = (1.732 * v * i_med) / 1000
+            e['potencia'] = f"{pot:.2f}"
+        else:
+            e['potencia'] = "0.00"
+    except Exception:
+        e['potencia'] = "Erro no cálculo"
 
-        e['potencia'] = f"{pot:.2f}"
-    except:
-        e['potencia'] = ""
+    # 4. RESULTADO E PROTEÇÃO
+    col_res, col_prot = st.columns(2)
+    
+    with col_res:
+        with st.expander("📊 Resultado da Potência", expanded=True):
+            # O campo de potência agora mostra o cálculo automático mas permite edição
+            e['potencia'] = st.text_input("Potência Estimada (kW):", value=e['potencia'], key="el_pot_final")
 
-    # RESULTADO
-    with st.expander("📊 Resultado", expanded=True):
-        e['potencia'] = st.text_input("Potência (kW):", value=e['potencia'])
+    with col_prot:
+        with st.expander("🔌 Proteção Instalada", expanded=True):
+            e['disjuntor'] = st.text_input("Disjuntor (A):", value=e['disjuntor'], key="el_disj")
+            e['cabo'] = st.text_input("Cabo (mm²):", value=e['cabo'], key="el_cabo")
 
-    # INSTALAÇÃO
-    with st.expander("🔌 Proteção", expanded=True):
-        p1, p2 = st.columns(2)
-        e['disjuntor'] = p1.text_input("Disjuntor (A):", value=e['disjuntor'])
-        e['cabo'] = p2.text_input("Cabo (mm²):", value=e['cabo'])
-
+    # 5. ATERRAMENTO (Correção do Erro de Index)
+    with st.expander("🛡️ Segurança", expanded=True):
+        opcoes_at = ["OK", "Irregular", "Inexistente"]
+        # Garante que se o valor for inválido, ele volta para "OK"
+        idx_at = opcoes_at.index(e['aterramento']) if e['aterramento'] in opcoes_at else 0
+        
         e['aterramento'] = st.radio(
-            "Aterramento:",
-            ["OK", "Irregular", "Inexistente"],
-            index=["OK", "Irregular", "Inexistente"].index(e.get('aterramento', 'OK')),
-            horizontal=True
+            "Condição do Aterramento:",
+            opcoes_at,
+            index=idx_at,
+            horizontal=True,
+            key="el_aterro"
         )
 
-    # OBSERVAÇÃO
-    with st.expander("📝 Observações", expanded=True):
-        e['obs'] = st.text_area("Observações:", value=e['obs'])
+        e['obs'] = st.text_area("Notas Técnicas da Elétrica:", value=e['obs'], key="el_obs")
+
+    # 6. SINCRONIZAÇÃO COM O DICIONÁRIO PAI (Para o WhatsApp ver os dados)
+    # Isso garante que st.session_state.dados também receba as infos da elétrica
+    if 'dados' in st.session_state:
+        st.session_state.dados['info_eletrica'] = f"{e['potencia']}kW | {e['aterramento']}"
