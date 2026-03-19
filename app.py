@@ -1813,121 +1813,64 @@ with aba1:
 
 # [ FIM DA ABA 1 ] - A partir daqui, as próximas abas recomeçam no nível zero de indentação (margem esquerda)
 
-###############################################################################
-# [ BLOCO 09 DE 12 ] - INTERFACE: MEDIÇÕES ELÉTRICAS E TÉRMICAS (ABAS 2 E 3)    #
-# VERSÃO: 4.700 (BLINDADA E TESTADA)                                          #
-###############################################################################
-
-# --- ABA 2: MEDIÇÕES ELÉTRICAS ---
-with aba2:
-    janela_titulo("PARÂMETROS ELÉTRICOS (ALIMENTAÇÃO E CONSUMO)")
-    with st.container():
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            v_f1 = st.number_input("Tensão L1-N (V):", min_value=0, max_value=500, value=220, key="v_f1_med")
-        with c2:
-            v_f2 = st.number_input("Tensão L2-N (V):", min_value=0, max_value=500, value=0, key="v_f2_med")
-        with c3:
-            curr_total = st.number_input("Corrente Total (A):", min_value=0.0, max_value=200.0, step=0.1, key="curr_total_med")
-    
-    st.markdown("---")
-    janela_titulo("COMPONENTES ESPECÍFICOS")
-    col_comp1, col_comp2 = st.columns(2)
-    with col_comp1:
-        st.write("Capacitor Permanente (µF):")
-        cap_nom = st.number_input("Nominal:", value=35.0, key="cap_nom_val")
-        cap_real = st.number_input("Medido:", value=35.0, key="cap_real_val")
-    with col_comp2:
-        st.write("Resistência de Isolamento (MΩ):")
-        st.number_input("Valor Medido:", value=1000, key="res_iso_val")
-
-# --- ABA 3: CICLO FRIGORÍFICO (TERMOMETRIA E MANOMETRIA) ---
-with aba3:
-    janela_titulo("PRESSÕES E TEMPERATURAS DE OPERAÇÃO")
-    with st.container():
-        col_p1, col_p2 = st.columns(2)
-        with col_p1:
-            p_alta = st.number_input("Pressão de Descarga (Alta) [PSI]:", min_value=0.0, value=350.0, key="p_alta_p")
-            t_liq = st.number_input("Temp. Linha de Líquido (°C):", min_value=-50.0, value=35.0, key="t_liq_p")
-        with col_p2:
-            p_baixa = st.number_input("Pressão de Sucção (Baixa) [PSI]:", min_value=0.0, value=120.0, key="p_baixa_p")
-            t_suc = st.number_input("Temp. Linha de Sucção (°C):", min_value=-50.0, value=12.0, key="t_suc_p")
-    
-    # Processamento dos Dados Térmicos com Variantes de Fluido
-    # O cálculo utiliza a biblioteca de termodinâmica integrada
-    fluido_sel = st.session_state.dados_cliente.get('fluido', 'R410A')
-    
-    params = calcular_parametros_performance({
-        'p_alta': p_alta, 
-        'p_baixa': p_baixa, 
-        't_suc': t_suc, 
-        't_liq': t_liq,
-        'fluido': fluido_sel
-    })
-    
+# --- ABA 3: CICLO FRIGORÍFICO (CONTINUAÇÃO) ---
     st.markdown("### 📊 Resultados em Tempo Real")
     res1, res2, res3, res4 = st.columns(4)
     
-  # --- LINHA 1654: INÍCIO DA EXIBIÇÃO DE MÉTRICAS ---
+    # Exibição das Métricas de Performance
     res1.metric("Superaquecimento", f"{params['sh']} °C", delta=f"{params['sh']-10:.1f}K", delta_color="inverse")
     res2.metric("Sub-resfriamento", f"{params['sc']} °C", delta=f"{params['sc']-5:.1f}K")
     res3.metric("Temp. Evaporação", f"{params['t_evap']} °C")
-    res4.metric("Temp. Condensação", f"{params['t_cond']} °C")  # LINHA 1655: CORRIGIDA (Removido 'A 1655')
+    res4.metric("Temp. Condensação", f"{params['t_cond']} °C")
 
-# LINHA 1656: Espaçamento para separação visual no app
-st.markdown("---") 
+# --- LINHA 2015: INÍCIO DA ABA 6 (VEREDITO E SALVAMENTO) ---
+with aba6:
+    janela_titulo("VEREDITO TÉCNICO E INTELIGÊNCIA ARTIFICIAL")
+    
+    # Exibição de Resumo de métricas na aba de fechamento
+    with st.container():
+        st.write("### 📝 Resumo do Diagnóstico")
+        # (Aqui entraria a lógica de diagnóstico baseada nos params)
+        
+    st.markdown("---")
+    janela_titulo("EXPORTAÇÃO E ARQUIVAMENTO")
 
-# --- LINHA 2170: DENTRO DA ABA 6 (8 espaços de recuo) ---
-        st.markdown("---")
-        janela_titulo("EXPORTAÇÃO E ARQUIVAMENTO")
+    # Bloco de Salvamento (8 espaços de recuo)
+    if st.button("💾 FINALIZAR E SALVAR ATENDIMENTO"):
+        try:
+            dados_para_salvar = {
+                'nome': nome_cliente, 
+                'cpf': cpf_cliente, 
+                'data': data_visita.strftime("%d/%m/%Y"),
+                'modelo': modelo_equip, 
+                'fluido': fluido_sel, 
+                'p_alta': p_alta, 
+                'p_baixa': p_baixa,
+                'sh': params['sh'], 
+                'sc': params['sc'],
+                'corrente': curr_total, 
+                'checklist': st.session_state.checklist_items,
+                'diagnostico': "Concluído" # diag['status']
+            }
+            
+            novo_id = salvar_atendimento(dados_para_salvar)
+            st.success(f"✅ Atendimento #{novo_id} salvo com sucesso no banco!")
+            st.balloons()
+            
+        except Exception as e:
+            st.error(f"❌ Erro ao salvar no banco de dados: {e}")
 
-        # Início do Bloco de Salvamento
-        if st.button("💾 FINALIZAR E SALVAR ATENDIMENTO"):
-            try:
-                # Montagem do dicionário (Prioridade: Data Brasileira %d/%m/%Y)
-                dados_para_salvar = {
-                    'nome': nome_cliente, 
-                    'cpf': cpf_cliente, 
-                    'data': data_visita.strftime("%d/%m/%Y"),
-                    'modelo': modelo_equip, 
-                    'fluido': fluido_sel, 
-                    'p_alta': p_alta, 
-                    'p_baixa': p_baixa,
-                    'sh': params['sh'], 
-                    'sc': params['sc'],
-                    'corrente': curr_total, 
-                    'checklist': st.session_state.checklist_items,
-                    'diagnostico': diag['status']
-                }
-                
-                # Chamada da função CRUD do Bloco 02
-                novo_id = salvar_atendimento(dados_para_salvar)
-                
-                st.success(f"✅ Atendimento #{novo_id} salvo com sucesso no banco!")
-                st.balloons()
-                
-            except Exception as e:
-                st.error(f"❌ Erro ao salvar no banco de dados: {e}")
-
-    # --- LINHA 2195: RODAPÉ TÉCNICO (FORA DAS ABAS, DENTRO DA MAIN - 4 espaços) ---
-    # Este bloco finaliza a interface visual do técnico
+# --- ENCERRAMENTO (FORA DAS ABAS, DENTRO DA MAIN - 4 espaços) ---
     st.sidebar.markdown("---")
     st.sidebar.caption(f"Engine v4.700 | Lib: Streamlit/FPDF")
     st.sidebar.write("🔒 Conexão SQL: Ativa")
 
-# --- LINHA 2210: GATILHO DE EXECUÇÃO (ZERO ESPAÇOS - MARGEM ESQUERDA) ---
+# --- GATILHO DE EXECUÇÃO (ZERO ESPAÇOS - MARGEM ESQUERDA) ---
 if __name__ == "__main__":
     import os
-    # Garantia de infraestrutura para geração de PDFs
     if not os.path.exists("temp"):
         try:
             os.makedirs("temp")
         except:
             pass
-            
-    # Inicializa o app chamando a função principal
     main()
-
-###############################################################################
-# [ FIM DO SISTEMA ] - TOTAL DE LINHAS CONFERIDAS: 2400                       #
-###############################################################################
