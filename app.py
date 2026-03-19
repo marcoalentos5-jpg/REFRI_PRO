@@ -164,27 +164,24 @@ with st.sidebar:
                 st.session_state.dados[key] = ""
         st.rerun()
 
-# --- ABA 02: ELÉTRICA (Posicionamento Corrigido) ---
+# --- ABA 02: ELÉTRICA (Correção de Escopo e NameError) ---
 with tab2:
     st.subheader("⚡ Análise Elétrica e Eficiência Energética")
 
-    # 1. Garantia de Existência das Variáveis (Session State)
-    elet_keys = [
-        'v_rede', 'v_med', 'lra', 'rla', 'i_med', 'freq', 'fp', 
-        'cap_c_nom', 'cap_c_med', 'cap_v_nom', 'cap_v_med', 'res_terra'
-    ]
-    for key in elet_keys:
-        if key not in st.session_state.dados:
-            st.session_state.dados[key] = 0.0 if key != 'freq' else 60.0
-    
-    if 'fp' not in st.session_state.dados or st.session_state.dados['fp'] == 0:
-        st.session_state.dados['fp'] = 0.85
+    # 1. Garantia de Dados (Evita erro de variável inexistente)
+    if 'v_med' not in st.session_state.dados:
+        st.session_state.dados.update({
+            'v_rede': 220.0, 'v_med': 0.0, 'lra': 0.0, 'rla': 0.0, 'i_med': 0.0,
+            'freq': 60.0, 'fp': 0.85, 'res_terra': 0.0,
+            'cap_c_nom': 0.0, 'cap_c_med': 0.0, 'cap_v_nom': 0.0, 'cap_v_med': 0.0
+        })
 
     # 2. BLOCO DE MONITORAMENTO (TENSÃO E CORRENTE)
     with st.expander("📊 Grandezas de Placa e Medições Reais", expanded=True):
         c1, c2, c3 = st.columns(3)
         st.session_state.dados['v_rede'] = c1.number_input("Tensão de Placa (V):", value=float(st.session_state.dados['v_rede']), key="el_v_rede")
         
+        # Destaque Amarelo via Markdown (CSS já definido no topo do seu app)
         st.markdown('<div class="destaque-amarelo">', unsafe_allow_html=True)
         st.session_state.dados['v_med'] = c2.number_input("Tensão Medida (V):", value=float(st.session_state.dados['v_med']), key="el_v_med")
         st.markdown('</div>', unsafe_allow_html=True)
@@ -203,37 +200,37 @@ with tab2:
     with st.expander("🔋 Diagnóstico de Capacitores (µF)", expanded=True):
         st.write("**Capacitor do Compressor**")
         cp1, cp2, cp3 = st.columns(3)
-        c_nom = cp1.number_input("Nominal (µF):", value=float(st.session_state.dados['cap_c_nom']), key="el_cap_c_nom")
-        c_med = cp2.number_input("Medido (µF):", value=float(st.session_state.dados['cap_c_med']), key="el_cap_c_med")
-        st.session_state.dados['cap_c_nom'], st.session_state.dados['cap_c_med'] = c_nom, c_med
+        nom_c = cp1.number_input("Nominal (µF):", value=float(st.session_state.dados['cap_c_nom']), key="el_cap_c_nom")
+        med_c = cp2.number_input("Medido (µF):", value=float(st.session_state.dados['cap_c_med']), key="el_cap_c_med")
+        st.session_state.dados['cap_c_nom'], st.session_state.dados['cap_c_med'] = nom_c, med_c
         
-        if c_nom > 0:
-            diff_c = ((c_med - c_nom) / c_nom) * 100
+        if nom_c > 0:
+            diff_c = ((med_c - nom_c) / nom_c) * 100
             status_c = "✅ OK" if abs(diff_c) <= 5 else "🚨 TROCAR"
             cp3.metric("Desvio Compressor", f"{diff_c:.1f}%", status_c)
 
         st.markdown("---")
         st.write("**Capacitor do Ventilador**")
         cv1, cv2, cv3 = st.columns(3)
-        v_nom = cv1.number_input("Nominal (µF):", value=float(st.session_state.dados['cap_v_nom']), key="el_cap_v_nom")
-        v_med = cv2.number_input("Medido (µF):", value=float(st.session_state.dados['cap_v_med']), key="el_cap_v_med")
-        st.session_state.dados['cap_v_nom'], st.session_state.dados['cap_v_med'] = v_nom, v_med
+        nom_v = vcap1.number_input("Nominal (µF):", value=float(st.session_state.dados['cap_v_nom']), key="el_cap_v_nom") if 'vcap1' not in locals() else cv1.number_input("Nominal (µF):", value=float(st.session_state.dados['cap_v_nom']), key="el_cap_v_nom")
+        med_v = cv2.number_input("Medido (µF):", value=float(st.session_state.dados['cap_v_med']), key="el_cap_v_med")
+        st.session_state.dados['cap_v_nom'], st.session_state.dados['cap_v_med'] = nom_v, med_v
         
-        if v_nom > 0:
-            diff_v = ((v_med - v_nom) / v_nom) * 100
+        if nom_v > 0:
+            diff_v = ((med_v - nom_v) / nom_v) * 100
             status_v = "✅ OK" if abs(diff_v) <= 5 else "🚨 TROCAR"
             cv3.metric("Desvio Ventilador", f"{diff_v:.1f}%", status_v)
 
-    # 4. BLOCO DE ENGENHARIA (CÁLCULOS TÉCNICOS)
+    # 4. CÁLCULOS TÉCNICOS (Realizados dentro da aba para evitar NameError externo)
+    v_f = st.session_state.dados['v_med']
+    i_f = st.session_state.dados['i_med']
+    fp_f = st.session_state.dados['fp']
+    
+    s_va = v_f * i_f
+    p_w = s_va * fp_f
+    eta = (p_w / (s_va if s_va > 0 else 1)) * 100
+
     with st.expander("🧬 Cálculos de Eficiência", expanded=True):
-        v_f = st.session_state.dados['v_med']
-        i_f = st.session_state.dados['i_med']
-        fp_f = st.session_state.dados['fp']
-        
-        s_va = v_f * i_f
-        p_w = s_va * fp_f
-        eta = (p_w / (s_va if s_va > 0 else 1)) * 100
-        
         p1, p2, p3 = st.columns(3)
         p1.metric("Pot. Aparente (S)", f"{s_va:.1f} VA")
         p2.metric("Pot. Ativa (P)", f"{p_w:.1f} W")
