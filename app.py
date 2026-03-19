@@ -163,6 +163,11 @@ with st.sidebar:
             if key not in chaves_tecnico:
                 st.session_state.dados[key] = ""
         st.rerun()
+
+
+
+
+
 # =========================================================
 # --- ABA 02: ANÁLISE ELÉTRICA E EFICIÊNCIA ENERGÉTICA ---
 # =========================================================
