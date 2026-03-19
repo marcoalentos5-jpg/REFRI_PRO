@@ -53,10 +53,10 @@ def buscar_cep(cep):
         except: pass
     return False
 
-# 3. INTERFACE DE ABA ÚNICA (ELIMINA O NAMEERROR DEFINITIVAMENTE)
-# Criamos a aba e já selecionamos o primeiro índice para evitar erro de variável nula
-tabs = st.tabs(["📋 Identificação e Equipamento"])
+# 3. INTERFACE COM DUAS ABAS (SEM AFETAR NADA EXISTENTE)
+tabs = st.tabs(["📋 Identificação e Equipamento", "⚡ Análise Elétrica"])
 tab1 = tabs[0]
+tab2 = tabs[1]
 
 with tab1:
     # --- SEÇÃO CLIENTE ---
@@ -163,3 +163,67 @@ with st.sidebar:
             if key not in chaves_tecnico:
                 st.session_state.dados[key] = ""
         st.rerun()
+
+# ================== ABA 2 - ELÉTRICA ==================
+with tab2:
+    st.subheader("⚡ Análise Elétrica do Equipamento")
+
+    if 'eletrica' not in st.session_state:
+        st.session_state.eletrica = {
+            'tensao': '',
+            'corrente_r': '',
+            'corrente_s': '',
+            'corrente_t': '',
+            'potencia': '',
+            'disjuntor': '',
+            'cabo': '',
+            'aterramento': 'OK',
+            'obs': ''
+        }
+
+    e = st.session_state.eletrica
+
+    # MEDIÇÕES
+    with st.expander("📏 Medições", expanded=True):
+        c1, c2 = st.columns(2)
+        e['tensao'] = c1.text_input("Tensão (V):", value=e['tensao'])
+
+        c3, c4, c5 = st.columns(3)
+        e['corrente_r'] = c3.text_input("Corrente R (A):", value=e['corrente_r'])
+        e['corrente_s'] = c4.text_input("Corrente S (A):", value=e['corrente_s'])
+        e['corrente_t'] = c5.text_input("Corrente T (A):", value=e['corrente_t'])
+
+    # CÁLCULO AUTOMÁTICO
+    try:
+        v = float(e['tensao'] or 0)
+        ir = float(e['corrente_r'] or 0)
+        is_ = float(e['corrente_s'] or 0)
+        it = float(e['corrente_t'] or 0)
+
+        i_med = (ir + is_ + it) / 3 if (ir + is_ + it) > 0 else 0
+        pot = (1.732 * v * i_med) / 1000
+
+        e['potencia'] = f"{pot:.2f}"
+    except:
+        e['potencia'] = ""
+
+    # RESULTADO
+    with st.expander("📊 Resultado", expanded=True):
+        e['potencia'] = st.text_input("Potência (kW):", value=e['potencia'])
+
+    # INSTALAÇÃO
+    with st.expander("🔌 Proteção", expanded=True):
+        p1, p2 = st.columns(2)
+        e['disjuntor'] = p1.text_input("Disjuntor (A):", value=e['disjuntor'])
+        e['cabo'] = p2.text_input("Cabo (mm²):", value=e['cabo'])
+
+        e['aterramento'] = st.radio(
+            "Aterramento:",
+            ["OK", "Irregular", "Inexistente"],
+            index=["OK", "Irregular", "Inexistente"].index(e.get('aterramento', 'OK')),
+            horizontal=True
+        )
+
+    # OBSERVAÇÃO
+    with st.expander("📝 Observações", expanded=True):
+        e['obs'] = st.text_area("Observações:", value=e['obs'])
