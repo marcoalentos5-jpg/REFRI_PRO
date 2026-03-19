@@ -3,10 +3,10 @@ from datetime import datetime
 import requests
 import urllib.parse
 
-# 1. SETUP DE TELA
+# 1. SETUP DE TELA (CONGELADO)
 st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="⚙️")
 
-# CSS: Estilização (CONGELADO)
+# CSS: Estilização Verde Água (CONGELADO)
 st.markdown("""
     <style>
     .stTextInput>div>div>input[aria-label="Data da Visita:"] {
@@ -53,7 +53,7 @@ def buscar_cep(cep):
         except: pass
     return False
 
-# CORREÇÃO DO NAMEERROR: Definindo apenas as abas existentes
+# DEFINIÇÃO ÚNICA DE ABAS (CORREÇÃO DO NAMEERROR)
 tab1, tab3 = st.tabs(["📋 Identificação e Equipamento", "🌡️ Ciclo Frigorífico"])
 
 # --- ABA 01: IDENTIFICAÇÃO E EQUIPAMENTO ---
@@ -84,11 +84,6 @@ with tab1:
         st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'])
         st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'])
         st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'])
-        
-        # Botão interno para envio rápido de dados do cliente
-        msg_cli = f"*DADOS DO CLIENTE*\nNome: {st.session_state.dados['nome']}\nEndereço: {st.session_state.dados['endereco']}, {st.session_state.dados['numero']}"
-        link_cli = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_cli)}"
-        st.link_button("📲 Enviar Dados do Cliente", link_cli)
 
     col_titulo, col_data = st.columns([3, 1])
     with col_titulo: st.subheader("⚙️ Especificações do Equipamento")
@@ -119,9 +114,9 @@ with tab1:
 
 # --- ABA 03: CICLO FRIGORÍFICO ---
 with tab3:
-    st.info("Aba aguardando definições de Ciclo Frigorífico.")
+    st.info("Aba aguardando definições.")
 
-# --- SIDEBAR (CONGELADO E CORRIGIDO) ---
+# --- SIDEBAR (CONGELADO E BLOQUEADO) ---
 with st.sidebar:
     st.title("🚀 Painel de Controle")
     st.subheader("👤 Identificação do Técnico")
@@ -131,28 +126,43 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # STATUS DINÂMICO
     if not st.session_state.dados['nome'] or not st.session_state.dados['whatsapp']:
         st.error("📋 Status: 🔴 PENDENTE")
     else:
         st.success("📋 Status: 🟢 OK")
         
-    # BOTÃO WHATSAPP NO SIDEBAR (RESTORED)
-    msg_zap = f"*LAUDO TÉCNICO HVAC*\n" \
-              f"Cliente: {st.session_state.dados['nome']}\n" \
-              f"Equipamento: {st.session_state.dados['fabricante']} - {st.session_state.dados['tag_id']}\n" \
-              f"Status: {st.session_state.dados['status_maquina']}\n" \
-              f"Técnico: {st.session_state.dados['tecnico_nome']}"
+    # ENVIO COMPLETO SEM EXCEÇÃO (CLIENTE + ATIVO + TÉCNICO)
+    msg_completa = (
+        f"*LAUDO TÉCNICO COMPLETO*\n\n"
+        f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
+        f"🆔 CPF/CNPJ: {st.session_state.dados['cpf_cnpj']}\n"
+        f"📍 Endereço: {st.session_state.dados['endereco']}, {st.session_state.dados['numero']} - {st.session_state.dados['bairro']}\n"
+        f"🏙️ {st.session_state.dados['cidade']}/{st.session_state.dados['uf']} | CEP: {st.session_state.dados['cep']}\n"
+        f"📧 Email: {st.session_state.dados['email']}\n"
+        f"📞 Contato: {st.session_state.dados['whatsapp']} / {st.session_state.dados['celular']}\n\n"
+        f"⚙️ *EQUIPAMENTO:*\n"
+        f"📌 TAG: {st.session_state.dados['tag_id']}\n"
+        f"🏭 Fabricante: {st.session_state.dados['fabricante']} | Modelo: {st.session_state.dados['modelo']}\n"
+        f"❄️ Cap.: {st.session_state.dados['capacidade']} BTU | Fluido: {st.session_state.dados['fluido']}\n"
+        f"🏢 Linha: {st.session_state.dados['linha']} | Serviço: {st.session_state.dados['tipo_servico']}\n"
+        f"🔢 Série Evap: {st.session_state.dados['serie_evap']}\n"
+        f"🔢 Série Cond: {st.session_state.dados['serie_cond']}\n"
+        f"📍 Localização: Evap({st.session_state.dados['local_evap']}) / Cond({st.session_state.dados['local_cond']})\n"
+        f"🩺 Status: {st.session_state.dados['status_maquina']}\n\n"
+        f"👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}\n"
+        f"📜 Registro: {st.session_state.dados['tecnico_registro']}\n"
+        f"📅 Data: {st.session_state.dados['data']}"
+    )
     
-    link_zap = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_zap)}"
-    st.link_button("📲 Enviar Laudo via WhatsApp", link_zap, use_container_width=True)
+    link_final = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_completa)}"
+    st.link_button("📲 Enviar Laudo Completo via WhatsApp", link_final, use_container_width=True)
 
     st.markdown("---")
-    # CORREÇÃO DO BOTÃO LIMPAR
     if st.button("🗑️ Limpar Formulário", use_container_width=True):
+        # Limpeza completa preservando dados do técnico
+        chaves_tecnico = ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']
         for key in st.session_state.dados.keys():
-            # Não limpa os dados do técnico nem a data
-            if key not in ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']:
+            if key not in chaves_tecnico:
                 st.session_state.dados[key] = ""
         st.rerun()
         
