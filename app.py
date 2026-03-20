@@ -2,641 +2,250 @@ import streamlit as st
 from datetime import datetime
 import requests
 import urllib.parse
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import cm
 
-# 1. CONFIGURAÇÃO INICIAL (Obrigatório ser a primeira linha de UI)
-st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="⚙️")
+# 1. CONFIGURAÇÃO (Sempre a primeira linha)
+st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="❄️")
 
 # =========================================================
-# 2. FUNÇÃO DO PDF (MÁQUINA DE GERAR RELATÓRIOS)
+# 2. FUNÇÃO DO PDF (ESTRUTURA COMPLETA)
 # =========================================================
 def gerar_pdf_profissional(dados, eletrica):
     file_path = "relatorio_tecnico_mpn.pdf"
     doc = SimpleDocTemplate(file_path, pagesize=A4)
     styles = getSampleStyleSheet()
     elements = []
-    azul = colors.HexColor("#0b5394")
+    cor_hvac = colors.HexColor("#0b5394")
 
-    def tabela_secao(titulo, dados_tabela):
+    def formatar_tabela(titulo, conteudo):
         elements.append(Paragraph(f"<b>{titulo}</b>", styles['Heading3']))
-        tabela = Table(dados_tabela, colWidths=[6*cm, 10*cm])
-        tabela.setStyle(TableStyle([
-            ('BACKGROUND', (0,0), (-1,0), azul),
+        t = Table(conteudo, colWidths=[6*cm, 10*cm])
+        t.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), cor_hvac),
             ('TEXTCOLOR',(0,0),(-1,0),colors.white),
             ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
             ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
             ('BACKGROUND', (0,1), (-1,-1), colors.whitesmoke),
         ]))
-        elements.append(tabela)
-        elements.append(Spacer(1, 12))
+        elements.append(t)
+        elements.append(Spacer(1, 15))
 
-    # CLIENTE
-    tabela_secao("CLIENTE", [
+    formatar_tabela("DADOS DO CLIENTE", [
         ["Campo", "Valor"],
-        ["Nome", str(dados.get('nome', ''))],
-        ["CPF/CNPJ", str(dados.get('cpf_cnpj', ''))],
-        ["Telefone", str(dados.get('whatsapp', ''))],
-        ["Email", str(dados.get('email', ''))],
+        ["Cliente", str(dados.get('nome', ''))],
+        ["Documento", str(dados.get('cpf_cnpj', ''))],
+        ["Endereço", f"{dados.get('endereco', '')}, {dados.get('numero', '')}"],
+        ["WhatsApp", str(dados.get('whatsapp', ''))]
     ])
 
-    # EQUIPAMENTO
-    tabela_secao("EQUIPAMENTO", [
+    formatar_tabela("EQUIPAMENTO", [
         ["Campo", "Valor"],
-        ["Fabricante", str(dados.get('fabricante', ''))],
-        ["Modelo", str(dados.get('modelo', ''))],
-        ["Status", str(dados.get('status_maquina', ''))],
+        ["Marca/Modelo", f"{dados.get('fabricante', '')} / {dados.get('modelo', '')}"],
+        ["TAG/ID", str(dados.get('tag_id', ''))],
+        ["Status", str(dados.get('status_maquina', ''))]
     ])
 
-    # ELÉTRICA
-    tabela_secao("ANÁLISE ELÉTRICA", [
-        ["Campo", "Valor"],
-        ["Tensão Rede", str(eletrica.get('tensao_rede',''))],
-        ["Tensão Medida", str(eletrica.get('tensao_medida',''))],
-        ["Diferença Tensão", str(eletrica.get('dif_tensao',''))],
-        ["Corrente Medida", str(eletrica.get('corrente_medida',''))],
-        ["Potência", f"{eletrica.get('potencia_kw','')} kW"],
+    formatar_tabela("ANÁLISE ELÉTRICA", [
+        ["Parâmetro", "Medição"],
+        ["Tensão Nominal", f"{eletrica.get('tensao_rede','')} V"],
+        ["Tensão Medida", f"{eletrica.get('tensao_medida','')} V"],
+        ["Variação", f"{eletrica.get('dif_tensao','')} V"],
+        ["Corrente", f"{eletrica.get('corrente_medida','')} A"],
+        ["Notas", str(eletrica.get('obs', ''))]
     ])
 
-    # DIAGNÓSTICO
-    diagnostico = []
-    try:
-        if float(str(eletrica.get('dif_tensao') or 0).replace(',','.')) > 10:
-            diagnostico.append("Sobretensão detectada")
-        if not diagnostico:
-            diagnostico.append("Sistema operando dentro dos parâmetros")
-    except:
-        diagnostico.append("Dados insuficientes para diagnóstico")
-
-    tabela_secao("DIAGNÓSTICO TÉCNICO", [
-        ["Resultado", " | ".join(diagnostico)],
-        ["Observações", str(eletrica.get('obs',''))],
-    ])
-
-    # ASSINATURAS
-    assinatura = [
-        ["______________________________", "______________________________"],
-        ["Marcos Alexandre Almeida", str(dados.get('nome',''))],
-        ["Técnico Responsável", "Cliente"],
-        ["CNPJ: 51.274.762/0001-17", f"CPF/CNPJ: {dados.get('cpf_cnpj','')}"],
-    ]
-    table_ass = Table(assinatura, colWidths=[8*cm, 8*cm])
-    table_ass.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER')]))
-    elements.append(table_ass)
-
-    data_atual = datetime.now().strftime("%d/%m/%Y")
-    elements.append(Spacer(1, 20))
-    elements.append(Paragraph(f"Relatório gerado em {data_atual} | MPN Soluções", styles['Normal']))
+    # Assinaturas
+    elements.append(Spacer(1, 40))
+    ass_tabela = Table([
+        ["__________________________", "__________________________"],
+        [f"Técnico: {dados.get('tecnico_nome', '')}", "Assinatura do Cliente"]
+    ], colWidths=[8*cm, 8*cm])
+    ass_tabela.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER')]))
+    elements.append(ass_tabela)
 
     doc.build(elements)
-    return file_path 
+    return file_path
 
 # =========================================================
-# 3. MOTOR DE SESSÃO E CSS
+# 3. GESTÃO DE ESTADO
 # =========================================================
 if 'dados' not in st.session_state:
     st.session_state.dados = {
-        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
-        'data': datetime.now().strftime("%d/%m/%Y"),
-        'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '', 'complemento': '',
-        'fabricante': 'Carrier', 'modelo': '', 'capacidade': '12.000', 'linha': 'Residencial',
-        'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '',
-        'tipo_servico': 'Manutenção Preventiva', 'tag_id': 'TAG-01',
-        'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
-        'status_maquina': '🟢 Operacional'
+        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'endereco': '', 'numero': '',
+        'fabricante': 'Carrier', 'modelo': '', 'tag_id': 'TAG-01',
+        'tecnico_nome': 'Marcos Alexandre', 'status_maquina': '🟢 Operacional'
     }
 
 if 'eletrica' not in st.session_state:
-    st.session_state.eletrica = {}
-
-st.markdown("""
-    <style>
-    .stTextInput>div>div>input { background-color: #e0f2f1 !important; color: #004d40 !important; font-weight: bold; }
-    div.stLinkButton > a { background-color: #25D366 !important; color: white !important; font-weight: bold; border-radius: 8px !important; }
-    </style>
-""", unsafe_allow_html=True)
-
-def buscar_cep(cep):
-    cep_limpo = "".join(filter(str.isdigit, cep))
-    if len(cep_limpo) == 8:
-        try:
-            r = requests.get(f"https://viacep.com.br/ws/{cep_limpo}/json/")
-            if r.status_code == 200:
-                d = r.json()
-                if "erro" not in d:
-                    st.session_state.dados['endereco'] = d.get('logradouro', '')
-                    st.session_state.dados['bairro'] = d.get('bairro', '')
-                    st.session_state.dados['cidade'] = d.get('localidade', '')
-                    st.session_state.dados['uf'] = d.get('uf', '')
-                    return True
-        except: pass
-    return False
+    st.session_state.eletrica = {'tensao_rede': '220', 'tensao_medida': '', 'dif_tensao': '0', 'corrente_medida': '', 'obs': ''}
 
 # =========================================================
-# 4. INTERFACE COM ABAS
+# 4. INTERFACE
 # =========================================================
-tabs = st.tabs(["📋 Identificação e Equipamento", "⚡ Análise Elétrica"])
+tab1, tab2 = st.tabs(["📋 Identificação", "⚡ Elétrica"])
 
-with tabs[0]:
-    with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
-        c1, c2, c3 = st.columns([2, 1, 1])
-        st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="cli_nome")
-        st.session_state.dados['cpf_cnpj'] = c2.text_input("CPF ou CNPJ", value=st.session_state.dados['cpf_cnpj'], key="cli_doc")
-        st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp (DDD) *", value=st.session_state.dados['whatsapp'], key="cli_zap")
+with tab1:
+    with st.expander("👤 Cliente", expanded=True):
+        st.session_state.dados['nome'] = st.text_input("Nome", value=st.session_state.dados['nome'])
+        st.session_state.dados['whatsapp'] = st.text_input("WhatsApp", value=st.session_state.dados['whatsapp'])
+        st.session_state.dados['endereco'] = st.text_input("Endereço", value=st.session_state.dados['endereco'])
 
-        cx1, cx2, cx3 = st.columns([1, 1, 2])
-        st.session_state.dados['celular'] = cx1.text_input("Celular:", value=st.session_state.dados['celular'])
-        st.session_state.dados['tel_fixo'] = cx2.text_input("Tel Fixo:", value=st.session_state.dados['tel_fixo'])
-        st.session_state.dados['email'] = cx3.text_input("Email:", value=st.session_state.dados['email'])
+    with st.expander("⚙️ Equipamento", expanded=True):
+        st.session_state.dados['fabricante'] = st.selectbox("Marca", ["Carrier", "Daikin", "LG", "Samsung", "Trane"], index=0)
+        st.session_state.dados['modelo'] = st.text_input("Modelo", value=st.session_state.dados['modelo'])
+        st.session_state.dados['tag_id'] = st.text_input("TAG", value=st.session_state.dados['tag_id'])
+        st.session_state.dados['status_maquina'] = st.radio("Status", ["🟢 Operacional", "🟡 Manutenção", "🔴 Parado"], horizontal=True)
 
-        st.markdown("---")
-        ce1, ce2, ce3 = st.columns([1, 2, 1])
-        cep_input = ce1.text_input("CEP *", value=st.session_state.dados['cep'])
-        if cep_input != st.session_state.dados['cep']:
-            st.session_state.dados['cep'] = cep_input
-            if buscar_cep(cep_input): st.rerun()
+with tab2:
+    st.subheader("⚡ Medições")
+    v_nom = st.text_input("Tensão Nominal", value=st.session_state.eletrica['tensao_rede'])
+    v_med = st.text_input("Tensão Medida", value=st.session_state.eletrica['tensao_medida'])
+    
+    try:
+        diff = round(abs(float(v_nom.replace(',','.')) - float(v_med.replace(',','.'))), 1) if v_med else 0
+        st.session_state.eletrica.update({'tensao_rede': v_nom, 'tensao_medida': v_med, 'dif_tensao': str(diff)})
+    except: pass
 
-        st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados['endereco'])
-        st.session_state.dados['numero'] = ce3.text_input("Número/Apto:", value=st.session_state.dados['numero'])
+    st.session_state.eletrica['corrente_medida'] = st.text_input("Corrente (A)", value=st.session_state.eletrica['corrente_medida'])
+    st.session_state.eletrica['obs'] = st.text_area("Observações", value=st.session_state.eletrica['obs'])
 
-        ce4, ce5, ce6, ce7 = st.columns([1, 1, 1, 1])
-        st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados['complemento'])
-        st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'])
-        st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'])
-        st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'])
-
-    col_titulo, col_data = st.columns([3, 1])
-    with col_titulo: st.subheader("⚙️ Especificações do Equipamento")
-    with col_data: st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'])
-
-    with st.expander("Detalhes Técnicos do Ativo", expanded=True):
-        e1, e2, e3 = st.columns(3)
-        with e1:
-            fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
-            fab_val = st.session_state.dados.get('fabricante', 'Carrier')
-            fab_idx = fab_list.index(fab_val) if fab_val in fab_list else 0
-            st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx)
-            st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados['modelo'])
-            st.session_state.dados['linha'] = st.selectbox("Linha:", ["Residencial", "Comercial", "Industrial"], index=0)
-            st.session_state.dados['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], horizontal=True)
-        with e2:
-            st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados['serie_evap'])
-            st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND)", value=st.session_state.dados['serie_cond'])
-            st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'])
-            st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
-        with e3:
-            st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], index=1)
-            st.session_state.dados['fluido'] = st.selectbox("Fluido:", ["R410A", "R134a", "R22", "R32", "R290"], index=0)
-            st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
-            st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
-
-# --- SIDEBAR (CONGELADO E PROTEGIDO) ---
 with st.sidebar:
-    st.title("🚀 Painel de Controle")
-    st.session_state.dados['tecnico_nome'] = st.text_input("Nome:", value=st.session_state.dados['tecnico_nome'])
-    st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ Técnico:", value=st.session_state.dados['tecnico_documento'])
-    st.session_state.dados['tecnico_registro'] = st.text_input("Inscrição (CFT/CREA):", value=st.session_state.dados['tecnico_registro'])
-    st.markdown("---")
-    if st.button("📄 GERAR RELATÓRIO TOTAL", use_container_width=True):
-        rel_path = gerar_pdf_profissional(st.session_state.dados, st.session_state.eletrica)
-        with open(rel_path, "rb") as f:
-            st.download_button("📥 Baixar PDF", f, file_name=rel_path, use_container_width=True)
-    
-    msg_zap = f"*LAUDO TÉCNICO HVAC*\n👤 *CLIENTE:* {st.session_state.dados['nome']}\n🩺 *STATUS:* {st.session_state.dados['status_maquina']}"
-    link_final = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_zap)}"
-    st.link_button("📲 Enviar Laudo via WhatsApp", link_final, use_container_width=True)
-    
-    if st.button("🗑️ Limpar Formulário", use_container_width=True):
-        st.session_state.dados = {k: ("" if k not in ['tecnico_nome', 'data'] else v) for k, v in st.session_state.dados.items()}
-        st.rerun()
-
-with tab2:
-    st.subheader("⚡ Medições Elétricas e Diagnóstico")
-    
-    # Inicialização segura da seção elétrica se não existir
-    if 'eletrica' not in st.session_state:
-        st.session_state.eletrica = {
-            'tensao_rede': '220', 'tensao_medida': '', 'dif_tensao': '0',
-            'corrente_medida': '', 'rla': '', 'lra': '', 'dif_corrente': '0',
-            'tensao_rs': '', 'tensao_st': '', 'tensao_tr': '',
-            'corrente_r': '', 'corrente_s': '', 'corrente_t': '',
-            'potencia_kw': '0.0', 'obs': ''
-        }
-
-    with st.expander("📊 Grandezas Elétricas (Monofásico / Trifásico)", expanded=True):
-        g1, g2, g3 = st.columns(3)
-        
-        with g1:
-            st.markdown("### 🔌 Tensão (V)")
-            v_rede = st.text_input("Tensão Nominal (Rede):", value=st.session_state.eletrica.get('tensao_rede', '220'))
-            v_medida = st.text_input("Tensão Medida (V):", value=st.session_state.eletrica.get('tensao_medida', ''))
-            
-            # Cálculo de Diferença de Tensão automático
-            try:
-                dt = abs(float(v_rede.replace(',','.')) - float(v_medida.replace(',','.'))) if v_medida else 0
-                st.session_state.eletrica['dif_tensao'] = f"{dt:.1f}"
-                st.warning(f"Variação de Tensão: {dt:.1f}V")
-            except: pass
-
-        with g2:
-            st.markdown("### 📈 Corrente (A)")
-            i_medida = st.text_input("Corrente Medida (A):", value=st.session_state.eletrica.get('corrente_medida', ''))
-            i_rla = st.text_input("Corrente Nominal (RLA):", value=st.session_state.eletrica.get('rla', ''))
-            
-            # Cálculo de Sobrecarga
-            try:
-                di = float(i_medida.replace(',','.')) - float(i_rla.replace(',','.')) if i_medida and i_rla else 0
-                st.session_state.eletrica['dif_corrente'] = f"{di:.1f}"
-                if di > 0: st.error(f"Sobrecarga: {di:.1f}A")
-            except: pass
-
-        with g3:
-            st.markdown("### ⚡ Potência e Start")
-            st.session_state.eletrica['lra'] = st.text_input("Corrente de Partida (LRA):", value=st.session_state.eletrica.get('lra', ''))
-            p_kw = st.text_input("Potência Ativa (kW):", value=st.session_state.eletrica.get('potencia_kw', '0.0'))
-            st.session_state.eletrica['potencia_kw'] = p_kw
-
-    with st.expander("🌀 Sistema Trifásico (Equilíbrio de Fases)", expanded=False):
-        t1, t2 = st.columns(2)
-        with t1:
-            st.write("**Tensões entre Fases:**")
-            st.session_state.eletrica['tensao_rs'] = st.text_input("Fase RS:", value=st.session_state.eletrica.get('tensao_rs', ''))
-            st.session_state.eletrica['tensao_st'] = st.text_input("Fase ST:", value=st.session_state.eletrica.get('tensao_st', ''))
-            st.session_state.eletrica['tensao_tr'] = st.text_input("Fase TR:", value=st.session_state.eletrica.get('tensao_tr', ''))
-        with t2:
-            st.write("**Correntes por Fase:**")
-            st.session_state.eletrica['corrente_r'] = st.text_input("Corrente R:", value=st.session_state.eletrica.get('corrente_r', ''))
-            st.session_state.eletrica['corrente_s'] = st.text_input("Corrente S:", value=st.session_state.eletrica.get('corrente_s', ''))
-            st.session_state.eletrica['corrente_t'] = st.text_input("Corrente T:", value=st.session_state.eletrica.get('corrente_t', ''))
-
-    # Salvando valores atualizados na sessão para o PDF ler
-    st.session_state.eletrica['tensao_rede'] = v_rede
-    st.session_state.eletrica['tensao_medida'] = v_medida
-    st.session_state.eletrica['corrente_medida'] = i_medida
-    st.session_state.eletrica['rla'] = i_rla
-    
-    st.session_state.eletrica['obs'] = st.text_area("📝 Observações Técnicas Adicionais:", value=st.session_state.eletrica.get('obs', ''))
-# ================= WHATSAPP - ABA IDENTIFICAÇÃO =================
-st.markdown("---")
-st.subheader("📲 Enviar Laudo de Identificação")
-
-# limpa número
-zap_num = "".join(filter(str.isdigit, st.session_state.dados.get('whatsapp', '')))
-
-# mensagem SOMENTE da aba 1
-msg_identificacao = (
-    f"*LAUDO HVAC - IDENTIFICAÇÃO*\n\n"
-
-    f"👤 *CLIENTE*\n"
-    f"{st.session_state.dados.get('nome','')}\n"
-    f"CPF/CNPJ: {st.session_state.dados.get('cpf_cnpj','')}\n"
-    f"WhatsApp: {st.session_state.dados.get('whatsapp','')}\n"
-    f"E-mail: {st.session_state.dados.get('email','')}\n\n"
-
-    f"📍 *ENDEREÇO*\n"
-    f"{st.session_state.dados.get('endereco','')}, {st.session_state.dados.get('numero','')}\n"
-    f"{st.session_state.dados.get('bairro','')}\n"
-    f"{st.session_state.dados.get('cidade','')}/{st.session_state.dados.get('uf','')}\n"
-    f"CEP: {st.session_state.dados.get('cep','')}\n\n"
-
-    f"⚙️ *EQUIPAMENTO*\n"
-    f"Fabricante: {st.session_state.dados.get('fabricante','')}\n"
-    f"Modelo: {st.session_state.dados.get('modelo','')}\n"
-    f"Capacidade: {st.session_state.dados.get('capacidade','')} BTU\n"
-    f"Linha: {st.session_state.dados.get('linha','')}\n"
-    f"Fluido: {st.session_state.dados.get('fluido','')}\n\n"
-
-    f"🔢 Série Evap: {st.session_state.dados.get('serie_evap','')}\n"
-    f"🔢 Série Cond: {st.session_state.dados.get('serie_cond','')}\n\n"
-
-    f"📍 Locais:\n"
-    f"Evap: {st.session_state.dados.get('local_evap','')}\n"
-    f"Cond: {st.session_state.dados.get('local_cond','')}\n\n"
-
-    f"🛠️ Serviço: {st.session_state.dados.get('tipo_servico','')}\n"
-    f"🩺 Status: {st.session_state.dados.get('status_maquina','')}\n\n"
-
-    f"👨‍🔧 *TÉCNICO*\n"
-    f"{st.session_state.dados.get('tecnico_nome','')}\n"
-    f"Registro: {st.session_state.dados.get('tecnico_registro','')}\n"
-    f"📅 Data: {st.session_state.dados.get('data','')}"
-)
-
-# link
-link_identificacao = f"https://wa.me/55{zap_num}?text={urllib.parse.quote(msg_identificacao)}"
-
-# botão
-st.link_button("📲 Enviar Laudo de Identificação", link_identificacao, use_container_width=True)
-
-st.markdown("---")
-st.subheader("📄 Enviar Relatório Técnico")
-
-if st.button("📄 Gerar e Baixar PDF", use_container_width=True):
-    pdf_path = gerar_pdf_profissional(st.session_state.dados, st.session_state.get('eletrica', {}))
-    with open(pdf_path, "rb") as f:
-        st.download_button(
-            label="📥 Baixar Relatório Técnico",
-            data=f,
-            file_name="relatorio_tecnico.pdf",
-            mime="application/pdf",
-            use_container_width=True
-        )
-st.markdown("---")
-st.subheader("📄 Enviar Relatório Técnico")
-
-if st.button("📄 Gerar Relatório Profissional", use_container_width=True):
-    pdf = gerar_pdf_profissional(
-        st.session_state.dados,
-        st.session_state.get('eletrica', {})
-    )
-
-    with open(pdf, "rb") as f:
-        st.download_button(
-            "📥 Baixar PDF",
-            f,
-            file_name="Relatorio_Tecnico_HVAC.pdf",
-            mime="application/pdf",
-            use_container_width=True
-        )
-
-# ================== ABA 2 - ELÉTRICA (FINAL) ==================
-with tab2:
-    st.subheader("⚡ Análise Elétrica Profissional")
-
-    # ===== GARANTE SESSION =====
-    if 'eletrica' not in st.session_state:
-        st.session_state.eletrica = {}
-
-    defaults_eletrica = {
-        # CAMPOS GERAIS
-        'tensao_rede': '',
-        'tensao_medida': '',
-        'dif_tensao': '',
-        'corrente_medida': '',
-        'dif_corrente': '',
-        'rla': '',
-        'lra': '',
-
-        # TRIFÁSICO
-        'tensao_rs': '', 'tensao_st': '', 'tensao_tr': '',
-        'corrente_r': '', 'corrente_s': '', 'corrente_t': '',
-
-        # OUTROS
-        'fp': '0.92',
-        'potencia_kw': '',
-        'disjuntor': '',
-        'cabo': '',
-        'aterramento': 'OK',
-        'obs': ''
-    }
-
-    for k, v in defaults_eletrica.items():
-        if k not in st.session_state.eletrica:
-            st.session_state.eletrica[k] = v
-
-    e = st.session_state.eletrica
-
-    # ================= TOPO - DADOS GERAIS =================
-    with st.expander("📌 Dados Gerais", expanded=True):
-        c1, c2, c3 = st.columns(3)
-        e['tensao_rede'] = c1.text_input("Tensão da Rede (V):", value=e.get('tensao_rede', ''))
-        e['tensao_medida'] = c2.text_input("Tensão Medida (V):", value=e.get('tensao_medida', ''))
-        e['dif_tensao'] = c3.text_input("Diferença (V):", value=e.get('dif_tensao', ''), disabled=True)
-
-        c4, c5, c6 = st.columns(3)
-        e['corrente_medida'] = c4.text_input("Corrente Medida (A):", value=e.get('corrente_medida', ''))
-        e['rla'] = c5.text_input("RLA (A):", value=e.get('rla', ''))
-        e['lra'] = c6.text_input("LRA (A):", value=e.get('lra', ''))
-
-        e['dif_corrente'] = st.text_input("Diferença de Corrente (A):", value=e.get('dif_corrente', ''), disabled=True)
-
-    # ===== CÁLCULOS GERAIS =====
-    try:
-        tensao_rede = float(e.get('tensao_rede') or 0)
-        tensao_medida = float(e.get('tensao_medida') or 0)
-        corrente_medida = float(e.get('corrente_medida') or 0)
-        rla = float(e.get('rla') or 0)
-
-        dif_tensao = tensao_medida - tensao_rede
-        dif_corrente = corrente_medida - rla if rla > 0 else 0
-
-        e['dif_tensao'] = f"{dif_tensao:.2f}"
-        e['dif_corrente'] = f"{dif_corrente:.2f}"
-
-    except:
-        e['dif_tensao'] = ""
-        e['dif_corrente'] = ""
-
-    # ================= TENSÕES =================
-    with st.expander("📏 Tensões entre Fases (V)", expanded=True):
-        v1, v2, v3 = st.columns(3)
-        e['tensao_rs'] = v1.text_input("RS (V):", value=e.get('tensao_rs', ''))
-        e['tensao_st'] = v2.text_input("ST (V):", value=e.get('tensao_st', ''))
-        e['tensao_tr'] = v3.text_input("TR (V):", value=e.get('tensao_tr', ''))
-
-    # ================= CORRENTES =================
-    with st.expander("🔌 Correntes por Fase (A)", expanded=True):
-        c1, c2, c3 = st.columns(3)
-        e['corrente_r'] = c1.text_input("Fase R:", value=e.get('corrente_r', ''))
-        e['corrente_s'] = c2.text_input("Fase S:", value=e.get('corrente_s', ''))
-        e['corrente_t'] = c3.text_input("Fase T:", value=e.get('corrente_t', ''))
-
-    # ================= CÁLCULO TRIFÁSICO =================
-    try:
-        v_rs = float(e.get('tensao_rs') or 0)
-        v_st = float(e.get('tensao_st') or 0)
-        v_tr = float(e.get('tensao_tr') or 0)
-
-        i_r = float(e.get('corrente_r') or 0)
-        i_s = float(e.get('corrente_s') or 0)
-        i_t = float(e.get('corrente_t') or 0)
-
-        fp = float(e.get('fp') or 0.92)
-
-        v_med = (v_rs + v_st + v_tr) / 3 if (v_rs + v_st + v_tr) > 0 else 0
-        i_med = (i_r + i_s + i_t) / 3 if (i_r + i_s + i_t) > 0 else 0
-
-        potencia = (1.732 * v_med * i_med * fp) / 1000
-        e['potencia_kw'] = f"{potencia:.2f}"
-
-        # Desequilíbrios
-        v_max = max(v_rs, v_st, v_tr)
-        des_v = ((v_max - v_med) / v_med * 100) if v_med > 0 else 0
-
-        i_max = max(i_r, i_s, i_t)
-        des_i = ((i_max - i_med) / i_med * 100) if i_med > 0 else 0
-
-    except:
-        e['potencia_kw'] = ""
-        v_med = i_med = des_v = des_i = 0
-
-        # ================= RESULTADOS =================
-    with st.expander("📊 Resultados", expanded=True):
-
-        try:
-            # BASE
-            v_med = (v_rs + v_st + v_tr) / 3 if (v_rs + v_st + v_tr) > 0 else 0
-            i_med = (i_r + i_s + i_t) / 3 if (i_r + i_s + i_t) > 0 else 0
-
-            fp = float(e.get('fp') or 0.92)
-
-            # ===== POTÊNCIAS =====
-            # Aparente (S)
-            S = (1.732 * v_med * i_med) / 1000  # kVA
-
-            # Ativa (P)
-            P = S * fp  # kW
-
-            # Reativa (Q)
-            import math
-            Q = S * math.sqrt(1 - fp**2) if fp <= 1 else 0  # kVAr
-
-            # Elétrica (entrada)
-            P_eletrica = P  # kW (mesma ativa)
-
-            # Mecânica (estimativa com rendimento)
-            rendimento = 0.85  # típico compressor
-            P_mecanica = P * rendimento
-
-            # ===== OUTROS =====
-            v_max = max(v_rs, v_st, v_tr)
-            des_v = ((v_max - v_med) / v_med * 100) if v_med > 0 else 0
-
-            i_max = max(i_r, i_s, i_t)
-            des_i = ((i_max - i_med) / i_med * 100) if i_med > 0 else 0
-
-            # Eficiência estimada
-            eficiencia = (P_mecanica / P_eletrica * 100) if P_eletrica > 0 else 0
-
-        except:
-            S = P = Q = P_eletrica = P_mecanica = eficiencia = 0
-            des_v = des_i = 0
-
-        # ===== EXIBIÇÃO =====
-        r1, r2, r3 = st.columns(3)
-        r1.metric("Potência Aparente (kVA)", f"{S:.2f}")
-        r2.metric("Potência Ativa (kW)", f"{P:.2f}")
-        r3.metric("Potência Reativa (kVAr)", f"{Q:.2f}")
-
-        r4, r5, r6 = st.columns(3)
-        r4.metric("Potência Elétrica (kW)", f"{P_eletrica:.2f}")
-        r5.metric("Potência Mecânica (kW)", f"{P_mecanica:.2f}")
-        r6.metric("Fator de Potência", f"{fp:.2f}")
-
-        r7, r8, r9 = st.columns(3)
-        r7.metric("Eficiência Estimada (%)", f"{eficiencia:.1f}")
-        r8.metric("Desequilíbrio Tensão (%)", f"{des_v:.1f}")
-        r9.metric("Desequilíbrio Corrente (%)", f"{des_i:.1f}")
-
-        r10, r11 = st.columns(2)
-        r10.metric("Tensão Média (V)", f"{v_med:.1f}")
-        r11.metric("Corrente Média (A)", f"{i_med:.2f}")
-
-    # ================= PROTEÇÃO =================
-    with st.expander("🔧 Proteção Elétrica", expanded=True):
-        p1, p2 = st.columns(2)
-        e['disjuntor'] = p1.text_input("Disjuntor (A):", value=e.get('disjuntor', ''))
-        e['cabo'] = p2.text_input("Seção do Cabo (mm²):", value=e.get('cabo', ''))
-
-        e['aterramento'] = st.radio(
-            "Aterramento:",
-            ["OK", "Irregular", "Inexistente"],
-            index=["OK", "Irregular", "Inexistente"].index(e.get('aterramento', 'OK')),
-            horizontal=True
-        )
-
-    # ================= OBS =================
-    with st.expander("📝 Observações Técnicas", expanded=True):
-        e['obs'] = st.text_area("Observações:", value=e.get('obs', ''))
-
-# ================= WHATSAPP - ABA ELÉTRICA =================
-st.markdown("---")
-st.subheader("📲 Enviar Laudo Elétrico")
-
-# limpa número
-zap_num = "".join(filter(str.isdigit, st.session_state.dados.get('whatsapp', '')))
-
-# mensagem elétrica (somente dados da aba elétrica)
-msg_eletrica = (
-    f"*LAUDO ELÉTRICO HVAC*\n\n"
-
-    f"👤 Cliente: {st.session_state.dados.get('nome','')}\n\n"
-
-    f"⚡ *DADOS GERAIS*\n"
-    f"Tensão Rede: {e.get('tensao_rede','')} V\n"
-    f"Tensão Medida: {e.get('tensao_medida','')} V\n"
-    f"Diferença: {e.get('dif_tensao','')} V\n\n"
-
-    f"Corrente Medida: {e.get('corrente_medida','')} A\n"
-    f"RLA: {e.get('rla','')} A | LRA: {e.get('lra','')} A\n"
-    f"Diferença Corrente: {e.get('dif_corrente','')} A\n\n"
-
-    f"🔌 *TRIFÁSICO*\n"
-    f"RS: {e.get('tensao_rs','')} | ST: {e.get('tensao_st','')} | TR: {e.get('tensao_tr','')}\n"
-    f"R: {e.get('corrente_r','')} | S: {e.get('corrente_s','')} | T: {e.get('corrente_t','')}\n\n"
-
-    f"📊 Potência: {e.get('potencia_kw','')} kW\n"
-    f"FP: {e.get('fp','')}\n\n"
-
-    f"👨‍🔧 Técnico: {st.session_state.dados.get('tecnico_nome','')}\n"
-    f"📅 {st.session_state.dados.get('data','')}"
-)
-
-link_eletrica = f"https://wa.me/55{zap_num}?text={urllib.parse.quote(msg_eletrica)}"
-
-st.link_button("📲 Enviar Laudo Elétrico", link_eletrica, use_container_width=True)
-
-# --- SEÇÃO DE CHECK-LIST TÉCNICO ---
-    st.markdown("---")
-    st.subheader("📋 Check-list de Manutenção e Verificação")
-    
-    # Inicialização do checklist se não existir
-    if 'checklist' not in st.session_state:
-        st.session_state.checklist = {
-            'filtro': False, 'serpentina': False, 'dreno': False, 
-            'isolamento': False, 'contatos': False, 'vibracoes': False
-        }
-
-    c_check1, c_check2, c_check3 = st.columns(3)
-    
-    with c_check1:
-        st.session_state.checklist['filtro'] = st.checkbox("Filtros de Ar Limpos/Substituídos", value=st.session_state.checklist['filtro'])
-        st.session_state.checklist['serpentina'] = st.checkbox("Serpentinas Higienizadas", value=st.session_state.checklist['serpentina'])
-    
-    with c_check2:
-        st.session_state.checklist['dreno'] = st.checkbox("Dreno Desobstruído e Testado", value=st.session_state.checklist['dreno'])
-        st.session_state.checklist['isolamento'] = st.checkbox("Isolamento Térmico em Ordem", value=st.session_state.checklist['isolamento'])
-        
-    with c_check3:
-        st.session_state.checklist['contatos'] = st.checkbox("Reaperto de Contatos Elétricos", value=st.session_state.checklist['contatos'])
-        st.session_state.checklist['vibracoes'] = st.checkbox("Ausência de Ruídos/Vibrações", value=st.session_state.checklist['vibracoes'])
-
-    # --- CAMPO DE DIAGNÓSTICO FINAL (TEXTO LIVRE) ---
-    st.markdown("---")
-    st.subheader("📝 Conclusão e Recomendações")
-    st.session_state.dados['recomendacoes'] = st.text_area(
-        "Descreva o diagnóstico final ou peças que precisam de substituição:",
-        value=st.session_state.dados.get('recomendacoes', ''),
-        height=150,
-        placeholder="Ex: Equipamento operando normalmente após higienização. Sugerido troca do capacitor de partida na próxima visita."
-    )
+    st.title("🚀 Painel")
+    st.session_state.dados['tecnico_nome'] = st.text_input("Técnico", value=st.session_state.dados['tecnico_nome'])
+    if st.button("📄 GERAR PDF"):
+        path = gerar_pdf_profissional(st.session_state.dados, st.session_state.eletrica)
+        with open(path, "rb") as f:
+            st.download_button("📥 Baixar PDF", f, file_name=path)
+            ====================================================================
+   import streamlit as st
+from datetime import datetime
+import urllib.parse
+import math
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import cm
+
+# 1. CONFIGURAÇÃO
+st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="❄️")
 
 # =========================================================
-# 5. RENDERIZAÇÃO DE STATUS NO FINAL DA PÁGINA
+# 2. MOTOR DO PDF (ATUALIZADO PARA NOVOS CAMPOS)
 # =========================================================
-st.markdown("---")
-f1, f2, f3 = st.columns(3)
-with f1:
-    st.info(f"📅 Data: {st.session_state.dados['data']}")
-with f2:
-    status_cor = "green" if "Operacional" in st.session_state.dados['status_maquina'] else "orange"
-    st.markdown(f"Status Atual: :{status_cor}[{st.session_state.dados['status_maquina']}]")
-with f3:
-    st.write(f"🔧 Técnico: **{st.session_state.dados['tecnico_nome']}**")
+def gerar_pdf_profissional(dados, eletrica):
+    file_path = "relatorio_tecnico_mpn.pdf"
+    doc = SimpleDocTemplate(file_path, pagesize=A4)
+    styles = getSampleStyleSheet()
+    elements = []
+    cor_azul = colors.HexColor("#0b5394")
 
-# LOG DE SEGURANÇA (Invisível para o usuário, mas garante que os dados existem)
+    def criar_secao(titulo, lista):
+        elements.append(Paragraph(f"<b>{titulo}</b>", styles['Heading3']))
+        t = Table(lista, colWidths=[6*cm, 10*cm])
+        t.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), cor_azul),
+            ('TEXTCOLOR',(0,0),(-1,0),colors.white),
+            ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+            ('BACKGROUND', (0,1), (-1,-1), colors.whitesmoke),
+        ]))
+        elements.append(t)
+        elements.append(Spacer(1, 10))
+
+    # Blocos de Dados
+    criar_secao("IDENTIFICAÇÃO", [
+        ["Cliente", str(dados.get('nome',''))],
+        ["Endereço", f"{dados.get('endereco','')}, {dados.get('numero','')}"],
+        ["Equipamento", f"{dados.get('fabricante','')} - {dados.get('modelo','')}"],
+        ["Status", str(dados.get('status_maquina',''))]
+    ])
+
+    criar_secao("ANÁLISE ELÉTRICA TRIFÁSICA", [
+        ["Tensões (RS/ST/TR)", f"{eletrica.get('tensao_rs','')} / {eletrica.get('tensao_st','')} / {eletrica.get('tensao_tr','')} V"],
+        ["Correntes (R/S/T)", f"{eletrica.get('corrente_r','')} / {eletrica.get('corrente_s','')} / {eletrica.get('corrente_t','')} A"],
+        ["Potência Ativa (P)", f"{eletrica.get('potencia_kw','')} kW"],
+        ["Fator de Potência", str(eletrica.get('fp',''))]
+    ])
+
+    doc.build(elements)
+    return file_path
+
+# =========================================================
+# 3. SESSION STATE (MEMÓRIA DO APP)
+# =========================================================
+if 'dados' not in st.session_state:
+    st.session_state.dados = {'nome': '', 'whatsapp': '', 'status_maquina': '🟢 Operacional', 'tecnico_nome': 'Marcos Alexandre', 'data': datetime.now().strftime("%d/%m/%Y"), 'capacidade': '12.000'}
 if 'eletrica' not in st.session_state:
-    st.session_state.eletrica = {}
+    st.session_state.eletrica = {'fp': '0.92', 'aterramento': 'OK', 'tensao_rs': '0', 'tensao_st': '0', 'tensao_tr': '0', 'corrente_r': '0', 'corrente_s': '0', 'corrente_t': '0'}
+if 'checklist' not in st.session_state:
+    st.session_state.checklist = {'filtro': False, 'serpentina': False, 'dreno': False, 'contatos': False}
+
+# =========================================================
+# 4. INTERFACE PRINCIPAL
+# =========================================================
+tab1, tab2 = st.tabs(["📋 Identificação", "⚡ Elétrica & Checklist"])
+
+with tab1:
+    with st.expander("👤 Dados do Cliente & Ativo", expanded=True):
+        c1, c2 = st.columns([2, 1])
+        st.session_state.dados['nome'] = c1.text_input("Cliente", value=st.session_state.dados['nome'])
+        st.session_state.dados['whatsapp'] = c2.text_input("WhatsApp (DDD)", value=st.session_state.dados['whatsapp'])
+        st.session_state.dados['status_maquina'] = st.radio("Status", ["🟢 Operacional", "🟡 Manutenção", "🔴 Parado"], horizontal=True)
+
+    # Link WhatsApp de Identificação (Conforme seu modelo)
+    zap_num = "".join(filter(str.isdigit, st.session_state.dados['whatsapp']))
+    msg_id = f"*LAUDO HVAC*\n*Cliente:* {st.session_state.dados['nome']}\n*Status:* {st.session_state.dados['status_maquina']}"
+    st.link_button("📲 Enviar Identificação via WhatsApp", f"https://wa.me/55{zap_num}?text={urllib.parse.quote(msg_id)}", use_container_width=True)
+
+with tab2:
+    e = st.session_state.eletrica
+    st.subheader("⚡ Medições e Cálculos")
+    
+    with st.expander("📏 Tensões e Correntes Trifásicas", expanded=True):
+        v1, v2, v3 = st.columns(3)
+        e['tensao_rs'] = v1.text_input("RS (V)", value=e['tensao_rs'])
+        e['tensao_st'] = v2.text_input("ST (V)", value=e['tensao_st'])
+        e['tensao_tr'] = v3.text_input("TR (V)", value=e['tensao_tr'])
+        
+        i1, i2, i3 = st.columns(3)
+        e['corrente_r'] = i1.text_input("Fase R (A)", value=e['corrente_r'])
+        e['corrente_s'] = i2.text_input("Fase S (A)", value=e['corrente_s'])
+        e['corrente_t'] = i3.text_input("Fase T (A)", value=e['corrente_t'])
+
+    # --- LÓGICA DE CÁLCULO AVANÇADA ---
+    try:
+        v_med = (float(e['tensao_rs']) + float(e['tensao_st']) + float(e['tensao_tr'])) / 3
+        i_med = (float(e['corrente_r']) + float(e['corrente_s']) + float(e['corrente_t'])) / 3
+        fp = float(e['fp'])
+        # Potência Ativa (P) = √3 * V * I * cosφ
+        p_ativa = (1.732 * v_med * i_med * fp) / 1000
+        e['potencia_kw'] = f"{p_ativa:.2f}"
+        
+        # Exibição de Métricas
+        m1, m2 = st.columns(2)
+        m1.metric("Potência Ativa Calculada", f"{e['potencia_kw']} kW")
+        m2.metric("Tensão Média", f"{v_med:.1f} V")
+    except: pass
+
+    st.markdown("---")
+    st.subheader("📋 Check-list Técnico")
+    ch1, ch2 = st.columns(2)
+    st.session_state.checklist['filtro'] = ch1.checkbox("Filtros Limpos", value=st.session_state.checklist['filtro'])
+    st.session_state.checklist['contatos'] = ch2.checkbox("Contatos Reapertados", value=st.session_state.checklist['contatos'])
+    
+    st.session_state.dados['recomendacoes'] = st.text_area("Conclusão e Recomendações", height=100)
+
+# --- SIDEBAR FINAL ---
+with st.sidebar:
+    st.title("🚀 Finalizar")
+    st.session_state.dados['tecnico_nome'] = st.text_input("Técnico", value=st.session_state.dados['tecnico_nome'])
+    
+    if st.button("📄 GERAR RELATÓRIO PDF", use_container_width=True):
+        path = gerar_pdf_profissional(st.session_state.dados, st.session_state.eletrica)
+        with open(path, "rb") as f:
+            st.download_button("📥 Baixar PDF", f, file_name="Laudo_Tecnico.pdf", use_container_width=True)
