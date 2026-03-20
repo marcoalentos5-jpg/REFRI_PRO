@@ -81,15 +81,18 @@ def gerar_pdf_profissional(dados, eletrica):
     data_atual = datetime.now().strftime("%d/%m/%Y")
     elements.append(Spacer(1, 20))
     elements.append(Paragraph(f"Gerado em {data_atual} | MPN Soluções", styles['Normal']))
-
     doc.build(elements)
     return file_path 
-
 # =========================================================
 # 2. CONFIGURAÇÃO DA PÁGINA E SIDEBAR (FORA DA FUNÇÃO)
 # =========================================================
 st.set_page_config(page_title="HVAC Pro - MPN", layout="wide")
-
+if 'dados' not in st.session_state:
+    st.session_state.dados = {
+        'nome': '', 'whatsapp': '', 'fabricante': '', 'modelo': '', 
+        'status_maquina': 'Operacional', 'tag_id': 'TAG-01'
+        # ... adicione aqui os nomes de outros campos que seu código usa ...
+    }
 with st.sidebar:
     st.header("📲 Finalizar")
     
