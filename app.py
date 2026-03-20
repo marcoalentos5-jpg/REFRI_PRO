@@ -122,7 +122,8 @@ with st.sidebar:
         elements.append(Spacer(1, 12))
 
     # ================= CLIENTE =================
-dados = {}
+if 'dados' not in locals():
+    dados = {}
 
 tabela_secao("CLIENTE", [
     ["Campo", "Valor"],
