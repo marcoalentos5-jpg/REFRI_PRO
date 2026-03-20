@@ -5,6 +5,7 @@ import streamlit as st
 from datetime import datetime
 import requests
 import urllib.parse
+import os # Biblioteca para verificar arquivos no sistema
 
 # 1. CONFIGURAÇÃO INICIAL (TESTADA)
 st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="⚙️")
@@ -61,8 +62,6 @@ def buscar_cep(cep):
 # 1. FUNÇÃO DA ABA 1: Identificação e Equipamento (CÓDIGO ORGANIZADO)
 # ==============================================================================
 def renderizar_aba_1():
-    # --- INTERFACE DE ABA ÚNICA ---
-    # Criamos a aba e já selecionamos o primeiro índice para evitar erro de variável nula
     tabs = st.tabs(["📋 Identificação e Equipamento"])
     tab1 = tabs[0]
 
@@ -130,25 +129,20 @@ def renderizar_aba_1():
 def renderizar_aba_diagnosticos():
     st.header("📋 Central de Diagnósticos")
     st.markdown("---")
-
-    # 1. SELEÇÃO DO EQUIPAMENTO (Dependência da Aba 1)
-    # equipments = db_utils.buscar_equipamentos_cadastrados()
-    # equipamento_id = st.selectbox("Selecione o Equipamento para Diagnóstico:", list(equipments.keys()), format_func=lambda x: equipments[x])
     
     st.info("Aba de Diagnósticos em desenvolvimento. Implemente a lógica aqui.")
 
 
 # ==============================================================================
-# 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (CONGELADO E PROTEGIDO)
+# 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
 # ==============================================================================
-# Mudamos esta seção para antes da Lógica de Exibição das Abas para definir aba_selecionada
+# Invertemos a ordem para definir aba_selecionada antes de usá-la
 with st.sidebar:
     st.title("🚀 Painel de Controle")
 
     # A. NAVEGAÇÃO E EXIBIÇÃO DAS ABAS (ATIVADA AQUI)
-    # Defina as abas disponíveis no menu
     opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
-    # Use st.sidebar.radio para criar os botões de seleção de aba e DEFINIR a variável
+    # DEFINIÇÃO DA VARIÁVEL CRUCIAL
     aba_selecionada = st.sidebar.radio("Selecione a Aba:", opcoes_abas)
     
     st.markdown("---")
@@ -167,24 +161,11 @@ with st.sidebar:
     else:
         st.success("📋 STATUS: PRONTO PARA ENVIO")
         
-    # MENSAGEM WHATSAPP - ENVIO DE TODOS OS DADOS SEM EXCEÇÃO
+    # MENSAGEM WHATSAPP
     msg_zap = (
         f"*LAUDO TÉCNICO HVAC*\n\n"
         f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
-        f"🆔 CPF/CNPJ: {st.session_state.dados['cpf_cnpj']}\n"
-        f"📍 END: {st.session_state.dados['endereco']}, {st.session_state.dados['numero']} - {st.session_state.dados['bairro']}\n"
-        f"🏙️ {st.session_state.dados['cidade']}/{st.session_state.dados['uf']} | CEP: {st.session_state.dados['cep']}\n"
-        f"📞 Contato: {st.session_state.dados['whatsapp']} | Email: {st.session_state.dados['email']}\n\n"
-        f"⚙️ *EQUIPAMENTO:*\n"
-        f"📌 TAG: {st.session_state.dados['tag_id']} | Linha: {st.session_state.dados['linha']}\n"
-        f"🏭 Fab: {st.session_state.dados['fabricante']} | Mod: {st.session_state.dados['modelo']}\n"
-        f"❄️ Cap: {st.session_state.dados['capacidade']} BTU | Fluido: {st.session_state.dados['fluido']}\n"
-        f"🔢 S.Evap: {st.session_state.dados['serie_evap']} | S.Cond: {st.session_state.dados['serie_cond']}\n"
-        f"📍 Loc.Evap: {st.session_state.dados['local_evap']} | Loc.Cond: {st.session_state.dados['local_cond']}\n"
-        f"🛠️ Serviço: {st.session_state.dados['tipo_servico']}\n"
-        f"🩺 Status: {st.session_state.dados['status_maquina']}\n\n"
         f"👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}\n"
-        f"📜 Registro: {st.session_state.dados['tecnico_registro']}\n"
         f"📅 Data: {st.session_state.dados['data']}"
     )
     
@@ -206,17 +187,26 @@ with st.sidebar:
 # ==============================================================================
 # Use a seleção do sidebar para chamar a função correta
 if aba_selecionada == "Home":
-    # --- NOVA APRESENTAÇÃO DA ABA HOME (COM LOGO) ---
+    # --- NOVA APRESENTAÇÃO DA ABA HOME (COM LOGO MPN SOLUÇÕES ) ---
     st.markdown("<br>", unsafe_allow_html=True) # Espaçamento superior
 
-    # 1. CENTRALIZAÇÃO E EXIBIÇÃO DA LOGOMARCA (MPN Soluções )
+    # 1. CENTRALIZAÇÃO E EXIBIÇÃO DA LOGOMARCA
     col1, col2, col3 = st.columns([1, 2, 1]) 
     with col2: 
-        try:
-            # Substitua 'logo_mpn_solucoes.png' pelo nome real do arquivo que você salvou
-            st.image("logo_mpn_solucoes.png", use_container_width=True) 
-        except FileNotFoundError:
-            st.error("⚠️ Erro: Arquivo 'logo_mpn_solucoes.png' não encontrado. Verifique o nome e a pasta.")
+        # NOME DO ARQUIVO DE IMAGEM QUE ESTÁ DANDO ERRO
+        NOME_ARQUIVO_LOGO = "logo_mpn_solucoes.png"
+        
+        # VERIFICAÇÃO ADICIONAL DO ARQUIVO NO DISCO (PARA AJUDAR NO DIAGNÓSTICO)
+        if os.path.exists(NOME_ARQUIVO_LOGO):
+            try:
+                # SE O ARQUIVO EXISTE, TENTA EXIBIR
+                st.image(NOME_ARQUIVO_LOGO, use_container_width=True) 
+            except Exception as e:
+                st.error(f"⚠️ Erro ao tentar abrir a imagem '{NOME_ARQUIVO_LOGO}'. Verifique se o arquivo está corrompido.")
+                st.write(f"Detalhes do erro do sistema: {e}")
+        else:
+            st.error(f"⚠️ Erro: Arquivo '{NOME_ARQUIVO_LOGO}' não encontrado na pasta raiz.")
+            st.info("Verifique se o nome do arquivo salvo no computador é EXATAMENTE 'logo_mpn_solucoes.png' (maiúsculas/minúsculas importam).")
 
     st.markdown("<br><br>", unsafe_allow_html=True) 
 
