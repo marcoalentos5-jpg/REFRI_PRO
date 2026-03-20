@@ -197,8 +197,8 @@ assinatura = [
         ["CNPJ: 51.274.762/0001-17", f"CPF/CNPJ: {dados.get('cpf_cnpj','')}"],
     ]
 
-    table_ass = Table(assinatura, colWidths=[8*cm, 8*cm])
-    table_ass.setStyle(TableStyle([
+table_ass = Table(assinatura, colWidths=[8*cm, 8*cm])
+table_ass.setStyle(TableStyle([
         ('ALIGN',(0,0),(-1,-1),'CENTER')
     ]))
 
