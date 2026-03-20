@@ -370,8 +370,7 @@ st.markdown("---")
 st.subheader("📄 Enviar Relatório Técnico")
 
 if st.button("📄 Gerar e Baixar PDF", use_container_width=True):
-    pdf_path = gerar_pdf(st.session_state.dados, st.session_state.get('eletrica', {}))
-
+    pdf_path = gerar_pdf_profissional(st.session_state.dados, st.session_state.get('eletrica', {}))
     with open(pdf_path, "rb") as f:
         st.download_button(
             label="📥 Baixar Relatório Técnico",
