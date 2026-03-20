@@ -11,7 +11,7 @@ from reportlab.lib.units import cm
 # =========================================================
 # 1. FUNÇÃO DO PDF (VERSÃO FINAL MPN SOLUÇÕES)
 # =========================================================
-def gerar_pdf_profissional(dados, eletrica):
+returndados, eletrica):
     # ... código anterior ...
     doc.build(elements)
     return "relatorio_tecnico_mpn.pdf"  # Este return ESTÁ CORRETO (dentro da def)
@@ -204,13 +204,8 @@ with st.sidebar:
         styles['Normal']
     ))
 
-    doc.build(elements)
-
-    return "relatorio_tecnico.pdf"
-
-    doc.build(elements)
-
-    return file_path
+ doc.build(elements)
+    return "relatorio_tecnico_mpn.pdf"
 
 import streamlit as st
 from datetime import datetime
