@@ -165,3 +165,17 @@ with st.sidebar:
             if key not in chaves_tecnico:
                 st.session_state.dados[key] = ""
         st.rerun()
+
+# ==============================================================================
+# 2. DESENVOLVIMENTO DA ABA DE DIAGNÓSTICOS (PARTE 2)
+# ==============================================================================
+def renderizar_aba_diagnosticos():
+    st.header("📋 Central de Diagnósticos")
+    st.markdown("---")
+
+    # 1. SELEÇÃO DO EQUIPAMENTO (Dependência da Aba 1)
+    # equipments = db_utils.buscar_equipamentos_cadastrados()
+    # equipamento_id = st.selectbox("Selecione o Equipamento para Diagnóstico:", list(equipments.keys()), format_func=lambda x: equipments[x])
+    
+    # ... Resto do código da Aba de Diagnósticos que passei anteriormente ...
+# ==============================================================================
