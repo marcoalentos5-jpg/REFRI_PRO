@@ -122,15 +122,15 @@ with st.sidebar:
         elements.append(Spacer(1, 12))
 
     # ================= CLIENTE =================
-    tabela_secao("CLIENTE", [
-     ["Campo", "Valor"],
-     ["Nome", dados.get('nome','')],
-     ["CPF/CNPJ", dados.get('cpf_cnpj','')],
-     ["Telefone", dados.get('whatsapp','')],
-     ["Email", dados.get('email','')],
-    ])
+tabela_secao("CLIENTE", [
+    ["Campo", "Valor"],
+    ["Nome", str(dados.get('nome', ''))],
+    ["CPF/CNPJ", str(dados.get('cpf_cnpj', ''))],
+    ["Telefone", str(dados.get('whatsapp', ''))],
+    ["Email", str(dados.get('email', ''))],
+])
 
-    # ================= ENDEREÇO =================
+# ================= ENDEREÇO =================
     tabela_secao("ENDEREÇO", [
         ["Campo", "Valor"],
         ["Logradouro", f"{dados.get('endereco','')}, {dados.get('numero','')}"],
