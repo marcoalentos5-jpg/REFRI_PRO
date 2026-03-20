@@ -2,12 +2,9 @@ import streamlit as st
 from datetime import datetime
 import requests
 import urllib.parse
-import streamlit as st
-from datetime import datetime
-import requests
-import urllib.parse
 import re
 from fpdf import FPDF
+
 # --- FUNÇÃO: LIMPEZA PARA PDF (EVITA ERRO DE UNICODE) ---
 def limpar_pdf(txt):
     if not txt: return ""
@@ -15,19 +12,19 @@ def limpar_pdf(txt):
     txt = re.sub(r'[^\x00-\x7f-\xc0-\xff]', '', str(txt))
     return txt.encode('latin-1', 'ignore').decode('latin-1')
 
-# --- FUNÇÃO: MÁSCARAS DE FORMATAÇÃO ---
-def formatar_cpf_cnpj(v):
+# --- FUNÇÕES DE MÁSCARA (PONTOS E TRAÇOS) ---
+def aplicar_mascara_cpf_cnpj(v):
     v = re.sub(r'\D', '', v)
     if len(v) == 11: return f"{v[:3]}.{v[3:6]}.{v[6:9]}-{v[9:]}"
     if len(v) == 14: return f"{v[:2]}.{v[2:5]}.{v[5:8]}/{v[8:12]}-{v[12:]}"
     return v
 
-def formatar_cep(v):
+def aplicar_mascara_cep(v):
     v = re.sub(r'\D', '', v)
     if len(v) == 8: return f"{v[:5]}-{v[5:]}"
     return v
 
-def formatar_tel(v):
+def aplicar_mascara_tel(v):
     v = re.sub(r'\D', '', v)
     if len(v) == 11: return f"({v[:2]}) {v[2:7]}-{v[7:]}"
     if len(v) == 10: return f"({v[:2]}) {v[2:6]}-{v[6:]}"
@@ -43,45 +40,34 @@ def gerar_pdf_hvac(d):
     
     pdf.set_font("Arial", 'B', 12)
     pdf.set_fill_color(240, 240, 240)
-    pdf.cell(0, 8, limpar_pdf(" 1. IDENTIFICAÇÃO"), 1, 1, 'L', 1)
+    pdf.cell(0, 8, limpar_pdf(" 1. IDENTIFICAÇÃO DO CLIENTE"), 1, 1, 'L', 1)
     pdf.set_font("Arial", '', 10)
-    pdf.cell(0, 8, limpar_pdf(f" Cliente: {d['nome']} | Doc: {formatar_cpf_cnpj(d['cpf_cnpj'])}"), 1, 1)
-    pdf.cell(0, 8, limpar_pdf(f" Endereço: {d['endereco']}, {d['numero']} - CEP: {formatar_cep(d['cep'])}"), 1, 1)
+    pdf.cell(0, 8, limpar_pdf(f" Cliente: {d['nome']}"), 1, 1)
+    pdf.cell(0, 8, limpar_pdf(f" CPF/CNPJ: {aplicar_mascara_cpf_cnpj(d['cpf_cnpj'])}"), 1, 1)
+    pdf.cell(0, 8, limpar_pdf(f" Endereço: {d['endereco']}, {d['numero']} - {d['bairro']}"), 1, 1)
+    pdf.cell(0, 8, limpar_pdf(f" CEP: {aplicar_mascara_cep(d['cep'])} | WhatsApp: {aplicar_mascara_tel(d['whatsapp'])}"), 1, 1)
     
     pdf.ln(5)
     pdf.set_font("Arial", 'B', 12)
-    pdf.cell(0, 8, limpar_pdf(" 2. EQUIPAMENTO"), 1, 1, 'L', 1)
+    pdf.cell(0, 8, limpar_pdf(" 2. DADOS DO EQUIPAMENTO"), 1, 1, 'L', 1)
     pdf.set_font("Arial", '', 10)
     pdf.cell(95, 8, limpar_pdf(f" Fabricante: {d['fabricante']}"), 1)
     pdf.cell(95, 8, limpar_pdf(f" Modelo: {d['modelo']}"), 1, 1)
-    pdf.cell(95, 8, limpar_pdf(f" Status: {d['status_maquina']}"), 1)
-    pdf.cell(95, 8, limpar_pdf(f" Data: {d['data']}"), 1, 1)
+    pdf.cell(64, 8, limpar_pdf(f" Cap: {d['capacidade']} BTU"), 1)
+    pdf.cell(63, 8, limpar_pdf(f" Fluido: {d['fluido']}"), 1)
+    pdf.cell(63, 8, limpar_pdf(f" TAG: {d['tag_id']}"), 1, 1)
+    pdf.cell(0, 8, limpar_pdf(f" Status: {d['status_maquina']}"), 1, 1)
+    
+    pdf.ln(10)
+    pdf.set_font("Arial", 'I', 8)
+    pdf.cell(0, 10, limpar_pdf(f"Técnico: {d['tecnico_nome']} | Registro: {d['tecnico_registro']} | Data: {d['data']}"), 0, 0, 'C')
     
     return pdf.output(dest='S').encode('latin-1')
-    
 
-# 1. CONFIGURAÇÃO INICIAL (TESTADA)
+# 1. CONFIGURAÇÃO INICIAL
 st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="⚙️")
 
-# CSS: Estilização (CONGELADO)
-st.markdown("""
-    <style>
-    .stTextInput>div>div>input[aria-label="Data da Visita:"] {
-        background-color: #e0f2f1 !important;
-        color: #004d40 !important;
-        font-weight: bold;
-        border: 1px solid #b2dfdb !important;
-    }
-    div.stLinkButton > a {
-        background-color: #25D366 !important;
-        color: white !important;
-        font-weight: bold;
-        border-radius: 8px !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# 2. MOTOR DE SESSÃO (CHAVES VERIFICADAS)
+# 2. MOTOR DE SESSÃO
 if 'dados' not in st.session_state:
     st.session_state.dados = {
         'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
@@ -110,25 +96,17 @@ def buscar_cep(cep):
         except: pass
     return False
 
-# 3. INTERFACE DE ABA ÚNICA (ELIMINA O NAMEERROR DEFINITIVAMENTE)
-# Criamos a aba e já selecionamos o primeiro índice para evitar erro de variável nula
+# 3. INTERFACE
 tabs = st.tabs(["📋 Identificação e Equipamento"])
 tab1 = tabs[0]
 
 with tab1:
-    # --- SEÇÃO CLIENTE ---
     with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
         c1, c2, c3 = st.columns([2, 1, 1])
-        st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="cli_nome")
-        st.session_state.dados['cpf_cnpj'] = c2.text_input("CPF ou CNPJ", value=st.session_state.dados['cpf_cnpj'], key="cli_doc")
-        st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp (DDD) *", value=st.session_state.dados['whatsapp'], key="cli_zap")
+        st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'])
+        st.session_state.dados['cpf_cnpj'] = c2.text_input("CPF ou CNPJ", value=st.session_state.dados['cpf_cnpj'], help="Apenas números")
+        st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp (DDD) *", value=st.session_state.dados['whatsapp'])
 
-        cx1, cx2, cx3 = st.columns([1, 1, 2])
-        st.session_state.dados['celular'] = cx1.text_input("Cel.:", value=st.session_state.dados['celular'])
-        st.session_state.dados['tel_fixo'] = cx2.text_input("Telefone Fixo:", value=st.session_state.dados['tel_fixo'])
-        st.session_state.dados['email'] = cx3.text_input("E-mail:", value=st.session_state.dados['email'])
-
-        st.markdown("---")
         ce1, ce2, ce3 = st.columns([1, 2, 1])
         cep_input = ce1.text_input("CEP *", value=st.session_state.dados['cep'])
         if cep_input != st.session_state.dados['cep']:
@@ -137,99 +115,56 @@ with tab1:
 
         st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados['endereco'])
         st.session_state.dados['numero'] = ce3.text_input("Número/Apto:", value=st.session_state.dados['numero'])
+        
+        # Outros campos automáticos do CEP
+        ce4, ce5, ce6, ce7 = st.columns(4)
+        st.session_state.dados['bairro'] = ce4.text_input("Bairro:", value=st.session_state.dados['bairro'])
+        st.session_state.dados['cidade'] = ce5.text_input("Cidade:", value=st.session_state.dados['cidade'])
+        st.session_state.dados['uf'] = ce6.text_input("UF:", value=st.session_state.dados['uf'])
+        st.session_state.dados['email'] = ce7.text_input("E-mail:", value=st.session_state.dados['email'])
 
-        ce4, ce5, ce6, ce7 = st.columns([1, 1, 1, 1])
-        st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados['complemento'])
-        st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'])
-        st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'])
-        st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'])
-
-    # --- SEÇÃO EQUIPAMENTO ---
-    col_titulo, col_data = st.columns([3, 1])
-    with col_titulo: st.subheader("⚙️ Especificações do Equipamento")
-    with col_data: st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'])
-
-    with st.expander("Detalhes Técnicos do Ativo", expanded=True):
+    with st.expander("⚙️ Detalhes Técnicos do Equipamento", expanded=True):
         e1, e2, e3 = st.columns(3)
         with e1:
-            fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
-            fab_val = st.session_state.dados.get('fabricante', 'Carrier')
-            fab_idx = fab_list.index(fab_val) if fab_val in fab_list else 0
-            st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx)
+            st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"]), index=0)
             st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados['modelo'])
-            st.session_state.dados['linha'] = st.selectbox("Linha:", ["Residencial", "Comercial", "Industrial"], index=0)
             st.session_state.dados['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], horizontal=True)
-
         with e2:
             st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados['serie_evap'])
-            st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND)", value=st.session_state.dados['serie_cond'])
-            st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'])
-            st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
-
-        with e3:
             st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], index=1)
+        with e3:
             st.session_state.dados['fluido'] = st.selectbox("Fluido:", ["R410A", "R134a", "R22", "R32", "R290"], index=0)
-            st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
             st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
 
 # --- SIDEBAR (CONGELADO E PROTEGIDO) ---
 with st.sidebar:
     st.title("🚀 Painel de Controle")
-    st.subheader("👤 Técnico Responsável")
-    st.session_state.dados['tecnico_nome'] = st.text_input("Nome:", value=st.session_state.dados['tecnico_nome'])
-    st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ Técnico:", value=st.session_state.dados['tecnico_documento'])
-    st.session_state.dados['tecnico_registro'] = st.text_input("Inscrição (CFT/CREA):", value=st.session_state.dados['tecnico_registro'])
+    st.session_state.dados['tecnico_nome'] = st.text_input("Técnico:", value=st.session_state.dados['tecnico_nome'])
+    st.session_state.dados['tecnico_registro'] = st.text_input("CREA/CFT:", value=st.session_state.dados['tecnico_registro'])
     
     st.markdown("---")
     
-    # VALIDAÇÃO DE CAMPOS OBRIGATÓRIOS
-    if not st.session_state.dados['nome'] or not st.session_state.dados['whatsapp']:
-        st.error("📋 STATUS: PENDENTE (Preencha Cliente e WhatsApp)")
-    else:
-        st.success("📋 STATUS: PRONTO PARA ENVIO")
-        
-    # MENSAGEM WHATSAPP - ENVIO DE TODOS OS DADOS SEM EXCEÇÃO
-    msg_zap = (
-        f"*LAUDO TÉCNICO HVAC*\n\n"
-        f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
-        f"🆔 CPF/CNPJ: {st.session_state.dados['cpf_cnpj']}\n"
-        f"📍 END: {st.session_state.dados['endereco']}, {st.session_state.dados['numero']} - {st.session_state.dados['bairro']}\n"
-        f"🏙️ {st.session_state.dados['cidade']}/{st.session_state.dados['uf']} | CEP: {st.session_state.dados['cep']}\n"
-        f"📞 Contato: {st.session_state.dados['whatsapp']} | Email: {st.session_state.dados['email']}\n\n"
-        f"⚙️ *EQUIPAMENTO:*\n"
-        f"📌 TAG: {st.session_state.dados['tag_id']} | Linha: {st.session_state.dados['linha']}\n"
-        f"🏭 Fab: {st.session_state.dados['fabricante']} | Mod: {st.session_state.dados['modelo']}\n"
-        f"❄️ Cap: {st.session_state.dados['capacidade']} BTU | Fluido: {st.session_state.dados['fluido']}\n"
-        f"🔢 S.Evap: {st.session_state.dados['serie_evap']} | S.Cond: {st.session_state.dados['serie_cond']}\n"
-        f"📍 Loc.Evap: {st.session_state.dados['local_evap']} | Loc.Cond: {st.session_state.dados['local_cond']}\n"
-        f"🛠️ Serviço: {st.session_state.dados['tipo_servico']}\n"
-        f"🩺 Status: {st.session_state.dados['status_maquina']}\n\n"
-        f"👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}\n"
-        f"📜 Registro: {st.session_state.dados['tecnico_registro']}\n"
-        f"📅 Data: {st.session_state.dados['data']}"
-    )
-    
-    link_final = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_zap)}"
-    st.link_button("📲 Enviar Laudo via WhatsApp", link_final, use_container_width=True)
+    # WHATSAPP LINK
+    zap_limpo = re.sub(r'\D', '', st.session_state.dados['whatsapp'])
+    msg_zap = f"Olá, segue o laudo do equipamento {st.session_state.dados['tag_id']}"
+    link_zap = f"https://wa.me/55{zap_limpo}?text={urllib.parse.quote(msg_zap)}"
+    st.link_button("📲 Enviar via WhatsApp", link_zap, use_container_width=True)
 
-    st.markdown("---")
-    # LIMPAR FORMULÁRIO (PROTEGENDO DADOS DO TÉCNICO)
-    if st.button("🗑️ Limpar Formulário", use_container_width=True):
-        chaves_tecnico = ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']
-        for key in st.session_state.dados.keys():
-            if key not in chaves_tecnico:
-                st.session_state.dados[key] = ""
-        st.rerun()
-        # --- BLOCO: BOTÃO PDF (IMPLEMENTADO) ---
+    # BOTÃO PDF (AGORA NO LUGAR CORRETO E VISÍVEL)
     st.markdown("---")
     if st.session_state.dados['nome'] and st.session_state.dados['cep']:
         pdf_bytes = gerar_pdf_hvac(st.session_state.dados)
         st.download_button(
-            label="📄 Gerar e Baixar Relatório PDF",
+            label="📄 Baixar Relatório PDF",
             data=pdf_bytes,
-            file_name=f"Relatorio_HVAC_{st.session_state.dados['tag_id']}.pdf",
+            file_name=f"Laudo_{st.session_state.dados['tag_id']}.pdf",
             mime="application/pdf",
             use_container_width=True
         )
-    else:
-        st.warning("⚠️ Preencha o Nome do Cliente e o CEP para liberar o PDF.")
+    
+    # LIMPAR FORMULÁRIO
+    if st.button("🗑️ Limpar Formulário", use_container_width=True):
+        for key in st.session_state.dados.keys():
+            if key not in ['tecnico_nome', 'tecnico_registro', 'data']:
+                st.session_state.dados[key] = ""
+        st.rerun()
