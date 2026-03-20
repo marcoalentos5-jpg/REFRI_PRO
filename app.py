@@ -104,14 +104,6 @@ try:
         if not diagnostico:
             diagnostico.append("Sistema operando dentro dos parâmetros")
 
-except:
-        diagnostico.append("Dados insuficientes para diagnóstico")
-        ["Resultado", " | ".join(diagnostico)],
-        ["Observações", eletrica.get('obs','')],
-    ])
-
-elements.append(Spacer(1, 30))
-
     # ================= ASSINATURAS =================
 assinatura = [
         ["______________________________", "______________________________"],
