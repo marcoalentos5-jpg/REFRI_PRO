@@ -70,14 +70,19 @@ if 'dados' not in st.session_state:
 # --- SIDEBAR COM BOTÃO QUE CHAMA A FUNÇÃO ---
 with st.sidebar:
     st.header("📲 Finalizar")
+
+    # Garantir que existem
+    dados = st.session_state.get('dados', {})
+    eletrica = st.session_state.get('eletrica', {})
+
     if st.button("📄 GERAR RELATÓRIO TOTAL"):
-        # Aqui passamos os dados da sessão para a função
-        relatorio = gerar_pdf_profissional(st.session_state.dados, st.session_state.get('eletrica', {}))
+        relatorio = gerar_pdf_profissional(dados, eletrica)
+
         with open(relatorio, "rb") as f:
             st.download_button("📥 Baixar PDF", f, file_name=relatorio)
 
     # ================= ELÉTRICA =================      
-        tabela_secao("ANÁLISE ELÉTRICA", [
+    tabela_secao("ANÁLISE ELÉTRICA", [
         ["Campo", "Valor"],
         ["Tensão Rede", eletrica.get('tensao_rede','')],
         ["Tensão Medida", eletrica.get('tensao_medida','')],
@@ -91,7 +96,7 @@ with st.sidebar:
         ["Potência", f"{eletrica.get('potencia_kw','')} kW"],
     ])
 
-    # ================= DIAGNÓSTICO AUTOMÁTICO =================
+# ================= DIAGNÓSTICO AUTOMÁTICO =================
 diagnostico = []
 
 try:
