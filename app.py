@@ -49,41 +49,55 @@ def gerar_pdf_profissional(dados, eletrica):
         ["Status", str(dados.get('status_maquina', ''))],
     ])
 
-    # ================= ASSINATURAS =================
+    # ================= ELÉTRICA (MOVIDO PARA DENTRO DA FUNÇÃO) =================      
+    tabela_secao("ANÁLISE ELÉTRICA", [
+        ["Campo", "Valor"],
+        ["Tensão Rede", str(eletrica.get('tensao_rede',''))],
+        ["Tensão Medida", str(eletrica.get('tensao_medida',''))],
+        ["Diferença Tensão", str(eletrica.get('dif_tensao',''))],
+        ["Corrente Medida", str(eletrica.get('corrente_medida',''))],
+        ["Potência", f"{eletrica.get('potencia_kw','')} kW"],
+    ])
+
+    # ================= DIAGNÓSTICO (MOVIDO PARA DENTRO DA FUNÇÃO) =================
+    diagnostico = []
+    try:
+        if float(str(eletrica.get('dif_tensao') or 0).replace(',','.')) > 10:
+            diagnostico.append("Sobretensão detectada")
+        if not diagnostico:
+            diagnostico.append("Sistema operando dentro dos parâmetros")
+    except:
+        diagnostico.append("Dados insuficientes para diagnóstico")
+
+    tabela_secao("DIAGNÓSTICO TÉCNICO", [
+        ["Resultado", " | ".join(diagnostico)],
+        ["Observações", str(eletrica.get('obs',''))],
+    ])
+
+    # ================= ASSINATURAS (MOVIDO PARA DENTRO DA FUNÇÃO) =================
     assinatura = [
         ["______________________________", "______________________________"],
-        ["Marcos Alexandre Almeida do Nascimento", str(dados.get('nome',''))],
+        ["Marcos Alexandre Almeida", str(dados.get('nome',''))],
         ["Técnico Responsável", "Cliente"],
         ["CNPJ: 51.274.762/0001-17", f"CPF/CNPJ: {dados.get('cpf_cnpj','')}"],
     ]
-
     table_ass = Table(assinatura, colWidths=[8*cm, 8*cm])
-    table_ass.setStyle(TableStyle([
-        ('ALIGN', (0,0), (-1,-1), 'CENTER')
-    ]))
-
+    table_ass.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER')]))
     elements.append(table_ass)
 
     # ================= RODAPÉ =================
     data_atual = datetime.now().strftime("%d/%m/%Y")
-
     elements.append(Spacer(1, 20))
-    elements.append(Paragraph(
-        f"Relatório gerado em {data_atual} | MPN Soluções em Refrigeração e Climatização",
-        styles['Normal']
-    ))
+    elements.append(Paragraph(f"Relatório gerado em {data_atual} | MPN Soluções", styles['Normal']))
 
-    # FINALIZAÇÃO DO PDF
     doc.build(elements)
     return file_path 
 
-
 # =========================================================
-# 2. INÍCIO DO SITE
+# 2. INÍCIO DO SITE (ESTRUTURA BLOQUEADA)
 # =========================================================
 st.set_page_config(page_title="HVAC Pro - MPN", layout="wide")
 
-# Inicialização segura dos dados
 if 'dados' not in st.session_state:
     st.session_state.dados = {
         'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'email': '',
@@ -93,16 +107,10 @@ if 'dados' not in st.session_state:
 if 'eletrica' not in st.session_state:
     st.session_state.eletrica = {}
 
-# --- SIDEBAR COM BOTÃO QUE CHAMA A FUNÇÃO ---
 with st.sidebar:
     st.header("📲 Finalizar")
-
-    dados = st.session_state.get('dados', {})
-    eletrica = st.session_state.get('eletrica', {})
-
     if st.button("📄 GERAR RELATÓRIO TOTAL"):
-        relatorio = gerar_pdf_profissional(dados, eletrica)
-
+        relatorio = gerar_pdf_profissional(st.session_state.dados, st.session_state.eletrica)
         with open(relatorio, "rb") as f:
             st.download_button("📥 Baixar PDF", f, file_name=relatorio)
 
