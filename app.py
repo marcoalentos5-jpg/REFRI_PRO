@@ -31,6 +31,7 @@ def aplicar_mascara_tel(v):
     return v
 
 # --- FUNÇÃO: GERADOR DE PDF ---
+# --- FUNÇÃO: GERADOR DE PDF (CORRIGIDA) ---
 def gerar_pdf_hvac(d):
     pdf = FPDF()
     pdf.add_page()
@@ -62,6 +63,8 @@ def gerar_pdf_hvac(d):
     pdf.set_font("Arial", 'I', 8)
     pdf.cell(0, 10, limpar_pdf(f"Técnico: {d['tecnico_nome']} | Registro: {d['tecnico_registro']} | Data: {d['data']}"), 0, 0, 'C')
     
+    # --- AQUI ESTAVA O ERRO: CORREÇÃO ABAIXO ---
+    return pdf.output() # No FPDF2, output() já retorna bytes por padrão
     return pdf.output(dest='S').encode('latin-1')
 
 # 1. CONFIGURAÇÃO INICIAL
