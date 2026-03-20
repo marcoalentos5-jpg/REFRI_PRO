@@ -122,6 +122,7 @@ with st.sidebar:
         elements.append(Spacer(1, 12))
 
     # ================= CLIENTE =================
+dados = {}
 tabela_secao("CLIENTE", [
     ["Campo", "Valor"],
     ["Nome", str(dados.get('nome', ''))],
