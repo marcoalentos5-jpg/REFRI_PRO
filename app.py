@@ -8,8 +8,11 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import cm
 
+# 1. CONFIGURAÇÃO INICIAL (Obrigatório ser a primeira linha de UI)
+st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="⚙️")
+
 # =========================================================
-# 1. FUNÇÃO DO PDF (MÁQUINA DE GERAR RELATÓRIOS)
+# 2. FUNÇÃO DO PDF (MÁQUINA DE GERAR RELATÓRIOS)
 # =========================================================
 def gerar_pdf_profissional(dados, eletrica):
     file_path = "relatorio_tecnico_mpn.pdf"
@@ -18,7 +21,6 @@ def gerar_pdf_profissional(dados, eletrica):
     elements = []
     azul = colors.HexColor("#0b5394")
 
-    # --- FUNÇÃO INTERNA PARA CRIAR TABELAS (DENTRO DA DEF) ---
     def tabela_secao(titulo, dados_tabela):
         elements.append(Paragraph(f"<b>{titulo}</b>", styles['Heading3']))
         tabela = Table(dados_tabela, colWidths=[6*cm, 10*cm])
@@ -32,7 +34,7 @@ def gerar_pdf_profissional(dados, eletrica):
         elements.append(tabela)
         elements.append(Spacer(1, 12))
 
-    # ================= CLIENTE =================
+    # CLIENTE
     tabela_secao("CLIENTE", [
         ["Campo", "Valor"],
         ["Nome", str(dados.get('nome', ''))],
@@ -41,7 +43,7 @@ def gerar_pdf_profissional(dados, eletrica):
         ["Email", str(dados.get('email', ''))],
     ])
 
-    # ================= EQUIPAMENTO =================
+    # EQUIPAMENTO
     tabela_secao("EQUIPAMENTO", [
         ["Campo", "Valor"],
         ["Fabricante", str(dados.get('fabricante', ''))],
@@ -49,7 +51,7 @@ def gerar_pdf_profissional(dados, eletrica):
         ["Status", str(dados.get('status_maquina', ''))],
     ])
 
-    # ================= ELÉTRICA (MOVIDO PARA DENTRO DA FUNÇÃO) =================      
+    # ELÉTRICA
     tabela_secao("ANÁLISE ELÉTRICA", [
         ["Campo", "Valor"],
         ["Tensão Rede", str(eletrica.get('tensao_rede',''))],
@@ -59,7 +61,7 @@ def gerar_pdf_profissional(dados, eletrica):
         ["Potência", f"{eletrica.get('potencia_kw','')} kW"],
     ])
 
-    # ================= DIAGNÓSTICO (MOVIDO PARA DENTRO DA FUNÇÃO) =================
+    # DIAGNÓSTICO
     diagnostico = []
     try:
         if float(str(eletrica.get('dif_tensao') or 0).replace(',','.')) > 10:
@@ -74,7 +76,7 @@ def gerar_pdf_profissional(dados, eletrica):
         ["Observações", str(eletrica.get('obs',''))],
     ])
 
-    # ================= ASSINATURAS (MOVIDO PARA DENTRO DA FUNÇÃO) =================
+    # ASSINATURAS
     assinatura = [
         ["______________________________", "______________________________"],
         ["Marcos Alexandre Almeida", str(dados.get('nome',''))],
@@ -85,7 +87,6 @@ def gerar_pdf_profissional(dados, eletrica):
     table_ass.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER')]))
     elements.append(table_ass)
 
-    # ================= RODAPÉ =================
     data_atual = datetime.now().strftime("%d/%m/%Y")
     elements.append(Spacer(1, 20))
     elements.append(Paragraph(f"Relatório gerado em {data_atual} | MPN Soluções", styles['Normal']))
@@ -94,74 +95,8 @@ def gerar_pdf_profissional(dados, eletrica):
     return file_path 
 
 # =========================================================
-# 2. INÍCIO DO SITE (ESTRUTURA BLOQUEADA)
+# 3. MOTOR DE SESSÃO E CSS
 # =========================================================
-st.set_page_config(page_title="HVAC Pro - MPN", layout="wide")
-
-if 'dados' not in st.session_state:
-    st.session_state.dados = {
-        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'email': '',
-        'fabricante': '', 'modelo': '', 'status_maquina': 'Operacional'
-    }
-
-if 'eletrica' not in st.session_state:
-    st.session_state.eletrica = {}
-
-with st.sidebar:
-    st.header("📲 Finalizar")
-    if st.button("📄 GERAR RELATÓRIO TOTAL"):
-        relatorio = gerar_pdf_profissional(st.session_state.dados, st.session_state.eletrica)
-        with open(relatorio, "rb") as f:
-            st.download_button("📥 Baixar PDF", f, file_name=relatorio)
-
-    # ================= ELÉTRICA =================      
-    st.subheader("ANÁLISE ELÉTRICA")
-    st.write(eletrica)
-
-
-# ================= DIAGNÓSTICO AUTOMÁTICO =================
-diagnostico = []
-
-eletrica = st.session_state.get('eletrica', {})
-
-try:
-    if float(eletrica.get('dif_tensao') or 0) > 10:
-        diagnostico.append("Sobretensão detectada")
-
-    if float(eletrica.get('dif_corrente') or 0) > 5:
-        diagnostico.append("Corrente acima do nominal (sobrecarga)")
-
-    if not diagnostico:
-        diagnostico.append("Sistema operando dentro dos parâmetros")
-
-except Exception:
-    diagnostico.append("Erro na análise elétrica")
-# 1. CONFIGURAÇÃO INICIAL (TESTADA)
-st.set_page_config(
-    page_title="HVAC Pro - Marcos Alexandre",
-    layout="wide",
-    page_icon="⚙️"
-)
-
-# CSS: Estilização (CONGELADO)
-st.markdown("""
-    <style>
-    .stTextInput>div>div>input[aria-label="Data da Visita:"] {
-        background-color: #e0f2f1 !important;
-        color: #004d40 !important;
-        font-weight: bold;
-        border: 1px solid #b2dfdb !important;
-    }
-    div.stLinkButton > a {
-        background-color: #25D366 !important;
-        color: white !important;
-        font-weight: bold;
-        border-radius: 8px !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# 2. MOTOR DE SESSÃO (CHAVES VERIFICADAS)
 if 'dados' not in st.session_state:
     st.session_state.dados = {
         'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
@@ -173,6 +108,16 @@ if 'dados' not in st.session_state:
         'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
         'status_maquina': '🟢 Operacional'
     }
+
+if 'eletrica' not in st.session_state:
+    st.session_state.eletrica = {}
+
+st.markdown("""
+    <style>
+    .stTextInput>div>div>input { background-color: #e0f2f1 !important; color: #004d40 !important; font-weight: bold; }
+    div.stLinkButton > a { background-color: #25D366 !important; color: white !important; font-weight: bold; border-radius: 8px !important; }
+    </style>
+""", unsafe_allow_html=True)
 
 def buscar_cep(cep):
     cep_limpo = "".join(filter(str.isdigit, cep))
@@ -190,13 +135,12 @@ def buscar_cep(cep):
         except: pass
     return False
 
-# 3. INTERFACE COM DUAS ABAS (SEM AFETAR NADA EXISTENTE)
+# =========================================================
+# 4. INTERFACE COM ABAS
+# =========================================================
 tabs = st.tabs(["📋 Identificação e Equipamento", "⚡ Análise Elétrica"])
-tab1 = tabs[0]
-tab2 = tabs[1]
 
-with tab1:
-    # --- SEÇÃO CLIENTE ---
+with tabs[0]:
     with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
         c1, c2, c3 = st.columns([2, 1, 1])
         st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="cli_nome")
@@ -204,9 +148,9 @@ with tab1:
         st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp (DDD) *", value=st.session_state.dados['whatsapp'], key="cli_zap")
 
         cx1, cx2, cx3 = st.columns([1, 1, 2])
-        st.session_state.dados['whatsapp'] = cx1.text_input("whatsapp.:", value=st.session_state.dados['whatsapp'])
-        st.session_state.dados['tel_fixo'] = cx2.text_input("tel_fixo:", value=st.session_state.dados['tel_fixo'])
-        st.session_state.dados['email'] = cx3.text_input("email:", value=st.session_state.dados['email'])
+        st.session_state.dados['celular'] = cx1.text_input("Celular:", value=st.session_state.dados['celular'])
+        st.session_state.dados['tel_fixo'] = cx2.text_input("Tel Fixo:", value=st.session_state.dados['tel_fixo'])
+        st.session_state.dados['email'] = cx3.text_input("Email:", value=st.session_state.dados['email'])
 
         st.markdown("---")
         ce1, ce2, ce3 = st.columns([1, 2, 1])
@@ -224,7 +168,6 @@ with tab1:
         st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'])
         st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'])
 
-    # --- SEÇÃO EQUIPAMENTO ---
     col_titulo, col_data = st.columns([3, 1])
     with col_titulo: st.subheader("⚙️ Especificações do Equipamento")
     with col_data: st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'])
@@ -239,13 +182,11 @@ with tab1:
             st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados['modelo'])
             st.session_state.dados['linha'] = st.selectbox("Linha:", ["Residencial", "Comercial", "Industrial"], index=0)
             st.session_state.dados['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], horizontal=True)
-
         with e2:
             st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados['serie_evap'])
             st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND)", value=st.session_state.dados['serie_cond'])
             st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'])
             st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
-
         with e3:
             st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], index=1)
             st.session_state.dados['fluido'] = st.selectbox("Fluido:", ["R410A", "R134a", "R22", "R32", "R290"], index=0)
@@ -255,52 +196,22 @@ with tab1:
 # --- SIDEBAR (CONGELADO E PROTEGIDO) ---
 with st.sidebar:
     st.title("🚀 Painel de Controle")
-    st.subheader("👤 Técnico Responsável")
     st.session_state.dados['tecnico_nome'] = st.text_input("Nome:", value=st.session_state.dados['tecnico_nome'])
     st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ Técnico:", value=st.session_state.dados['tecnico_documento'])
     st.session_state.dados['tecnico_registro'] = st.text_input("Inscrição (CFT/CREA):", value=st.session_state.dados['tecnico_registro'])
-    
     st.markdown("---")
+    if st.button("📄 GERAR RELATÓRIO TOTAL", use_container_width=True):
+        rel_path = gerar_pdf_profissional(st.session_state.dados, st.session_state.eletrica)
+        with open(rel_path, "rb") as f:
+            st.download_button("📥 Baixar PDF", f, file_name=rel_path, use_container_width=True)
     
-    # VALIDAÇÃO DE CAMPOS OBRIGATÓRIOS
-    if not st.session_state.dados['nome'] or not st.session_state.dados['whatsapp']:
-        st.error("📋 STATUS: PENDENTE (Preencha Cliente e WhatsApp)")
-    else:
-        st.success("📋 STATUS: PRONTO PARA ENVIO")
-        
-    # MENSAGEM WHATSAPP - ENVIO DE TODOS OS DADOS SEM EXCEÇÃO
-    msg_zap = (
-        f"*LAUDO TÉCNICO HVAC*\n\n"
-        f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
-        f"🆔 CPF/CNPJ: {st.session_state.dados['cpf_cnpj']}\n"
-        f"📍 END: {st.session_state.dados['endereco']}, {st.session_state.dados['numero']} - {st.session_state.dados['bairro']}\n"
-        f"🏙️ {st.session_state.dados['cidade']}/{st.session_state.dados['uf']} | CEP: {st.session_state.dados['cep']}\n"
-        f"📞 Contato: {st.session_state.dados['whatsapp']} | Email: {st.session_state.dados['email']}\n\n"
-        f"⚙️ *EQUIPAMENTO:*\n"
-        f"📌 TAG: {st.session_state.dados['tag_id']} | Linha: {st.session_state.dados['linha']}\n"
-        f"🏭 Fab: {st.session_state.dados['fabricante']} | Mod: {st.session_state.dados['modelo']}\n"
-        f"❄️ Cap: {st.session_state.dados['capacidade']} BTU | Fluido: {st.session_state.dados['fluido']}\n"
-        f"🔢 S.Evap: {st.session_state.dados['serie_evap']} | S.Cond: {st.session_state.dados['serie_cond']}\n"
-        f"📍 Loc.Evap: {st.session_state.dados['local_evap']} | Loc.Cond: {st.session_state.dados['local_cond']}\n"
-        f"🛠️ Serviço: {st.session_state.dados['tipo_servico']}\n"
-        f"🩺 Status: {st.session_state.dados['status_maquina']}\n\n"
-        f"👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}\n"
-        f"📜 Registro: {st.session_state.dados['tecnico_registro']}\n"
-        f"📅 Data: {st.session_state.dados['data']}"
-    )
-    
+    msg_zap = f"*LAUDO TÉCNICO HVAC*\n👤 *CLIENTE:* {st.session_state.dados['nome']}\n🩺 *STATUS:* {st.session_state.dados['status_maquina']}"
     link_final = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_zap)}"
     st.link_button("📲 Enviar Laudo via WhatsApp", link_final, use_container_width=True)
-
-    st.markdown("---")
-    # LIMPAR FORMULÁRIO (PROTEGENDO DADOS DO TÉCNICO)
+    
     if st.button("🗑️ Limpar Formulário", use_container_width=True):
-        chaves_tecnico = ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']
-        for key in st.session_state.dados.keys():
-            if key not in chaves_tecnico:
-                st.session_state.dados[key] = ""
+        st.session_state.dados = {k: ("" if k not in ['tecnico_nome', 'data'] else v) for k, v in st.session_state.dados.items()}
         st.rerun()
-
 # ================= WHATSAPP - ABA IDENTIFICAÇÃO =================
 st.markdown("---")
 st.subheader("📲 Enviar Laudo de Identificação")
