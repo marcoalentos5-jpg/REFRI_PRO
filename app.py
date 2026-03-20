@@ -190,7 +190,7 @@ tabela_secao("DIAGNÓSTICO TÉCNICO", [
 elements.append(Spacer(1, 30))
 
     # ================= ASSINATURAS =================
-    assinatura = [
+assinatura = [
         ["______________________________", "______________________________"],
         ["Marcos Alexandre Almeida do Nascimento", dados.get('nome','')],
         ["Técnico Responsável", "Cliente"],
