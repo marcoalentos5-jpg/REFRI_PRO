@@ -12,7 +12,9 @@ from reportlab.lib.units import cm
 # 1. FUNÇÃO DO PDF (VERSÃO FINAL MPN SOLUÇÕES)
 # =========================================================
 def gerar_pdf_profissional(dados, eletrica):
-    file_path = "relatorio_tecnico_mpn.pdf"
+    # ... código anterior ...
+    doc.build(elements)
+    return "relatorio_tecnico_mpn.pdf"  # Este return ESTÁ CORRETO (dentro da def)
     doc = SimpleDocTemplate(file_path, pagesize=A4)
     styles = getSampleStyleSheet()
     elements = []
