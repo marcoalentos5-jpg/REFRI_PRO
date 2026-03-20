@@ -2,8 +2,6 @@ import streamlit as st
 from datetime import datetime
 import requests
 import urllib.parse
-import re
-from fpdf import FPDF
 
 # 1. CONFIGURAÇÃO INICIAL (TESTADA)
 st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="⚙️")
@@ -23,56 +21,8 @@ st.markdown("""
         font-weight: bold;
         border-radius: 8px !important;
     }
-    /* Estilo do botão de PDF para destacar */
-    div.stDownloadButton > button {
-        background-color: #0d47a1 !important;
-        color: white !important;
-        border-radius: 8px !important;
-        font-weight: bold;
-    }
     </style>
 """, unsafe_allow_html=True)
-
-# --- FUNÇÃO DE LIMPEZA PARA EVITAR ERRO DE UNICODE NO PDF ---
-def limpar_texto_pdf(texto):
-    if not texto: return ""
-    # Remove emojis que quebram o FPDF
-    texto = texto.replace('🟢', '').replace('🟡', '').replace('🔴', '')
-    # Trata acentos para o formato latin-1
-    return texto.encode('latin-1', 'ignore').decode('latin-1')
-
-def gerar_pdf_tecnico(d):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", 'B', 16)
-    pdf.cell(0, 10, "LAUDO TECNICO DE MANUTENCAO HVAC", 0, 1, 'C')
-    pdf.ln(5)
-    
-    # Seção Cliente
-    pdf.set_font("Arial", 'B', 12)
-    pdf.set_fill_color(240, 240, 240)
-    pdf.cell(0, 8, " IDENTIFICACAO DO CLIENTE", 1, 1, 'L', 1)
-    pdf.set_font("Arial", '', 10)
-    pdf.cell(100, 8, f" Cliente: {limpar_texto_pdf(d['nome'])}", 1)
-    pdf.cell(90, 8, f" CPF/CNPJ: {d['cpf_cnpj']}", 1, 1)
-    pdf.cell(190, 8, f" Endereco: {limpar_texto_pdf(d['endereco'])}, {d['numero']} - {limpar_texto_pdf(d['bairro'])}", 1, 1)
-    pdf.cell(100, 8, f" Cidade/UF: {limpar_texto_pdf(d['cidade'])}/{d['uf']}", 1)
-    pdf.cell(90, 8, f" CEP: {d['cep']}", 1, 1)
-    pdf.ln(5)
-
-    # Seção Equipamento
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(0, 8, " ESPECIFICACOES DO EQUIPAMENTO", 1, 1, 'L', 1)
-    pdf.set_font("Arial", '', 10)
-    pdf.cell(64, 8, f" Fab: {limpar_texto_pdf(d['fabricante'])}", 1)
-    pdf.cell(63, 8, f" Mod: {limpar_texto_pdf(d['modelo'])}", 1)
-    pdf.cell(63, 8, f" Cap: {d['capacidade']} BTU", 1, 1)
-    pdf.cell(64, 8, f" S.Evap: {d['serie_evap']}", 1)
-    pdf.cell(63, 8, f" S.Cond: {d['serie_cond']}", 1)
-    pdf.cell(63, 8, f" Fluido: {d['fluido']}", 1, 1)
-    pdf.cell(190, 8, f" Status: {limpar_texto_pdf(d['status_maquina'])}", 1, 1)
-    
-    return pdf.output(dest='S').encode('latin-1')
 
 # 2. MOTOR DE SESSÃO (CHAVES VERIFICADAS)
 if 'dados' not in st.session_state:
@@ -103,11 +53,13 @@ def buscar_cep(cep):
         except: pass
     return False
 
-# 3. INTERFACE DE ABA ÚNICA
+# 3. INTERFACE DE ABA ÚNICA (ELIMINA O NAMEERROR DEFINITIVAMENTE)
+# Criamos a aba e já selecionamos o primeiro índice para evitar erro de variável nula
 tabs = st.tabs(["📋 Identificação e Equipamento"])
 tab1 = tabs[0]
 
 with tab1:
+    # --- SEÇÃO CLIENTE ---
     with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
         c1, c2, c3 = st.columns([2, 1, 1])
         st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="cli_nome")
@@ -135,6 +87,7 @@ with tab1:
         st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'])
         st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'])
 
+    # --- SEÇÃO EQUIPAMENTO ---
     col_titulo, col_data = st.columns([3, 1])
     with col_titulo: st.subheader("⚙️ Especificações do Equipamento")
     with col_data: st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'])
@@ -157,25 +110,12 @@ with tab1:
             st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
 
         with e3:
-            caps = ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"]
-            st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", caps, index=caps.index(st.session_state.dados['capacidade']))
+            st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], index=1)
             st.session_state.dados['fluido'] = st.selectbox("Fluido:", ["R410A", "R134a", "R22", "R32", "R290"], index=0)
             st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
             st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
 
-    # --- NOVO: BOTÃO DE PDF ---
-    st.markdown("---")
-    if st.session_state.dados['nome']:
-        pdf_bytes = gerar_pdf_tecnico(st.session_state.dados)
-        st.download_button(
-            label="📄 Baixar Laudo em PDF",
-            data=pdf_bytes,
-            file_name=f"Laudo_{st.session_state.dados['tag_id']}.pdf",
-            mime="application/pdf",
-            use_container_width=True
-        )
-
-# --- SIDEBAR (MANTIDO CONFORME SOLICITADO) ---
+# --- SIDEBAR (CONGELADO E PROTEGIDO) ---
 with st.sidebar:
     st.title("🚀 Painel de Controle")
     st.subheader("👤 Técnico Responsável")
@@ -185,11 +125,13 @@ with st.sidebar:
     
     st.markdown("---")
     
+    # VALIDAÇÃO DE CAMPOS OBRIGATÓRIOS
     if not st.session_state.dados['nome'] or not st.session_state.dados['whatsapp']:
         st.error("📋 STATUS: PENDENTE (Preencha Cliente e WhatsApp)")
     else:
         st.success("📋 STATUS: PRONTO PARA ENVIO")
         
+    # MENSAGEM WHATSAPP - ENVIO DE TODOS OS DADOS SEM EXCEÇÃO
     msg_zap = (
         f"*LAUDO TÉCNICO HVAC*\n\n"
         f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
@@ -214,6 +156,7 @@ with st.sidebar:
     st.link_button("📲 Enviar Laudo via WhatsApp", link_final, use_container_width=True)
 
     st.markdown("---")
+    # LIMPAR FORMULÁRIO (PROTEGENDO DADOS DO TÉCNICO)
     if st.button("🗑️ Limpar Formulário", use_container_width=True):
         chaves_tecnico = ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']
         for key in st.session_state.dados.keys():
