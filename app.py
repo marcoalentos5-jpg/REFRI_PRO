@@ -106,7 +106,7 @@ try:
 
 except:
         diagnostico.append("Dados insuficientes para diagnóstico")
-            tabela_secao("DIAGNÓSTICO TÉCNICO", [
+             tabela_secao("DIAGNÓSTICO TÉCNICO", [
         ["Resultado", " | ".join(diagnostico)],
         ["Observações", eletrica.get('obs','')],
     ])
