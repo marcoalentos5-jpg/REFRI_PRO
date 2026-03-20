@@ -62,6 +62,8 @@ def buscar_cep(cep):
 # 1. FUNÇÃO DA ABA 1: Identificação e Equipamento (CÓDIGO ORGANIZADO)
 # ==============================================================================
 def renderizar_aba_1():
+    # --- INTERFACE DE ABA ÚNICA ---
+    # Criamos a aba e já selecionamos o primeiro índice para evitar erro de variável nula
     tabs = st.tabs(["📋 Identificação e Equipamento"])
     tab1 = tabs[0]
 
@@ -136,13 +138,13 @@ def renderizar_aba_diagnosticos():
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
 # ==============================================================================
-# Invertemos a ordem para definir aba_selecionada antes de usá-la
+# Mudamos esta seção para antes da Lógica de Exibição das Abas para definir aba_selecionada
 with st.sidebar:
     st.title("🚀 Painel de Controle")
 
     # A. NAVEGAÇÃO E EXIBIÇÃO DAS ABAS (ATIVADA AQUI)
     opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
-    # DEFINIÇÃO DA VARIÁVEL CRUCIAL
+    # Use st.sidebar.radio para criar os botões de seleção de aba e DEFINIR a variável
     aba_selecionada = st.sidebar.radio("Selecione a Aba:", opcoes_abas)
     
     st.markdown("---")
@@ -161,7 +163,7 @@ with st.sidebar:
     else:
         st.success("📋 STATUS: PRONTO PARA ENVIO")
         
-    # MENSAGEM WHATSAPP
+    # MENSAGEM WHATSAPP - ENVIO DE TODOS OS DADOS SEM EXCEÇÃO
     msg_zap = (
         f"*LAUDO TÉCNICO HVAC*\n\n"
         f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
@@ -187,16 +189,16 @@ with st.sidebar:
 # ==============================================================================
 # Use a seleção do sidebar para chamar a função correta
 if aba_selecionada == "Home":
-    # --- NOVA APRESENTAÇÃO DA ABA HOME (COM LOGO MPN SOLUÇÕES ) ---
+    # --- NOVA APRESENTAÇÃO DA ABA HOME (COM LOGO ATUALIZADA PARA 'logo.png') ---
     st.markdown("<br>", unsafe_allow_html=True) # Espaçamento superior
 
     # 1. CENTRALIZAÇÃO E EXIBIÇÃO DA LOGOMARCA
     col1, col2, col3 = st.columns([1, 2, 1]) 
     with col2: 
-        # NOME DO ARQUIVO DE IMAGEM QUE ESTÁ DANDO ERRO
-        NOME_ARQUIVO_LOGO = "logo_mpn_solucoes.png"
+        # NOME DO ARQUIVO DE IMAGEM ATUALIZADO
+        NOME_ARQUIVO_LOGO = "logo.png"
         
-        # VERIFICAÇÃO ADICIONAL DO ARQUIVO NO DISCO (PARA AJUDAR NO DIAGNÓSTICO)
+        # VERIFICAÇÃO ADICIONAL DO ARQUIVO NO DISCO
         if os.path.exists(NOME_ARQUIVO_LOGO):
             try:
                 # SE O ARQUIVO EXISTE, TENTA EXIBIR
@@ -206,7 +208,7 @@ if aba_selecionada == "Home":
                 st.write(f"Detalhes do erro do sistema: {e}")
         else:
             st.error(f"⚠️ Erro: Arquivo '{NOME_ARQUIVO_LOGO}' não encontrado na pasta raiz.")
-            st.info("Verifique se o nome do arquivo salvo no computador é EXATAMENTE 'logo_mpn_solucoes.png' (maiúsculas/minúsculas importam).")
+            st.info("Verifique se o nome do arquivo salvo no computador é EXATAMENTE 'logo.png' (maiúsculas/minúsculas importam).")
 
     st.markdown("<br><br>", unsafe_allow_html=True) 
 
