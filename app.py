@@ -18,19 +18,7 @@ def gerar_pdf_profissional(dados, eletrica):
     elements = []
     azul = colors.HexColor("#0b5394")
 
-    # Logo
-    try:
-        logo = Image("logo.png", width=6*cm, height=3*cm)
-        elements.append(logo)
-    except:
-        pass
-
-    # Cabeçalho Profissional
-    elements.append(Paragraph("<b>MPN SOLUÇÕES EM REFRIGERAÇÃO</b>", styles['Title']))
-    elements.append(Paragraph("Laudo Técnico de Manutenção e Diagnóstico", styles['Normal']))
-    elements.append(Spacer(1, 12))
-
-    # --- FUNÇÃO AUXILIAR PARA TABELAS ---
+    # --- FUNÇÃO INTERNA PARA CRIAR TABELAS (DENTRO DA DEF) ---
     def tabela_secao(titulo, dados_tabela):
         elements.append(Paragraph(f"<b>{titulo}</b>", styles['Heading3']))
         tabela = Table(dados_tabela, colWidths=[6*cm, 10*cm])
@@ -44,118 +32,49 @@ def gerar_pdf_profissional(dados, eletrica):
         elements.append(tabela)
         elements.append(Spacer(1, 12))
 
-    # --- MONTAGEM DAS SEÇÕES NO PDF ---
+    # ================= CLIENTE (AGORA DENTRO DA FUNÇÃO) =================
     tabela_secao("CLIENTE", [
         ["Campo", "Valor"],
-        ["Nome", dados.get('nome','')],
-        ["CPF/CNPJ", dados.get('cpf_cnpj','')],
-        ["Telefone", dados.get('whatsapp','')],
-    ])
-
-    tabela_secao("EQUIPAMENTO", [
-        ["Campo", "Valor"],
-        ["Fabricante", dados.get('fabricante','')],
-        ["Modelo", dados.get('modelo','')],
-        ["Status", dados.get('status_maquina','')],
-    ])
-
-    if eletrica: # Só adiciona elétrica se não for o relatório parcial
-        tabela_secao("ANÁLISE ELÉTRICA", [
-            ["Campo", "Valor"],
-            ["Tensão Rede", eletrica.get('tensao_rede','')],
-            ["Corrente Medida", eletrica.get('corrente_medida','')],
-            ["Potência", f"{eletrica.get('potencia_kw','')} kW"],
-        ])
-
-    # Assinaturas
-    elements.append(Spacer(1, 30))
-    assinatura = [
-        ["______________________________", "______________________________"],
-        ["Marcos Alexandre Almeida", dados.get('nome','')],
-        ["Técnico Responsável", "Cliente"]
-    ]
-    table_ass = Table(assinatura, colWidths=[8*cm, 8*cm])
-    elements.append(table_ass)
-
-    # Rodapé com Data
-    data_atual = datetime.now().strftime("%d/%m/%Y")
-    elements.append(Spacer(1, 20))
-    elements.append(Paragraph(f"Gerado em {data_atual} | MPN Soluções", styles['Normal']))
-    return file_path 
-# =========================================================
-# 2. CONFIGURAÇÃO DA PÁGINA E SIDEBAR (FORA DA FUNÇÃO)
-# =========================================================
-st.set_page_config(page_title="HVAC Pro - MPN", layout="wide")
-if 'dados' not in st.session_state:
-    st.session_state.dados = {
-        'nome': '', 'whatsapp': '', 'fabricante': '', 'modelo': '', 
-        'status_maquina': 'Operacional', 'tag_id': 'TAG-01'
-        # ... adicione aqui os nomes de outros campos que seu código usa ...
-    }
-with st.sidebar:
-    st.header("📲 Finalizar")
-    
-    if st.button("📄 GERAR RELATÓRIO TOTAL", use_container_width=True):
-        path = gerar_pdf_profissional(st.session_state.dados, st.session_state.get('eletrica', {}))
-        with open(path, "rb") as f:
-            st.download_button("📥 Baixar PDF Completo", f, file_name=path)
-            
-    zap_num = st.session_state.dados.get('whatsapp', '')
-    msg = urllib.parse.quote(f"Olá! Segue o laudo da MPN Soluções.")
-    st.link_button("🟢 ENVIAR VIA WHATSAPP", f"https://wa.me/55{zap_num}?text={msg}", use_container_width=True)
-
-# AQUI CONTINUA O RESTO DO SEU APP (TABS, CSS, ETC)
-    # ================= FUNÇÃO TABELA =================
-    def tabela_secao(titulo, dados_tabela):
-        elements.append(Paragraph(f"<b>{titulo}</b>", styles['Heading3']))
-
-        tabela = Table(dados_tabela, colWidths=[6*cm, 10*cm])
-        tabela.setStyle(TableStyle([
-            ('BACKGROUND', (0,0), (-1,0), azul),
-            ('TEXTCOLOR',(0,0),(-1,0),colors.white),
-            ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
-            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-            ('BACKGROUND', (0,1), (-1,-1), colors.whitesmoke),
-        ]))
-
-        elements.append(tabela)
-        elements.append(Spacer(1, 12))
-
-    # ================= CLIENTE =================
-if 'dados' not in locals():
-    dados = {}
-print("DEBUG:", dados)
-def gerar_pdf():
-    dados = {} 
-
-tabela_secao("CLIENTE", [
-    ["Campo", "Valor"],
-    ["Nome", str(dados.get('nome', ''))],
-    ["CPF/CNPJ", str(dados.get('cpf_cnpj', ''))],
-    ["Telefone", str(dados.get('whatsapp', ''))],
-    ["Email", str(dados.get('email', ''))],
-])
-
-# ================= ENDEREÇO =================
-tabela_secao("ENDEREÇO", [
-        ["Campo", "Valor"],
-        ["Logradouro", f"{dados.get('endereco','')}, {dados.get('numero','')}"],
-        ["Bairro", dados.get('bairro','')],
-        ["Cidade", dados.get('cidade','')],
-        ["UF", dados.get('uf','')],
-        ["CEP", dados.get('cep','')],
+        ["Nome", str(dados.get('nome', ''))],
+        ["CPF/CNPJ", str(dados.get('cpf_cnpj', ''))],
+        ["Telefone", str(dados.get('whatsapp', ''))],
+        ["Email", str(dados.get('email', ''))],
     ])
 
     # ================= EQUIPAMENTO =================
-tabela_secao("EQUIPAMENTO", [
+    tabela_secao("EQUIPAMENTO", [
         ["Campo", "Valor"],
-        ["Fabricante", dados.get('fabricante','')],
-        ["Modelo", dados.get('modelo','')],
-        ["Capacidade", f"{dados.get('capacidade','')} BTU"],
-        ["Fluido", dados.get('fluido','')],
-        ["Linha", dados.get('linha','')],
-        ["Status", dados.get('status_maquina','')],
+        ["Fabricante", str(dados.get('fabricante', ''))],
+        ["Modelo", str(dados.get('modelo', ''))],
+        ["Status", str(dados.get('status_maquina', ''))],
     ])
+
+    # ... (Se tiver mais tabelas de Elétrica/Diagnóstico, coloque-as AQUI com o mesmo recuo)
+
+    # FINALIZAÇÃO DO PDF
+    doc.build(elements)
+    return file_path 
+
+# =========================================================
+# 2. INÍCIO DO SITE (FORA DA FUNÇÃO - ENCOSTADO NA ESQUERDA)
+# =========================================================
+st.set_page_config(page_title="HVAC Pro - MPN", layout="wide")
+
+# Inicialização segura dos dados
+if 'dados' not in st.session_state:
+    st.session_state.dados = {
+        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'email': '',
+        'fabricante': '', 'modelo': '', 'status_maquina': 'Operacional'
+    }
+
+# --- SIDEBAR COM BOTÃO QUE CHAMA A FUNÇÃO ---
+with st.sidebar:
+    st.header("📲 Finalizar")
+    if st.button("📄 GERAR RELATÓRIO TOTAL"):
+        # Aqui passamos os dados da sessão para a função
+        relatorio = gerar_pdf_profissional(st.session_state.dados, st.session_state.get('eletrica', {}))
+        with open(relatorio, "rb") as f:
+            st.download_button("📥 Baixar PDF", f, file_name=relatorio)
 
     # ================= ELÉTRICA =================
 tabela_secao("ANÁLISE ELÉTRICA", [
