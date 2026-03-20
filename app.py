@@ -1,5 +1,5 @@
 # ==============================================================================
-# 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES (CONGELADO)
+# 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES (COMPLETO)
 # ==============================================================================
 import streamlit as st
 from datetime import datetime
@@ -29,7 +29,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. MOTOR DE SESSÃO (CHAVES VERIFICADAS)
+# 2. MOTOR DE SESSÃO (TODAS AS CHAVES ORIGINAIS RESTAURADAS)
 if 'dados' not in st.session_state:
     st.session_state.dados = {
         'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
@@ -42,8 +42,29 @@ if 'dados' not in st.session_state:
         'status_maquina': '🟢 Operacional'
     }
 
-def buscar_cep(cep):
-    cep_limpo = "".join(filter(str.isdigit, cep))
+# --- FUNÇÕES DE MÁSCARA (CORREÇÃO DA TUBULAÇÃO) ---
+def formatar_cpf(cpf):
+    cpf = re.sub(r'\D', '', cpf)
+    if len(cpf) == 11:
+        return f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}"
+    return cpf
+
+def formatar_telefone(num, fixo=False):
+    num = re.sub(r'\D', '', num)
+    if not fixo and len(num) == 11:
+        return f"{num[:2]}-{num[2:3]}-{num[3:7]}-{num[7:]}"
+    elif fixo and len(num) == 10:
+        return f"{num[:2]}-{num[2:6]}-{num[6:]}"
+    return num
+
+def formatar_cep(cep):
+    cep = re.sub(r'\D', '', cep)
+    if len(cep) == 8:
+        return f"{cep[:5]}-{cep[5:]}"
+    return cep
+
+def buscar_cep(cep_val):
+    cep_limpo = re.sub(r'\D', '', cep_val)
     if len(cep_limpo) == 8:
         try:
             r = requests.get(f"https://viacep.com.br/ws/{cep_limpo}/json/")
@@ -58,81 +79,62 @@ def buscar_cep(cep):
         except: pass
     return False
 
-# Funções auxiliares para formatação de máscaras
-def formatar_telefone(numero, fixo=False):
-    numero = re.sub(r'\D', '', numero)
-    if fixo:
-        if len(numero) == 10:
-            return f"{numero[:2]}-{numero[2:6]}-{numero[6:]}"
-    else:
-        if len(numero) == 11:
-            return f"{numero[:2]}-{numero[2:3]}-{numero[3:7]}-{numero[7:]}"
-    return numero
-
-def formatar_cep(cep):
-    cep = re.sub(r'\D', '', cep)
-    if len(cep) == 8:
-        return f"{cep[:5]}-{cep[5:]}"
-    return cep
-
-def formatar_cpf(cpf):
-    cpf = re.sub(r'\D', '', cpf)
-    if len(cpf) == 11:
-        return f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}"
-    return cpf
-
 # ==============================================================================
-# 1. FUNÇÃO DA ABA 1: Identificação e Equipamento
+# 1. FUNÇÃO DA ABA 1: Identificação e Equipamento (VERSÃO INTEGRAL)
 # ==============================================================================
 def renderizar_aba_1():
     tabs = st.tabs(["📋 Identificação e Equipamento"])
-    tab1 = tabs[0]
-
-    with tab1:
+    with tabs[0]:
+        # --- SEÇÃO CLIENTE ---
         with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
             c1, c2, c3 = st.columns([2, 1, 1])
-            st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="cli_nome")
+            st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'])
             
-            cpf_input = c2.text_input("CPF ou CNPJ", value=st.session_state.dados['cpf_cnpj'], key="cli_doc")
-            if cpf_input != st.session_state.dados['cpf_cnpj']:
-                st.session_state.dados['cpf_cnpj'] = formatar_cpf(cpf_input)
+            # CPF com máscara
+            cpf_in = c2.text_input("CPF *", value=st.session_state.dados['cpf_cnpj'])
+            if cpf_in != st.session_state.dados['cpf_cnpj']:
+                st.session_state.dados['cpf_cnpj'] = formatar_cpf(cpf_in)
                 st.rerun()
-                
-            whatsapp_input = c3.text_input("WhatsApp (DDD) *", value=st.session_state.dados['whatsapp'], key="cli_zap")
-            if whatsapp_input != st.session_state.dados['whatsapp']:
-                st.session_state.dados['whatsapp'] = formatar_telefone(whatsapp_input)
+
+            # WhatsApp com máscara
+            zap_in = c3.text_input("WhatsApp (DDD) *", value=st.session_state.dados['whatsapp'])
+            if zap_in != st.session_state.dados['whatsapp']:
+                st.session_state.dados['whatsapp'] = formatar_telefone(zap_in)
                 st.rerun()
 
             cx1, cx2, cx3 = st.columns([1, 1, 2])
-            celular_input = cx1.text_input("Cel.:", value=st.session_state.dados['celular'])
-            if celular_input != st.session_state.dados['celular']:
-                st.session_state.dados['celular'] = formatar_telefone(celular_input)
+            # Celular com máscara
+            cel_in = cx1.text_input("Cel.:", value=st.session_state.dados['celular'])
+            if cel_in != st.session_state.dados['celular']:
+                st.session_state.dados['celular'] = formatar_telefone(cel_in)
                 st.rerun()
                 
-            fixo_input = cx2.text_input("Telefone Fixo:", value=st.session_state.dados['tel_fixo'])
-            if fixo_input != st.session_state.dados['tel_fixo']:
-                st.session_state.dados['tel_fixo'] = formatar_telefone(fixo_input, fixo=True)
+            # Fixo com máscara
+            fix_in = cx2.text_input("Telefone Fixo:", value=st.session_state.dados['tel_fixo'])
+            if fix_in != st.session_state.dados['tel_fixo']:
+                st.session_state.dados['tel_fixo'] = formatar_telefone(fix_in, fixo=True)
                 st.rerun()
 
             st.session_state.dados['email'] = cx3.text_input("E-mail:", value=st.session_state.dados['email'])
 
             st.markdown("---")
             ce1, ce2, ce3 = st.columns([1, 2, 1])
-            cep_input = ce1.text_input("CEP *", value=st.session_state.dados['cep'])
-            if cep_input != st.session_state.dados['cep']:
-                st.session_state.dados['cep'] = formatar_cep(cep_input)
+            cep_in = ce1.text_input("CEP *", value=st.session_state.dados['cep'])
+            if cep_in != st.session_state.dados['cep']:
+                st.session_state.dados['cep'] = formatar_cep(cep_in)
                 if buscar_cep(st.session_state.dados['cep']): st.rerun()
 
             st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados['endereco'])
             st.session_state.dados['numero'] = ce3.text_input("Número/Apto:", value=st.session_state.dados['numero'])
 
-            # LAYOUT LADO A LADO
+            # LAYOUT ORIGINAL: Complemento, Bairro, Cidade, UF (pequeno)
             ce4, ce5, ce6, ce7 = st.columns([2, 2, 2, 0.5]) 
             st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados['complemento'])
             st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'])
             st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'])
             st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'], max_chars=2)
 
+        # --- SEÇÃO EQUIPAMENTO (TODOS OS CAMPOS RESTAURADOS) ---
         col_titulo, col_data = st.columns([3, 1])
         with col_titulo: st.subheader("⚙️ Especificações do Equipamento")
         with col_data: st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'])
@@ -161,20 +163,20 @@ def renderizar_aba_1():
                 st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
 
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS
+# 2. OUTRAS ABAS (ESQUELETOS PRESERVADOS)
 # ==============================================================================
 def renderizar_aba_diagnosticos():
     st.header("📋 Central de Diagnósticos")
     st.markdown("---")
-    st.info("Aba de Diagnósticos em desenvolvimento. Implemente a lógica aqui.")
+    st.info("Aba de Diagnósticos em desenvolvimento.")
 
 # ==============================================================================
-# 3. SIDEBAR
+# 3. SIDEBAR (COMPLETO)
 # ==============================================================================
 with st.sidebar:
     st.title("🚀 Painel de Controle")
-    opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
-    aba_selecionada = st.sidebar.radio("Selecione a Aba:", opcoes_abas)
+    opcoes = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
+    aba_selecionada = st.sidebar.radio("Selecione a Aba:", opcoes)
     
     st.markdown("---")
     st.subheader("👤 Técnico Responsável")
@@ -188,9 +190,8 @@ with st.sidebar:
     else:
         st.success("📋 STATUS: PRONTO")
         
-    # Limpeza total de caracteres não numéricos para o Link do WhatsApp
     num_limpo = re.sub(r'\D', '', st.session_state.dados['whatsapp'])
-    msg_zap = f"*LAUDO TÉCNICO HVAC*\n\n👤 *CLIENTE:* {st.session_state.dados['nome']}\n👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}\n📅 Data: {st.session_state.dados['data']}"
+    msg_zap = f"*LAUDO TÉCNICO HVAC*\n\n👤 *CLIENTE:* {st.session_state.dados['nome']}\n👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}"
     link_final = f"https://wa.me/55{num_limpo}?text={urllib.parse.quote(msg_zap)}"
     st.link_button("📲 Enviar Laudo via WhatsApp", link_final, use_container_width=True)
 
@@ -201,20 +202,19 @@ with st.sidebar:
         st.rerun()
 
 # ==============================================================================
-# 4. LÓGICA DE EXIBIÇÃO
+# 4. LÓGICA DE EXIBIÇÃO E LOGO (FIX)
 # ==============================================================================
 if aba_selecionada == "Home":
     st.markdown("<br>", unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([1, 2, 1]) 
-    with col2: 
-        # ATUALIZADO PARA O NOME QUE VOCÊ SALVOU
-        NOME_ARQUIVO_LOGO = "logo_mpn_solucoes.png" 
-        if os.path.exists(NOME_ARQUIVO_LOGO):
-            st.image(NOME_ARQUIVO_LOGO, use_container_width=True) 
+    c1, c2, c3 = st.columns([1, 2, 1]) 
+    with c2: 
+        NOME_LOGO = "logo_mpn_solucoes.png"
+        if os.path.exists(NOME_LOGO):
+            st.image(NOME_LOGO, use_container_width=True) 
         else:
-            st.error(f"⚠️ Arquivo '{NOME_ARQUIVO_LOGO}' não encontrado.")
+            st.error(f"⚠️ Arquivo '{NOME_LOGO}' não encontrado.")
 
-    st.markdown("""
+    st.markdown(f"""
         <div style="text-align: center;">
             <h1 style="color: #0d47a1;">MPN Soluções</h1>
             <p style="color: #1976d2; font-size: 1.3em;">Soluções em Refrigeração e Climatização</p>
