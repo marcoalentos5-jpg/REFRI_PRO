@@ -212,7 +212,6 @@ with st.sidebar:
     ))
 
 doc.build(elements)
-return "relatorio_tecnico_mpn.pdf"
 
 import streamlit as st
 from datetime import datetime
