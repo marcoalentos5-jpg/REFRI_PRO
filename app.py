@@ -123,11 +123,11 @@ with st.sidebar:
 
     # ================= CLIENTE =================
     tabela_secao("CLIENTE", [
-        ["Campo", "Valor"],
-        ["Nome", dados.get('nome','')],
-        ["CPF/CNPJ", dados.get('cpf_cnpj','')],
-        ["Telefone", dados.get('whatsapp','')],
-        ["Email", dados.get('email','')],
+     ["Campo", "Valor"],
+     ["Nome", dados.get('nome','')],
+     ["CPF/CNPJ", dados.get('cpf_cnpj','')],
+     ["Telefone", dados.get('whatsapp','')],
+     ["Email", dados.get('email','')],
     ])
 
     # ================= ENDEREÇO =================
