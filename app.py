@@ -1,4 +1,4 @@
-# =========== ABA 1 ==============
+# =========== ABA 1  Dados do Cliente e Endereço ==============
 
 import streamlit as st
 from datetime import datetime
@@ -178,4 +178,31 @@ def renderizar_aba_diagnosticos():
     # equipamento_id = st.selectbox("Selecione o Equipamento para Diagnóstico:", list(equipments.keys()), format_func=lambda x: equipments[x])
     
     # ... Resto do código da Aba de Diagnósticos que passei anteriormente ...
+
+# ==============================================================================
+# 3. LÓGICA DE NAVEGAÇÃO E EXIBIÇÃO DAS ABAS (ADICIONAR ISTO)
+# ==============================================================================
+# Crie o sidebar e as opções de navegação
+st.sidebar.title("Navegação")
+
+# Defina as abas disponíveis no menu
+opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
+
+# Use st.sidebar.radio para criar os botões de seleção de aba
+aba_selecionada = st.sidebar.radio("Selecione a Aba:", opcoes_abas)
+
+# Use a seleção do sidebar para chamar a função correta
+if aba_selecionada == "Home":
+    st.title("Bem-vindo ao Sistema de Gestão de Manutenção")
+    st.write("Selecione uma aba no sidebar para começar.")
+
+elif aba_selecionada == "1. Cadastro de Equipamentos":
+    renderizar_aba_1() # Chama a função que já existe
+
+elif aba_selecionada == "2. Diagnósticos":
+    renderizar_aba_diagnosticos() # Chama a função que você acabou de preencher
+
+elif aba_selecionada == "Relatórios":
+    st.header("Página de Relatórios (Em desenvolvimento)")
+    st.write("Em breve: Visualização e exportação de relatórios.")
 # ==============================================================================
