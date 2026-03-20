@@ -2,6 +2,63 @@ import streamlit as st
 from datetime import datetime
 import requests
 import urllib.parse
+import streamlit as st
+from datetime import datetime
+import requests
+import urllib.parse
+import re
+from fpdf import FPDF
+# --- FUNÇÃO: LIMPEZA PARA PDF (EVITA ERRO DE UNICODE) ---
+def limpar_pdf(txt):
+    if not txt: return ""
+    # Remove emojis que quebram o FPDF (🟢, 🔴, etc)
+    txt = re.sub(r'[^\x00-\x7f-\xc0-\xff]', '', str(txt))
+    return txt.encode('latin-1', 'ignore').decode('latin-1')
+
+# --- FUNÇÃO: MÁSCARAS DE FORMATAÇÃO ---
+def formatar_cpf_cnpj(v):
+    v = re.sub(r'\D', '', v)
+    if len(v) == 11: return f"{v[:3]}.{v[3:6]}.{v[6:9]}-{v[9:]}"
+    if len(v) == 14: return f"{v[:2]}.{v[2:5]}.{v[5:8]}/{v[8:12]}-{v[12:]}"
+    return v
+
+def formatar_cep(v):
+    v = re.sub(r'\D', '', v)
+    if len(v) == 8: return f"{v[:5]}-{v[5:]}"
+    return v
+
+def formatar_tel(v):
+    v = re.sub(r'\D', '', v)
+    if len(v) == 11: return f"({v[:2]}) {v[2:7]}-{v[7:]}"
+    if len(v) == 10: return f"({v[:2]}) {v[2:6]}-{v[6:]}"
+    return v
+
+# --- FUNÇÃO: GERADOR DE PDF ---
+def gerar_pdf_hvac(d):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", 'B', 16)
+    pdf.cell(0, 10, limpar_pdf("LAUDO TÉCNICO DE MANUTENÇÃO HVAC"), 0, 1, 'C')
+    pdf.ln(5)
+    
+    pdf.set_font("Arial", 'B', 12)
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(0, 8, limpar_pdf(" 1. IDENTIFICAÇÃO"), 1, 1, 'L', 1)
+    pdf.set_font("Arial", '', 10)
+    pdf.cell(0, 8, limpar_pdf(f" Cliente: {d['nome']} | Doc: {formatar_cpf_cnpj(d['cpf_cnpj'])}"), 1, 1)
+    pdf.cell(0, 8, limpar_pdf(f" Endereço: {d['endereco']}, {d['numero']} - CEP: {formatar_cep(d['cep'])}"), 1, 1)
+    
+    pdf.ln(5)
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(0, 8, limpar_pdf(" 2. EQUIPAMENTO"), 1, 1, 'L', 1)
+    pdf.set_font("Arial", '', 10)
+    pdf.cell(95, 8, limpar_pdf(f" Fabricante: {d['fabricante']}"), 1)
+    pdf.cell(95, 8, limpar_pdf(f" Modelo: {d['modelo']}"), 1, 1)
+    pdf.cell(95, 8, limpar_pdf(f" Status: {d['status_maquina']}"), 1)
+    pdf.cell(95, 8, limpar_pdf(f" Data: {d['data']}"), 1, 1)
+    
+    return pdf.output(dest='S').encode('latin-1')
+    
 
 # 1. CONFIGURAÇÃO INICIAL (TESTADA)
 st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="⚙️")
@@ -163,3 +220,16 @@ with st.sidebar:
             if key not in chaves_tecnico:
                 st.session_state.dados[key] = ""
         st.rerun()
+        # --- BLOCO: BOTÃO PDF (IMPLEMENTADO) ---
+    st.markdown("---")
+    if st.session_state.dados['nome'] and st.session_state.dados['cep']:
+        pdf_bytes = gerar_pdf_hvac(st.session_state.dados)
+        st.download_button(
+            label="📄 Gerar e Baixar Relatório PDF",
+            data=pdf_bytes,
+            file_name=f"Relatorio_HVAC_{st.session_state.dados['tag_id']}.pdf",
+            mime="application/pdf",
+            use_container_width=True
+        )
+    else:
+        st.warning("⚠️ Preencha o Nome do Cliente e o CEP para liberar o PDF.")
