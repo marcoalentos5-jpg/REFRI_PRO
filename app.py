@@ -5,8 +5,8 @@ import streamlit as st
 from datetime import datetime
 import requests
 import urllib.parse
-import os # Biblioteca para verificar arquivos no sistema
-import re # Biblioteca para manipulação de strings (máscaras)
+import os 
+import re 
 
 # 1. CONFIGURAÇÃO INICIAL (TESTADA)
 st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
@@ -82,19 +82,17 @@ def formatar_cpf(cpf):
     return cpf
 
 # ==============================================================================
-# 1. FUNÇÃO DA ABA 1: Identificação e Equipamento (CÓDIGO COMPLETO COM TODAS AS MÁSCARAS)
+# 1. FUNÇÃO DA ABA 1: Identificação e Equipamento
 # ==============================================================================
 def renderizar_aba_1():
     tabs = st.tabs(["📋 Identificação e Equipamento"])
     tab1 = tabs[0]
 
     with tab1:
-        # --- SEÇÃO CLIENTE ---
         with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
             c1, c2, c3 = st.columns([2, 1, 1])
             st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="cli_nome")
             
-            # CPF com Máscara (xxx.xxx.xxx-xx)
             cpf_input = c2.text_input("CPF ou CNPJ", value=st.session_state.dados['cpf_cnpj'], key="cli_doc")
             if cpf_input != st.session_state.dados['cpf_cnpj']:
                 st.session_state.dados['cpf_cnpj'] = formatar_cpf(cpf_input)
@@ -128,15 +126,13 @@ def renderizar_aba_1():
             st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados['endereco'])
             st.session_state.dados['numero'] = ce3.text_input("Número/Apto:", value=st.session_state.dados['numero'])
 
-            # --- CORREÇÃO DO LAYOUT DO ENDEREÇO (4 CAMPOS LADO A LADO, UF MENOR) ---
+            # LAYOUT LADO A LADO
             ce4, ce5, ce6, ce7 = st.columns([2, 2, 2, 0.5]) 
             st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados['complemento'])
             st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'])
             st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'])
             st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'], max_chars=2)
-            # -----------------------------------------------
 
-        # --- SEÇÃO EQUIPAMENTO ---
         col_titulo, col_data = st.columns([3, 1])
         with col_titulo: st.subheader("⚙️ Especificações do Equipamento")
         with col_data: st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'])
@@ -164,102 +160,70 @@ def renderizar_aba_1():
                 st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
                 st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
 
-
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (PARTE 2 - ESQUELETO INSERIDO)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS
 # ==============================================================================
 def renderizar_aba_diagnosticos():
     st.header("📋 Central de Diagnósticos")
     st.markdown("---")
     st.info("Aba de Diagnósticos em desenvolvimento. Implemente a lógica aqui.")
 
-
 # ==============================================================================
-# 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
+# 3. SIDEBAR
 # ==============================================================================
 with st.sidebar:
     st.title("🚀 Painel de Controle")
-
-    # A. NAVEGAÇÃO E EXIBIÇÃO DAS ABAS (ATIVADA AQUI)
     opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
     aba_selecionada = st.sidebar.radio("Selecione a Aba:", opcoes_abas)
     
     st.markdown("---")
-    
-    # B. DADOS DO TÉCNICO RESPONSÁVEL
     st.subheader("👤 Técnico Responsável")
     st.session_state.dados['tecnico_nome'] = st.text_input("Nome:", value=st.session_state.dados['tecnico_nome'])
     st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ Técnico:", value=st.session_state.dados['tecnico_documento'])
     st.session_state.dados['tecnico_registro'] = st.text_input("Inscrição (CFT/CREA):", value=st.session_state.dados['tecnico_registro'])
     
     st.markdown("---")
-    
-    # VALIDAÇÃO DE CAMPOS OBRIGATÓRIOS
     if not st.session_state.dados['nome'] or not st.session_state.dados['whatsapp']:
-        st.error("📋 STATUS: PENDENTE (Preencha Cliente e WhatsApp)")
+        st.error("📋 STATUS: PENDENTE")
     else:
-        st.success("📋 STATUS: PRONTO PARA ENVIO")
+        st.success("📋 STATUS: PRONTO")
         
-    # MENSAGEM WHATSAPP
-    msg_zap = (
-        f"*LAUDO TÉCNICO HVAC*\n\n"
-        f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
-        f"👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}\n"
-        f"📅 Data: {st.session_state.dados['data']}"
-    )
-    
-    link_final = f"https://wa.me/55{st.session_state.dados['whatsapp'].replace('-', '')}?text={urllib.parse.quote(msg_zap)}"
+    # Limpeza total de caracteres não numéricos para o Link do WhatsApp
+    num_limpo = re.sub(r'\D', '', st.session_state.dados['whatsapp'])
+    msg_zap = f"*LAUDO TÉCNICO HVAC*\n\n👤 *CLIENTE:* {st.session_state.dados['nome']}\n👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}\n📅 Data: {st.session_state.dados['data']}"
+    link_final = f"https://wa.me/55{num_limpo}?text={urllib.parse.quote(msg_zap)}"
     st.link_button("📲 Enviar Laudo via WhatsApp", link_final, use_container_width=True)
 
-    st.markdown("---")
     if st.button("🗑️ Limpar Formulário", use_container_width=True):
-        chaves_tecnico = ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']
         for key in st.session_state.dados.keys():
-            if key not in chaves_tecnico:
+            if key not in ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']:
                 st.session_state.dados[key] = ""
         st.rerun()
 
-
 # ==============================================================================
-# 4. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
+# 4. LÓGICA DE EXIBIÇÃO
 # ==============================================================================
 if aba_selecionada == "Home":
-    st.markdown("<br>", unsafe_allow_html=True) # Espaçamento superior
-
+    st.markdown("<br>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1]) 
     with col2: 
-        NOME_ARQUIVO_LOGO = "logo.png"
+        # ATUALIZADO PARA O NOME QUE VOCÊ SALVOU
+        NOME_ARQUIVO_LOGO = "logo_mpn_solucoes.png" 
         if os.path.exists(NOME_ARQUIVO_LOGO):
-            try:
-                st.image(NOME_ARQUIVO_LOGO, use_container_width=True) 
-            except Exception as e:
-                st.error(f"⚠️ Erro ao tentar abrir a imagem '{NOME_ARQUIVO_LOGO}'.")
+            st.image(NOME_ARQUIVO_LOGO, use_container_width=True) 
         else:
-            st.error(f"⚠️ Erro: Arquivo '{NOME_ARQUIVO_LOGO}' não encontrado.")
-
-    st.markdown("<br><br>", unsafe_allow_html=True) 
+            st.error(f"⚠️ Arquivo '{NOME_ARQUIVO_LOGO}' não encontrado.")
 
     st.markdown("""
         <div style="text-align: center;">
-            <h1 style="color: #0d47a1; font-family: 'Segoe UI', ... sans-serif;">
-                MPN Soluções
-            </h1>
-            <p style="color: #1976d2; font-size: 1.3em;">
-                Soluções em Refrigeração e Climatização
-            </p>
+            <h1 style="color: #0d47a1;">MPN Soluções</h1>
+            <p style="color: #1976d2; font-size: 1.3em;">Soluções em Refrigeração e Climatização</p>
             <hr style="border: 1px solid #90caf9; width: 60%; margin: 20px auto;">
-            <p style="color: #455a64; font-size: 1.1em; font-weight: bold;">
-                Bem-vindo ao Sistema HVAC Pro de Gestão Inteligente.
-            </p>
+            <p>Bem-vindo ao Sistema HVAC Pro de Gestão Inteligente.</p>
         </div>
     """, unsafe_allow_html=True)
 
 elif aba_selecionada == "1. Cadastro de Equipamentos":
     renderizar_aba_1()
-
 elif aba_selecionada == "2. Diagnósticos":
     renderizar_aba_diagnosticos()
-
-elif aba_selecionada == "Relatórios":
-    st.header("Página de Relatórios (Em desenvolvimento)")
-# ==============================================================================
