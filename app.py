@@ -205,10 +205,10 @@ table_ass.setStyle(TableStyle([
 elements.append(table_ass)
 
     # ================= RODAPÉ =================
-    data_atual = datetime.datetime.now().strftime("%d/%m/%Y")
+data_atual = datetime.datetime.now().strftime("%d/%m/%Y")
 
-    elements.append(Spacer(1, 20))
-    elements.append(Paragraph(
+elements.append(Spacer(1, 20))
+elements.append(Paragraph(
         f"Relatório gerado em {data_atual} | MPN Soluções em Refrigeração e Climatização",
         styles['Normal']
     ))
