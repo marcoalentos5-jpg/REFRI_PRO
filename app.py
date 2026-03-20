@@ -588,3 +588,55 @@ msg_eletrica = (
 link_eletrica = f"https://wa.me/55{zap_num}?text={urllib.parse.quote(msg_eletrica)}"
 
 st.link_button("📲 Enviar Laudo Elétrico", link_eletrica, use_container_width=True)
+
+# --- SEÇÃO DE CHECK-LIST TÉCNICO ---
+    st.markdown("---")
+    st.subheader("📋 Check-list de Manutenção e Verificação")
+    
+    # Inicialização do checklist se não existir
+    if 'checklist' not in st.session_state:
+        st.session_state.checklist = {
+            'filtro': False, 'serpentina': False, 'dreno': False, 
+            'isolamento': False, 'contatos': False, 'vibracoes': False
+        }
+
+    c_check1, c_check2, c_check3 = st.columns(3)
+    
+    with c_check1:
+        st.session_state.checklist['filtro'] = st.checkbox("Filtros de Ar Limpos/Substituídos", value=st.session_state.checklist['filtro'])
+        st.session_state.checklist['serpentina'] = st.checkbox("Serpentinas Higienizadas", value=st.session_state.checklist['serpentina'])
+    
+    with c_check2:
+        st.session_state.checklist['dreno'] = st.checkbox("Dreno Desobstruído e Testado", value=st.session_state.checklist['dreno'])
+        st.session_state.checklist['isolamento'] = st.checkbox("Isolamento Térmico em Ordem", value=st.session_state.checklist['isolamento'])
+        
+    with c_check3:
+        st.session_state.checklist['contatos'] = st.checkbox("Reaperto de Contatos Elétricos", value=st.session_state.checklist['contatos'])
+        st.session_state.checklist['vibracoes'] = st.checkbox("Ausência de Ruídos/Vibrações", value=st.session_state.checklist['vibracoes'])
+
+    # --- CAMPO DE DIAGNÓSTICO FINAL (TEXTO LIVRE) ---
+    st.markdown("---")
+    st.subheader("📝 Conclusão e Recomendações")
+    st.session_state.dados['recomendacoes'] = st.text_area(
+        "Descreva o diagnóstico final ou peças que precisam de substituição:",
+        value=st.session_state.dados.get('recomendacoes', ''),
+        height=150,
+        placeholder="Ex: Equipamento operando normalmente após higienização. Sugerido troca do capacitor de partida na próxima visita."
+    )
+
+# =========================================================
+# 5. RENDERIZAÇÃO DE STATUS NO FINAL DA PÁGINA
+# =========================================================
+st.markdown("---")
+f1, f2, f3 = st.columns(3)
+with f1:
+    st.info(f"📅 Data: {st.session_state.dados['data']}")
+with f2:
+    status_cor = "green" if "Operacional" in st.session_state.dados['status_maquina'] else "orange"
+    st.markdown(f"Status Atual: :{status_cor}[{st.session_state.dados['status_maquina']}]")
+with f3:
+    st.write(f"🔧 Técnico: **{st.session_state.dados['tecnico_nome']}**")
+
+# LOG DE SEGURANÇA (Invisível para o usuário, mas garante que os dados existem)
+if 'eletrica' not in st.session_state:
+    st.session_state.eletrica = {}
