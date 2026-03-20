@@ -76,8 +76,8 @@ with st.sidebar:
         with open(relatorio, "rb") as f:
             st.download_button("📥 Baixar PDF", f, file_name=relatorio)
 
-    # ================= ELÉTRICA =================
-tabela_secao("ANÁLISE ELÉTRICA", [
+    # ================= ELÉTRICA =================      
+        tabela_secao("ANÁLISE ELÉTRICA", [
         ["Campo", "Valor"],
         ["Tensão Rede", eletrica.get('tensao_rede','')],
         ["Tensão Medida", eletrica.get('tensao_medida','')],
