@@ -169,7 +169,7 @@ tabela_secao("ANÁLISE ELÉTRICA", [
     # ================= DIAGNÓSTICO AUTOMÁTICO =================
 diagnostico = []
 
-    try:
+try:
         if float(eletrica.get('dif_tensao') or 0) > 10:
             diagnostico.append("Sobretensão detectada")
 
@@ -179,7 +179,7 @@ diagnostico = []
         if not diagnostico:
             diagnostico.append("Sistema operando dentro dos parâmetros")
 
-    except:
+except:
         diagnostico.append("Dados insuficientes para diagnóstico")
 
     tabela_secao("DIAGNÓSTICO TÉCNICO", [
