@@ -1,36 +1,98 @@
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.units import cm
-from reportlab.pdfgen import canvas
-
+import streamlit as st
+from datetime import datetime
+import requests
+import urllib.parse
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import cm
-import datetime
 
+# =========================================================
+# 1. FUNÇÃO DO PDF (VERSÃO FINAL MPN SOLUÇÕES)
+# =========================================================
 def gerar_pdf_profissional(dados, eletrica):
-
-    doc = SimpleDocTemplate("relatorio_tecnico.pdf", pagesize=A4)
+    file_path = "relatorio_tecnico_mpn.pdf"
+    doc = SimpleDocTemplate(file_path, pagesize=A4)
     styles = getSampleStyleSheet()
     elements = []
-
     azul = colors.HexColor("#0b5394")
 
-    # ================= LOGO =================
+    # --- LOGO ---
     try:
         logo = Image("logo.png", width=6*cm, height=3*cm)
         elements.append(logo)
-    except:
-        pass
+    except: pass
 
-    # ================= CABEÇALHO =================
+    # --- CABEÇALHO ---
     elements.append(Paragraph("<b>MPN SOLUÇÕES EM REFRIGERAÇÃO E CLIMATIZAÇÃO</b>", styles['Title']))
     elements.append(Paragraph("Rio de Janeiro - RJ | CNPJ: 51.274.762/0001-17", styles['Normal']))
     elements.append(Spacer(1, 12))
+
+    # --- FUNÇÃO INTERNA PARA CRIAR TABELAS ---
+    def criar_tabela(titulo, lista_dados):
+        elements.append(Paragraph(f"<b>{titulo}</b>", styles['Heading3']))
+        t = Table(lista_dados, colWidths=[6*cm, 10*cm])
+        t.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), azul),
+            ('TEXTCOLOR',(0,0),(-1,0),colors.white),
+            ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+            ('BACKGROUND', (0,1), (-1,-1), colors.whitesmoke),
+        ]))
+        elements.append(t)
+        elements.append(Spacer(1, 12))
+
+    # --- TABELA 1: CLIENTE E EQUIPAMENTO ---
+    criar_tabela("IDENTIFICAÇÃO DO ATIVO", [
+        ["Campo", "Informação"],
+        ["Cliente", dados.get('nome', 'N/A')],
+        ["WhatsApp", dados.get('whatsapp', 'N/A')],
+        ["Fabricante", dados.get('fabricante', 'N/A')],
+        ["Modelo", dados.get('modelo', 'N/A')],
+        ["Capacidade", f"{dados.get('capacidade', 'N/A')} BTU"],
+        ["Status", dados.get('status_maquina', 'N/A')]
+    ])
+
+    # --- TABELA 2: ANÁLISE ELÉTRICA (SÓ APARECE SE HOUVER DADOS) ---
+    if eletrica:
+        criar_tabela("ANÁLISE TÉCNICA / ELÉTRICA", [
+            ["Parâmetro", "Valor Medido"],
+            ["Tensão Rede", eletrica.get('tensao_rede', 'N/A')],
+            ["Corrente (A)", eletrica.get('corrente_medida', 'N/A')],
+            ["Potência (kW)", eletrica.get('potencia_kw', 'N/A')],
+            ["Observações", eletrica.get('obs', 'N/A')]
+        ])
+    else:
+        elements.append(Paragraph("<i>* Relatório Parcial: Dados elétricos não coletados.</i>", styles['Italic']))
+
+    # --- DATA E ASSINATURA ---
+    data_atual = datetime.now().strftime("%d/%m/%Y")
+    elements.append(Spacer(1, 20))
+    elements.append(Paragraph(f"Relatório gerado em {data_atual} por Marcos Alexandre - MPN Soluções", styles['Normal']))
+    
+    doc.build(elements)
+    return file_path
+
+# =========================================================
+# 2. CONFIGURAÇÃO DA PÁGINA E SIDEBAR
+# =========================================================
+st.set_page_config(page_title="HVAC Pro - MPN", layout="wide")
+
+with st.sidebar:
+    st.image("logo.png") # Opcional: mostra seu logo no menu
+    st.header("📲 Finalizar")
+    
+    # Botão de Relatório Total
+    if st.button("📄 GERAR RELATÓRIO TOTAL", use_container_width=True):
+        path = gerar_pdf_profissional(st.session_state.dados, st.session_state.get('eletrica', {}))
+        with open(path, "rb") as f:
+            st.download_button("📥 Baixar PDF Completo", f, file_name=path)
+            
+    # Botão de WhatsApp
+    zap_num = st.session_state.dados.get('whatsapp', '')
+    msg = urllib.parse.quote(f"Olá! Segue o laudo da MPN Soluções do equipamento {st.session_state.dados.get('modelo')}.")
+    st.link_button("🟢 ENVIAR VIA WHATSAPP", f"https://wa.me/55{zap_num}?text={msg}", use_container_width=True)
 
     # ================= FUNÇÃO TABELA =================
     def tabela_secao(titulo, dados_tabela):
