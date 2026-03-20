@@ -144,7 +144,7 @@ def renderizar_aba_diagnosticos():
 # ... (código anterior da sidebar) ...
 
 # Use a seleção do sidebar para chamar a função correta
-if aba_selecionada == "Home":
+    if aba_selecionada == "Home":
     # --- NOVA APRESENTAÇÃO DA ABA HOME (COM LOGO) ---
     st.markdown("<br>", unsafe_allow_html=True) # Espaçamento superior
 
