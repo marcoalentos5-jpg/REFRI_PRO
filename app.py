@@ -187,7 +187,7 @@ tabela_secao("DIAGNÓSTICO TÉCNICO", [
         ["Observações", eletrica.get('obs','')],
     ])
 
-    elements.append(Spacer(1, 30))
+elements.append(Spacer(1, 30))
 
     # ================= ASSINATURAS =================
     assinatura = [
@@ -202,7 +202,7 @@ tabela_secao("DIAGNÓSTICO TÉCNICO", [
         ('ALIGN',(0,0),(-1,-1),'CENTER')
     ]))
 
-    elements.append(table_ass)
+elements.append(table_ass)
 
     # ================= RODAPÉ =================
     data_atual = datetime.datetime.now().strftime("%d/%m/%Y")
