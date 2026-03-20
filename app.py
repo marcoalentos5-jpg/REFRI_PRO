@@ -196,7 +196,7 @@ with tab1:
         st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp (DDD) *", value=st.session_state.dados['whatsapp'], key="cli_zap")
 
         cx1, cx2, cx3 = st.columns([1, 1, 2])
-        st.session_state.dados['whatsapp'] = cx1.text_input("Cel.:", value=st.session_state.dados['celular'])
+        st.session_state.dados['whatsapp'] = cx1.text_input("Cel.:", value=st.session_state.dados['whatsapp'])
         st.session_state.dados['tel_fixo'] = cx2.text_input("Telefone Fixo:", value=st.session_state.dados['tel_fixo'])
         st.session_state.dados['email'] = cx3.text_input("E-mail:", value=st.session_state.dados['email'])
 
