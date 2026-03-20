@@ -141,7 +141,7 @@ tabela_secao("ENDEREÇO", [
     ])
 
     # ================= EQUIPAMENTO =================
-    tabela_secao("EQUIPAMENTO", [
+tabela_secao("EQUIPAMENTO", [
         ["Campo", "Valor"],
         ["Fabricante", dados.get('fabricante','')],
         ["Modelo", dados.get('modelo','')],
@@ -152,7 +152,7 @@ tabela_secao("ENDEREÇO", [
     ])
 
     # ================= ELÉTRICA =================
-    tabela_secao("ANÁLISE ELÉTRICA", [
+tabela_secao("ANÁLISE ELÉTRICA", [
         ["Campo", "Valor"],
         ["Tensão Rede", eletrica.get('tensao_rede','')],
         ["Tensão Medida", eletrica.get('tensao_medida','')],
