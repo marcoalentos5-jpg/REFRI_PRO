@@ -59,7 +59,48 @@ def aplicar_mascaras():
                 st.session_state.dados['uf'] = r.get('uf', '')
         except: pass
 
+# --- FUNÇÃO DE APOIO PARA LIMPAR EMOJIS (EVITA O ERRO DE ENCODING) ---
+def limpar_texto_pdf(texto):
+    # Remove emojis e caracteres que o FPDF não entende
+    return texto.replace('🟢', '').replace('🟡', '').replace('🔴', '').strip()
+
+# --- 3. GERADOR DE PDF (CORRIGIDO PARA NÃO DAR ERRO DE UNICODE) ---
 def gerar_pdf_tecnico(d):
+    # Usamos 'latin-1' que é o padrão do FPDF para evitar o erro que você recebeu
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", 'B', 16)
+    pdf.cell(0, 10, "LAUDO TECNICO DE MANUTENCAO HVAC", 0, 1, 'C')
+    pdf.ln(5)
+    
+    pdf.set_font("Arial", 'B', 12)
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(0, 8, " IDENTIFICACAO DO CLIENTE", 1, 1, 'L', 1)
+    
+    pdf.set_font("Arial", '', 10)
+    # Usamos .encode('latin-1', 'ignore').decode('latin-1') para garantir que acentos funcionem
+    pdf.cell(100, 8, f" Cliente: {d['nome']}".encode('latin-1', 'ignore').decode('latin-1'), 1)
+    pdf.cell(90, 8, f" Doc: {d['cpf_cnpj']}", 1, 1)
+    pdf.cell(100, 8, f" Endereco: {d['endereco']}, {d['numero']}".encode('latin-1', 'ignore').decode('latin-1'), 1)
+    pdf.cell(90, 8, f" CEP: {d['cep']}", 1, 1)
+    pdf.ln(5)
+    
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(0, 8, " DADOS DO EQUIPAMENTO", 1, 1, 'L', 1)
+    pdf.set_font("Arial", '', 10)
+    pdf.cell(64, 8, f" Fab: {d['fabricante']}", 1)
+    pdf.cell(63, 8, f" Mod: {d['modelo']}".encode('latin-1', 'ignore').decode('latin-1'), 1)
+    pdf.cell(63, 8, f" Cap: {d['capacidade']} BTU", 1, 1)
+    
+    pdf.cell(64, 8, f" S.Evap: {d['serie_evap']}", 1)
+    
+    # AQUI ESTAVA O ERRO: Limpamos o emoji do status antes de enviar para o PDF
+    status_limpo = limpar_texto_pdf(d['status_maquina'])
+    pdf.cell(126, 8, f" Status: {status_limpo}".encode('latin-1', 'ignore').decode('latin-1'), 1, 1)
+    
+    return pdf.output(dest='S').encode('latin-1')
+
+# --- MANTENHA O RESTANTE DO SEU CÓDIGO IGUAL (INTERFACE E SIDEBAR) ---
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", 'B', 16)
@@ -171,7 +212,48 @@ with tab1:
     # --- BOTÃO DE GERAR PDF (NOVO) ---
     st.markdown("---")
     if st.session_state.dados['nome']:
-        pdf_data = gerar_pdf_tecnico(st.session_state.dados)
+        # --- FUNÇÃO DE APOIO PARA LIMPAR EMOJIS (EVITA O ERRO DE ENCODING) ---
+def limpar_texto_pdf(texto):
+    # Remove emojis e caracteres que o FPDF não entende
+    return texto.replace('🟢', '').replace('🟡', '').replace('🔴', '').strip()
+
+# --- 3. GERADOR DE PDF (CORRIGIDO PARA NÃO DAR ERRO DE UNICODE) ---
+def gerar_pdf_tecnico(d):
+    # Usamos 'latin-1' que é o padrão do FPDF para evitar o erro que você recebeu
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", 'B', 16)
+    pdf.cell(0, 10, "LAUDO TECNICO DE MANUTENCAO HVAC", 0, 1, 'C')
+    pdf.ln(5)
+    
+    pdf.set_font("Arial", 'B', 12)
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(0, 8, " IDENTIFICACAO DO CLIENTE", 1, 1, 'L', 1)
+    
+    pdf.set_font("Arial", '', 10)
+    # Usamos .encode('latin-1', 'ignore').decode('latin-1') para garantir que acentos funcionem
+    pdf.cell(100, 8, f" Cliente: {d['nome']}".encode('latin-1', 'ignore').decode('latin-1'), 1)
+    pdf.cell(90, 8, f" Doc: {d['cpf_cnpj']}", 1, 1)
+    pdf.cell(100, 8, f" Endereco: {d['endereco']}, {d['numero']}".encode('latin-1', 'ignore').decode('latin-1'), 1)
+    pdf.cell(90, 8, f" CEP: {d['cep']}", 1, 1)
+    pdf.ln(5)
+    
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(0, 8, " DADOS DO EQUIPAMENTO", 1, 1, 'L', 1)
+    pdf.set_font("Arial", '', 10)
+    pdf.cell(64, 8, f" Fab: {d['fabricante']}", 1)
+    pdf.cell(63, 8, f" Mod: {d['modelo']}".encode('latin-1', 'ignore').decode('latin-1'), 1)
+    pdf.cell(63, 8, f" Cap: {d['capacidade']} BTU", 1, 1)
+    
+    pdf.cell(64, 8, f" S.Evap: {d['serie_evap']}", 1)
+    
+    # AQUI ESTAVA O ERRO: Limpamos o emoji do status antes de enviar para o PDF
+    status_limpo = limpar_texto_pdf(d['status_maquina'])
+    pdf.cell(126, 8, f" Status: {status_limpo}".encode('latin-1', 'ignore').decode('latin-1'), 1, 1)
+    
+    return pdf.output(dest='S').encode('latin-1')
+
+# --- MANTENHA O RESTANTE DO SEU CÓDIGO IGUAL (INTERFACE E SIDEBAR) ---
         st.download_button(label="📄 Gerar Relatório Técnico em PDF", data=pdf_data, file_name=f"Laudo_{st.session_state.dados['tag_id']}.pdf", mime="application/pdf", use_container_width=True)
 
 # --- SIDEBAR (CONGELADO E PROTEGIDO) ---
