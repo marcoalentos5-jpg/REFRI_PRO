@@ -125,9 +125,12 @@ with st.sidebar:
 if 'dados' not in locals():
     dados = {}
 
-tabela_secao("CLIENTE", [
-    ["Campo", "Valor"],
-    ["Nome", str(dados.get('nome', ''))],
+def gerar_pdf():
+    dados = {}  # ← TEM QUE ESTAR AQUI DENTRO
+
+    tabela_secao("CLIENTE", [
+        ["Campo", "Valor"],
+        ["Nome", str(dados.get('nome', ''))],
     ["CPF/CNPJ", str(dados.get('cpf_cnpj', ''))],
     ["Telefone", str(dados.get('whatsapp', ''))],
     ["Email", str(dados.get('email', ''))],
