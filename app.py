@@ -7,16 +7,35 @@ import re
 # 1. CONFIGURAÇÃO (BLOQUEADA)
 st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="⚙️")
 
-# 2. FUNÇÕES DE APOIO (MÁSCARAS E BUSCA)
+# 2. ESTILO CSS ORIGINAL (PRESERVADO)
+st.markdown("""
+    <style>
+    .stTextInput>div>div>input[aria-label="Data da Visita:"] {
+        background-color: #e0f2f1 !important;
+        color: #004d40 !important;
+        font-weight: bold;
+        border: 1px solid #b2dfdb !important;
+    }
+    div.stLinkButton > a {
+        background-color: #25D366 !important;
+        color: white !important;
+        font-weight: bold;
+        border-radius: 8px !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# 3. FUNÇÕES DE APOIO (MÁSCARAS SEM QUEBRA)
 def formatar_cpf_cnpj(v):
     v = re.sub(r'\D', '', v)
-    if len(v) <= 11:
-        return re.sub(r'(\d{3})(\d{3})(\d{3})(\d{2})', r'\1.\2.\3-\4', v) if len(v)==11 else v
-    return re.sub(r'(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})', r'\1.\2.\3/\4-\5', v) if len(v)==14 else v
+    if len(v) == 11: return re.sub(r'(\d{3})(\d{3})(\d{3})(\d{2})', r'\1.\2.\3-\4', v)
+    if len(v) == 14: return re.sub(r'(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})', r'\1.\2.\3/\4-\5', v)
+    return v
 
 def formatar_cep(v):
     v = re.sub(r'\D', '', v)
-    return re.sub(r'(\d{5})(\d{3})', r'\1-\2', v) if len(v)==8 else v
+    if len(v) == 8: return re.sub(r'(\d{5})(\d{3})', r'\1-\2', v)
+    return v
 
 def buscar_cep(cep):
     cep_limpo = "".join(filter(str.isdigit, cep))
@@ -34,7 +53,7 @@ def buscar_cep(cep):
         except: return False
     return False
 
-# 3. SESSION STATE (RECUPERADO INTEGRALMENTE)
+# 4. SESSION STATE (INTEGRAL - TODOS OS CAMPOS)
 if 'dados' not in st.session_state:
     st.session_state.dados = {
         'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
@@ -47,7 +66,10 @@ if 'dados' not in st.session_state:
         'status_maquina': '🟢 Operacional'
     }
 
-# 4. INTERFACE - ABA 1 (IDENTIFICAÇÃO E EQUIPAMENTO)
+if 'cep_processado' not in st.session_state:
+    st.session_state['cep_processado'] = False
+
+# 5. ABA ÚNICA (EXATAMENTE COMO O SEU LAYOUT ORIGINAL)
 tabs = st.tabs(["📋 Identificação e Equipamento"])
 tab1 = tabs[0]
 
@@ -70,13 +92,16 @@ with tab1:
         st.markdown("---")
         ce1, ce2, ce3 = st.columns([1, 2, 1])
         
-        # Lógica de CEP com Máscara e Busca
+        # CEP com máscara e busca
         cep_raw = ce1.text_input("CEP *", value=st.session_state.dados['cep'], key="cli_cep")
         st.session_state.dados['cep'] = formatar_cep(cep_raw)
         
-        if st.session_state.dados['cep'] != cep_raw: # Se formatou, busca
+        if len(re.sub(r'\D', '', st.session_state.dados['cep'])) == 8 and not st.session_state['cep_processado']:
             if buscar_cep(st.session_state.dados['cep']):
+                st.session_state['cep_processado'] = True
                 st.rerun()
+        if len(re.sub(r'\D', '', st.session_state.dados['cep'])) != 8:
+            st.session_state['cep_processado'] = False
 
         st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados['endereco'], key="cli_end")
         st.session_state.dados['numero'] = ce3.text_input("Número/Apto:", value=st.session_state.dados['numero'], key="cli_num")
@@ -87,13 +112,18 @@ with tab1:
         st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'], key="cli_cidade")
         st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'], key="cli_uf")
 
-    st.subheader("⚙️ Especificações do Equipamento")
+    col_titulo, col_data = st.columns([3, 1])
+    with col_titulo: st.subheader("⚙️ Especificações do Equipamento")
+    with col_data: st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'], key="cli_data")
+
     with st.expander("Detalhes Técnicos do Ativo", expanded=True):
         e1, e2, e3 = st.columns(3)
         with e1:
             fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
-            st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_list.index(st.session_state.dados['fabricante']))
-            st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados['modelo'], key="eq_mod")
+            fab_val = st.session_state.dados.get('fabricante', 'Carrier')
+            fab_idx = fab_list.index(fab_val) if fab_val in fab_list else 0
+            st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx)
+            st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados['modelo'], key="eq_modelo")
             st.session_state.dados['linha'] = st.selectbox("Linha:", ["Residencial", "Comercial", "Industrial"], index=0)
             st.session_state.dados['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], horizontal=True)
 
@@ -105,11 +135,11 @@ with tab1:
 
         with e3:
             st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], index=1)
-            st.session_state.dados['fluido'] = st.selectbox("Fluido:", ["R410A", "R32", "R134a", "R22"], index=0)
+            st.session_state.dados['fluido'] = st.selectbox("Fluido:", ["R410A", "R134a", "R22", "R32", "R290"], index=0)
             st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
             st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'], key="eq_tag")
 
-# 5. SIDEBAR (RESTAURADO AO ORIGINAL)
+# 6. SIDEBAR (ORIGINAL E BLOQUEADO)
 with st.sidebar:
     st.title("🚀 Painel de Controle")
     st.subheader("👤 Técnico Responsável")
@@ -118,18 +148,47 @@ with st.sidebar:
     st.session_state.dados['tecnico_registro'] = st.text_input("Inscrição (CFT/CREA):", value=st.session_state.dados['tecnico_registro'], key="tec_reg")
 
     st.markdown("---")
+
     if not st.session_state.dados['nome'] or not st.session_state.dados['whatsapp']:
         st.error("📋 STATUS: PENDENTE (Preencha Cliente e WhatsApp)")
     else:
         st.success("📋 STATUS: PRONTO PARA ENVIO")
 
-    # [Lógica da msg_zap e link_button preservadas conforme seu código original]
+    # MENSAGEM WHATSAPP (A QUE VOCÊ ME MANDOU)
+    msg_zap = (
+        f"*LAUDO TÉCNICO HVAC*\n\n"
+        f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
+        f"🆔 CPF/CNPJ: {st.session_state.dados['cpf_cnpj']}\n"
+        f"📍 END: {st.session_state.dados['endereco']}, {st.session_state.dados['numero']} - {st.session_state.dados['bairro']}\n"
+        f"🏙️ {st.session_state.dados['cidade']}/{st.session_state.dados['uf']} | CEP: {st.session_state.dados['cep']}\n"
+        f"📞 Contato: {st.session_state.dados['whatsapp']} | Email: {st.session_state.dados['email']}\n\n"
+        f"⚙️ *EQUIPAMENTO:*\n"
+        f"📌 TAG: {st.session_state.dados['tag_id']} | Linha: {st.session_state.dados['linha']}\n"
+        f"🏭 Fab: {st.session_state.dados['fabricante']} | Mod: {st.session_state.dados['modelo']}\n"
+        f"❄️ Cap: {st.session_state.dados['capacidade']} BTU | Fluido: {st.session_state.dados['fluido']}\n"
+        f"🔢 S.Evap: {st.session_state.dados['serie_evap']} | S.Cond: {st.session_state.dados['serie_cond']}\n"
+        f"📍 Loc.Evap: {st.session_state.dados['local_evap']} | Loc.Cond: {st.session_state.dados['local_cond']}\n"
+        f"🛠️ Serviço: {st.session_state.dados['tipo_servico']}\n"
+        f"🩺 Status: {st.session_state.dados['status_maquina']}\n\n"
+        f"👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}\n"
+        f"📜 Registro: {st.session_state.dados['tecnico_registro']}\n"
+        f"📅 Data: {st.session_state.dados['data']}"
+    )
+
     zap_limpo = "".join(filter(str.isdigit, st.session_state.dados['whatsapp']))
-    link_zap = f"https://wa.me/55{zap_limpo}?text=" # Simplificado para o exemplo, mas usa sua msg_zap completa
-    st.link_button("📲 Enviar Laudo via WhatsApp", link_zap, use_container_width=True)
+    link_final = f"https://wa.me/55{zap_limpo}?text={urllib.parse.quote(msg_zap)}"
+    st.link_button("📲 Enviar Laudo via WhatsApp", link_final, use_container_width=True)
+
+    st.markdown("---")
 
     if st.button("🗑️ Limpar Formulário", use_container_width=True):
+        chaves_tecnico = ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']
+        valores_padrao = {
+            'status_maquina': '🟢 Operacional', 'fabricante': 'Carrier', 'capacidade': '12.000',
+            'linha': 'Residencial', 'fluido': 'R410A', 'tipo_servico': 'Manutenção Preventiva'
+        }
         for key in st.session_state.dados.keys():
-            if key not in ['tecnico_nome', 'tecnico_documento', 'tecnico_registro']:
-                st.session_state.dados[key] = ""
+            if key not in chaves_tecnico:
+                st.session_state.dados[key] = valores_padrao.get(key, "")
+        st.session_state['cep_processado'] = False
         st.rerun()
