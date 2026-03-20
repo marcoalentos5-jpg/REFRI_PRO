@@ -131,7 +131,7 @@ tabela_secao("CLIENTE", [
 ])
 
 # ================= ENDEREÇO =================
-    tabela_secao("ENDEREÇO", [
+tabela_secao("ENDEREÇO", [
         ["Campo", "Valor"],
         ["Logradouro", f"{dados.get('endereco','')}, {dados.get('numero','')}"],
         ["Bairro", dados.get('bairro','')],
