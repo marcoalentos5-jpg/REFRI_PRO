@@ -81,7 +81,6 @@ def gerar_pdf_profissional(dados, eletrica):
     data_atual = datetime.now().strftime("%d/%m/%Y")
     elements.append(Spacer(1, 20))
     elements.append(Paragraph(f"Gerado em {data_atual} | MPN Soluções", styles['Normal']))
-    doc.build(elements)
     return file_path 
 # =========================================================
 # 2. CONFIGURAÇÃO DA PÁGINA E SIDEBAR (FORA DA FUNÇÃO)
@@ -215,11 +214,6 @@ with st.sidebar:
     ))
 
 doc.build(elements)
-
-import streamlit as st
-from datetime import datetime
-import requests
-import urllib.parse
 
 # 1. CONFIGURAÇÃO INICIAL (TESTADA)
 st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="⚙️")
