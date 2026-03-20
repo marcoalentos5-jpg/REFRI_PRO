@@ -95,43 +95,50 @@ with st.sidebar:
 diagnostico = []
 
 try:
-        if float(eletrica.get('dif_tensao') or 0) > 10:
-            diagnostico.append("Sobretensão detectada")
+    if float(eletrica.get('dif_tensao') or 0) > 10:
+        diagnostico.append("Sobretensão detectada")
 
-        if float(eletrica.get('dif_corrente') or 0) > 5:
-            diagnostico.append("Corrente acima do nominal (sobrecarga)")
+    if float(eletrica.get('dif_corrente') or 0) > 5:
+        diagnostico.append("Corrente acima do nominal (sobrecarga)")
 
-        if not diagnostico:
-            diagnostico.append("Sistema operando dentro dos parâmetros")
+    if not diagnostico:
+        diagnostico.append("Sistema operando dentro dos parâmetros")
 
-    # ================= ASSINATURAS =================
+except Exception:
+    diagnostico.append("Erro na análise elétrica")
+
+# ================= ASSINATURAS =================
 assinatura = [
-        ["______________________________", "______________________________"],
-        ["Marcos Alexandre Almeida do Nascimento", dados.get('nome','')],
-        ["Técnico Responsável", "Cliente"],
-        ["CNPJ: 51.274.762/0001-17", f"CPF/CNPJ: {dados.get('cpf_cnpj','')}"],
-    ]
+    ["______________________________", "______________________________"],
+    ["Marcos Alexandre Almeida do Nascimento", dados.get('nome','')],
+    ["Técnico Responsável", "Cliente"],
+    ["CNPJ: 51.274.762/0001-17", f"CPF/CNPJ: {dados.get('cpf_cnpj','')}"],
+]
 
 table_ass = Table(assinatura, colWidths=[8*cm, 8*cm])
 table_ass.setStyle(TableStyle([
-        ('ALIGN',(0,0),(-1,-1),'CENTER')
-    ]))
+    ('ALIGN', (0,0), (-1,-1), 'CENTER')
+]))
 
 elements.append(table_ass)
 
-    # ================= RODAPÉ =================
+# ================= RODAPÉ =================
 data_atual = datetime.datetime.now().strftime("%d/%m/%Y")
 
 elements.append(Spacer(1, 20))
 elements.append(Paragraph(
-        f"Relatório gerado em {data_atual} | MPN Soluções em Refrigeração e Climatização",
-        styles['Normal']
-    ))
+    f"Relatório gerado em {data_atual} | MPN Soluções em Refrigeração e Climatização",
+    styles['Normal']
+))
 
 doc.build(elements)
 
 # 1. CONFIGURAÇÃO INICIAL (TESTADA)
-st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="⚙️")
+st.set_page_config(
+    page_title="HVAC Pro - Marcos Alexandre",
+    layout="wide",
+    page_icon="⚙️"
+)
 
 # CSS: Estilização (CONGELADO)
 st.markdown("""
