@@ -91,7 +91,7 @@ def renderizar_aba_1():
 
             ce4, ce5, ce6, ce7 = st.columns([1, 1, 1, 1])
             st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados['complemento'])
-            st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'])
+            st.session_state.dados['bairro'] = ce4.text_input("Bairro:", value=st.session_state.dados['bairro'])
             st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'])
             st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'])
 
@@ -139,55 +139,21 @@ def renderizar_aba_diagnosticos():
 
 
 # ==============================================================================
-# 3. LÓGICA DE NAVEGAÇÃO E EXIBIÇÃO DAS ABAS (MODIFICAR ABA HOME)
+# 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (CONGELADO E PROTEGIDO)
 # ==============================================================================
-# ... (código anterior da sidebar) ...
-
-# Use a seleção do sidebar para chamar a função correta
-    if aba_selecionada == "Home":
-    # --- NOVA APRESENTAÇÃO DA ABA HOME (COM LOGO) ---
-    st.markdown("<br>", unsafe_allow_html=True) # Espaçamento superior
-
-    # 1. CENTRALIZAÇÃO E EXIBIÇÃO DA LOGOMARCA
-    # Cria colunas para centralizar a imagem na tela
-    col1, col2, col3 = st.columns([1, 2, 1]) 
-    with col2: # Usa a coluna central (2/4 do espaço) para a imagem
-        try:
-            # Substitua 'logo_mpn_solucoes.png' pelo nome real do arquivo que você salvou
-            st.image("logo_mpn_solucoes.png", use_container_width=True) 
-        except FileNotFoundError:
-            st.error("⚠️ Erro: Arquivo 'logo_mpn_solucoes.png' não encontrado. Verifique o nome e a pasta.")
-
-    st.markdown("<br><br>", unsafe_allow_html=True) # Espaçamento entre logo e título
-
-    # 2. TÍTULO E BOAS-VINDAS CENTRALIZADOS E ESTILIZADOS
-    # Usamos HTML e CSS para formatação e cores
-    st.markdown("""
-        <div style="text-align: center;">
-            <h1 style="color: #0d47a1; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-                MPN Soluções
-            </h1>
-            <p style="color: #1976d2; font-size: 1.3em;">
-                Soluções em Refrigeração e Climatização
-            </p>
-            <hr style="border: 1px solid #90caf9; width: 60%; margin: 20px auto;">
-            <p style="color: #455a64; font-size: 1.1em; font-weight: bold;">
-                Bem-vindo ao Sistema HVAC Pro de Gestão Inteligente.
-            </p>
-            <p style="color: #546e7a; font-size: 1.0em;">
-                Selecione uma opção no Painel de Controle lateral para iniciar sua inspeção ou diagnóstico.
-            </p>
-        </div>
-    """, unsafe_allow_html=True)
-    # ------------------------------------------------
-
-# ... (resto do código da navegação: renderizar_aba_1, renderizar_aba_diagnosticos, etc.) ...
-
-# ==============================================================================
-# 4. SIDEBAR - DADOS DO TÉCNICO E ENVIO (CONGELADO E PROTEGIDO)
-# ==============================================================================
+# Mudamos esta seção para antes da Lógica de Exibição das Abas para definir aba_selecionada
 with st.sidebar:
+    st.title("🚀 Painel de Controle")
+
+    # A. NAVEGAÇÃO E EXIBIÇÃO DAS ABAS (ATIVADA AQUI)
+    # Defina as abas disponíveis no menu
+    opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
+    # Use st.sidebar.radio para criar os botões de seleção de aba e DEFINIR a variável
+    aba_selecionada = st.sidebar.radio("Selecione a Aba:", opcoes_abas)
+    
     st.markdown("---")
+    
+    # B. DADOS DO TÉCNICO RESPONSÁVEL
     st.subheader("👤 Técnico Responsável")
     st.session_state.dados['tecnico_nome'] = st.text_input("Nome:", value=st.session_state.dados['tecnico_nome'])
     st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ Técnico:", value=st.session_state.dados['tecnico_documento'])
@@ -233,3 +199,54 @@ with st.sidebar:
             if key not in chaves_tecnico:
                 st.session_state.dados[key] = ""
         st.rerun()
+
+
+# ==============================================================================
+# 4. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
+# ==============================================================================
+# Use a seleção do sidebar para chamar a função correta
+if aba_selecionada == "Home":
+    # --- NOVA APRESENTAÇÃO DA ABA HOME (COM LOGO) ---
+    st.markdown("<br>", unsafe_allow_html=True) # Espaçamento superior
+
+    # 1. CENTRALIZAÇÃO E EXIBIÇÃO DA LOGOMARCA (MPN Soluções )
+    col1, col2, col3 = st.columns([1, 2, 1]) 
+    with col2: 
+        try:
+            # Substitua 'logo_mpn_solucoes.png' pelo nome real do arquivo que você salvou
+            st.image("logo_mpn_solucoes.png", use_container_width=True) 
+        except FileNotFoundError:
+            st.error("⚠️ Erro: Arquivo 'logo_mpn_solucoes.png' não encontrado. Verifique o nome e a pasta.")
+
+    st.markdown("<br><br>", unsafe_allow_html=True) 
+
+    # 2. TÍTULO E BOAS-VINDAS CENTRALIZADOS E ESTILIZADOS
+    st.markdown("""
+        <div style="text-align: center;">
+            <h1 style="color: #0d47a1; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                MPN Soluções
+            </h1>
+            <p style="color: #1976d2; font-size: 1.3em;">
+                Soluções em Refrigeração e Climatização
+            </p>
+            <hr style="border: 1px solid #90caf9; width: 60%; margin: 20px auto;">
+            <p style="color: #455a64; font-size: 1.1em; font-weight: bold;">
+                Bem-vindo ao Sistema HVAC Pro de Gestão Inteligente.
+            </p>
+            <p style="color: #546e7a; font-size: 1.0em;">
+                Selecione uma opção no Painel de Controle lateral para iniciar sua inspeção ou diagnóstico.
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
+    # ------------------------------------------------
+
+elif aba_selecionada == "1. Cadastro de Equipamentos":
+    renderizar_aba_1() # Chama a função que contém todo o código da Aba 1
+
+elif aba_selecionada == "2. Diagnósticos":
+    renderizar_aba_diagnosticos() # Chama a função que contém o esqueleto da Aba 2
+
+elif aba_selecionada == "Relatórios":
+    st.header("Página de Relatórios (Em desenvolvimento)")
+    st.write("Em breve: Visualização e exportação de relatórios.")
+# ==============================================================================
