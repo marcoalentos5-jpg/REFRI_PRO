@@ -212,6 +212,73 @@ with st.sidebar:
     if st.button("🗑️ Limpar Formulário", use_container_width=True):
         st.session_state.dados = {k: ("" if k not in ['tecnico_nome', 'data'] else v) for k, v in st.session_state.dados.items()}
         st.rerun()
+
+with tab2:
+    st.subheader("⚡ Medições Elétricas e Diagnóstico")
+    
+    # Inicialização segura da seção elétrica se não existir
+    if 'eletrica' not in st.session_state:
+        st.session_state.eletrica = {
+            'tensao_rede': '220', 'tensao_medida': '', 'dif_tensao': '0',
+            'corrente_medida': '', 'rla': '', 'lra': '', 'dif_corrente': '0',
+            'tensao_rs': '', 'tensao_st': '', 'tensao_tr': '',
+            'corrente_r': '', 'corrente_s': '', 'corrente_t': '',
+            'potencia_kw': '0.0', 'obs': ''
+        }
+
+    with st.expander("📊 Grandezas Elétricas (Monofásico / Trifásico)", expanded=True):
+        g1, g2, g3 = st.columns(3)
+        
+        with g1:
+            st.markdown("### 🔌 Tensão (V)")
+            v_rede = st.text_input("Tensão Nominal (Rede):", value=st.session_state.eletrica.get('tensao_rede', '220'))
+            v_medida = st.text_input("Tensão Medida (V):", value=st.session_state.eletrica.get('tensao_medida', ''))
+            
+            # Cálculo de Diferença de Tensão automático
+            try:
+                dt = abs(float(v_rede.replace(',','.')) - float(v_medida.replace(',','.'))) if v_medida else 0
+                st.session_state.eletrica['dif_tensao'] = f"{dt:.1f}"
+                st.warning(f"Variação de Tensão: {dt:.1f}V")
+            except: pass
+
+        with g2:
+            st.markdown("### 📈 Corrente (A)")
+            i_medida = st.text_input("Corrente Medida (A):", value=st.session_state.eletrica.get('corrente_medida', ''))
+            i_rla = st.text_input("Corrente Nominal (RLA):", value=st.session_state.eletrica.get('rla', ''))
+            
+            # Cálculo de Sobrecarga
+            try:
+                di = float(i_medida.replace(',','.')) - float(i_rla.replace(',','.')) if i_medida and i_rla else 0
+                st.session_state.eletrica['dif_corrente'] = f"{di:.1f}"
+                if di > 0: st.error(f"Sobrecarga: {di:.1f}A")
+            except: pass
+
+        with g3:
+            st.markdown("### ⚡ Potência e Start")
+            st.session_state.eletrica['lra'] = st.text_input("Corrente de Partida (LRA):", value=st.session_state.eletrica.get('lra', ''))
+            p_kw = st.text_input("Potência Ativa (kW):", value=st.session_state.eletrica.get('potencia_kw', '0.0'))
+            st.session_state.eletrica['potencia_kw'] = p_kw
+
+    with st.expander("🌀 Sistema Trifásico (Equilíbrio de Fases)", expanded=False):
+        t1, t2 = st.columns(2)
+        with t1:
+            st.write("**Tensões entre Fases:**")
+            st.session_state.eletrica['tensao_rs'] = st.text_input("Fase RS:", value=st.session_state.eletrica.get('tensao_rs', ''))
+            st.session_state.eletrica['tensao_st'] = st.text_input("Fase ST:", value=st.session_state.eletrica.get('tensao_st', ''))
+            st.session_state.eletrica['tensao_tr'] = st.text_input("Fase TR:", value=st.session_state.eletrica.get('tensao_tr', ''))
+        with t2:
+            st.write("**Correntes por Fase:**")
+            st.session_state.eletrica['corrente_r'] = st.text_input("Corrente R:", value=st.session_state.eletrica.get('corrente_r', ''))
+            st.session_state.eletrica['corrente_s'] = st.text_input("Corrente S:", value=st.session_state.eletrica.get('corrente_s', ''))
+            st.session_state.eletrica['corrente_t'] = st.text_input("Corrente T:", value=st.session_state.eletrica.get('corrente_t', ''))
+
+    # Salvando valores atualizados na sessão para o PDF ler
+    st.session_state.eletrica['tensao_rede'] = v_rede
+    st.session_state.eletrica['tensao_medida'] = v_medida
+    st.session_state.eletrica['corrente_medida'] = i_medida
+    st.session_state.eletrica['rla'] = i_rla
+    
+    st.session_state.eletrica['obs'] = st.text_area("📝 Observações Técnicas Adicionais:", value=st.session_state.eletrica.get('obs', ''))
 # ================= WHATSAPP - ABA IDENTIFICAÇÃO =================
 st.markdown("---")
 st.subheader("📲 Enviar Laudo de Identificação")
