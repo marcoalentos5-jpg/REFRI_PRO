@@ -167,7 +167,7 @@ tabela_secao("ANÁLISE ELÉTRICA", [
     ])
 
     # ================= DIAGNÓSTICO AUTOMÁTICO =================
-    diagnostico = []
+diagnostico = []
 
     try:
         if float(eletrica.get('dif_tensao') or 0) > 10:
