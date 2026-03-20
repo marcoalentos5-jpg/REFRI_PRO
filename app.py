@@ -32,7 +32,7 @@ def gerar_pdf_profissional(dados, eletrica):
         elements.append(tabela)
         elements.append(Spacer(1, 12))
 
-    # ================= CLIENTE (AGORA DENTRO DA FUNÇÃO) =================
+    # ================= CLIENTE =================
     tabela_secao("CLIENTE", [
         ["Campo", "Valor"],
         ["Nome", str(dados.get('nome', ''))],
@@ -49,94 +49,70 @@ def gerar_pdf_profissional(dados, eletrica):
         ["Status", str(dados.get('status_maquina', ''))],
     ])
 
-    # ... (Se tiver mais tabelas de Elétrica/Diagnóstico, coloque-as AQUI com o mesmo recuo)
+    # ================= ELÉTRICA (MOVIDO PARA DENTRO DA FUNÇÃO) =================      
+    tabela_secao("ANÁLISE ELÉTRICA", [
+        ["Campo", "Valor"],
+        ["Tensão Rede", str(eletrica.get('tensao_rede',''))],
+        ["Tensão Medida", str(eletrica.get('tensao_medida',''))],
+        ["Diferença Tensão", str(eletrica.get('dif_tensao',''))],
+        ["Corrente Medida", str(eletrica.get('corrente_medida',''))],
+        ["Potência", f"{eletrica.get('potencia_kw','')} kW"],
+    ])
 
-    # FINALIZAÇÃO DO PDF
+    # ================= DIAGNÓSTICO (MOVIDO PARA DENTRO DA FUNÇÃO) =================
+    diagnostico = []
+    try:
+        if float(str(eletrica.get('dif_tensao') or 0).replace(',','.')) > 10:
+            diagnostico.append("Sobretensão detectada")
+        if not diagnostico:
+            diagnostico.append("Sistema operando dentro dos parâmetros")
+    except:
+        diagnostico.append("Dados insuficientes para diagnóstico")
+
+    tabela_secao("DIAGNÓSTICO TÉCNICO", [
+        ["Resultado", " | ".join(diagnostico)],
+        ["Observações", str(eletrica.get('obs',''))],
+    ])
+
+    # ================= ASSINATURAS (MOVIDO PARA DENTRO DA FUNÇÃO) =================
+    assinatura = [
+        ["______________________________", "______________________________"],
+        ["Marcos Alexandre Almeida", str(dados.get('nome',''))],
+        ["Técnico Responsável", "Cliente"],
+        ["CNPJ: 51.274.762/0001-17", f"CPF/CNPJ: {dados.get('cpf_cnpj','')}"],
+    ]
+    table_ass = Table(assinatura, colWidths=[8*cm, 8*cm])
+    table_ass.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER')]))
+    elements.append(table_ass)
+
+    # ================= RODAPÉ =================
+    data_atual = datetime.now().strftime("%d/%m/%Y")
+    elements.append(Spacer(1, 20))
+    elements.append(Paragraph(f"Relatório gerado em {data_atual} | MPN Soluções", styles['Normal']))
+
     doc.build(elements)
     return file_path 
 
 # =========================================================
-# 2. INÍCIO DO SITE (FORA DA FUNÇÃO - ENCOSTADO NA ESQUERDA)
+# 2. INÍCIO DO SITE (ESTRUTURA BLOQUEADA)
 # =========================================================
 st.set_page_config(page_title="HVAC Pro - MPN", layout="wide")
 
-# Inicialização segura dos dados
 if 'dados' not in st.session_state:
     st.session_state.dados = {
         'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'email': '',
         'fabricante': '', 'modelo': '', 'status_maquina': 'Operacional'
     }
 
-# --- SIDEBAR COM BOTÃO QUE CHAMA A FUNÇÃO ---
+if 'eletrica' not in st.session_state:
+    st.session_state.eletrica = {}
+
 with st.sidebar:
     st.header("📲 Finalizar")
-
-    # Garantir que existem
-    dados = st.session_state.get('dados', {})
-    eletrica = st.session_state.get('eletrica', {})
-
     if st.button("📄 GERAR RELATÓRIO TOTAL"):
-        relatorio = gerar_pdf_profissional(dados, eletrica)
-
+        relatorio = gerar_pdf_profissional(st.session_state.dados, st.session_state.eletrica)
         with open(relatorio, "rb") as f:
             st.download_button("📥 Baixar PDF", f, file_name=relatorio)
-
-    # ================= ELÉTRICA =================      
-    tabela_secao("ANÁLISE ELÉTRICA", [
-        ["Campo", "Valor"],
-        ["Tensão Rede", eletrica.get('tensao_rede','')],
-        ["Tensão Medida", eletrica.get('tensao_medida','')],
-        ["Diferença Tensão", eletrica.get('dif_tensao','')],
-        ["Corrente Medida", eletrica.get('corrente_medida','')],
-        ["RLA", eletrica.get('rla','')],
-        ["LRA", eletrica.get('lra','')],
-        ["Diferença Corrente", eletrica.get('dif_corrente','')],
-        ["RS / ST / TR", f"{eletrica.get('tensao_rs','')} / {eletrica.get('tensao_st','')} / {eletrica.get('tensao_tr','')}"],
-        ["Correntes", f"{eletrica.get('corrente_r','')} / {eletrica.get('corrente_s','')} / {eletrica.get('corrente_t','')}"],
-        ["Potência", f"{eletrica.get('potencia_kw','')} kW"],
-    ])
-
-# ================= DIAGNÓSTICO AUTOMÁTICO =================
-diagnostico = []
-
-try:
-    if float(eletrica.get('dif_tensao') or 0) > 10:
-        diagnostico.append("Sobretensão detectada")
-
-    if float(eletrica.get('dif_corrente') or 0) > 5:
-        diagnostico.append("Corrente acima do nominal (sobrecarga)")
-
-    if not diagnostico:
-        diagnostico.append("Sistema operando dentro dos parâmetros")
-
-except Exception:
-    diagnostico.append("Erro na análise elétrica")
-
-# ================= ASSINATURAS =================
-assinatura = [
-    ["______________________________", "______________________________"],
-    ["Marcos Alexandre Almeida do Nascimento", dados.get('nome','')],
-    ["Técnico Responsável", "Cliente"],
-    ["CNPJ: 51.274.762/0001-17", f"CPF/CNPJ: {dados.get('cpf_cnpj','')}"],
-]
-
-table_ass = Table(assinatura, colWidths=[8*cm, 8*cm])
-table_ass.setStyle(TableStyle([
-    ('ALIGN', (0,0), (-1,-1), 'CENTER')
-]))
-
-elements.append(table_ass)
-
-# ================= RODAPÉ =================
-data_atual = datetime.datetime.now().strftime("%d/%m/%Y")
-
-elements.append(Spacer(1, 20))
-elements.append(Paragraph(
-    f"Relatório gerado em {data_atual} | MPN Soluções em Refrigeração e Climatização",
-    styles['Normal']
-))
-
-doc.build(elements)
 
 # 1. CONFIGURAÇÃO INICIAL (TESTADA)
 st.set_page_config(
