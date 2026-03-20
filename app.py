@@ -60,7 +60,6 @@ def buscar_cep(cep):
 
 # Funções auxiliares para formatação de máscaras
 def formatar_telefone(numero, fixo=False):
-    # Remove caracteres não numéricos
     numero = re.sub(r'\D', '', numero)
     if fixo:
         if len(numero) == 10:
@@ -71,17 +70,21 @@ def formatar_telefone(numero, fixo=False):
     return numero
 
 def formatar_cep(cep):
-    # Remove caracteres não numéricos
     cep = re.sub(r'\D', '', cep)
     if len(cep) == 8:
         return f"{cep[:5]}-{cep[5:]}"
     return cep
 
+def formatar_cpf(cpf):
+    cpf = re.sub(r'\D', '', cpf)
+    if len(cpf) == 11:
+        return f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}"
+    return cpf
+
 # ==============================================================================
-# 1. FUNÇÃO DA ABA 1: Identificação e Equipamento (CÓDIGO COMPLETO COM MÁSCARAS)
+# 1. FUNÇÃO DA ABA 1: Identificação e Equipamento (CÓDIGO COMPLETO COM TODAS AS MÁSCARAS)
 # ==============================================================================
 def renderizar_aba_1():
-    # --- INTERFACE DE ABA ÚNICA ---
     tabs = st.tabs(["📋 Identificação e Equipamento"])
     tab1 = tabs[0]
 
@@ -90,22 +93,24 @@ def renderizar_aba_1():
         with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
             c1, c2, c3 = st.columns([2, 1, 1])
             st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="cli_nome")
-            st.session_state.dados['cpf_cnpj'] = c2.text_input("CPF ou CNPJ", value=st.session_state.dados['cpf_cnpj'], key="cli_doc")
             
-            # WhatsApp com Máscara (xx-x-xxxx-xxxx)
+            # CPF com Máscara (xxx.xxx.xxx-xx)
+            cpf_input = c2.text_input("CPF ou CNPJ", value=st.session_state.dados['cpf_cnpj'], key="cli_doc")
+            if cpf_input != st.session_state.dados['cpf_cnpj']:
+                st.session_state.dados['cpf_cnpj'] = formatar_cpf(cpf_input)
+                st.rerun()
+                
             whatsapp_input = c3.text_input("WhatsApp (DDD) *", value=st.session_state.dados['whatsapp'], key="cli_zap")
             if whatsapp_input != st.session_state.dados['whatsapp']:
                 st.session_state.dados['whatsapp'] = formatar_telefone(whatsapp_input)
                 st.rerun()
 
             cx1, cx2, cx3 = st.columns([1, 1, 2])
-            # Celular com Máscara (xx-x-xxxx-xxxx)
             celular_input = cx1.text_input("Cel.:", value=st.session_state.dados['celular'])
             if celular_input != st.session_state.dados['celular']:
                 st.session_state.dados['celular'] = formatar_telefone(celular_input)
                 st.rerun()
                 
-            # Telefone Fixo com Máscara (xx-xxxx-xxxx)
             fixo_input = cx2.text_input("Telefone Fixo:", value=st.session_state.dados['tel_fixo'])
             if fixo_input != st.session_state.dados['tel_fixo']:
                 st.session_state.dados['tel_fixo'] = formatar_telefone(fixo_input, fixo=True)
@@ -115,8 +120,6 @@ def renderizar_aba_1():
 
             st.markdown("---")
             ce1, ce2, ce3 = st.columns([1, 2, 1])
-            
-            # CEP com Máscara (xxxxx-xxx)
             cep_input = ce1.text_input("CEP *", value=st.session_state.dados['cep'])
             if cep_input != st.session_state.dados['cep']:
                 st.session_state.dados['cep'] = formatar_cep(cep_input)
