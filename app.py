@@ -211,7 +211,7 @@ with st.sidebar:
         styles['Normal']
     ))
 
- doc.build(elements)
+doc.build(elements)
     return "relatorio_tecnico_mpn.pdf"
 
 import streamlit as st
