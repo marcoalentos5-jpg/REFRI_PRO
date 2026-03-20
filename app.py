@@ -124,7 +124,7 @@ with st.sidebar:
     # ================= CLIENTE =================
 if 'dados' not in locals():
     dados = {}
-
+print("DEBUG:", dados)
 def gerar_pdf():
     dados = {}  # ← TEM QUE ESTAR AQUI DENTRO
 
