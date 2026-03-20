@@ -123,9 +123,9 @@ with st.sidebar:
 
     # ================= CLIENTE =================
 dados = {}
+
 tabela_secao("CLIENTE", [
     ["Campo", "Valor"],
-    dados = {}
     ["Nome", str(dados.get('nome', ''))],
     ["CPF/CNPJ", str(dados.get('cpf_cnpj', ''))],
     ["Telefone", str(dados.get('whatsapp', ''))],
