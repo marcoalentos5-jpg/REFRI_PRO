@@ -8,7 +8,7 @@ import urllib.parse
 import os # Biblioteca para verificar arquivos no sistema
 
 # 1. CONFIGURAÇÃO INICIAL (TESTADA)
-st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="⚙️")
+st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
 
 # CSS: Estilização (CONGELADO)
 st.markdown("""
@@ -59,7 +59,7 @@ def buscar_cep(cep):
 
 
 # ==============================================================================
-# 1. FUNÇÃO DA ABA 1: Identificação e Equipamento (CÓDIGO ORGANIZADO)
+# 1. FUNÇÃO DA ABA 1: Identificação e Equipamento (CÓDIGO COMPLETO E CORRIGIDO)
 # ==============================================================================
 def renderizar_aba_1():
     # --- INTERFACE DE ABA ÚNICA ---
@@ -90,11 +90,23 @@ def renderizar_aba_1():
             st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados['endereco'])
             st.session_state.dados['numero'] = ce3.text_input("Número/Apto:", value=st.session_state.dados['numero'])
 
-            ce4, ce5, ce6, ce7 = st.columns([1, 1, 1, 1])
+            # --- CORREÇÃO DO LAYOUT DO ENDEREÇO (Bairro entre Complemento e Cidade) ---
+            ce4, ce5, ce6 = st.columns([1, 1, 1]) # Criamos apenas 3 colunas
+            
+            # 1ª Coluna: Complemento
             st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados['complemento'])
-            st.session_state.dados['bairro'] = ce4.text_input("Bairro:", value=st.session_state.dados['bairro'])
+            
+            # 2ª Coluna: Bairro (POSIÇÃO CORRIGIDA)
+            st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'])
+            
+            # 3ª Coluna: Cidade
             st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'])
-            st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'])
+
+            # Uma linha separada para a UF (Estado), com uma coluna menor
+            col_uf = st.columns([1])
+            with col_uf[0]:
+                st.session_state.dados['uf'] = st.text_input("UF:", value=st.session_state.dados['uf'])
+            # -----------------------------------------------
 
         # --- SEÇÃO EQUIPAMENTO ---
         col_titulo, col_data = st.columns([3, 1])
@@ -132,6 +144,10 @@ def renderizar_aba_diagnosticos():
     st.header("📋 Central de Diagnósticos")
     st.markdown("---")
     
+    # 1. SELEÇÃO DO EQUIPAMENTO (Dependência da Aba 1)
+    # equipments = db_utils.buscar_equipamentos_cadastrados()
+    # equipamento_id = st.selectbox("Selecione o Equipamento para Diagnóstico:", list(equipments.keys()), format_func=lambda x: equipments[x])
+    
     st.info("Aba de Diagnósticos em desenvolvimento. Implemente a lógica aqui.")
 
 
@@ -167,7 +183,20 @@ with st.sidebar:
     msg_zap = (
         f"*LAUDO TÉCNICO HVAC*\n\n"
         f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
+        f"🆔 CPF/CNPJ: {st.session_state.dados['cpf_cnpj']}\n"
+        f"📍 END: {st.session_state.dados['endereco']}, {st.session_state.dados['numero']} - {st.session_state.dados['bairro']}\n"
+        f"🏙️ {st.session_state.dados['cidade']}/{st.session_state.dados['uf']} | CEP: {st.session_state.dados['cep']}\n"
+        f"📞 Contato: {st.session_state.dados['whatsapp']} | Email: {st.session_state.dados['email']}\n\n"
+        f"⚙️ *EQUIPAMENTO:*\n"
+        f"📌 TAG: {st.session_state.dados['tag_id']} | Linha: {st.session_state.dados['linha']}\n"
+        f"🏭 Fab: {st.session_state.dados['fabricante']} | Mod: {st.session_state.dados['modelo']}\n"
+        f"❄️ Cap: {st.session_state.dados['capacidade']} BTU | Fluido: {st.session_state.dados['fluido']}\n"
+        f"🔢 S.Evap: {st.session_state.dados['serie_evap']} | S.Cond: {st.session_state.dados['serie_cond']}\n"
+        f"📍 Loc.Evap: {st.session_state.dados['local_evap']} | Loc.Cond: {st.session_state.dados['local_cond']}\n"
+        f"🛠️ Serviço: {st.session_state.dados['tipo_servico']}\n"
+        f"🩺 Status: {st.session_state.dados['status_maquina']}\n\n"
         f"👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}\n"
+        f"📜 Registro: {st.session_state.dados['tecnico_registro']}\n"
         f"📅 Data: {st.session_state.dados['data']}"
     )
     
@@ -189,16 +218,16 @@ with st.sidebar:
 # ==============================================================================
 # Use a seleção do sidebar para chamar a função correta
 if aba_selecionada == "Home":
-    # --- NOVA APRESENTAÇÃO DA ABA HOME (COM LOGO ATUALIZADA PARA 'logo.png') ---
+    # --- NOVA APRESENTAÇÃO DA ABA HOME (COM LOGO MPN SOLUÇÕES ) ---
     st.markdown("<br>", unsafe_allow_html=True) # Espaçamento superior
 
     # 1. CENTRALIZAÇÃO E EXIBIÇÃO DA LOGOMARCA
     col1, col2, col3 = st.columns([1, 2, 1]) 
     with col2: 
-        # NOME DO ARQUIVO DE IMAGEM ATUALIZADO
+        # NOME DO ARQUIVO DE IMAGEM QUE ESTÁ SENDO USADO
         NOME_ARQUIVO_LOGO = "logo.png"
         
-        # VERIFICAÇÃO ADICIONAL DO ARQUIVO NO DISCO
+        # VERIFICAÇÃO ADICIONAL DO ARQUIVO NO DISCO (PARA AJUDAR NO DIAGNÓSTICO)
         if os.path.exists(NOME_ARQUIVO_LOGO):
             try:
                 # SE O ARQUIVO EXISTE, TENTA EXIBIR
