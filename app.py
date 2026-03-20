@@ -63,6 +63,7 @@ def buscar_cep(cep):
 # ==============================================================================
 def renderizar_aba_1():
     # --- INTERFACE DE ABA ÚNICA ---
+    # Criamos a aba e já selecionamos o primeiro índice para evitar erro de variável nula
     tabs = st.tabs(["📋 Identificação e Equipamento"])
     tab1 = tabs[0]
 
@@ -89,22 +90,22 @@ def renderizar_aba_1():
             st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados['endereco'])
             st.session_state.dados['numero'] = ce3.text_input("Número/Apto:", value=st.session_state.dados['numero'])
 
-            # --- CORREÇÃO DO LAYOUT DO ENDEREÇO (4 CAMPOS LADO A LADO, UF MENOR) ---
-            # Criamos 4 colunas com larguras proporcionais (Complemento, Bairro, Cidade, UF)
-            # A última coluna (UF) recebe um peso muito menor (0.5) para ser o menor campo.
-            ce4, ce5, ce6, ce7 = st.columns([2, 2, 2, 0.5]) 
+            # --- CORREÇÃO DO LAYOUT DO ENDEREÇO (Bairro entre Complemento e Cidade) ---
+            ce4, ce5, ce6 = st.columns([1, 1, 1]) # Criamos apenas 3 colunas
             
             # 1ª Coluna: Complemento
             st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados['complemento'])
             
-            # 2ª Coluna: Bairro
+            # 2ª Coluna: Bairro (POSIÇÃO CORRIGIDA)
             st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'])
             
             # 3ª Coluna: Cidade
             st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'])
 
-            # 4ª Coluna: UF (Menor e Último Campo, Limitado a 2 Letras)
-            st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'], max_chars=2)
+            # Uma linha separada para a UF (Estado), com uma coluna menor
+            col_uf = st.columns([1])
+            with col_uf[0]:
+                st.session_state.dados['uf'] = st.text_input("UF:", value=st.session_state.dados['uf'])
             # -----------------------------------------------
 
         # --- SEÇÃO EQUIPAMENTO ---
@@ -143,6 +144,10 @@ def renderizar_aba_diagnosticos():
     st.header("📋 Central de Diagnósticos")
     st.markdown("---")
     
+    # 1. SELEÇÃO DO EQUIPAMENTO (Dependência da Aba 1)
+    # equipments = db_utils.buscar_equipamentos_cadastrados()
+    # equipamento_id = st.selectbox("Selecione o Equipamento para Diagnóstico:", list(equipments.keys()), format_func=lambda x: equipments[x])
+    
     st.info("Aba de Diagnósticos em desenvolvimento. Implemente a lógica aqui.")
 
 
@@ -178,7 +183,20 @@ with st.sidebar:
     msg_zap = (
         f"*LAUDO TÉCNICO HVAC*\n\n"
         f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
+        f"🆔 CPF/CNPJ: {st.session_state.dados['cpf_cnpj']}\n"
+        f"📍 END: {st.session_state.dados['endereco']}, {st.session_state.dados['numero']} - {st.session_state.dados['bairro']}\n"
+        f"🏙️ {st.session_state.dados['cidade']}/{st.session_state.dados['uf']} | CEP: {st.session_state.dados['cep']}\n"
+        f"📞 Contato: {st.session_state.dados['whatsapp']} | Email: {st.session_state.dados['email']}\n\n"
+        f"⚙️ *EQUIPAMENTO:*\n"
+        f"📌 TAG: {st.session_state.dados['tag_id']} | Linha: {st.session_state.dados['linha']}\n"
+        f"🏭 Fab: {st.session_state.dados['fabricante']} | Mod: {st.session_state.dados['modelo']}\n"
+        f"❄️ Cap: {st.session_state.dados['capacidade']} BTU | Fluido: {st.session_state.dados['fluido']}\n"
+        f"🔢 S.Evap: {st.session_state.dados['serie_evap']} | S.Cond: {st.session_state.dados['serie_cond']}\n"
+        f"📍 Loc.Evap: {st.session_state.dados['local_evap']} | Loc.Cond: {st.session_state.dados['local_cond']}\n"
+        f"🛠️ Serviço: {st.session_state.dados['tipo_servico']}\n"
+        f"🩺 Status: {st.session_state.dados['status_maquina']}\n\n"
         f"👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}\n"
+        f"📜 Registro: {st.session_state.dados['tecnico_registro']}\n"
         f"📅 Data: {st.session_state.dados['data']}"
     )
     
