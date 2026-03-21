@@ -150,7 +150,7 @@ def renderizar_aba_diagnosticos():
     
     st.info("Aba de Diagnósticos em desenvolvimento. Implemente a lógica aqui.")
 
- ==============================================================================
+#==============================================================================
 # 3. SIDEBAR E DEFINIÇÃO DE FUNÇÕES (VERSÃO LIMPA E CORRIGIDA)
 # ==============================================================================
 
