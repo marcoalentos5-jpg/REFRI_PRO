@@ -138,7 +138,6 @@ if d_raw:
     if cep_in != st.session_state.dados['cep']:
         st.session_state.dados['cep'] = cep_in
     if buscar_cep(cep_in): st.rerun()
-
         st.session_state.dados['endereco'] = ce2.text_input("Rua:", value=st.session_state.dados.get('endereco', ''), key="k_cli_rua")
         st.session_state.dados['numero'] = ce3.text_input("Nº:", value=st.session_state.dados.get('numero', ''), key="k_cli_num")
 
