@@ -124,20 +124,20 @@ def renderizar_aba_1():
 # Só tenta formatar se d_raw não for None ou Vazio
 if d_raw:
     st.session_state.dados['cpf_cnpj'] = formatar_cpf(d_raw)
-            z_raw = c3.text_input("WhatsApp (XX-X-XXXX-XXXX) *", value=st.session_state.dados.get('whatsapp', ''), key="k_cli_zap")
-            st.session_state.dados['whatsapp'] = formatar_telefone(z_raw)
+    z_raw = c3.text_input("WhatsApp (XX-X-XXXX-XXXX) *", value=st.session_state.dados.get('whatsapp', ''), key="k_cli_zap")
+    st.session_state.dados['whatsapp'] = formatar_telefone(z_raw)
 
-            cx1, cx2, cx3 = st.columns([1, 1, 2])
-            st.session_state.dados['celular'] = formatar_telefone(cx1.text_input("Celular:", value=st.session_state.dados.get('celular', ''), key="k_cli_cel"))
-            st.session_state.dados['tel_fixo'] = formatar_telefone(cx2.text_input("Fixo:", value=st.session_state.dados.get('tel_fixo', ''), key="k_cli_fix"))
-            st.session_state.dados['email'] = cx3.text_input("E-mail:", value=st.session_state.dados.get('email', ''), key="k_cli_mail")
+    cx1, cx2, cx3 = st.columns([1, 1, 2])
+    st.session_state.dados['celular'] = formatar_telefone(cx1.text_input("Celular:", value=st.session_state.dados.get('celular', ''), key="k_cli_cel"))
+    st.session_state.dados['tel_fixo'] = formatar_telefone(cx2.text_input("Fixo:", value=st.session_state.dados.get('tel_fixo', ''), key="k_cli_fix"))
+    st.session_state.dados['email'] = cx3.text_input("E-mail:", value=st.session_state.dados.get('email', ''), key="k_cli_mail")
 
-            st.markdown("---")
-            ce1, ce2, ce3 = st.columns([1, 2, 1])
-            cep_in = ce1.text_input("CEP *", value=st.session_state.dados.get('cep', ''), key="k_cli_cep")
-            if cep_in != st.session_state.dados['cep']:
-                st.session_state.dados['cep'] = cep_in
-                if buscar_cep(cep_in): st.rerun()
+    st.markdown("---")
+    ce1, ce2, ce3 = st.columns([1, 2, 1])
+    cep_in = ce1.text_input("CEP *", value=st.session_state.dados.get('cep', ''), key="k_cli_cep")
+    if cep_in != st.session_state.dados['cep']:
+    st.session_state.dados['cep'] = cep_in
+    if buscar_cep(cep_in): st.rerun()
 
             st.session_state.dados['endereco'] = ce2.text_input("Rua:", value=st.session_state.dados.get('endereco', ''), key="k_cli_rua")
             st.session_state.dados['numero'] = ce3.text_input("Nº:", value=st.session_state.dados.get('numero', ''), key="k_cli_num")
