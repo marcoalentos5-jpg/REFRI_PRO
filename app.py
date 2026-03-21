@@ -266,3 +266,27 @@ elif "Diagn" in aba_selecionada:
 elif "Relat" in aba_selecionada:
     st.header("📋 Relatórios")
     st.info("Módulo de geração de PDF em desenvolvimento.")
+
+# ==============================================================================
+# 5. EXIBIÇÃO DE RESULTADOS (OCULTA SE NÃO HOUVER DADOS)
+# ==============================================================================
+# Só exibe se estiver na aba de Diagnóstico E se as variáveis de cálculo existirem
+if "Diagn" in aba_selecionada and 'status' in locals():
+    st.divider()
+    res1, res2, res3 = st.columns(3)
+    res1.metric("📊 Status", status)
+    res2.metric("❤️ Saúde", f"{score}%")
+    res3.metric("⚡ COP", cop)
+
+    st.info(f"🔎 **Diagnóstico:** {diag_txt}")
+    st.warning(f"🚨 **Falhas:** {prob_txt}")
+    st.success(f"🛠️ **Ações:** {acoes_txt}")
+
+    st.subheader("📄 Laudo Técnico")
+    # Usando o dicionário de dados para evitar erro de variável vazia
+    laudo_texto = st.session_state.dados.get('laudo', 'Laudo não gerado.')
+    st.text_area("Texto do Laudo", laudo_texto, height=200, label_visibility="collapsed")
+
+# ==============================================================================
+# FIM DO ARQUIVO
+# ==============================================================================
