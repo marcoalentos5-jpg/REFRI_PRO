@@ -567,6 +567,38 @@ if aba_teste == "A":
     st.write("O site está VIVO e respondendo na Aba A")
 else:
     st.write("O site está VIVO e respondendo na Aba B")
+
+# ==============================================================================
+# 4. LÓGICA DE EXIBIÇÃO FINAL (VERSÃO 1.55.0 - CORRIGIDA)
+# ==============================================================================
+
+if "Home" in aba_selecionada:
+    st.markdown("<br>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 2, 1]) 
+    with col2: 
+        if os.path.exists("logo.png"):
+            # CORREÇÃO AQUI: width='stretch' em vez de use_container_width
+            st.image("logo.png", width='stretch')
+        else:
+            st.info("🏠 MPN SOLUÇÕES HVAC")
+    st.header("Bem-vindo, Marcos!")
+
+elif "Cadastro" in aba_selecionada:
+    renderizar_aba_1()
+
+elif "Diagn" in aba_selecionada:
+    # Verificação de segurança para não travar o site
+    if 'renderizar_aba_diagnosticos' in globals():
+        renderizar_aba_diagnosticos()
+    else:
+        st.warning("Aba de Diagnósticos em manutenção.")
+
+elif "Relat" in aba_selecionada:
+    st.header("📋 Relatórios")
+    st.write("Módulo em desenvolvimento.")
+
+# No botão do WhatsApp na Sidebar, faça o mesmo:
+# st.link_button("📲 Enviar", link, width='stretch')
 # ==============================================================================
 # 5. EXIBIÇÃO DE RESULTADOS (APENAS SE AS VARIÁVEIS EXISTIREM)
 # ==============================================================================
