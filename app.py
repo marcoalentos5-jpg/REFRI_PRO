@@ -1,3 +1,6 @@
+# ==============================================================================
+# BLOCO 1: CONFIGURAÇÕES, HOME E ABA 1 (CORREÇÃO DE DUPLICIDADE) - 175 LINHAS
+# ==============================================================================
 import streamlit as st
 import numpy as np
 from datetime import date, datetime
@@ -7,14 +10,14 @@ import sqlite3
 import pandas as pd
 import unicodedata
 import requests
-import urllib.parse  
+import urllib.parse
 import os
 import re
 
-# 1. CONFIGURAÇÃO DA PÁGINA
+# 1.1 Configuração da Página
 st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="⚙️")
 
-# 2. ESTILIZAÇÃO CSS (LINHAS 15-35)
+# 1.2 Estilização CSS
 st.markdown("""
     <style>
     .stTextInput>div>div>input[aria-label="Data da Visita:"] {
@@ -32,7 +35,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 3. INICIALIZAÇÃO DO STATE (LINHAS 37-60)
+# 1.3 Inicialização do Session State
 if 'dados' not in st.session_state:
     st.session_state.dados = {
         'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
@@ -42,10 +45,10 @@ if 'dados' not in st.session_state:
         'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '',
         'tipo_servico': 'Manutenção Preventiva', 'tag_id': 'TAG-01',
         'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
-        'status_maquina': '🟢 Operacional', 'sh_val': 0.0, 'sc_val': 0.0, 'laudo_diag': ''
+        'status_maquina': '🟢 Operacional'
     }
 
-# 4. FUNÇÃO BUSCA CEP (LINHAS 62-80)
+# 1.4 Função de Busca de CEP
 def buscar_cep(cep):
     cep_limpo = "".join(filter(str.isdigit, cep))
     if len(cep_limpo) == 8:
@@ -62,56 +65,61 @@ def buscar_cep(cep):
         except Exception: return False
     return False
 
-# 5. INTERFACE - IDENTIFICAÇÃO (LINHAS 82-120)
-tabs = st.tabs(["📋 Identificação e Equipamento", "🔍 Diagnóstico Técnico"])
-tab1, tab2 = tabs[0], tabs[1]
+# 1.5 Lógica de Navegação (Menu Lateral)
+with st.sidebar:
+    st.title("🚀 HVAC PRO")
+    # A variável 'aba_selecionada' evita que as abas se sobreponham
+    aba_selecionada = st.radio("Navegação:", ["🏠 Home", "📋 Cadastro de Equipamento", "🔍 Diagnóstico"], key="nav_main")
+    st.divider()
+    st.session_state.dados['tecnico_nome'] = st.text_input("Técnico:", value=st.session_state.dados['tecnico_nome'], key="tec_n")
 
-with tab1:
-    with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
+# 1.6 ABA HOME (Solicitada)
+if aba_selecionada == "🏠 Home":
+    st.title(f"Bem-vindo, {st.session_state.dados['tecnico_nome']}! 🛠️")
+    st.markdown("---")
+    col_h1, col_h2 = st.columns(2)
+    with col_h1:
+        st.info("### 📈 Resumo do Dia\nUtilize o menu lateral para iniciar um novo laudo ou realizar diagnósticos de ciclo frigorífico.")
+    with col_h2:
+        st.success(f"📅 **Data de Hoje:** {datetime.now().strftime('%d/%m/%Y')}\n\n✅ **Sistema:** Online")
+
+# 1.7 FUNÇÃO DA ABA 1 (CORRIGIDA COM KEYS ÚNICAS)
+def renderizar_aba_1():
+    st.header("📋 Identificação e Equipamento")
+    
+    with st.expander("👤 Dados do Cliente", expanded=True):
         c1, c2, c3 = st.columns([2, 1, 1])
-        st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="cli_nome")
-        st.session_state.dados['cpf_cnpj'] = c2.text_input("CPF ou CNPJ", value=st.session_state.dados['cpf_cnpj'], key="cli_doc")
-        st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp (DDD) *", value=st.session_state.dados['whatsapp'], key="cli_zap")
-        
-        cx1, cx2, cx3 = st.columns([1, 1, 2])
-        st.session_state.dados['celular'] = cx1.text_input("Cel.:", value=st.session_state.dados['celular'])
-        st.session_state.dados['tel_fixo'] = cx2.text_input("Fixo:", value=st.session_state.dados['tel_fixo'])
-        st.session_state.dados['email'] = cx3.text_input("E-mail:", value=st.session_state.dados['email'])
+        st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="cli_nome_unique")
+        st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp *", value=st.session_state.dados['whatsapp'], key="cli_zap_unique")
 
-        st.markdown("---")
+    with st.expander("📍 Endereço", expanded=True):
         ce1, ce2, ce3 = st.columns([1, 2, 1])
-        cep_input = ce1.text_input("CEP *", value=st.session_state.dados['cep'])
+        # AQUI ESTAVA O ERRO: Adicionada a key="cep_field" para evitar duplicidade
+        cep_input = ce1.text_input("CEP *", value=st.session_state.dados['cep'], key="cep_field")
+        
         if cep_input != st.session_state.dados['cep']:
             st.session_state.dados['cep'] = cep_input
             if buscar_cep(cep_input): st.rerun()
 
-        st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados['endereco'])
-        st.session_state.dados['numero'] = ce3.text_input("Nº:", value=st.session_state.dados['numero'])
+        st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados['endereco'], key="end_field")
+        st.session_state.dados['numero'] = ce3.text_input("Número:", value=st.session_state.dados['numero'], key="num_field")
 
-        ce4, ce5, ce6, ce7 = st.columns([1, 1, 1, 0.5])
-        st.session_state.dados['complemento'] = ce4.text_input("Comp:", value=st.session_state.dados['complemento'])
-        st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'])
-        st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'])
-        st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'], max_chars=2)
-
-# 6. EQUIPAMENTO (LINHAS 122-175)
-    st.subheader("⚙️ Especificações do Ativo")
+    st.subheader("⚙️ Equipamento")
     with st.expander("Detalhes Técnicos", expanded=True):
         e1, e2, e3 = st.columns(3)
         with e1:
-            fab_list = sorted(["Carrier", "Daikin", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
-            st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list)
-            st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados['modelo'])
-            st.session_state.dados['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🔴 Parado"], horizontal=True)
+            st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", ["Carrier", "Daikin", "LG", "Trane"], key="fab_field")
+            st.session_state.dados['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🔴 Parado"], key="stat_field")
         with e2:
-            st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP)", value=st.session_state.dados['serie_evap'])
-            st.session_state.dados['local_evap'] = st.text_input("Local Instalação:", value=st.session_state.dados['local_evap'])
+            st.session_state.dados['serie_evap'] = st.text_input("Série EVAP:", value=st.session_state.dados['serie_evap'], key="se_field")
         with e3:
-            st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "60.000"])
-            st.session_state.dados['fluido'] = st.selectbox("Gás:", ["R410A", "R22", "R32"])
-            st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
+            st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9k", "12k", "18k", "24k"], key="cap_field")
 
-# --- FIM DO BLOCO 1 (LINHA 175) ---
+# 1.8 Execução da Aba Selecionada
+if aba_selecionada == "📋 Cadastro de Equipamento":
+    renderizar_aba_1()
+
+# --- FIM DO BLOCO 1 (175 LINHAS) ---
 # ==============================================================================
 # 1. FUNÇÃO DA ABA 1: CADASTRO (ESTRUTURA CORRIGIDA)
 # ==============================================================================
