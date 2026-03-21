@@ -312,8 +312,7 @@ def main():
         renderizar_aba_1()  # <--- Aqui ele chama a função pela segunda vez no arquivo
 
 # LINHA 315
-    if __name__ == "__main__":
-    main()
+    if __name__ == "__main__": main()
 
 # FINALIZAÇÃO DO ARQUIVO - TOTAL DE LINHAS FISCALIZADAS: 257
 
