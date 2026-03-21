@@ -174,7 +174,7 @@ with st.sidebar:
 # 1. FUNÇÃO DA ABA 1: Identificação e Equipamento (CÓDIGO COMPLETO E CORRIGIDO)
 # ==============================================================================
 # --- LAYOUT DO ENDEREÇO EM LINHA ÚNICA (Complemento, Bairro, Cidade, UF) ---
-            ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.5]) # 4 colunas com larguras ajustadas
+ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.5]) # 4 colunas com larguras ajustadas
             
             # 1ª Coluna: Complemento
             st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados['complemento'])
