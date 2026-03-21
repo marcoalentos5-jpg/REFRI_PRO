@@ -289,7 +289,14 @@ if aba_selecionada == "Home":
 elif aba_selecionada == "1. Cadastro de Equipamentos":
     renderizar_aba_1() # Chama a função que contém todo o código da Aba 1
 
-elif aba_selecionada == "2. Diagnósticos":
+# ... código anterior ...
+
+elif aba_selecionada == "Relatórios":
+    renderizar_aba_diagnosticos() 
+
+# Opcional: Se você ainda não terminou a aba, use 'pass' para não dar erro:
+# elif aba_selecionada == "Relatórios":
+#     pass
    
 elif aba_selecionada == "Relatórios":
     st.header("Página de Relatórios (Em desenvolvimento)")
