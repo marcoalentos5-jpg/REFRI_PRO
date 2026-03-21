@@ -177,7 +177,7 @@ with st.sidebar:
 ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.5]) # 4 colunas com larguras ajustadas
             
             # 1ª Coluna: Complemento
-            st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados['complemento'])
+st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados['complemento'])
             
             # 2ª Coluna: Bairro
             st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'])
