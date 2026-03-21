@@ -224,52 +224,37 @@ with st.sidebar:
     st.link_button("📲 Enviar Laudo WhatsApp", link, use_container_width=True)
     
 # ==============================================================================
-# 4. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
+# 4. LÓGICA DE EXIBIÇÃO DAS ABAS (CORREÇÃO DE GATILHO)
 # ==============================================================================
-# Verificação de segurança: se aba_selecionada não existir, volta para Home
+
+# 1. GARANTE QUE A VARIÁVEL DE SELEÇÃO EXISTE
 if 'aba_selecionada' not in locals():
     aba_selecionada = "Home"
 
-# Use a seleção do sidebar para chamar a função correta
+# 2. BLOCO DE DECISÃO DE EXIBIÇÃO (O CORAÇÃO DO SISTEMA)
 if aba_selecionada == "Home":
-    # --- NOVA APRESENTAÇÃO DA ABA HOME (COM LOGO MPN SOLUÇÕES ) ---
-    st.markdown("<br>", unsafe_allow_html=True) 
+    st.subheader("🏠 Bem-vindo à MPN Soluções")
+    st.info("Selecione uma das abas ao lado para começar.")
+    # (Opcional: Insira aqui o bloco da Logo que te mandei antes)
 
-    # 1. CENTRALIZAÇÃO E EXIBIÇÃO DA LOGOMARCA
-    col1, col2, col3 = st.columns([1, 2, 1]) 
-    with col2: 
-        NOME_ARQUIVO_LOGO = "logo.png"
-        if os.path.exists(NOME_ARQUIVO_LOGO):
-            try:
-                st.image(NOME_ARQUIVO_LOGO, use_container_width=True) 
-            except Exception as e:
-                st.error(f"⚠️ Erro ao abrir imagem.")
-        else:
-            st.info("📌 MPN SOLUÇÕES HVAC") # Texto reserva caso a logo suma
-
-    st.markdown("<br><br>", unsafe_allow_html=True) 
-
-    # 2. TÍTULO E BOAS-VINDAS CENTRALIZADOS
-    st.markdown("""
-        <div style="text-align: center;">
-            <h1 style="color: #0d47a1;">MPN Soluções</h1>
-            <p style="color: #1976d2; font-size: 1.3em;">Refrigeração e Climatização</p>
-            <hr style="border: 1px solid #90caf9; width: 60%; margin: 20px auto;">
-            <p style="font-weight: bold;">Bem-vindo ao Sistema de Gestão Inteligente.</p>
-        </div>
-    """, unsafe_allow_html=True)
-
-elif aba_selecionada == "1. Cadastro de Equipamentos":
+elif "1." in aba_selecionada:
     renderizar_aba_1()
 
-elif aba_selecionada == "2. Diagnósticos":
-    # IMPORTANTE: Esta função deve estar exatamente com este nome no Capítulo 2
+elif "2." in aba_selecionada:
+    # FORÇA A CHAMADA DA FUNÇÃO DE DIAGNÓSTICOS
     renderizar_aba_diagnosticos()
 
-elif aba_selecionada == "Relatórios":
+elif "Relatórios" in aba_selecionada:
     st.header("📋 Relatórios")
-    st.write("Módulo em fase de implementação.")
+    st.write("Área em desenvolvimento.")
 
+# 3. VERIFICAÇÃO DE ERRO DE CARREGAMENTO
+else:
+    st.warning("⚠️ Selecione uma opção válida no menu lateral.")
+
+# ==============================================================================
+# FIM DO ARQUIVO - SISTEMA HVAC MPN
+# ==============================================================================
 # ==============================================================================
 # FIM DO ARQUIVO - MPN SOLUÇÕES - SISTEMA DE GESTÃO HVAC (TOTAL 273 LINHAS)
 # ==========================================================================================================================================
