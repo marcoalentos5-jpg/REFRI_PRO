@@ -1,11 +1,122 @@
-# ==============================================================================
-# 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES (CONGELADO)
-# ==============================================================================
 import streamlit as st
 from datetime import datetime
 import requests
 import urllib.parse
 import os # Biblioteca para verificar arquivos no sistema
+
+# ==============================================================================
+# 0. FUNÇÕES DE SUPORTE E MÁSCARAS (PROCESSAMENTO DE DADOS)
+# ==============================================================================
+def buscar_cep(cep):
+    """Busca automática de endereço em todo o Brasil via API ViaCEP."""
+    cep_limpo = "".join(filter(str.isdigit, cep))
+    if len(cep_limpo) == 8:
+        try:
+            r = requests.get(f"https://viacep.com.br/ws/{cep_limpo}/json/")
+            if r.status_code == 200:
+                d = r.json()
+                if "erro" not in d:
+                    # Atualiza o estado global com os dados da API
+                    st.session_state.dados['endereco'] = d.get('logradouro', '')
+                    st.session_state.dados['bairro'] = d.get('bairro', '')
+                    st.session_state.dados['cidade'] = d.get('localidade', '')
+                    st.session_state.dados['uf'] = d.get('uf', '')[:2].upper()
+                    return True
+        except: pass
+    return False
+
+def formatar_cpf(valor):
+    """Aplica máscara XXX.XXX.XXX-XX"""
+    v = "".join(filter(str.isdigit, valor))
+    if len(v) == 11:
+        return f"{v[:3]}.{v[3:6]}.{v[6:9]}-{v[9:]}"
+    return v
+
+def formatar_telefone(valor):
+    """Aplica máscara XX-X-XXXX-XXXX ou XX-XXXX-XXXX"""
+    v = "".join(filter(str.isdigit, valor))
+    if len(v) == 11: # Celular
+        return f"{v[:2]}-{v[2:3]}-{v[3:7]}-{v[7:]}"
+    elif len(v) == 10: # Fixo
+        return f"{v[:2]}-{v[2:6]}-{v[6:]}"
+    return v
+
+# ==============================================================================
+# 1. ABA 1: IDENTIFICAÇÃO E EQUIPAMENTO (LAYOUT FINAL)
+# ==============================================================================
+def renderizar_aba_1():
+    tabs = st.tabs(["📋 Identificação e Equipamento"])
+    tab1 = tabs[0]
+
+    with tab1:
+        # --- SEÇÃO CLIENTE ---
+        with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
+            # Linha 1: Nome, CPF e WhatsApp
+            c1, c2, c3 = st.columns([2, 1, 1])
+            st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="f_nome")
+            
+            doc_raw = c2.text_input("CPF (000.000.000-00)", value=st.session_state.dados['cpf_cnpj'], key="f_doc")
+            st.session_state.dados['cpf_cnpj'] = formatar_cpf(doc_raw)
+            
+            zap_raw = c3.text_input("WhatsApp (XX-X-XXXX-XXXX) *", value=st.session_state.dados['whatsapp'], key="f_zap")
+            st.session_state.dados['whatsapp'] = formatar_telefone(zap_raw)
+
+            # Linha 2: Celular, Fixo e Email
+            cx1, cx2, cx3 = st.columns([1, 1, 2])
+            cel_raw = cx1.text_input("Cel. (XX-X-XXXX-XXXX):", value=st.session_state.dados['celular'], key="f_cel")
+            st.session_state.dados['celular'] = formatar_telefone(cel_raw)
+            
+            fixo_raw = cx2.text_input("Fixo (XX-XXXX-XXXX):", value=st.session_state.dados['tel_fixo'], key="f_fixo")
+            st.session_state.dados['tel_fixo'] = formatar_telefone(fixo_raw)
+            st.session_state.dados['email'] = cx3.text_input("E-mail:", value=st.session_state.dados['email'], key="f_email")
+
+            st.markdown("---")
+            
+            # Linha 3: CEP Automatizado, Logradouro e Número
+            ce1, ce2, ce3 = st.columns([1, 2, 1])
+            cep_input = ce1.text_input("CEP *", value=st.session_state.dados['cep'], key="f_cep")
+            if cep_input != st.session_state.dados['cep']:
+                st.session_state.dados['cep'] = cep_input
+                if buscar_cep(cep_input): 
+                    st.rerun() # Recarrega para preencher os campos automaticamente
+
+            st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados['endereco'], key="f_end")
+            st.session_state.dados['numero'] = ce3.text_input("Nº/Apto:", value=st.session_state.dados['numero'], key="f_num")
+
+            # Linha 4: Complemento, Bairro, Cidade e UF (Layout Unificado)
+            ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.4]) 
+            st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados['complemento'], key="f_comp")
+            st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'], key="f_bair")
+            st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'], key="f_cid")
+            st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'], max_chars=2, key="f_uf")
+
+        # --- SEÇÃO EQUIPAMENTO (ORDEM DE TAB RIGOROSA) ---
+        st.subheader("⚙️ Especificações do Equipamento")
+        with st.expander("Detalhes Técnicos do Ativo", expanded=True):
+            # Ordem de preenchimento via TAB baseada na disposição dos campos:
+            
+            # 1. Fabricante, Modelo e Linha
+            e1, e2, e3 = st.columns(3)
+            fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
+            st.session_state.dados['fabricante'] = e1.selectbox("Fabricante:", fab_list, key="seq_1")
+            st.session_state.dados['modelo'] = e2.text_input("Modelo:", value=st.session_state.dados['modelo'], key="seq_2")
+            st.session_state.dados['linha'] = e3.selectbox("Linha:", ["Residencial", "Comercial", "Industrial"], key="seq_3")
+
+            # 2. Nº de Série Evaporadora e Condensadora
+            e4, e5 = st.columns(2)
+            st.session_state.dados['serie_evap'] = e4.text_input("Nº de Série da Evaporadora:", value=st.session_state.dados['serie_evap'], key="seq_4")
+            st.session_state.dados['serie_cond'] = e5.text_input("Nº de Série da Condensadora:", value=st.session_state.dados['serie_cond'], key="seq_5")
+
+            # 3. Local da Evaporadora e Condensadora
+            e6, e7 = st.columns(2)
+            st.session_state.dados['local_evap'] = e6.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'], key="seq_6")
+            st.session_state.dados['local_cond'] = e7.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'], key="seq_7")
+
+            # 4. Capacidade, Fluído e TAG
+            e8, e9, e10 = st.columns(3)
+            st.session_state.dados['capacidade'] = e8.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], key="seq_8")
+            st.session_state.dados['fluido'] = e9.selectbox("Fluído:", ["R410A", "R22", "R32", "R134a", "R290"], key="seq_9")
+            st.session_state.dados['tag_id'] = e10.text_input("TAG:", value=st.session_state.dados['tag_id'], key="seq_10")
 
 # 1. CONFIGURAÇÃO INICIAL (TESTADA)
 st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
@@ -132,7 +243,7 @@ def renderizar_aba_1():
         with st.expander("Detalhes Técnicos do Ativo", expanded=True):
             e1, e2, e3 = st.columns(3)
             with e1:
-                fab_list = sorted(["Carrier", "Daikin", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
+                fab_list = sorted(["Carrier", "Daikin", "Elgin", "Gree", "Hitachi", "LG", "Midea", "Philco", "Samsung", "Trane", "TCL" "York"])
                 fab_val = st.session_state.dados.get('fabricante', 'Carrier')
                 fab_idx = fab_list.index(fab_val) if fab_val in fab_list else 0
                 st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx, key="fab_f")
