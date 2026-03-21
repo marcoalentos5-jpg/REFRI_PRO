@@ -132,8 +132,8 @@ if d_raw:
     st.session_state.dados['tel_fixo'] = formatar_telefone(cx2.text_input("Fixo:", value=st.session_state.dados.get('tel_fixo', ''), key="k_cli_fix"))
     st.session_state.dados['email'] = cx3.text_input("E-mail:", value=st.session_state.dados.get('email', ''), key="k_cli_mail")
     st.markdown("---")
-        ce1, ce2, ce3 = st.columns([1, 2, 1])
-        cep_in = ce1.text_input("CEP *", value=st.session_state.dados.get('cep', ''), key="k_cli_cep")
+    ce1, ce2, ce3 = st.columns([1, 2, 1])
+    cep_in = ce1.text_input("CEP *", value=st.session_state.dados.get('cep', ''), key="k_cli_cep")
         
         if cep_in != st.session_state.dados['cep']:
             st.session_state.dados['cep'] = cep_in
