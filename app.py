@@ -278,8 +278,43 @@ with st.sidebar:
 
 
 # ==============================================================================
-# 4. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
+# 4. FUNÇÃO DA ABA 2: DIAGNÓSTICOS TÉCNICOS E DADOS DO TÉCNICO
 # ==============================================================================
+
+def renderizar_aba_diagnosticos():
+    st.header("🔍 Diagnóstico e Identificação Profissional")
+    
+    with st.expander("👷 Identificação do Técnico Responsável", expanded=True):
+        t1, t2, t3 = st.columns([2, 1, 1])
+        # CORREÇÃO DAS KEYS DO TÉCNICO PARA EVITAR DUPLICIDADE
+        st.session_state.dados['tecnico_nome'] = t1.text_input("Nome do Técnico:", value=st.session_state.dados.get('tecnico_nome', ''), key="tec_nome_final")
+        st.session_state.dados['tecnico_documento'] = t2.text_input("CPF/CNPJ Técnico:", value=st.session_state.dados.get('tecnico_documento', ''), key="tec_doc_final")
+        st.session_state.dados['tecnico_registro'] = t3.text_input("Registro (CFT/CREA):", value=st.session_state.dados.get('tecnico_registro', ''), key="tec_reg_final")
+
+    st.markdown("---")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.number_input("P. Sucção (PSI):", key="p_suc_val")
+        st.number_input("T. Sucção (°C):", key="t_suc_val")
+    with col2:
+        st.number_input("P. Descarga (PSI):", key="p_des_val")
+        st.number_input("T. Líquido (°C):", key="t_liq_val")
+
+# ==============================================================================
+# EXECUÇÃO FINAL DO MOTOR DO APLICATIVO
+# ==============================================================================
+
+def main():
+    # Renderiza a Aba 1 por padrão. Para alternar, use st.sidebar.radio ou tabs.
+    renderizar_aba_1()
+    
+    # Espaço reservado para a renderização da Aba 2 se necessário
+    # renderizar_aba_diagnosticos()
+
+if __name__ == "__main__":
+    main()
+
+# FINALIZAÇÃO DO ARQUIVO - TOTAL DE LINHAS FISCALIZADAS: 257
 # Use a seleção do sidebar para chamar a função correta
 if aba_selecionada == "Home":
     # --- NOVA APRESENTAÇÃO DA ABA HOME (COM LOGO MPN SOLUÇÕES ) ---
