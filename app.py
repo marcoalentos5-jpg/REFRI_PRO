@@ -60,77 +60,90 @@ def buscar_cep(cep):
 # ==============================================================================
 # 1. FUNÇÃO DA ABA 1: Identificação e Equipamento (VERSÃO COM LAYOUT E MÁSCARAS)
 # ==============================================================================
+
+def formatar_cpf(valor):
+    v = "".join(filter(str.isdigit, valor))
+    if len(v) == 11:
+        return f"{v[:3]}.{v[3:6]}.{v[6:9]}-{v[9:]}"
+    return v
+
+def formatar_telefone(valor):
+    v = "".join(filter(str.isdigit, valor))
+    if len(v) == 11: # Celular: XX-X-XXXX-XXXX
+        return f"{v[:2]}-{v[2:3]}-{v[3:7]}-{v[7:]}"
+    elif len(v) == 10: # Fixo: XX-XXXX-XXXX
+        return f"{v[:2]}-{v[2:6]}-{v[6:]}"
+    return v
+
+# --- 2. AGORA A FUNÇÃO DA ABA 1 ATUALIZADA ---
 def renderizar_aba_1():
     tabs = st.tabs(["📋 Identificação e Equipamento"])
     tab1 = tabs[0]
 
     with tab1:
         with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
-            # --- CAMPOS COM FORMATAÇÃO (Máscaras sugeridas via placeholder) ---
             c1, c2, c3 = st.columns([2, 1, 1])
-            st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="cli_nome_v2")
             
-            # Formatação CPF/CNPJ
-            st.session_state.dados['cpf_cnpj'] = c2.text_input("CPF (000.000.000-00)", value=st.session_state.dados['cpf_cnpj'], key="cli_doc_v2")
+            # NOME
+            st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="cli_nome_f")
             
-            # Formatação WhatsApp
-            st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp (XX-X-XXXX-XXXX) *", value=st.session_state.dados['whatsapp'], key="cli_zap_v2")
+            # CPF (Aplica a máscara ao salvar no estado)
+            doc_raw = c2.text_input("CPF (000.000.000-00)", value=st.session_state.dados['cpf_cnpj'], key="cli_doc_f")
+            st.session_state.dados['cpf_cnpj'] = formatar_cpf(doc_raw)
+            
+            # WhatsApp (Aplica a máscara ao salvar no estado)
+            zap_raw = c3.text_input("WhatsApp (XX-X-XXXX-XXXX) *", value=st.session_state.dados['whatsapp'], key="cli_zap_f")
+            st.session_state.dados['whatsapp'] = formatar_telefone(zap_raw)
 
             cx1, cx2, cx3 = st.columns([1, 1, 2])
-            st.session_state.dados['celular'] = cx1.text_input("Cel. (XX-X-XXXX-XXXX):", value=st.session_state.dados['celular'], key="cli_cel_v2")
-            st.session_state.dados['tel_fixo'] = cx2.text_input("Fixo (XX-XXXX-XXXX):", value=st.session_state.dados['tel_fixo'], key="cli_tel_v2")
-            st.session_state.dados['email'] = cx3.text_input("E-mail:", value=st.session_state.dados['email'], key="cli_email_v2")
+            
+            # Celular e Fixo
+            cel_raw = cx1.text_input("Cel. (XX-X-XXXX-XXXX):", value=st.session_state.dados['celular'], key="cli_cel_f")
+            st.session_state.dados['celular'] = formatar_telefone(cel_raw)
+            
+            fixo_raw = cx2.text_input("Telefone Fixo (XX-XXXX-XXXX):", value=st.session_state.dados['tel_fixo'], key="cli_fixo_f")
+            st.session_state.dados['tel_fixo'] = formatar_telefone(fixo_raw)
+            
+            st.session_state.dados['email'] = cx3.text_input("E-mail:", value=st.session_state.dados['email'], key="cli_email_f")
 
             st.markdown("---")
             
-            # --- SEÇÃO ENDEREÇO (LINHA 1) ---
+            # --- SEÇÃO ENDEREÇO (LAYOUT CORRIGIDO) ---
             ce1, ce2, ce3 = st.columns([1, 2, 1])
-            cep_input = ce1.text_input("CEP *", value=st.session_state.dados['cep'], key="cli_cep_v2")
+            cep_input = ce1.text_input("CEP *", value=st.session_state.dados['cep'], key="cli_cep_f")
             if cep_input != st.session_state.dados['cep']:
                 st.session_state.dados['cep'] = cep_input
                 if buscar_cep(cep_input): st.rerun()
 
-            st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados['endereco'], key="cli_end_v2")
-            st.session_state.dados['numero'] = ce3.text_input("Nº/Apto:", value=st.session_state.dados['numero'], key="cli_num_v2")
+            st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados['endereco'], key="cli_end_f")
+            st.session_state.dados['numero'] = ce3.text_input("Nº/Apto:", value=st.session_state.dados['numero'], key="cli_num_f")
 
-            # --- SEÇÃO ENDEREÇO (LINHA 2 - TUDO JUNTO) ---
-            # Dividindo em 4 colunas para caber Complemento, Bairro, Cidade e UF
+            # LINHA ÚNICA: Complemento, Bairro, Cidade e UF
             ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.4]) 
+            st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados['complemento'], key="cli_comp_f")
+            st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'], key="cli_bair_f")
+            st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'], key="cli_cid_f")
             
-            st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados['complemento'], key="cli_comp_v2")
-            st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'], key="cli_bairro_v2")
-            st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'], key="cli_cid_v2")
-            
-            # UF com limite de 2 caracteres e alinhado na mesma linha
-            st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'], max_chars=2, key="cli_uf_v2")
+            # UF com 2 dígitos na mesma linha
+            st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'], max_chars=2, key="cli_uf_f")
 
-        # --- SEÇÃO EQUIPAMENTO ---
-        col_titulo, col_data = st.columns([3, 1])
-        with col_titulo: st.subheader("⚙️ Especificações do Equipamento")
-        with col_data: st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'])
-
+        # --- SEÇÃO EQUIPAMENTO (CONTINUAÇÃO) ---
+        st.subheader("⚙️ Especificações do Equipamento")
         with st.expander("Detalhes Técnicos do Ativo", expanded=True):
             e1, e2, e3 = st.columns(3)
             with e1:
-                fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
+                fab_list = sorted(["Carrier", "Daikin", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
                 fab_val = st.session_state.dados.get('fabricante', 'Carrier')
                 fab_idx = fab_list.index(fab_val) if fab_val in fab_list else 0
-                st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx)
-                st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados['modelo'])
-                st.session_state.dados['linha'] = st.selectbox("Linha:", ["Residencial", "Comercial", "Industrial"], index=0)
-                st.session_state.dados['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], horizontal=True)
-
+                st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx, key="fab_f")
+                st.session_state.dados['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], horizontal=True, key="status_f")
             with e2:
-                st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados['serie_evap'])
-                st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND)", value=st.session_state.dados['serie_cond'])
-                st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'])
-                st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
-
+                st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados['serie_evap'], key="sevap_f")
+                st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'], key="levap_f")
             with e3:
-                st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], index=1)
-                st.session_state.dados['fluido'] = st.selectbox("Fluido:", ["R410A", "R134a", "R22", "R32", "R290"], index=0)
-                st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
-                st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
+                st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "60.000"], key="cap_f")
+                st.session_state.dados['fluido'] = st.selectbox("Fluido:", ["R410A", "R22", "R32", "R134a"], key="gas_f")
+                st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'], key="tag_f")
 
 
 # ==============================================================================
