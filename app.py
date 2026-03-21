@@ -518,42 +518,63 @@ Recomenda-se:
     st.text_area("", laudo, height=250)
 
 # ==============================================================================
-# 4. LÓGICA DE EXIBIÇÃO DAS ABAS (CORRIGIDA)
+# 4. LÓGICA DE EXIBIÇÃO DAS ABAS (VERSÃO UNIFICADA E BLINDADA)
 # ==============================================================================
 
-if aba_selecionada == "Home":
-    st.markdown("<br>", unsafe_allow_html=True)
+# 1. DEBUG: Mostra no topo qual aba está ativa (Pode apagar depois de testar)
+st.caption(f"DEBUG: Aba Selecionada -> {aba_selecionada}")
 
+# 2. BLOCO ÚNICO DE DECISÃO
+if "Home" in aba_selecionada:
+    st.markdown("<br>", unsafe_allow_html=True)
+    
     col1, col2, col3 = st.columns([1, 2, 1]) 
     with col2: 
         if os.path.exists("logo.png"):
             st.image("logo.png", use_container_width=True)
         else:
-            st.warning("Logo não encontrada")
-
-    st.markdown("<br><br>", unsafe_allow_html=True)
+            st.info("🏠 MPN SOLUÇÕES HVAC")
 
     st.markdown("""
         <div style="text-align: center;">
             <h1 style="color: #0d47a1;">MPN Soluções</h1>
-            <p style="color: #1976d2;">Sistema HVAC Pro</p>
+            <p style="color: #1976d2; font-size: 1.2em;">Sistema HVAC Pro - Gestão Inteligente</p>
+            <hr style="width: 50%; margin: auto;">
         </div>
     """, unsafe_allow_html=True)
-
-# ==============================================================================
-# CONTROLE DE ABAS (VERSÃO À PROVA DE ERRO)
-# ==============================================================================
-
-st.write("DEBUG ABA:", aba_selecionada)
-
-if "Home" in aba_selecionada:
-    st.write("HOME OK")
 
 elif "Cadastro" in aba_selecionada:
     renderizar_aba_1()
 
 elif "Diagn" in aba_selecionada:
-    renderizar_aba_diagnosticos()
+    # Garante que a função existe antes de chamar
+    if 'renderizar_aba_diagnosticos' in globals():
+        renderizar_aba_diagnosticos()
+    else:
+        st.error("⚠️ Função de Diagnóstico não encontrada no código.")
 
 elif "Relat" in aba_selecionada:
-    st.write("RELATÓRIOS OK")
+    st.header("📋 Relatórios")
+    st.write("Módulo em desenvolvimento.")
+
+# ==============================================================================
+# 5. EXIBIÇÃO DE RESULTADOS (APENAS SE AS VARIÁVEIS EXISTIREM)
+# ==============================================================================
+# Este bloco evita o erro de "Variável não definida" que deixa a tela branca
+if "Diagn" in aba_selecionada and 'status' in locals():
+    st.divider()
+    c1, c2, c3 = st.columns(3)
+    c1.metric("📊 Status", status)
+    c2.metric("❤️ Saúde", f"{score}%")
+    c3.metric("⚡ COP", cop)
+
+    st.info(f"🔎 **Diagnóstico:** {diag_txt}")
+    st.warning(f"🚨 **Falhas:** {prob_txt}")
+    st.success(f"🛠️ **Ações:** {acoes_txt}")
+
+    st.subheader("📄 Laudo Técnico")
+    st.text_area("Texto do Laudo", laudo, height=200, label_visibility="collapsed")
+
+# ==============================================================================
+# FIM DO ARQUIVO
+# ==============================================================================
