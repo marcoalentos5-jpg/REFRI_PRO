@@ -540,12 +540,20 @@ if aba_selecionada == "Home":
         </div>
     """, unsafe_allow_html=True)
 
-elif aba_selecionada == "1. Cadastro de Equipamentos":
+# ==============================================================================
+# CONTROLE DE ABAS (VERSÃO À PROVA DE ERRO)
+# ==============================================================================
+
+st.write("DEBUG ABA:", aba_selecionada)
+
+if "Home" in aba_selecionada:
+    st.write("HOME OK")
+
+elif "Cadastro" in aba_selecionada:
     renderizar_aba_1()
 
-# 🔥 CORREÇÃO PRINCIPAL AQUI
 elif "Diagn" in aba_selecionada:
     renderizar_aba_diagnosticos()
 
-elif aba_selecionada == "Relatórios":
-    st.header("Relatórios (Em desenvolvimento)")
+elif "Relat" in aba_selecionada:
+    st.write("RELATÓRIOS OK")
