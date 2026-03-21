@@ -173,25 +173,73 @@ with st.sidebar:
     st.link_button("📲 Enviar WhatsApp", link, use_container_width=True)
 
 # ==============================================================================
+# 2. FUNÇÃO DA ABA 2: CHECK-LIST DE MANUTENÇÃO (SUBSTITUTA)
+# ==============================================================================
+def renderizar_aba_checklist():
+    st.header("✅ Check-list de Manutenção")
+    st.markdown("---")
+    
+    st.subheader("Itens de Verificação Obrigatória")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("##### ❄️ Unidade Evaporadora")
+        st.checkbox("Limpeza de Filtros", key="chk_1")
+        st.checkbox("Limpeza da Serpentina", key="chk_2")
+        st.checkbox("Desobstrução do Dreno", key="chk_3")
+        st.checkbox("Verificação de Ruídos/Vibração", key="chk_4")
+
+    with col2:
+        st.markdown("##### 🔥 Unidade Condensadora")
+        st.checkbox("Limpeza da Serpentina Externa", key="chk_5")
+        st.checkbox("Reaperto de Bornes Elétricos", key="chk_6")
+        st.checkbox("Verificação do Ventilador", key="chk_7")
+        st.checkbox("Conferência de Isolamento Térmico", key="chk_8")
+
+    st.markdown("---")
+    st.session_state.dados['obs_tecnica'] = st.text_area("Observações Técnicas Adicionais:", 
+                                                        value=st.session_state.dados.get('obs_tecnica', ''))
+
+    # Salva o status do checklist para o resumo
+    st.session_state.dados['status_check'] = "Check-list Concluído"
+    # ==============================================================================
+# 3. SIDEBAR - PAINEL DE CONTROLE
+# ==============================================================================
+with st.sidebar:
+    st.title("🚀 MPN Soluções")
+    
+    # Nova lista de abas incluindo o Check-list
+    opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Check-list de Serviço", "Relatórios"]
+    aba_selecionada = st.sidebar.radio("Selecione a Aba:", opcoes_abas)
+    
+    st.markdown("---")
+    st.subheader("👤 Técnico Responsável")
+    st.session_state.dados['tecnico_nome'] = st.text_input("Nome:", value=st.session_state.dados.get('tecnico_nome', 'Marcos Alexandre'))
+    
+    # Link do WhatsApp atualizado
+    msg_zap = (f"*LAUDO HVAC*\n"
+               f"👤 Cliente: {st.session_state.dados['nome']}\n"
+               f"⚙️ TAG: {st.session_state.dados['tag_id']}\n"
+               f"✅ Status: {st.session_state.dados.get('status_check', 'Em andamento')}")
+    
+    link = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_zap)}"
+    st.link_button("📲 Enviar WhatsApp", link, use_container_width=True)
+# ==============================================================================
 # 4. LÓGICA DE EXIBIÇÃO DAS ABAS
 # ==============================================================================
 if aba_selecionada == "Home":
-    st.markdown("<h2 style='text-align: center; color: #0d47a1;'>MPN Soluções</h2>", unsafe_allow_html=True)
-    st.write("---")
-    st.info("Sistema de Gestão HVAC. Utilize o menu lateral para navegar entre o Cadastro e os Relatórios.")
-    
-    # Tenta carregar a logo se existir
-    if os.path.exists("logo.png"):
-        st.image("logo.png", width=200)
+    st.subheader("🏠 Bem-vindo ao Sistema MPN")
+    st.info("Utilize o menu lateral para cadastrar o cliente ou realizar o check-list de manutenção.")
 
 elif aba_selecionada == "1. Cadastro de Equipamentos":
     renderizar_aba_1()
 
+elif aba_selecionada == "2. Check-list de Serviço":
+    renderizar_aba_checklist() # Chama a nova função que criamos no Cap 2
+
 elif aba_selecionada == "Relatórios":
     st.header("📋 Relatórios")
-    st.write("Módulo de geração de PDF em desenvolvimento.")
-
-# ==============================================================================
-# FIM DO ARQUIVO
+    st.write("Área em desenvolvimento.")
 # ==============================================================================
 
