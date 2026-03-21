@@ -142,57 +142,52 @@ def renderizar_aba_1():
 # ==============================================================================
 def renderizar_aba_diagnosticos():
     st.header("📋 Central de Diagnósticos")
-    st.markdown("---")
+    st.write("---")
     
-    # 1. IDENTIFICAÇÃO DO FLUIDO (Vem da Aba 1 ou assume R410A por segurança)
+    # 1. SEGURANÇA DE DADOS
     if 'dados' not in st.session_state:
-        st.error("Erro: Dados não inicializados.")
+        st.error("Erro: Inicialize o sistema primeiro.")
         return
 
     fluido = st.session_state.dados.get('fluido', 'R410A')
-    st.info(f"Análise Técnica para o Fluido: **{fluido}**")
-
-    # Função interna para calcular Temperatura de Saturação (P/T)
+    
+    # Função P/T
     def get_tsat(p, modo):
         if fluido == "R410A": return (p * 0.17) - 16.5 if modo == "baixa" else (p * 0.11) + 2.5
         if fluido == "R22": return (p * 0.28) - 14.5 if modo == "baixa" else (p * 0.18) + 8.5
         if fluido == "R32": return (p * 0.17) - 17.8 if modo == "baixa" else (p * 0.11) + 1.2
         return 0.0
 
-    # 2. SEÇÃO DE SUPERAQUECIMENTO (MEDICÕES E RESULTADOS)
-    with st.container():
-        st.subheader("❄️ Superaquecimento (Lado de Baixa)")
-        c1, c2, c3, c4 = st.columns(4)
-        p_b = c1.number_input("P. Baixa (PSI)", min_value=0.0, value=118.0, step=1.0, key="pb_diag")
-        t_sat_b = get_tsat(p_b, "baixa")
-        c2.metric("T. Sat (Baixa)", f"{t_sat_b:.1f}°C")
-        t_suc = c3.number_input("T. Sucção (°C)", min_value=-50.0, value=12.0, step=0.1, key="ts_diag")
-        sa_t = t_suc - t_sat_b
-        c4.metric("SA TOTAL", f"{sa_t:.1f} K", delta=f"{sa_t-7:.1f}K", delta_color="inverse")
+    # 2. CAMPOS DE ENTRADA E CÁLCULOS
+    st.subheader(f"📊 Medições Técnicas ({fluido})")
+    
+    col1, col2, col3, col4 = st.columns(4)
+    pb = col1.number_input("P. Baixa (PSI)", value=118.0, key="pb_diag")
+    tsat_b = get_tsat(pb, "baixa")
+    col2.metric("T. Sat (Baixa)", f"{tsat_b:.1f}°C")
+    tsuc = col3.number_input("T. Sucção (°C)", value=12.0, key="ts_diag")
+    sa_t = tsuc - tsat_b
+    col4.metric("SA Total", f"{sa_t:.1f} K", delta=f"{sa_t-7:.1f}K", delta_color="inverse")
 
-    # 3. SEÇÃO DE SUBRESFRIAMENTO (MEDIÇÕES E RESULTADOS)
-    with st.container():
-        st.subheader("🔥 Subresfriamento (Lado de Alta)")
-        ca1, ca2, ca3, ca4 = st.columns(4)
-        p_a = ca1.number_input("P. Alta (PSI)", min_value=0.0, value=340.0, step=1.0, key="pa_diag")
-        t_sat_a = get_tsat(p_a, "alta")
-        ca2.metric("T. Sat (Alta)", f"{t_sat_a:.1f}°C")
-        t_liq = ca3.number_input("T. Linha Líq (°C)", min_value=-50.0, value=35.0, step=0.1, key="tl_diag")
-        sr_t = t_sat_a - t_liq
-        ca4.metric("SR TOTAL", f"{sr_t:.1f} K", delta=f"{sr_t-5:.1f}K", delta_color="normal")
+    ca1, ca2, ca3, ca4 = st.columns(4)
+    pa = ca1.number_input("P. Alta (PSI)", value=340.0, key="pa_diag")
+    tsat_a = get_tsat(pa, "alta")
+    ca2.metric("T. Sat (Alta)", f"{tsat_a:.1f}°C")
+    tliq = ca3.number_input("T. Linha Líq (°C)", value=35.0, key="tl_diag")
+    sr_t = tsat_a - tliq
+    ca4.metric("SR Total", f"{sr_t:.1f} K", delta=f"{sr_t-5:.1f}K", delta_color="normal")
 
-    # 4. DELTA T DO AR E PERSISTÊNCIA
+    # 3. DELTA T E PERSISTÊNCIA
     st.markdown("---")
-    st.subheader("🌡️ Diferencial de Temperatura (Delta T)")
     cd1, cd2, cd3 = st.columns(3)
-    t_ret = cd1.number_input("Ar Retorno (°C)", value=24.0, step=0.1, key="tr_ar")
-    t_ins = cd2.number_input("Ar Insuflamento (°C)", value=12.0, step=0.1, key="ti_ar")
-    dt_ar = t_ret - t_ins
-    cd3.metric("Delta T Ar", f"{dt_ar:.1f} °C")
+    t_ret = cd1.number_input("Ar Retorno (°C)", value=24.0, key="tr_ar_d")
+    t_ins = cd2.number_input("Ar Insuflamento (°C)", value=12.0, key="ti_ar_d")
+    dt = t_ret - t_ins
+    cd3.metric("Delta T Ar", f"{dt:.1f} °C")
     
-    # SALVAMENTO DOS RESULTADOS PARA O WHATSAPP
-    st.session_state.dados['perf'] = f"SA:{sa_t:.1f}K | SR:{sr_t:.1f}K | DT:{dt_ar:.1f}C"
-    
+    # Atualiza o estado global para o WhatsApp
+    st.session_state.dados['perf'] = f"SA:{sa_t:.1f}K | SR:{sr_t:.1f}K | DT:{dt:.1f}C"
+
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO
 # ==============================================================================
@@ -231,60 +226,49 @@ with st.sidebar:
 # ==============================================================================
 # 4. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
 # ==============================================================================
+# Verificação de segurança: se aba_selecionada não existir, volta para Home
+if 'aba_selecionada' not in locals():
+    aba_selecionada = "Home"
+
 # Use a seleção do sidebar para chamar a função correta
 if aba_selecionada == "Home":
     # --- NOVA APRESENTAÇÃO DA ABA HOME (COM LOGO MPN SOLUÇÕES ) ---
-    st.markdown("<br>", unsafe_allow_html=True) # Espaçamento superior
+    st.markdown("<br>", unsafe_allow_html=True) 
 
     # 1. CENTRALIZAÇÃO E EXIBIÇÃO DA LOGOMARCA
     col1, col2, col3 = st.columns([1, 2, 1]) 
     with col2: 
-        # NOME DO ARQUIVO DE IMAGEM QUE ESTÁ SENDO USADO
         NOME_ARQUIVO_LOGO = "logo.png"
-        
-        # VERIFICAÇÃO ADICIONAL DO ARQUIVO NO DISCO (PARA AJUDAR NO DIAGNÓSTICO)
         if os.path.exists(NOME_ARQUIVO_LOGO):
             try:
-                # SE O ARQUIVO EXISTE, TENTA EXIBIR
                 st.image(NOME_ARQUIVO_LOGO, use_container_width=True) 
             except Exception as e:
-                st.error(f"⚠️ Erro ao tentar abrir a imagem '{NOME_ARQUIVO_LOGO}'.")
-                st.write(f"Detalhes do erro do sistema: {e}")
+                st.error(f"⚠️ Erro ao abrir imagem.")
         else:
-            st.error(f"⚠️ Erro: Arquivo '{NOME_ARQUIVO_LOGO}' não encontrado na pasta raiz.")
-            st.info("Verifique se o arquivo está salvo como 'logo.png' na mesma pasta do script.")
+            st.info("📌 MPN SOLUÇÕES HVAC") # Texto reserva caso a logo suma
 
     st.markdown("<br><br>", unsafe_allow_html=True) 
 
-    # 2. TÍTULO E BOAS-VINDAS CENTRALIZADOS E ESTILIZADOS
+    # 2. TÍTULO E BOAS-VINDAS CENTRALIZADOS
     st.markdown("""
         <div style="text-align: center;">
-            <h1 style="color: #0d47a1; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-                MPN Soluções
-            </h1>
-            <p style="color: #1976d2; font-size: 1.3em;">
-                Soluções em Refrigeração e Climatização
-            </p>
+            <h1 style="color: #0d47a1;">MPN Soluções</h1>
+            <p style="color: #1976d2; font-size: 1.3em;">Refrigeração e Climatização</p>
             <hr style="border: 1px solid #90caf9; width: 60%; margin: 20px auto;">
-            <p style="color: #455a64; font-size: 1.1em; font-weight: bold;">
-                Bem-vindo ao Sistema HVAC Pro de Gestão Inteligente.
-            </p>
-            <p style="color: #546e7a; font-size: 1.0em;">
-                Selecione uma opção no Painel de Controle lateral para iniciar sua inspeção ou diagnóstico.
-            </p>
+            <p style="font-weight: bold;">Bem-vindo ao Sistema de Gestão Inteligente.</p>
         </div>
     """, unsafe_allow_html=True)
-    # ------------------------------------------------
 
 elif aba_selecionada == "1. Cadastro de Equipamentos":
-    renderizar_aba_1() # Chama a função que contém todo o código da Aba 1
+    renderizar_aba_1()
 
 elif aba_selecionada == "2. Diagnósticos":
-    renderizar_aba_diagnosticos() # Chama a função que contém os cálculos de SA/SR
+    # IMPORTANTE: Esta função deve estar exatamente com este nome no Capítulo 2
+    renderizar_aba_diagnosticos()
 
 elif aba_selecionada == "Relatórios":
-    st.header("Página de Relatórios (Em desenvolvimento)")
-    st.write("Em breve: Visualização e exportação de relatórios.")
+    st.header("📋 Relatórios")
+    st.write("Módulo em fase de implementação.")
 
 # ==============================================================================
 # FIM DO ARQUIVO - MPN SOLUÇÕES - SISTEMA DE GESTÃO HVAC (TOTAL 273 LINHAS)
