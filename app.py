@@ -137,13 +137,6 @@ def renderizar_aba_1():
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (PARTE 2 - ESQUELETO INSERIDO)
 # ==============================================================================
 def renderizar_aba_diagnosticos():
-    st.header("📋 Central de Diagnósticos")
-    st.markdown("---")
-
-# ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (CORRIGIDA - ORDEM DE EXECUÇÃO)
-# ==============================================================================
-def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
     
     # Puxa o fluido da Aba 1 ou usa R410A como padrão
@@ -151,25 +144,50 @@ def renderizar_aba_diagnosticos():
     st.info(f"❄️ Fluido Refrigerante em Análise: **{fluido_selecionado}**")
     st.markdown("---")
 
-    # --- BLOCO 1: ENTRADA DE MEDIÇÕES (DEFINIÇÃO DAS VARIÁVEIS) ---
-    st.subheader("1. Medições de Campo")
-    col_suc, col_des = st.columns(2)
-    
-    with col_suc:
-        st.markdown("### 🔵 Baixa Pressão")
-        # Definimos pres_suc ANTES de usá-la nos cálculos abaixo
-        pres_suc = st.number_input("Pressão de Sucção (PSI):", min_value=0.0, step=1.0, key="p_suc_diag")
-        temp_suc = st.number_input("Temp. Tubulação Sucção (°C):", step=0.1, key="t_suc_diag")
+    # --- ESTILO CSS PARA FORMATO E ALERTAS ---
+    st.markdown("""
+        <style>
+        .sh-alerta { background-color: #ff1744; color: white; padding: 10px; border-radius: 5px; text-align: center; font-weight: bold; }
+        </style>
+    """, unsafe_allow_html=True)
 
-    with col_des:
-        st.markdown("### 🔴 Alta Pressão")
-        # Definimos pres_des ANTES de usá-la nos cálculos abaixo
-        pres_des = st.number_input("Pressão de Descarga (PSI):", min_value=0.0, step=1.0, key="p_des_diag")
-        temp_liq = st.number_input("Temp. Tubulação Líquido (°C):", step=0.1, key="t_liq_diag")
+    # --- 1. MEDIÇÕES DE CAMPO (5 COLUNAS) ---
+    st.subheader("1. Medições de Campo")
+    col1, col2, col3, col4, col5 = st.columns(5)
+
+    with col1:
+        st.markdown("🔵 **BAIXA**")
+        pres_suc = st.number_input("P. Sucção", format="%.2f", step=0.01, key="p_suc_diag")
+        temp_suc = st.number_input("T. Tubo Suc.", format="%.2f", step=0.01, key="t_suc_diag")
+
+    with col2:
+        st.markdown("🔴 **ALTA**")
+        pres_des = st.number_input("P. Desc.", format="%.2f", step=0.01, key="p_des_diag")
+        temp_liq = st.number_input("T. Tubo Líq.", format="%.2f", step=0.01, key="t_liq_diag")
+
+    with col3:
+        st.markdown("⚡ **TENSÃO**")
+        v_linha = st.number_input("Tens. Linha", format="%.2f", step=0.01, key="v_lin")
+        v_fase = st.number_input("Tens. Fase", format="%.2f", step=0.01, key="v_fase")
+        v_medida = st.number_input("Tens. Med.", format="%.2f", step=0.01, key="v_med")
+
+    with col4:
+        st.markdown("🔌 **CORRENTE**")
+        i_linha = st.number_input("Corr. Linha", format="%.2f", step=0.01, key="i_lin")
+        i_fase = st.number_input("Corr. Fase", format="%.2f", step=0.01, key="i_fase")
+        i_medida = st.number_input("Corr. Med.", format="%.2f", step=0.01, key="i_med")
+
+    with col5:
+        st.markdown("🔋 **CAPAC.**")
+        cap_nom_comp = st.number_input("C. Nom. Comp", format="%.2f", step=0.01, key="c_n_c")
+        cap_nom_fan = st.number_input("C. Nom. Fan", format="%.2f", step=0.01, key="c_n_f")
+        tol_fab = st.number_input("Tol. (%)", format="%.2f", step=0.1, key="tol_f")
+        cap_med_comp = st.number_input("C. Med. Comp", format="%.2f", step=0.01, key="c_m_c")
+        cap_med_fan = st.number_input("C. Med. Fan", format="%.2f", step=0.01, key="c_m_f")
 
     st.markdown("---")
 
-    # --- BLOCO 2: PROCESSAMENTO (CÁLCULOS TÉCNICOS) ---
+    # --- LÓGICA DE CÁLCULO P->T ---
     def calcular_t_sat(p, gas):
         if p <= 0: return 0.0
         if gas == "R410A": return 0.253 * (p**0.8) - 18.5
@@ -178,28 +196,39 @@ def renderizar_aba_diagnosticos():
         elif gas == "R32": return 0.245 * (p**0.81) - 19.0
         return 0.0
 
-    # Agora o Python encontra as variáveis pres_suc e pres_des sem erro
     t_sat_suc = calcular_t_sat(pres_suc, fluido_selecionado)
     t_sat_des = calcular_t_sat(pres_des, fluido_selecionado)
-    
-    # Cálculo Final de SH e SC
     sh = temp_suc - t_sat_suc if pres_suc > 0 else 0.0
     sc = t_sat_des - temp_liq if pres_des > 0 else 0.0
 
-    # --- BLOCO 3: EXIBIÇÃO DE RESULTADOS ---
+    # --- 2. RESULTADOS CALCULADOS (ESPELHAMENTO) ---
     st.subheader("2. Resultados Calculados")
-    res1, res2 = st.columns(2)
-    
+    res1, res2, res3, res4, res5 = st.columns(5)
+
     with res1:
-        st.metric(label="Superaquecimento (SH)", value=f"{sh:.1f} K")
-        if 5 <= sh <= 7: st.success("✅ SH dentro do padrão")
-        elif sh < 5: st.error("⚠️ SH Baixo: Risco de líquido no compressor")
-        else: st.warning("⚠️ SH Alto: Baixo rendimento / Falta de fluido")
+        st.info(f"T. Sat. Baixa: {t_sat_suc:.2f} °C")
+        if sh < 5 and pres_suc > 0:
+            st.markdown(f'<div class="sh-alerta">SH: {sh:.2f} K<br>⚠️ Risco de Líquido</div>', unsafe_allow_html=True)
+        else:
+            st.metric("SH Final", f"{sh:.2f} K")
 
     with res2:
-        st.metric(label="Sub-resfriamento (SC)", value=f"{sc:.1f} K")
-        if 4 <= sc <= 7: st.success("✅ SC dentro do padrão")
-        else: st.info("ℹ️ SC fora do padrão: Verifique a condensação")
+        st.error(f"T. Sat. Alta: {t_sat_des:.2f} °C")
+        st.metric("SC Final", f"{sc:.2f} K")
+
+    with res3:
+        diff_v = v_linha - v_medida
+        st.metric("Dif. Tensão", f"{diff_v:.2f} V")
+
+    with res4:
+        diff_i = i_linha - i_medida
+        st.metric("Dif. Corrente", f"{diff_i:.2f} A")
+
+    with res5:
+        df_c = cap_med_comp - cap_nom_comp
+        df_f = cap_med_fan - cap_nom_fan
+        st.caption(f"Dif. Comp: {df_c:.2f} µF")
+        st.caption(f"Dif. Fan: {df_f:.2f} µF")
 
     st.markdown("---")
     st.subheader("3. Parecer Técnico")
