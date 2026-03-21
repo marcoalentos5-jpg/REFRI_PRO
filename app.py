@@ -144,12 +144,42 @@ def renderizar_aba_diagnosticos():
     st.header("📋 Central de Diagnósticos")
     st.markdown("---")
     
-    # 1. SELEÇÃO DO EQUIPAMENTO (Dependência da Aba 1)
-    # equipments = db_utils.buscar_equipamentos_cadastrados()
-    # equipamento_id = st.selectbox("Selecione o Equipamento para Diagnóstico:", list(equipments.keys()), format_func=lambda x: equipments[x])
-    
-    st.info("Aba de Diagnósticos em desenvolvimento. Implemente a lógica aqui.")
+    # 1. RECUPERAÇÃO DE FLUIDO E LÓGICA P/T
+    fluido = st.session_state.dados.get('fluido', 'R410A')
+    def get_tsat(p, modo):
+        if fluido == "R410A": return (p * 0.17) - 16.5 if modo == "baixa" else (p * 0.11) + 2.5
+        if fluido == "R22": return (p * 0.28) - 14.5 if modo == "baixa" else (p * 0.18) + 8.5
+        if fluido == "R32": return (p * 0.17) - 17.8 if modo == "baixa" else (p * 0.11) + 1.2
+        return 0.0
 
+    # 2. CAMPOS DE MEDIÇÃO RELACIONADOS (INTUITIVOS)
+    st.subheader(f"❄️ Ciclo de Refrigerante ({fluido})")
+    col_p1, col_p2, col_p3, col_p4 = st.columns(4)
+    p_b = col_p1.number_input("P. Baixa (PSI)", min_value=0.0, key="pb_diag")
+    t_sat_b = get_tsat(p_b, "baixa")
+    col_p2.metric("T. Sat (Baixa)", f"{t_sat_b:.1f}°C")
+    t_suc = col_p3.number_input("T. Sucção (°C)", key="ts_diag")
+    sa_t = t_suc - t_sat_b
+    col_p4.metric("SA Total", f"{sa_t:.1f} K", delta=f"{sa_t-7:.1f}", delta_color="inverse")
+
+    col_a1, col_a2, col_a3, col_a4 = st.columns(4)
+    p_a = col_a1.number_input("P. Alta (PSI)", min_value=0.0, key="pa_diag")
+    t_sat_a = get_tsat(p_a, "alta")
+    col_a2.metric("T. Sat (Alta)", f"{t_sat_a:.1f}°C")
+    t_liq = col_a3.number_input("T. Linha Líq (°C)", key="tl_diag")
+    sr_t = t_sat_a - t_liq
+    col_a4.metric("SR Total", f"{sr_t:.1f} K", delta=f"{sr_t-5:.1f}", delta_color="normal")
+
+    st.markdown("---")
+    st.subheader("🌡️ Diferencial de Temperatura (Delta T)")
+    cd1, cd2, cd3 = st.columns(3)
+    t_ret = cd1.number_input("Temp. Retorno Ar (°C)", value=24.0)
+    t_ins = cd2.number_input("Temp. Insuflamento Ar (°C)", value=12.0)
+    dt_ar = t_ret - t_ins
+    cd3.metric("Delta T Ar", f"{dt_ar:.1f} °C")
+    
+    # Armazena para o WhatsApp
+    st.session_state.dados['perf'] = f"SA:{sa_t:.1f}K | SR:{sr_t:.1f}K | DT:{dt_ar:.1f}C"
 
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
@@ -179,7 +209,7 @@ with st.sidebar:
     else:
         st.success("📋 STATUS: PRONTO PARA ENVIO")
         
-    # MENSAGEM WHATSAPP - ENVIO DE TODOS OS DADOS SEM EXCEÇÃO
+    # MENSAGEM WHATSAPP - ENVIO DE TODOS OS DADOS SEM EXCEÇÃO (Incluso Performance)
     msg_zap = (
         f"*LAUDO TÉCNICO HVAC*\n\n"
         f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
@@ -194,7 +224,8 @@ with st.sidebar:
         f"🔢 S.Evap: {st.session_state.dados['serie_evap']} | S.Cond: {st.session_state.dados['serie_cond']}\n"
         f"📍 Loc.Evap: {st.session_state.dados['local_evap']} | Loc.Cond: {st.session_state.dados['local_cond']}\n"
         f"🛠️ Serviço: {st.session_state.dados['tipo_servico']}\n"
-        f"🩺 Status: {st.session_state.dados['status_maquina']}\n\n"
+        f"🩺 Status: {st.session_state.dados['status_maquina']}\n"
+        f"📊 *PERFORMANCE:* {st.session_state.dados.get('perf', 'N/A')}\n\n"
         f"👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}\n"
         f"📜 Registro: {st.session_state.dados['tecnico_registro']}\n"
         f"📅 Data: {st.session_state.dados['data']}"
