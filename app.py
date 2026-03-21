@@ -88,7 +88,7 @@ def renderizar_aba_1():
     with tabs[0]:
         with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
             c1, c2, c3 = st.columns([2, 1, 1])
-            st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="cli_n")
+           st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados.get('nome', ''), key="cli_nome_unico_v3")
             doc_raw = c2.text_input("CPF (000.000.000-00)", value=st.session_state.dados['cpf_cnpj'], key="cli_d")
             st.session_state.dados['cpf_cnpj'] = formatar_cpf(doc_raw)
             zap_raw = c3.text_input("WhatsApp (XX-X-XXXX-XXXX) *", value=st.session_state.dados['whatsapp'], key="cli_w")
@@ -321,7 +321,7 @@ if aba_selecionada == "Home":
     # ------------------------------------------------
 
 elif aba_selecionada == "1. Cadastro de Equipamentos":
-    renderizar_aba_1() # Chama a função que contém todo o código da Aba 1
+   st.session_state.dados['tecnico_registro'] = st.text_input("Registro Profissional (CFT/CREA):", value=st.session_state.dados.get('tecnico_registro', ''), key="f_tec_reg_unico")
 
 elif aba_selecionada == "2. Diagnósticos":
     renderizar_aba_diagnosticos() # Chama a função que contém o esqueleto da Aba 2
