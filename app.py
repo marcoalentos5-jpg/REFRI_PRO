@@ -57,7 +57,6 @@ def buscar_cep(cep):
         except: pass
     return False
 
-
 # ==============================================================================
 # 1. FUNÇÃO DA ABA 1: CADASTRO (LAYOUT OTIMIZADO E FORMATADO)
 # ==============================================================================
@@ -208,7 +207,6 @@ if "Home" in aba_selecionada:
 elif "Cadastro" in aba_selecionada:
     # Chama a função de cadastro que você corrigiu
     renderizar_aba_1()
-    
     st.divider()
     # O botão de limpar agora fica PROTEGIDO dentro deste elif para não duplicar
     if st.button("🗑️ Limpar Formulário", width='stretch'):
