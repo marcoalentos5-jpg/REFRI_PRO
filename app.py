@@ -334,10 +334,134 @@ with st.sidebar:
 # FUNÇÃO DA ABA DIAGNÓSTICOS (CORRIGIDA)
 # =============================
 
-def renderizar_aba_diagnosticos():
+    def renderizar_aba_diagnosticos():
 
     st.header("DIAGNÓSTICO")
     st.subheader("🤖 Diagnóstico IA")
+
+    # =============================
+    # FUNÇÃO SEGURA
+    # =============================
+    def seguro(v):
+        try:
+            if v is None:
+                return 0
+            return float(v)
+        except:
+            return 0
+
+    # =============================
+    # CAPTURA DE VARIÁVEIS
+    # =============================
+    sh = seguro(globals().get("sh_val", 0))
+    sc = seguro(globals().get("sc_val", 0))
+    ps = seguro(globals().get("p_suc", 0))
+    pl = seguro(globals().get("p_liq", 0))
+    tsuc = seguro(globals().get("ts_suc", 0))
+    tsuct = seguro(globals().get("t_suc_tubo", 0))
+    tliq = seguro(globals().get("t_liq_tubo", 0))
+    tliq_sat = seguro(globals().get("ts_liq", 0))
+    amp = seguro(globals().get("a_med", 0))
+    rla = seguro(globals().get("rla_comp", 0))
+    dv = seguro(globals().get("diff_v", 0))
+
+    # =============================
+    # DEBUG (AGORA VOCÊ VÊ OS DADOS)
+    # =============================
+    st.write("### 📥 Dados Recebidos")
+    st.write({
+        "SH": sh,
+        "SC": sc,
+        "P_suc": ps,
+        "P_liq": pl,
+        "T_suc": tsuc,
+        "T_tubo_suc": tsuct,
+        "T_liq": tliq,
+        "T_sat_liq": tliq_sat,
+        "Corrente": amp,
+        "RLA": rla,
+        "ΔV": dv
+    })
+
+    # =============================
+    # VERIFICAÇÃO CRÍTICA
+    # =============================
+    if sh == 0 and sc == 0 and ps == 0 and pl == 0:
+        st.warning("⚠️ Nenhum dado carregado. Preencha a aba anterior primeiro.")
+        st.info("Dica: vá na aba de medições e insira os valores.")
+    
+    # =============================
+    # MOTOR DIAGNÓSTICO
+    # =============================
+    diagnostico = []
+    probabilidades = {}
+
+    def registrar(msg, falha=None, prob=0):
+        diagnostico.append(msg)
+        if falha:
+            probabilidades[falha] = prob
+
+    # Lógica básica
+    if sh > 15 and sc < 3:
+        registrar("Baixa carga de refrigerante", "Vazamento", 80)
+
+    elif sh < 3 and sc > 10:
+        registrar("Excesso de refrigerante", "Excesso de gás", 75)
+
+    elif 5 <= sh <= 12 and 5 <= sc <= 10:
+        registrar("Sistema operando normalmente")
+
+    if ps < 90:
+        registrar("Sucção baixa", "Evaporador sujo", 60)
+
+    if pl > 420:
+        registrar("Alta pressão", "Condensador sujo", 75)
+
+    # COP
+    try:
+        delta_evap = tsuct - tsuc
+        delta_cond = tliq_sat - tliq
+        cop = round((delta_cond + 1) / (delta_evap + 1), 2)
+    except:
+        cop = 0
+
+    # Resultado
+    if not diagnostico:
+        diagnostico.append("Sem dados suficientes para diagnóstico")
+
+    diag_txt = " | ".join(diagnostico)
+
+    if probabilidades:
+        prob_txt = " | ".join([f"{k} ({v}%)" for k, v in probabilidades.items()])
+    else:
+        prob_txt = "Nenhuma falha detectada"
+
+    # =============================
+    # EXIBIÇÃO FINAL
+    # =============================
+
+    st.write("### 🔎 Diagnóstico")
+    st.write(diag_txt)
+
+    st.write("### 📊 Falhas")
+    st.write(prob_txt)
+
+    st.write("### ⚡ COP")
+    st.write(cop)
+
+    # RELATÓRIO
+    relatorio = f"""
+Diagnóstico:
+{diag_txt}
+
+Falhas:
+{prob_txt}
+
+COP:
+{cop}
+"""
+
+    st.text_area("📄 Relatório", relatorio, height=200)
 
     # =============================
     # PROTEÇÃO DE VARIÁVEIS
