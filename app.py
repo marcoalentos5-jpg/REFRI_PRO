@@ -344,14 +344,7 @@ with st.sidebar:
     st.link_button("📲 Enviar Laudo via WhatsApp", link_final, use_container_width=True)
 
     st.markdown("---")
-    # LIMPAR FORMULÁRIO (PROTEGENDO DADOS DO TÉCNICO)
-    if st.button("🗑️ Limpar Formulário", use_container_width=True):
-        chaves_tecnico = ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']
-        for key in st.session_state.dados.keys():
-            if key not in chaves_tecnico:
-                st.session_state.dados[key] = ""
-        st.rerun()
-
+        
 # =============================
 # FUNÇÃO DIAGNÓSTICO (100% FUNCIONAL)
 # =============================
@@ -553,35 +546,63 @@ else:
     st.write("O site está VIVO e respondendo na Aba B")
 
 # ==============================================================================
-# 4. LÓGICA DE EXIBIÇÃO FINAL (VERSÃO 1.55.0 - TOTALMENTE CORRIGIDA)
+# 4. LÓGICA DE EXIBIÇÃO FINAL (ESTRUTURA ANTI-ERRO 1.55.0)
 # ==============================================================================
 
+# IMPORTANTE: Esta parte deve vir LOGO APÓS a criação da variável 'aba_selecionada' no Sidebar
 if "Home" in aba_selecionada:
     st.markdown("<br>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1]) 
     with col2: 
         if os.path.exists("logo.png"):
-            # Ajustado para a versão 1.55.0
             st.image("logo.png", width='stretch')
         else:
             st.info("🏠 MPN SOLUÇÕES HVAC")
     st.header("Bem-vindo, Marcos!")
+    st.write("Selecione uma opção no menu lateral para começar.")
 
 elif "Cadastro" in aba_selecionada:
-    # CORREÇÃO: Removido o 'if' colado no nome da função
+    # Chama a função de cadastro que você corrigiu
     renderizar_aba_1()
+    
+    st.divider()
+    # O botão de limpar agora fica PROTEGIDO dentro deste elif para não duplicar
+    if st.button("🗑️ Limpar Formulário", width='stretch'):
+        for chave in st.session_state.dados.keys():
+            st.session_state.dados[chave] = ""
+        st.success("Formulário reiniciado!")
+        st.rerun()
 
 elif "Diagn" in aba_selecionada:
-    # Verificação de segurança
     if 'renderizar_aba_diagnosticos' in globals():
-        # CORREÇÃO: Removido o 'if' colado no nome da função
         renderizar_aba_diagnosticos()
+        
+        # --- BLOCO 5: EXIBIÇÃO DE RESULTADOS (INCORPORADO AQUI) ---
+        # Só exibe se as variáveis de cálculo existirem no contexto
+        if 'status' in locals():
+            st.divider()
+            res1, res2, res3 = st.columns(3)
+            res1.metric("📊 Status", status)
+            res2.metric("❤️ Saúde", f"{score}%")
+            res3.metric("⚡ COP", cop)
+
+            st.info(f"🔎 **Diagnóstico:** {diag_txt}")
+            st.warning(f"🚨 **Falhas:** {prob_txt}")
+            st.success(f"🛠️ **Ações:** {acoes_txt}")
+
+            st.subheader("📄 Laudo Técnico")
+            laudo_texto = st.session_state.dados.get('laudo', 'Laudo não gerado.')
+            st.text_area("Texto do Laudo", laudo_texto, height=200, label_visibility="collapsed")
     else:
         st.warning("Aba de Diagnósticos em manutenção.")
 
 elif "Relat" in aba_selecionada:
     st.header("📋 Relatórios")
-    st.write("Módulo em desenvolvimento.")
+    st.info("Módulo de geração de PDF em desenvolvimento.")
+
+# ==============================================================================
+# FIM DO ARQUIVO - NÃO ADICIONE NADA ABAIXO DESTA LINHA
+# ==============================================================================
 
 # ==============================================================================
 # 5. EXIBIÇÃO DE RESULTADOS (OCULTA SE NÃO HOUVER DADOS)
