@@ -226,7 +226,7 @@ with st.expander("📍 Endereço e Localização", expanded=True):
         st.session_state.dados['uf'] = l4.text_input("UF:", value=st.session_state.dados['uf'])
 
     # --- SEÇÃO EQUIPAMENTO ---
-    st.subheader("⚙️ Especificações Técnicas")
+st.subheader("⚙️ Especificações Técnicas")
 with st.expander("Detalhes do Ativo", expanded=True):
         e1, e2, e3 = st.columns(3)
         with e1:
