@@ -155,7 +155,7 @@ def renderizar_aba_diagnosticos():
             return 0.245 * (p**0.81) - 19.0
         elif gas == "R134a":
             return 0.65 * (p**0.62) - 25.0
-        return 0.0
+            return 0.0
 
     # Cálculo das Temperaturas de Saturação
     t_sat_suc = calcular_t_sat(pres_suc, fluido) if pres_suc > 0 else 0.0
