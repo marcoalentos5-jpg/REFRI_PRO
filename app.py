@@ -330,8 +330,9 @@ with st.sidebar:
 # =============================
 def renderizar_aba_diagnosticos():
 
-    st.header("DIAGNÓSTICO AVANÇADO")
-    st.subheader("🧠 Engenharia HVAC Inteligente")
+   def renderizar_aba_diagnosticos():
+    st.title("🔥 TESTE DIAGNÓSTICO")
+    st.write("Se você está vendo isso, a aba está funcionando.")
 
     # =============================
     # FUNÇÃO SEGURA
