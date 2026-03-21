@@ -2,86 +2,32 @@ import streamlit as st
 import os
 import urllib.parse
 import re
+import requests
+from datetime import datetime
 
-# 1. CONFIGURAÇÃO DA PÁGINA (Sempre no topo, sem espaços na esquerda)
+# 1. CONFIGURAÇÃO ÚNICA DA PÁGINA
 st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
 
-# 2. FUNÇÕES DE FORMATAÇÃO (Sem espaços na esquerda)
+# 2. FUNÇÕES DE FORMATAÇÃO (MÁSCARAS)
 def formatar_cpf(valor):
     nums = re.sub(r'\D', '', valor)
-    if len(nums) == 11:
-        return f"{nums[:3]}.{nums[3:6]}.{nums[6:9]}-{nums[9:]}"
+    if len(nums) == 11: return f"{nums[:3]}.{nums[3:6]}.{nums[6:9]}-{nums[9:]}"
     return valor
 
 def formatar_cep(valor):
     nums = re.sub(r'\D', '', valor)
-    if len(nums) == 8:
-        return f"{nums[:5]}-{nums[5:]}"
+    if len(nums) == 8: return f"{nums[:5]}-{nums[5:]}"
     return valor
 
 def formatar_telefone(valor):
     nums = re.sub(r'\D', '', valor)
-    if len(nums) == 11:
-        return f"({nums[:2]}) {nums[2:7]}-{nums[7:]}"
-    elif len(nums) == 10:
-        return f"({nums[:2]}) {nums[2:6]}-{nums[6:]}"
+    if len(nums) == 11: return f"({nums[:2]}) {nums[2:7]}-{nums[7:]}"
+    elif len(nums) == 10: return f"({nums[:2]}) {nums[2:6]}-{nums[6:]}"
     return valor
 
-# 3. INICIALIZAÇÃO DE DADOS
-if 'dados' not in st.session_state:
-    st.session_state.dados = {
-        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'cep': '',
-        'endereco': '', 'numero': '', 'complemento': '', 'bairro': '',
-        'cidade': '', 'uf': '', 'fabricante': 'Carrier', 'modelo': '',
-        'capacidade': '12.000', 'tag_id': '', 'serie_evap': '',
-        'local_evap': '', 'status_maquina': '🟢 Operacional',
-        'tecnico_nome': '', 'tecnico_documento': '', 'tecnico_registro': '',
-        'email': '', 'linha': '', 'fluido': 'R410A', 'serie_cond': '',
-        'local_cond': '', 'tipo_servico': 'Manutenção Preventiva',
-        'data': '2024', 'laudo': ''
-    }
-
-# 4. FUNÇÕES DAS ABAS (O código dentro delas PRECISA de 4 espaços de recuo)
-def renderizar_aba_1():
-    st.header("📋 Cadastro de Equipamento")
-    # ... resto do código da aba com recuo ...
-
-# 1. CONFIGURAÇÃO INICIAL (TESTADA)
-st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
-
-# CSS: Estilização (CONGELADO)
-st.markdown("""
-    <style>
-    .stTextInput>div>div>input[aria-label="Data da Visita:"] {
-        background-color: #e0f2f1 !important;
-        color: #004d40 !important;
-        font-weight: bold;
-        border: 1px solid #b2dfdb !important;
-    }
-    div.stLinkButton > a {
-        background-color: #25D366 !important;
-        color: white !important;
-        font-weight: bold;
-        border-radius: 8px !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# 2. MOTOR DE SESSÃO (CHAVES VERIFICADAS)
-if 'dados' not in st.session_state:
-    st.session_state.dados = {
-        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
-        'data': datetime.now().strftime("%d/%m/%Y"),
-        'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '', 'complemento': '',
-        'fabricante': 'Carrier', 'modelo': '', 'capacidade': '12.000', 'linha': 'Residencial',
-        'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '',
-        'tipo_servico': 'Manutenção Preventiva', 'tag_id': 'TAG-01',
-        'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
-        'status_maquina': '🟢 Operacional'
-    }
-
+# 3. MOTOR DE BUSCA DE CEP (ViaCEP)
 def buscar_cep(cep):
-    cep_limpo = "".join(filter(str.isdigit, cep))
+    cep_limpo = re.sub(r'\D', '', cep)
     if len(cep_limpo) == 8:
         try:
             r = requests.get(f"https://viacep.com.br/ws/{cep_limpo}/json/")
@@ -96,43 +42,46 @@ def buscar_cep(cep):
         except: pass
     return False
 
-# ==============================================================================
-# 1. FUNÇÃO DA ABA 1: CADASTRO (LAYOUT OTIMIZADO E FORMATADO)
-# ==============================================================================
+# 4. INICIALIZAÇÃO DO BANCO DE DADOS (SESSION STATE)
+if 'dados' not in st.session_state:
+    st.session_state.dados = {
+        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'email': '',
+        'data': datetime.now().strftime("%d/%m/%Y"),
+        'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '', 'complemento': '',
+        'fabricante': 'Carrier', 'modelo': '', 'capacidade': '12.000',
+        'serie_evap': '', 'tag_id': 'TAG-01', 'local_evap': '',
+        'tecnico_nome': 'Marcos Alexandre', 'tecnico_registro': '',
+        'status_maquina': '🟢 Operacional'
+    }
+
+# 5. INTERFACE DA ABA 1
 def renderizar_aba_1():
     st.header("📋 Cadastro de Equipamento")
     
-    # --- SEÇÃO CLIENTE ---
     with st.expander("👤 Dados do Cliente", expanded=True):
         c1, c2, c3 = st.columns([2, 1, 1])
         st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'])
-        
-        # Máscara CPF (XXX.XXX.XXX-XX)
         cpf_raw = c2.text_input("CPF *", value=st.session_state.dados['cpf_cnpj'], max_chars=14)
         st.session_state.dados['cpf_cnpj'] = formatar_cpf(cpf_raw)
-        
-        # Máscara WhatsApp ((XX) XXXXX-XXXX)
         zap_raw = c3.text_input("WhatsApp (DDD) *", value=st.session_state.dados['whatsapp'], max_chars=15)
         st.session_state.dados['whatsapp'] = formatar_telefone(zap_raw)
 
-    # --- SEÇÃO ENDEREÇO ---
     with st.expander("📍 Endereço e Localização", expanded=True):
-        # Linha 1: CEP, Logradouro e Número
         ce1, ce2, ce3 = st.columns([1, 2, 0.8])
         cep_raw = ce1.text_input("CEP *", value=st.session_state.dados['cep'], max_chars=9)
-        st.session_state.dados['cep'] = formatar_cep(cep_raw)
-        
+        if cep_raw != st.session_state.dados['cep']:
+            st.session_state.dados['cep'] = formatar_cep(cep_raw)
+            if buscar_cep(cep_raw): st.rerun()
+            
         st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados['endereco'])
         st.session_state.dados['numero'] = ce3.text_input("Nº/Apto:", value=st.session_state.dados['numero'])
 
-        # Linha 2: Complemento, Bairro, Cidade e UF (Estreito - 2 dígitos)
         l1, l2, l3, l4 = st.columns([1.2, 1.2, 1.2, 0.4])
         st.session_state.dados['complemento'] = l1.text_input("Complemento:", value=st.session_state.dados['complemento'])
         st.session_state.dados['bairro'] = l2.text_input("Bairro:", value=st.session_state.dados['bairro'])
         st.session_state.dados['cidade'] = l3.text_input("Cidade:", value=st.session_state.dados['cidade'])
         st.session_state.dados['uf'] = l4.text_input("UF:", value=st.session_state.dados['uf'], max_chars=2)
 
-    # --- SEÇÃO EQUIPAMENTO ---
     st.subheader("⚙️ Especificações Técnicas")
     with st.expander("Detalhes do Ativo", expanded=True):
         e1, e2, e3 = st.columns(3)
@@ -146,6 +95,20 @@ def renderizar_aba_1():
             st.session_state.dados['capacidade'] = st.selectbox("Capacidade (BTU):", ["9.000", "12.000", "18.000", "24.000"])
             st.session_state.dados['tag_id'] = st.text_input("TAG/Patrimônio:", value=st.session_state.dados['tag_id'])
 
+# 6. SIDEBAR E NAVEGAÇÃO
+with st.sidebar:
+    st.title("🚀 Painel de Controle")
+    aba_selecionada = st.radio("Selecione a Aba:", ["Home", "Cadastro", "Diagnóstico"])
+    st.markdown("---")
+    st.session_state.dados['tecnico_nome'] = st.text_input("Técnico:", value=st.session_state.dados['tecnico_nome'])
+
+# 7. LÓGICA DE EXIBIÇÃO
+if aba_selecionada == "Home":
+    st.title("Bem-vindo, Marcos!")
+    st.write("Sistema HVAC PRO carregado com sucesso.")
+elif aba_selecionada == "Cadastro":
+    renderizar_aba_1()
+    
 # ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (PARTE 2 - ESQUELETO INSERIDO)
 # ==============================================================================
