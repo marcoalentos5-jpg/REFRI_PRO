@@ -138,111 +138,93 @@ def renderizar_aba_1():
 
 
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (PARTE 2 - ESQUELETO INSERIDO)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (PARTE 2 - IMPLEMENTAÇÃO TÉCNICA)
 # ==============================================================================
 def renderizar_aba_diagnosticos():
     st.header("📋 Central de Diagnósticos")
     st.markdown("---")
     
-    # 1. RECUPERAÇÃO DE FLUIDO E LÓGICA P/T
+    # 1. IDENTIFICAÇÃO DO FLUIDO (Vem da Aba 1)
     fluido = st.session_state.dados.get('fluido', 'R410A')
+    st.info(f"Análise Técnica para o Fluido: **{fluido}**")
+
+    # Função interna para calcular Temperatura de Saturação (P/T)
     def get_tsat(p, modo):
         if fluido == "R410A": return (p * 0.17) - 16.5 if modo == "baixa" else (p * 0.11) + 2.5
         if fluido == "R22": return (p * 0.28) - 14.5 if modo == "baixa" else (p * 0.18) + 8.5
         if fluido == "R32": return (p * 0.17) - 17.8 if modo == "baixa" else (p * 0.11) + 1.2
         return 0.0
 
-    # 2. CAMPOS DE MEDIÇÃO RELACIONADOS (INTUITIVOS)
-    st.subheader(f"❄️ Ciclo de Refrigerante ({fluido})")
-    col_p1, col_p2, col_p3, col_p4 = st.columns(4)
-    p_b = col_p1.number_input("P. Baixa (PSI)", min_value=0.0, key="pb_diag")
-    t_sat_b = get_tsat(p_b, "baixa")
-    col_p2.metric("T. Sat (Baixa)", f"{t_sat_b:.1f}°C")
-    t_suc = col_p3.number_input("T. Sucção (°C)", key="ts_diag")
-    sa_t = t_suc - t_sat_b
-    col_p4.metric("SA Total", f"{sa_t:.1f} K", delta=f"{sa_t-7:.1f}", delta_color="inverse")
+    # 2. SEÇÃO DE SUPERAQUECIMENTO (MEDICÕES E RESULTADOS)
+    with st.container(border=True):
+        st.subheader("❄️ Superaquecimento (Lado de Baixa)")
+        c1, c2, c3, c4 = st.columns(4)
+        p_b = c1.number_input("P. Baixa (PSI)", min_value=0.0, key="pb_diag")
+        t_sat_b = get_tsat(p_b, "baixa")
+        c2.metric("T. Sat (Baixa)", f"{t_sat_b:.1f}°C")
+        t_suc = c3.number_input("T. Sucção (°C)", key="ts_diag")
+        sa_t = t_suc - t_sat_b
+        # Métrica com cor: Ideal entre 5K e 9K (seta indica desvio de 7K)
+        c4.metric("SA TOTAL", f"{sa_t:.1f} K", delta=f"{sa_t-7:.1f}", delta_color="inverse")
 
-    col_a1, col_a2, col_a3, col_a4 = st.columns(4)
-    p_a = col_a1.number_input("P. Alta (PSI)", min_value=0.0, key="pa_diag")
-    t_sat_a = get_tsat(p_a, "alta")
-    col_a2.metric("T. Sat (Alta)", f"{t_sat_a:.1f}°C")
-    t_liq = col_a3.number_input("T. Linha Líq (°C)", key="tl_diag")
-    sr_t = t_sat_a - t_liq
-    col_a4.metric("SR Total", f"{sr_t:.1f} K", delta=f"{sr_t-5:.1f}", delta_color="normal")
+    # 3. SEÇÃO DE SUBRESFRIAMENTO (MEDIÇÕES E RESULTADOS)
+    with st.container(border=True):
+        st.subheader("🔥 Subresfriamento (Lado de Alta)")
+        ca1, ca2, ca3, ca4 = st.columns(4)
+        p_a = ca1.number_input("P. Alta (PSI)", min_value=0.0, key="pa_diag")
+        t_sat_a = get_tsat(p_a, "alta")
+        ca2.metric("T. Sat (Alta)", f"{t_sat_a:.1f}°C")
+        t_liq = ca3.number_input("T. Linha Líq (°C)", key="tl_diag")
+        sr_t = t_sat_a - t_liq
+        # Métrica com cor: Ideal entre 4K e 7K (seta indica desvio de 5K)
+        ca4.metric("SR TOTAL", f"{sr_t:.1f} K", delta=f"{sr_t-5:.1f}", delta_color="normal")
 
+    # 4. DELTA T DO AR E PERSISTÊNCIA
     st.markdown("---")
-    st.subheader("🌡️ Diferencial de Temperatura (Delta T)")
     cd1, cd2, cd3 = st.columns(3)
-    t_ret = cd1.number_input("Temp. Retorno Ar (°C)", value=24.0)
-    t_ins = cd2.number_input("Temp. Insuflamento Ar (°C)", value=12.0)
+    t_ret = cd1.number_input("Ar Retorno (°C)", value=24.0)
+    t_ins = cd2.number_input("Ar Insuflamento (°C)", value=12.0)
     dt_ar = t_ret - t_ins
     cd3.metric("Delta T Ar", f"{dt_ar:.1f} °C")
     
-    # Armazena para o WhatsApp
+    # SALVAMENTO DOS RESULTADOS PARA O WHATSAPP
     st.session_state.dados['perf'] = f"SA:{sa_t:.1f}K | SR:{sr_t:.1f}K | DT:{dt_ar:.1f}C"
-
+    
 # ==============================================================================
-# 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
+# 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO
 # ==============================================================================
-# Mudamos esta seção para antes da Lógica de Exibição das Abas para definir aba_selecionada
 with st.sidebar:
     st.title("🚀 Painel de Controle")
-
-    # A. NAVEGAÇÃO E EXIBIÇÃO DAS ABAS (ATIVADA AQUI)
     opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
-    # Use st.sidebar.radio para criar os botões de seleção de aba e DEFINIR a variável
     aba_selecionada = st.sidebar.radio("Selecione a Aba:", opcoes_abas)
     
     st.markdown("---")
-    
-    # B. DADOS DO TÉCNICO RESPONSÁVEL
     st.subheader("👤 Técnico Responsável")
     st.session_state.dados['tecnico_nome'] = st.text_input("Nome:", value=st.session_state.dados['tecnico_nome'])
-    st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ Técnico:", value=st.session_state.dados['tecnico_documento'])
-    st.session_state.dados['tecnico_registro'] = st.text_input("Inscrição (CFT/CREA):", value=st.session_state.dados['tecnico_registro'])
+    st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ:", value=st.session_state.dados['tecnico_documento'])
+    st.session_state.dados['tecnico_registro'] = st.text_input("Registro (CFT/CREA):", value=st.session_state.dados['tecnico_registro'])
     
     st.markdown("---")
-    
-    # VALIDAÇÃO DE CAMPOS OBRIGATÓRIOS
+    # VALIDAÇÃO
     if not st.session_state.dados['nome'] or not st.session_state.dados['whatsapp']:
-        st.error("📋 STATUS: PENDENTE (Preencha Cliente e WhatsApp)")
+        st.error("📋 STATUS: PENDENTE")
     else:
-        st.success("📋 STATUS: PRONTO PARA ENVIO")
+        st.success("📋 STATUS: PRONTO")
         
-    # MENSAGEM WHATSAPP - ENVIO DE TODOS OS DADOS COM PERFORMANCE TÉCNICA
+    # MENSAGEM WHATSAPP COM OS RESULTADOS DO CAPÍTULO 2
     msg_zap = (
         f"*LAUDO TÉCNICO HVAC*\n\n"
         f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
-        f"🆔 CPF/CNPJ: {st.session_state.dados['cpf_cnpj']}\n"
-        f"📍 END: {st.session_state.dados['endereco']}, {st.session_state.dados['numero']} - {st.session_state.dados['bairro']}\n"
-        f"🏙️ {st.session_state.dados['cidade']}/{st.session_state.dados['uf']} | CEP: {st.session_state.dados['cep']}\n"
-        f"📞 Contato: {st.session_state.dados['whatsapp']} | Email: {st.session_state.dados['email']}\n\n"
-        f"⚙️ *EQUIPAMENTO:*\n"
-        f"📌 TAG: {st.session_state.dados['tag_id']} | Linha: {st.session_state.dados['linha']}\n"
-        f"🏭 Fab: {st.session_state.dados['fabricante']} | Mod: {st.session_state.dados['modelo']}\n"
-        f"❄️ Cap: {st.session_state.dados['capacidade']} BTU | Fluido: {st.session_state.dados['fluido']}\n"
-        f"🔢 S.Evap: {st.session_state.dados['serie_evap']} | S.Cond: {st.session_state.dados['serie_cond']}\n"
-        f"📍 Loc.Evap: {st.session_state.dados['local_evap']} | Loc.Cond: {st.session_state.dados['local_cond']}\n"
-        f"🛠️ Serviço: {st.session_state.dados['tipo_servico']}\n"
-        f"🩺 Status: {st.session_state.dados['status_maquina']}\n"
-        f"📊 *PERFORMANCE:* {st.session_state.dados.get('perf', 'Aguardando medição')}\n\n"
+        f"⚙️ *EQUIPAMENTO:* {st.session_state.dados['tag_id']}\n"
+        f"❄️ Fluido: {st.session_state.dados['fluido']}\n"
+        f"📊 *PERFORMANCE:* {st.session_state.dados.get('perf', 'N/A')}\n\n"
         f"👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}\n"
-        f"📜 Registro: {st.session_state.dados['tecnico_registro']}\n"
         f"📅 Data: {st.session_state.dados['data']}"
     )
     
-    link_final = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_zap)}"
-    st.link_button("📲 Enviar Laudo via WhatsApp", link_final, use_container_width=True)
-
-    st.markdown("---")
-    # LIMPAR FORMULÁRIO (PROTEGENDO DADOS DO TÉCNICO)
-    if st.button("🗑️ Limpar Formulário", use_container_width=True):
-        chaves_tecnico = ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']
-        for key in st.session_state.dados.keys():
-            if key not in chaves_tecnico:
-                st.session_state.dados[key] = ""
-        st.rerun()
-
+    link = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_zap)}"
+    st.link_button("📲 Enviar Laudo WhatsApp", link, use_container_width=True)
+    
 # ==============================================================================
 # 4. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
 # ==============================================================================
