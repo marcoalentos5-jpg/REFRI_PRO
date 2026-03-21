@@ -184,10 +184,6 @@ def renderizar_aba_diagnosticos():
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
 # ==============================================================================
-
-# ==============================================================================
-# 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
-# ==============================================================================
 # Mudamos esta seção para antes da Lógica de Exibição das Abas para definir aba_selecionada
 with st.sidebar:
     st.title("🚀 Painel de Controle")
@@ -213,7 +209,7 @@ with st.sidebar:
     else:
         st.success("📋 STATUS: PRONTO PARA ENVIO")
         
-    # MENSAGEM WHATSAPP - ENVIO DE TODOS OS DADOS SEM EXCEÇÃO (Incluso Performance)
+    # MENSAGEM WHATSAPP - ENVIO DE TODOS OS DADOS COM PERFORMANCE TÉCNICA
     msg_zap = (
         f"*LAUDO TÉCNICO HVAC*\n\n"
         f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
@@ -229,7 +225,7 @@ with st.sidebar:
         f"📍 Loc.Evap: {st.session_state.dados['local_evap']} | Loc.Cond: {st.session_state.dados['local_cond']}\n"
         f"🛠️ Serviço: {st.session_state.dados['tipo_servico']}\n"
         f"🩺 Status: {st.session_state.dados['status_maquina']}\n"
-        f"📊 *PERFORMANCE:* {st.session_state.dados.get('perf', 'N/A')}\n\n"
+        f"📊 *PERFORMANCE:* {st.session_state.dados.get('perf', 'Aguardando medição')}\n\n"
         f"👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}\n"
         f"📜 Registro: {st.session_state.dados['tecnico_registro']}\n"
         f"📅 Data: {st.session_state.dados['data']}"
@@ -246,7 +242,6 @@ with st.sidebar:
             if key not in chaves_tecnico:
                 st.session_state.dados[key] = ""
         st.rerun()
-
 
 # ==============================================================================
 # 4. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
