@@ -122,7 +122,7 @@ def renderizar_aba_1():
             d_raw = c2.text_input("CPF (000.000.000-00)", value=st.session_state.dados.get('cpf_cnpj', ''), key="key_v4_cpf_cli")
 
 # Só tenta formatar se d_raw não for None ou Vazio
-if d_raw:
+    if d_raw:
     st.session_state.dados['cpf_cnpj'] = formatar_cpf(d_raw)
     z_raw = c3.text_input("WhatsApp (XX-X-XXXX-XXXX) *", value=st.session_state.dados.get('whatsapp', ''), key="k_cli_zap")
     st.session_state.dados['whatsapp'] = formatar_telefone(z_raw)
