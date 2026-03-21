@@ -135,4 +135,63 @@ def renderizar_aba_1():
                 st.session_state.dados['fluido'] = st.selectbox("Fluido:", ["R410A", "R134a", "R22", "R32", "R290"], index=0)
                 st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
                 st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
+                # ==============================================================================
+# 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO
+# ==============================================================================
+with st.sidebar:
+    st.title("🚀 MPN Soluções")
+    st.markdown("---")
+    
+    # Menu de navegação (Aba Diagnósticos removida daqui)
+    opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "Relatórios"]
+    aba_selecionada = st.sidebar.radio("Selecione a Aba:", opcoes_abas)
+    
+    st.markdown("---")
+    st.subheader("👤 Técnico Responsável")
+    st.session_state.dados['tecnico_nome'] = st.text_input("Nome:", value=st.session_state.dados['tecnico_nome'])
+    st.session_state.dados['tecnico_registro'] = st.text_input("Registro (CFT/CREA):", value=st.session_state.dados['tecnico_registro'])
+    
+    st.markdown("---")
+    
+    # Validação simples
+    if not st.session_state.dados['nome'] or not st.session_state.dados['whatsapp']:
+        st.error("📋 STATUS: PENDENTE (Preencha Cliente e WhatsApp)")
+    else:
+        st.success("📋 STATUS: PRONTO")
+        
+    # Mensagem montada para o WhatsApp
+    msg_zap = (
+        f"*LAUDO TÉCNICO HVAC*\n\n"
+        f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
+        f"⚙️ *EQUIPAMENTO:* {st.session_state.dados['tag_id']}\n"
+        f"📍 Local: {st.session_state.dados['local_evap']}\n"
+        f"🛠️ Serviço: {st.session_state.dados['tipo_servico']}\n"
+        f"👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}"
+    )
+    
+    link = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_zap)}"
+    st.link_button("📲 Enviar WhatsApp", link, use_container_width=True)
+
+# ==============================================================================
+# 4. LÓGICA DE EXIBIÇÃO DAS ABAS
+# ==============================================================================
+if aba_selecionada == "Home":
+    st.markdown("<h2 style='text-align: center; color: #0d47a1;'>MPN Soluções</h2>", unsafe_allow_html=True)
+    st.write("---")
+    st.info("Sistema de Gestão HVAC. Utilize o menu lateral para navegar entre o Cadastro e os Relatórios.")
+    
+    # Tenta carregar a logo se existir
+    if os.path.exists("logo.png"):
+        st.image("logo.png", width=200)
+
+elif aba_selecionada == "1. Cadastro de Equipamentos":
+    renderizar_aba_1()
+
+elif aba_selecionada == "Relatórios":
+    st.header("📋 Relatórios")
+    st.write("Módulo de geração de PDF em desenvolvimento.")
+
+# ==============================================================================
+# FIM DO ARQUIVO
+# ==============================================================================
 
