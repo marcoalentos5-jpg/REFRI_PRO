@@ -241,28 +241,71 @@ def renderizar_aba_1():
             st.session_state.dados['tag_id'] = st.text_input("TAG/Patrimônio:", value=st.session_state.dados['tag_id'])
 
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (PARTE 2 - ESQUELETO INSERIDO)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (CAMPOS TÉCNICOS)
 # ==============================================================================
-diagnostico = []
-probabilidades = {}
-
-def registrar(msg, falha=None, prob=0):
-    diagnostico.append(msg)
-    if falha:
-        probabilidades[falha] = prob
-
-# lógica mínima para evitar erro
-diag_ia = "Sistema operando"
-prob_txt = "Sem falhas"
-contramedidas_txt = "Nenhuma ação necessária"
-cop_aprox = 0
+def renderizar_aba_diagnosticos():
+    st.header("🔍 Diagnóstico do Ciclo Frigorífico")
     
-    # 1. SELEÇÃO DO EQUIPAMENTO (Dependência da Aba 1)
-    # equipments = db_utils.buscar_equipamentos_cadastrados()
-    # equipamento_id = st.selectbox("Selecione o Equipamento para Diagnóstico:", list(equipments.keys()), format_func=lambda x: equipments[x])
-    
-    st.info("Aba de Diagnósticos em desenvolvimento. Implemente a lógica aqui.")
+    # Recupera o fluido selecionado na Aba 1
+    fluido = st.session_state.dados.get('fluido', 'R410A')
+    st.info(f"⚙️ Fluido de Referência: **{fluido}**")
 
+    # --- ENTRADA DE DADOS ---
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("❄️ Lado de Baixa (Evaporação)")
+        p_baixa = st.number_input("Pressão de Baixa (PSI)", value=118.0)
+        t_suc = st.number_input("Temp. Tubo Sucção (°C)", value=12.0)
+        
+    with col2:
+        st.subheader("🔥 Lado de Alta (Condensação)")
+        p_alta = st.number_input("Pressão de Alta (PSI)", value=340.0)
+        t_liq = st.number_input("Temp. Tubo Líquido (°C)", value=35.0)
+
+    st.divider()
+
+    # --- LÓGICA DE CÁLCULO (EXEMPLO SIMPLIFICADO P/ R410A) ---
+    # Em um sistema real, usaríamos uma tabela P/T completa.
+    if fluido == "R410A":
+        t_sat_baixa = (p_baixa * 0.17) - 16.5
+        t_sat_alta = (p_alta * 0.11) + 2.5
+    else: # Exemplo genérico para outros
+        t_sat_baixa = (p_baixa * 0.28) - 14.5
+        t_sat_alta = (p_alta * 0.18) + 8.5
+
+    sa = t_suc - t_sat_baixa
+    sr = t_sat_alta - t_liq
+
+    # --- EXIBIÇÃO DOS RESULTADOS (MÉTRICAS) ---
+    res1, res2, res3 = st.columns(3)
+    
+    res1.metric("Superaquecimento (SA)", f"{sa:.1f} K", 
+                delta="Ideal: 5 a 7K", delta_color="normal")
+    
+    res2.metric("Subresfriamento (SR)", f"{sr:.1f} K", 
+                delta="Ideal: 4 a 7K", delta_color="normal")
+    
+    # Status simplificado
+    status_diag = "🟢 Normal" if (5 <= sa <= 9) else "🟡 Reavaliar Carga"
+    res3.metric("Status do Ciclo", status_diag)
+
+    # --- LAUDO AUTOMÁTICO ---
+    st.subheader("📝 Parecer Técnico Preliminar")
+    laudo_sugerido = f"O equipamento apresenta SA de {sa:.1f}K e SR de {sr:.1f}K. "
+    if sa > 9:
+        laudo_sugerido += "Possível falta de fluido ou baixa carga."
+    elif sa < 5:
+        laudo_sugerido += "Possível excesso de fluido ou baixa troca na evaporadora."
+    else:
+        laudo_sugerido += "Parâmetros de operação dentro da normalidade."
+
+    st.text_area("Diagnóstico Sugerido:", value=laudo_sugerido, height=100)
+    
+    # Salva no sistema para o WhatsApp
+    st.session_state.dados['diagnostico_resumo'] = f"SA:{sa:.1f} | SR:{sr:.1f} | {status_diag}"
+
+# ==============================================================================
 
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
