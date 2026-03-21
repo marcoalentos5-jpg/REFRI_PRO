@@ -93,56 +93,56 @@ def renderizar_aba_1():
     with tabs[0]:
         with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
             c1, c2, c3 = st.columns([2, 1, 1])
-           st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados.get('nome', ''), key="key_nome_cliente_final")
-            doc_raw = c2.text_input("CPF (000.000.000-00)", value=st.session_state.dados['cpf_cnpj'], key="cli_d")
-            st.session_state.dados['cpf_cnpj'] = formatar_cpf(doc_raw)
-            zap_raw = c3.text_input("WhatsApp (XX-X-XXXX-XXXX) *", value=st.session_state.dados['whatsapp'], key="cli_w")
-            st.session_state.dados['whatsapp'] = formatar_telefone(zap_raw)
+            # CORREÇÃO DA LINHA 91: USO DE .GET E KEY EXCLUSIVA
+            st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados.get('nome', ''), key="k_cli_nome")
+            d_raw = c2.text_input("CPF (000.000.000-00)", value=st.session_state.dados.get('cpf_cnpj', ''), key="k_cli_doc")
+            st.session_state.dados['cpf_cnpj'] = formatar_cpf(d_raw)
+            z_raw = c3.text_input("WhatsApp (XX-X-XXXX-XXXX) *", value=st.session_state.dados.get('whatsapp', ''), key="k_cli_zap")
+            st.session_state.dados['whatsapp'] = formatar_telefone(z_raw)
 
             cx1, cx2, cx3 = st.columns([1, 1, 2])
-            st.session_state.dados['celular'] = formatar_telefone(cx1.text_input("Celular:", value=st.session_state.dados['celular'], key="cli_c"))
-            st.session_state.dados['tel_fixo'] = formatar_telefone(cx2.text_input("Fixo:", value=st.session_state.dados['tel_fixo'], key="cli_f"))
-            st.session_state.dados['email'] = cx3.text_input("E-mail:", value=st.session_state.dados['email'], key="cli_e")
+            st.session_state.dados['celular'] = formatar_telefone(cx1.text_input("Celular:", value=st.session_state.dados.get('celular', ''), key="k_cli_cel"))
+            st.session_state.dados['tel_fixo'] = formatar_telefone(cx2.text_input("Fixo:", value=st.session_state.dados.get('tel_fixo', ''), key="k_cli_fix"))
+            st.session_state.dados['email'] = cx3.text_input("E-mail:", value=st.session_state.dados.get('email', ''), key="k_cli_mail")
 
             st.markdown("---")
             ce1, ce2, ce3 = st.columns([1, 2, 1])
-            cep_in = ce1.text_input("CEP *", value=st.session_state.dados['cep'], key="cli_cep_val")
+            cep_in = ce1.text_input("CEP *", value=st.session_state.dados.get('cep', ''), key="k_cli_cep")
             if cep_in != st.session_state.dados['cep']:
                 st.session_state.dados['cep'] = cep_in
                 if buscar_cep(cep_in): st.rerun()
 
-            st.session_state.dados['endereco'] = ce2.text_input("Rua:", value=st.session_state.dados['endereco'], key="cli_rua_val")
-            st.session_state.dados['numero'] = ce3.text_input("Nº:", value=st.session_state.dados['numero'], key="cli_num_val")
+            st.session_state.dados['endereco'] = ce2.text_input("Rua:", value=st.session_state.dados.get('endereco', ''), key="k_cli_rua")
+            st.session_state.dados['numero'] = ce3.text_input("Nº:", value=st.session_state.dados.get('numero', ''), key="k_cli_num")
 
             ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.4]) 
-            st.session_state.dados['complemento'] = ce4.text_input("Comp:", value=st.session_state.dados['complemento'], key="cli_comp_val")
-            st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'], key="cli_bair_val")
-            st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'], key="cli_cid_val")
-            st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'], max_chars=2, key="cli_uf_val")
+            st.session_state.dados['complemento'] = ce4.text_input("Comp:", value=st.session_state.dados.get('complemento', ''), key="k_cli_comp")
+            st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados.get('bairro', ''), key="k_cli_bair")
+            st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados.get('cidade', ''), key="k_cli_cid")
+            st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados.get('uf', ''), max_chars=2, key="k_cli_uf")
 
         st.subheader("⚙️ Especificações do Equipamento")
         with st.expander("Detalhes Técnicos", expanded=True):
             e1, e2, e3 = st.columns(3)
             f_list = sorted(["Carrier", "Daikin", "Elgin", "Fujitsu", "Gree", "LG", "Midea", "Samsung", "TCL", "Trane", "York"])
             st.session_state.dados['fabricante'] = e1.selectbox("Fabricante:", f_list, key="seq_1")
-            st.session_state.dados['modelo'] = e2.text_input("Modelo:", value=st.session_state.dados['modelo'], key="seq_2")
+            st.session_state.dados['modelo'] = e2.text_input("Modelo:", value=st.session_state.dados.get('modelo', ''), key="seq_2")
             st.session_state.dados['linha'] = e3.selectbox("Linha:", ["Residencial", "Comercial", "Industrial"], key="seq_3")
 
             e4, e5 = st.columns(2)
-            st.session_state.dados['serie_evap'] = e4.text_input("Série Evap:", value=st.session_state.dados['serie_evap'], key="seq_4")
-            st.session_state.dados['serie_cond'] = e5.text_input("Série Cond:", value=st.session_state.dados['serie_cond'], key="seq_5")
+            st.session_state.dados['serie_evap'] = e4.text_input("Série Evap:", value=st.session_state.dados.get('serie_evap', ''), key="seq_4")
+            st.session_state.dados['serie_cond'] = e5.text_input("Série Cond:", value=st.session_state.dados.get('serie_cond', ''), key="seq_5")
 
             e6, e7 = st.columns(2)
-            st.session_state.dados['local_evap'] = e6.text_input("Local Evap:", value=st.session_state.dados['local_evap'], key="seq_6")
-            st.session_state.dados['local_cond'] = e7.text_input("Local Cond:", value=st.session_state.dados['local_cond'], key="seq_7")
+            st.session_state.dados['local_evap'] = e6.text_input("Local Evap:", value=st.session_state.dados.get('local_evap', ''), key="seq_6")
+            st.session_state.dados['local_cond'] = e7.text_input("Local Cond:", value=st.session_state.dados.get('local_cond', ''), key="seq_7")
 
             e8, e9, e10 = st.columns(3)
             st.session_state.dados['capacidade'] = e8.selectbox("BTU:", ["9k", "12k", "18k", "24k", "30k", "60k"], key="seq_8")
             st.session_state.dados['fluido'] = e9.selectbox("Gás:", ["R410A", "R22", "R32", "R134a"], key="seq_9")
-            st.session_state.dados['tag_id'] = e10.text_input("TAG:", value=st.session_state.dados['tag_id'], key="seq_10")
+            st.session_state.dados['tag_id'] = e10.text_input("TAG:", value=st.session_state.dados.get('tag_id', ''), key="seq_10")
             
             st.session_state.dados['status_maquina'] = st.radio("Condição:", ["🟢 OK", "🟡 Atenção", "🔴 Parado"], horizontal=True, key="st_f")
-
 # ==============================================================================
 # 4. FUNÇÃO DA ABA 2: DIAGNÓSTICOS TÉCNICOS
 # ==============================================================================
