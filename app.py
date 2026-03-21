@@ -135,10 +135,10 @@ if d_raw:
     ce1, ce2, ce3 = st.columns([1, 2, 1])
     cep_in = ce1.text_input("CEP *", value=st.session_state.dados.get('cep', ''), key="k_cli_cep")
         
-        if cep_in != st.session_state.dados['cep']:
-            st.session_state.dados['cep'] = cep_in
-            if buscar_cep(cep_in): 
-                st.rerun()
+if cep_in != st.session_state.dados['cep']:
+    st.session_state.dados['cep'] = cep_in
+if buscar_cep(cep_in): 
+    st.rerun()
 
         # CAMPOS DE ENDEREÇO (Alinhados fora do IF do CEP)
         st.session_state.dados['endereco'] = ce2.text_input("Rua:", value=st.session_state.dados.get('endereco', ''), key="k_cli_rua")
