@@ -576,7 +576,7 @@ else:
     st.write("O site está VIVO e respondendo na Aba B")
 
 # ==============================================================================
-# 4. LÓGICA DE EXIBIÇÃO FINAL (VERSÃO 1.55.0 - CORRIGIDA)
+# 4. LÓGICA DE EXIBIÇÃO FINAL (VERSÃO 1.55.0 - TOTALMENTE CORRIGIDA)
 # ==============================================================================
 
 if "Home" in aba_selecionada:
@@ -584,19 +584,21 @@ if "Home" in aba_selecionada:
     col1, col2, col3 = st.columns([1, 2, 1]) 
     with col2: 
         if os.path.exists("logo.png"):
-            # CORREÇÃO AQUI: width='stretch' em vez de use_container_width
+            # Ajustado para a versão 1.55.0
             st.image("logo.png", width='stretch')
         else:
             st.info("🏠 MPN SOLUÇÕES HVAC")
     st.header("Bem-vindo, Marcos!")
 
 elif "Cadastro" in aba_selecionada:
-    ifrenderizar_aba_1()
+    # CORREÇÃO: Removido o 'if' colado no nome da função
+    renderizar_aba_1()
 
 elif "Diagn" in aba_selecionada:
-    # Verificação de segurança para não travar o site
+    # Verificação de segurança
     if 'renderizar_aba_diagnosticos' in globals():
-        ifrenderizar_aba_diagnosticos()
+        # CORREÇÃO: Removido o 'if' colado no nome da função
+        renderizar_aba_diagnosticos()
     else:
         st.warning("Aba de Diagnósticos em manutenção.")
 
@@ -604,25 +606,25 @@ elif "Relat" in aba_selecionada:
     st.header("📋 Relatórios")
     st.write("Módulo em desenvolvimento.")
 
-# No botão do WhatsApp na Sidebar, faça o mesmo:
-# st.link_button("📲 Enviar", link, width='stretch')
 # ==============================================================================
-# 5. EXIBIÇÃO DE RESULTADOS (APENAS SE AS VARIÁVEIS EXISTIREM)
+# 5. EXIBIÇÃO DE RESULTADOS (OCULTA SE NÃO HOUVER DADOS)
 # ==============================================================================
-# Este bloco evita o erro de "Variável não definida" que deixa a tela branca
+# Só exibe se estiver na aba de Diagnóstico E se as variáveis de cálculo existirem
 if "Diagn" in aba_selecionada and 'status' in locals():
     st.divider()
-    c1, c2, c3 = st.columns(3)
-    c1.metric("📊 Status", status)
-    c2.metric("❤️ Saúde", f"{score}%")
-    c3.metric("⚡ COP", cop)
+    res1, res2, res3 = st.columns(3)
+    res1.metric("📊 Status", status)
+    res2.metric("❤️ Saúde", f"{score}%")
+    res3.metric("⚡ COP", cop)
 
     st.info(f"🔎 **Diagnóstico:** {diag_txt}")
     st.warning(f"🚨 **Falhas:** {prob_txt}")
     st.success(f"🛠️ **Ações:** {acoes_txt}")
 
     st.subheader("📄 Laudo Técnico")
-    st.text_area("Texto do Laudo", laudo, height=200, label_visibility="collapsed")
+    # Usando o dicionário de dados para evitar erro de variável vazia
+    laudo_texto = st.session_state.dados.get('laudo', 'Laudo não gerado.')
+    st.text_area("Texto do Laudo", laudo_texto, height=200, label_visibility="collapsed")
 
 # ==============================================================================
 # FIM DO ARQUIVO
