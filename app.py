@@ -1,7 +1,13 @@
 import streamlit as st
 from datetime import datetime
 import os
-
+def formatar_cpf(valor):
+    """Aplica máscara XXX.XXX.XXX-XX e evita erros se estiver vazio"""
+    if not valor: return "" # Se não digitou nada, retorna vazio sem erro
+    v = "".join(filter(str.isdigit, str(valor)))
+    if len(v) == 11: 
+        return f"{v[:3]}.{v[3:6]}.{v[6:9]}-{v[9:]}"
+    return v # Retorna o que o usuário digitou se não tiver 11 dígitos
 # --- CONFIGURAÇÃO INICIAL (Linha 1-15) ---
 st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
 
@@ -113,8 +119,11 @@ def renderizar_aba_1():
             c1, c2, c3 = st.columns([2, 1, 1])
             # CORREÇÃO DA LINHA 91: USO DE .GET E KEY EXCLUSIVA
             st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados.get('nome', ''), key="key_unico_nome_v4")
-            d_raw = c2.text_input("CPF (000.000.000-00)", value=st.session_state.dados.get('cpf_cnpj', ''), key="k_cli_doc")
-            st.session_state.dados['cpf_cnpj'] = formatar_cpf(d_raw)
+            d_raw = c2.text_input("CPF (000.000.000-00)", value=st.session_state.dados.get('cpf_cnpj', ''), key="key_v4_cpf_cli")
+
+# Só tenta formatar se d_raw não for None ou Vazio
+if d_raw:
+    st.session_state.dados['cpf_cnpj'] = formatar_cpf(d_raw)
             z_raw = c3.text_input("WhatsApp (XX-X-XXXX-XXXX) *", value=st.session_state.dados.get('whatsapp', ''), key="k_cli_zap")
             st.session_state.dados['whatsapp'] = formatar_telefone(z_raw)
 
