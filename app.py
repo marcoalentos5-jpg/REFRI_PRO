@@ -307,8 +307,9 @@ def renderizar_aba_diagnosticos():
 def main():
     # Renderiza apenas a interface ativa
     # LINHA 309 (O ERRO ESTÁ AQUI)
-def main():
-    renderizar_aba_1()  # <--- Aqui ele chama a função pela segunda vez no arquivo
+    
+    def main():
+        renderizar_aba_1()  # <--- Aqui ele chama a função pela segunda vez no arquivo
 
 # LINHA 315
     if __name__ == "__main__":
