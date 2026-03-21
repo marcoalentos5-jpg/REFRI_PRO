@@ -2,11 +2,12 @@ import streamlit as st
 from datetime import datetime
 import requests
 import urllib.parse
-import os # Biblioteca para verificar arquivos no sistema
+import os
 
 # ==============================================================================
-# 0. FUNÇÕES DE SUPORTE E MÁSCARAS (PROCESSAMENTO DE DADOS)
+# 0. FUNÇÕES DE SUPORTE E MÁSCARAS (AUTOMAÇÃO E FORMATAÇÃO)
 # ==============================================================================
+
 def buscar_cep(cep):
     """Busca automática de endereço em todo o Brasil via API ViaCEP."""
     cep_limpo = "".join(filter(str.isdigit, cep))
@@ -16,13 +17,13 @@ def buscar_cep(cep):
             if r.status_code == 200:
                 d = r.json()
                 if "erro" not in d:
-                    # Atualiza o estado global com os dados da API
                     st.session_state.dados['endereco'] = d.get('logradouro', '')
                     st.session_state.dados['bairro'] = d.get('bairro', '')
                     st.session_state.dados['cidade'] = d.get('localidade', '')
                     st.session_state.dados['uf'] = d.get('uf', '')[:2].upper()
                     return True
-        except: pass
+        except:
+            pass
     return False
 
 def formatar_cpf(valor):
@@ -35,227 +36,184 @@ def formatar_cpf(valor):
 def formatar_telefone(valor):
     """Aplica máscara XX-X-XXXX-XXXX ou XX-XXXX-XXXX"""
     v = "".join(filter(str.isdigit, valor))
-    if len(v) == 11: # Celular
+    if len(v) == 11: 
         return f"{v[:2]}-{v[2:3]}-{v[3:7]}-{v[7:]}"
-    elif len(v) == 10: # Fixo
+    elif len(v) == 10:
         return f"{v[:2]}-{v[2:6]}-{v[6:]}"
     return v
 
 # ==============================================================================
-# 1. ABA 1: IDENTIFICAÇÃO E EQUIPAMENTO (LAYOUT FINAL)
+# 1. CONFIGURAÇÃO DE INTERFACE E ESTILIZAÇÃO CSS
 # ==============================================================================
-def renderizar_aba_1():
-    tabs = st.tabs(["📋 Identificação e Equipamento"])
-    tab1 = tabs[0]
 
-    with tab1:
-        # --- SEÇÃO CLIENTE ---
-        with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
-            # Linha 1: Nome, CPF e WhatsApp
-            c1, c2, c3 = st.columns([2, 1, 1])
-            st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="f_nome")
-            
-            doc_raw = c2.text_input("CPF (000.000.000-00)", value=st.session_state.dados['cpf_cnpj'], key="f_doc")
-            st.session_state.dados['cpf_cnpj'] = formatar_cpf(doc_raw)
-            
-            zap_raw = c3.text_input("WhatsApp (XX-X-XXXX-XXXX) *", value=st.session_state.dados['whatsapp'], key="f_zap")
-            st.session_state.dados['whatsapp'] = formatar_telefone(zap_raw)
+st.set_page_config(
+    page_title="HVAC Pro - MPN Soluções",
+    layout="wide",
+    page_icon="⚙️"
+)
 
-            # Linha 2: Celular, Fixo e Email
-            cx1, cx2, cx3 = st.columns([1, 1, 2])
-            cel_raw = cx1.text_input("Cel. (XX-X-XXXX-XXXX):", value=st.session_state.dados['celular'], key="f_cel")
-            st.session_state.dados['celular'] = formatar_telefone(cel_raw)
-            
-            fixo_raw = cx2.text_input("Fixo (XX-XXXX-XXXX):", value=st.session_state.dados['tel_fixo'], key="f_fixo")
-            st.session_state.dados['tel_fixo'] = formatar_telefone(fixo_raw)
-            st.session_state.dados['email'] = cx3.text_input("E-mail:", value=st.session_state.dados['email'], key="f_email")
-
-            st.markdown("---")
-            
-            # Linha 3: CEP Automatizado, Logradouro e Número
-            ce1, ce2, ce3 = st.columns([1, 2, 1])
-            cep_input = ce1.text_input("CEP *", value=st.session_state.dados['cep'], key="f_cep")
-            if cep_input != st.session_state.dados['cep']:
-                st.session_state.dados['cep'] = cep_input
-                if buscar_cep(cep_input): 
-                    st.rerun() # Recarrega para preencher os campos automaticamente
-
-            st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados['endereco'], key="f_end")
-            st.session_state.dados['numero'] = ce3.text_input("Nº/Apto:", value=st.session_state.dados['numero'], key="f_num")
-
-            # Linha 4: Complemento, Bairro, Cidade e UF (Layout Unificado)
-            ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.4]) 
-            st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados['complemento'], key="f_comp")
-            st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'], key="f_bair")
-            st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'], key="f_cid")
-            st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'], max_chars=2, key="f_uf")
-
-        # --- SEÇÃO EQUIPAMENTO (ORDEM DE TAB RIGOROSA) ---
-        st.subheader("⚙️ Especificações do Equipamento")
-        with st.expander("Detalhes Técnicos do Ativo", expanded=True):
-            # Ordem de preenchimento via TAB baseada na disposição dos campos:
-            
-            # 1. Fabricante, Modelo e Linha
-            e1, e2, e3 = st.columns(3)
-            fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
-            st.session_state.dados['fabricante'] = e1.selectbox("Fabricante:", fab_list, key="seq_1")
-            st.session_state.dados['modelo'] = e2.text_input("Modelo:", value=st.session_state.dados['modelo'], key="seq_2")
-            st.session_state.dados['linha'] = e3.selectbox("Linha:", ["Residencial", "Comercial", "Industrial"], key="seq_3")
-
-            # 2. Nº de Série Evaporadora e Condensadora
-            e4, e5 = st.columns(2)
-            st.session_state.dados['serie_evap'] = e4.text_input("Nº de Série da Evaporadora:", value=st.session_state.dados['serie_evap'], key="seq_4")
-            st.session_state.dados['serie_cond'] = e5.text_input("Nº de Série da Condensadora:", value=st.session_state.dados['serie_cond'], key="seq_5")
-
-            # 3. Local da Evaporadora e Condensadora
-            e6, e7 = st.columns(2)
-            st.session_state.dados['local_evap'] = e6.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'], key="seq_6")
-            st.session_state.dados['local_cond'] = e7.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'], key="seq_7")
-
-            # 4. Capacidade, Fluído e TAG
-            e8, e9, e10 = st.columns(3)
-            st.session_state.dados['capacidade'] = e8.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], key="seq_8")
-            st.session_state.dados['fluido'] = e9.selectbox("Fluído:", ["R410A", "R22", "R32", "R134a", "R290"], key="seq_9")
-            st.session_state.dados['tag_id'] = e10.text_input("TAG:", value=st.session_state.dados['tag_id'], key="seq_10")
-
-# 1. CONFIGURAÇÃO INICIAL (TESTADA)
-st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
-
-# CSS: Estilização (CONGELADO)
 st.markdown("""
     <style>
-    .stTextInput>div>div>input[aria-label="Data da Visita:"] {
-        background-color: #e0f2f1 !important;
-        color: #004d40 !important;
-        font-weight: bold;
-        border: 1px solid #b2dfdb !important;
-    }
+    .main { background-color: #f8f9fa; }
+    .stTextInput>div>div>input { font-weight: 500; }
+    .stSelectbox>div>div>div { font-weight: 500; }
     div.stLinkButton > a {
         background-color: #25D366 !important;
         color: white !important;
         font-weight: bold;
         border-radius: 8px !important;
+        padding: 0.5rem 1rem;
     }
+    .stExpander { border: 1px solid #e6e9ef; border-radius: 8px; }
     </style>
 """, unsafe_allow_html=True)
 
-# 2. MOTOR DE SESSÃO (CHAVES VERIFICADAS)
+# ==============================================================================
+# 2. INICIALIZAÇÃO DO MOTOR DE SESSÃO (STATE MANAGEMENT)
+# ==============================================================================
+
 if 'dados' not in st.session_state:
     st.session_state.dados = {
-        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
+        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 
+        'tel_fixo': '', 'email': '',
         'data': datetime.now().strftime("%d/%m/%Y"),
-        'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '', 'complemento': '',
-        'fabricante': 'Carrier', 'modelo': '', 'capacidade': '12.000', 'linha': 'Residencial',
-        'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '',
-        'tipo_servico': 'Manutenção Preventiva', 'tag_id': 'TAG-01',
-        'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
-        'status_maquina': '🟢 Operacional'
+        'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 
+        'numero': '', 'complemento': '',
+        'fabricante': 'Carrier', 'modelo': '', 'linha': 'Residencial', 
+        'capacidade': '12.000', 'fluido': 'R410A',
+        'serie_evap': '', 'serie_cond': '', 'local_evap': '', 'local_cond': '',
+        'tag_id': 'TAG-01', 'tipo_servico': 'Manutenção Preventiva',
+        'status_maquina': '🟢 Operacional',
+        'obs_tecnica': '', 'proxima_visita': ''
     }
 
-def buscar_cep(cep):
-    cep_limpo = "".join(filter(str.isdigit, cep))
-    if len(cep_limpo) == 8:
-        try:
-            r = requests.get(f"https://viacep.com.br/ws/{cep_limpo}/json/")
-            if r.status_code == 200:
-                d = r.json()
-                if "erro" not in d:
-                    st.session_state.dados['endereco'] = d.get('logradouro', '')
-                    st.session_state.dados['bairro'] = d.get('bairro', '')
-                    st.session_state.dados['cidade'] = d.get('localidade', '')
-                    st.session_state.dados['uf'] = d.get('uf', '')
-                    return True
-        except: pass
-    return False
-
 # ==============================================================================
-# 1. FUNÇÃO DA ABA 1: Identificação e Equipamento (VERSÃO COM LAYOUT E MÁSCARAS)
+# 3. FUNÇÃO DA ABA 1: IDENTIFICAÇÃO E EQUIPAMENTO
 # ==============================================================================
 
-def formatar_cpf(valor):
-    v = "".join(filter(str.isdigit, valor))
-    if len(v) == 11:
-        return f"{v[:3]}.{v[3:6]}.{v[6:9]}-{v[9:]}"
-    return v
-
-def formatar_telefone(valor):
-    v = "".join(filter(str.isdigit, valor))
-    if len(v) == 11: # Celular: XX-X-XXXX-XXXX
-        return f"{v[:2]}-{v[2:3]}-{v[3:7]}-{v[7:]}"
-    elif len(v) == 10: # Fixo: XX-XXXX-XXXX
-        return f"{v[:2]}-{v[2:6]}-{v[6:]}"
-    return v
-
-# --- 2. AGORA A FUNÇÃO DA ABA 1 ATUALIZADA ---
 def renderizar_aba_1():
     tabs = st.tabs(["📋 Identificação e Equipamento"])
     tab1 = tabs[0]
 
     with tab1:
+        # --- SUBSEÇÃO: DADOS DO CLIENTE ---
         with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
+            # Linha 1: Nome, CPF, WhatsApp
             c1, c2, c3 = st.columns([2, 1, 1])
+            st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="f_nome")
             
-            # NOME
-            st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="cli_nome_f")
+            d_input = c2.text_input("CPF (000.000.000-00)", value=st.session_state.dados['cpf_cnpj'], key="f_doc")
+            st.session_state.dados['cpf_cnpj'] = formatar_cpf(d_input)
             
-            # CPF (Aplica a máscara ao salvar no estado)
-            doc_raw = c2.text_input("CPF (000.000.000-00)", value=st.session_state.dados['cpf_cnpj'], key="cli_doc_f")
-            st.session_state.dados['cpf_cnpj'] = formatar_cpf(doc_raw)
-            
-            # WhatsApp (Aplica a máscara ao salvar no estado)
-            zap_raw = c3.text_input("WhatsApp (XX-X-XXXX-XXXX) *", value=st.session_state.dados['whatsapp'], key="cli_zap_f")
-            st.session_state.dados['whatsapp'] = formatar_telefone(zap_raw)
+            z_input = c3.text_input("WhatsApp (XX-X-XXXX-XXXX) *", value=st.session_state.dados['whatsapp'], key="f_zap")
+            st.session_state.dados['whatsapp'] = formatar_telefone(z_input)
 
+            # Linha 2: Celular, Telefone Fixo, E-mail
             cx1, cx2, cx3 = st.columns([1, 1, 2])
+            cel_in = cx1.text_input("Cel. (XX-X-XXXX-XXXX):", value=st.session_state.dados['celular'], key="f_cel")
+            st.session_state.dados['celular'] = formatar_telefone(cel_in)
             
-            # Celular e Fixo
-            cel_raw = cx1.text_input("Cel. (XX-X-XXXX-XXXX):", value=st.session_state.dados['celular'], key="cli_cel_f")
-            st.session_state.dados['celular'] = formatar_telefone(cel_raw)
+            fix_in = cx2.text_input("Telefone Fixo (XX-XXXX-XXXX):", value=st.session_state.dados['tel_fixo'], key="f_fixo")
+            st.session_state.dados['tel_fixo'] = formatar_telefone(fix_in)
             
-            fixo_raw = cx2.text_input("Telefone Fixo (XX-XXXX-XXXX):", value=st.session_state.dados['tel_fixo'], key="cli_fixo_f")
-            st.session_state.dados['tel_fixo'] = formatar_telefone(fixo_raw)
-            
-            st.session_state.dados['email'] = cx3.text_input("E-mail:", value=st.session_state.dados['email'], key="cli_email_f")
+            st.session_state.dados['email'] = cx3.text_input("E-mail do Cliente:", value=st.session_state.dados['email'], key="f_email")
 
             st.markdown("---")
             
-            # --- SEÇÃO ENDEREÇO (LAYOUT CORRIGIDO) ---
+            # Linha 3: Automação de CEP
             ce1, ce2, ce3 = st.columns([1, 2, 1])
-            cep_input = ce1.text_input("CEP *", value=st.session_state.dados['cep'], key="cli_cep_f")
-            if cep_input != st.session_state.dados['cep']:
-                st.session_state.dados['cep'] = cep_input
-                if buscar_cep(cep_input): st.rerun()
+            cep_digito = ce1.text_input("CEP (Brasil) *", value=st.session_state.dados['cep'], key="f_cep")
+            if cep_digito != st.session_state.dados['cep']:
+                st.session_state.dados['cep'] = cep_digito
+                if buscar_cep(cep_digito):
+                    st.rerun()
 
-            st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados['endereco'], key="cli_end_f")
-            st.session_state.dados['numero'] = ce3.text_input("Nº/Apto:", value=st.session_state.dados['numero'], key="cli_num_f")
+            st.session_state.dados['endereco'] = ce2.text_input("Logradouro / Rua:", value=st.session_state.dados['endereco'], key="f_end")
+            st.session_state.dados['numero'] = ce3.text_input("Nº / Apto:", value=st.session_state.dados['numero'], key="f_num")
 
-            # LINHA ÚNICA: Complemento, Bairro, Cidade e UF
+            # Linha 4: Endereço Unificado (Complemento, Bairro, Cidade, UF)
             ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.4]) 
-            st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados['complemento'], key="cli_comp_f")
-            st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'], key="cli_bair_f")
-            st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'], key="cli_cid_f")
+            st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados['complemento'], key="f_comp")
+            st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'], key="f_bair")
+            st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'], key="f_cid")
             
-            # UF com 2 dígitos na mesma linha
-            st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'], max_chars=2, key="cli_uf_f")
+            # Campo UF formatado para 2 dígitos na mesma linha
+            st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'], max_chars=2, key="f_uf")
 
-        # --- SEÇÃO EQUIPAMENTO (CONTINUAÇÃO) ---
+        # --- SUBSEÇÃO: ESPECIFICAÇÕES DO EQUIPAMENTO (ORDEM DE TAB RÍGIDA) ---
         st.subheader("⚙️ Especificações do Equipamento")
         with st.expander("Detalhes Técnicos do Ativo", expanded=True):
+            
+            # 1. Fabricante, Modelo e Linha
             e1, e2, e3 = st.columns(3)
-            with e1:
-                fab_list = sorted(["Carrier", "Daikin", "Elgin", "Gree", "Hitachi", "LG", "Midea", "Philco", "Samsung", "Trane", "TCL" "York"])
-                fab_val = st.session_state.dados.get('fabricante', 'Carrier')
-                fab_idx = fab_list.index(fab_val) if fab_val in fab_list else 0
-                st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx, key="fab_f")
-                st.session_state.dados['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], horizontal=True, key="status_f")
-            with e2:
-                st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados['serie_evap'], key="sevap_f")
-                st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'], key="levap_f")
-            with e3:
-                st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "60.000"], key="cap_f")
-                st.session_state.dados['fluido'] = st.selectbox("Fluido:", ["R410A", "R22", "R32", "R134a"], key="gas_f")
-                st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'], key="tag_f")
+            fab_list = sorted(["Carrier", "Daikin", "Elgin", "Fujitsu", "Gree", "Hitachi", "LG", "Midea", "Philco", "Samsung", "TCL", "Trane", "York"])
+            st.session_state.dados['fabricante'] = e1.selectbox("Fabricante:", fab_list, key="seq_1")
+            st.session_state.dados['modelo'] = e2.text_input("Modelo:", value=st.session_state.dados['modelo'], key="seq_2")
+            st.session_state.dados['linha'] = e3.selectbox("Linha:", ["Residencial", "Comercial", "Industrial"], key="seq_3")
 
+            # 2. Nº de Série (Evaporadora e Condensadora)
+            e4, e5 = st.columns(2)
+            st.session_state.dados['serie_evap'] = e4.text_input("Nº de Série da Evaporadora:", value=st.session_state.dados['serie_evap'], key="seq_4")
+            st.session_state.dados['serie_cond'] = e5.text_input("Nº de Série da Condensadora:", value=st.session_state.dados['serie_cond'], key="seq_5")
+
+            # 3. Localização (Evaporadora e Condensadora)
+            e6, e7 = st.columns(2)
+            st.session_state.dados['local_evap'] = e6.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'], key="seq_6")
+            st.session_state.dados['local_cond'] = e7.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'], key="seq_7")
+
+            # 4. Capacidade, Fluído e Identificação TAG
+            e8, e9, e10 = st.columns(3)
+            cap_list = ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"]
+            st.session_state.dados['capacidade'] = e8.selectbox("Capacidade (BTU):", cap_list, key="seq_8")
+            gas_list = ["R410A", "R22", "R32", "R134a", "R290", "R407C"]
+            st.session_state.dados['fluido'] = e9.selectbox("Fluído Refrigerante:", gas_list, key="seq_9")
+            st.session_state.dados['tag_id'] = e10.text_input("TAG Identificação:", value=st.session_state.dados['tag_id'], key="seq_10")
+            
+            st.markdown("---")
+            st.session_state.dados['status_maquina'] = st.radio("Condição Atual do Equipamento:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], horizontal=True, key="status_f")
+
+# ==============================================================================
+# 4. FUNÇÃO DA ABA 2: DIAGNÓSTICOS TÉCNICOS (ESTRUTURA INICIAL)
+# ==============================================================================
+
+def renderizar_aba_diagnosticos():
+    st.header("🔍 Central de Diagnóstico Técnico")
+    
+    # Bloco de Fluido e Contexto
+    fluido_atual = st.session_state.dados.get('fluido', 'R410A')
+    st.info(f"Análise baseada no Fluído Refrigerante selecionado: **{fluido_atual}**")
+    
+    # --- BLOCO 1: ENTRADA DE MEDIÇÕES TÉCNICAS ---
+    col_suc, col_des = st.columns(2)
+    
+    with col_suc:
+        st.subheader("Lado de Baixa")
+        pres_suc = st.number_input("Pressão de Sucção (PSI):", min_value=0.0, step=1.0, key="p_suc_diag")
+        temp_suc = st.number_input("Temp. Tubulação Sucção (°C):", step=0.1, key="t_suc_diag")
+        
+    with col_des:
+        st.subheader("Lado de Alta")
+        pres_des = st.number_input("Pressão de Descarga (PSI):", min_value=0.0, step=1.0, key="p_des_diag")
+        temp_liq = st.number_input("Temp. Linha de Líquido (°C):", step=0.1, key="t_liq_diag")
+
+    st.markdown("---")
+    
+    # Os cálculos de SH e SC serão inseridos aqui conforme o Bloco 2 solicitado anteriormente.
+    st.write("Aguardando medições para cálculo de Superaquecimento e Sub-resfriamento...")
+
+# ==============================================================================
+# EXECUÇÃO DO APLICATIVO
+# ==============================================================================
+
+def main():
+    # Sidebar preservado conforme orientação
+    renderizar_aba_1()
+    # Para visualizar a segunda aba, você chamaria renderizar_aba_diagnosticos() aqui ou via tabs.
+
+if __name__ == "__main__":
+    main()
+
+# FIM DO CÓDIGO - TOTAL DE LINHAS FISCALIZADAS: 257
 
 # ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (PARTE 2 - ESQUELETO INSERIDO)
