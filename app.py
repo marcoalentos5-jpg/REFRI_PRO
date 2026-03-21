@@ -33,10 +33,21 @@ def formatar_telefone(valor):
     return valor
 
 # ==============================================================================
-# 1. INICIALIZAÇÃO DO SESSION STATE (DADOS)
+# 0. INICIALIZAÇÃO DO BANCO DE DADOS (SESSION STATE)
 # ==============================================================================
 if 'dados' not in st.session_state:
-st.session_state.dados = { ... seu dicionário de dados aqui ... }
+    # Esta linha abaixo PRECISA de 4 espaços de recuo (Tab)
+    st.session_state.dados = {
+        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'cep': '',
+        'endereco': '', 'numero': '', 'complemento': '', 'bairro': '',
+        'cidade': '', 'uf': '', 'fabricante': 'Carrier', 'modelo': '',
+        'capacidade': '12.000', 'tag_id': '', 'serie_evap': '',
+        'local_evap': '', 'status_maquina': '🟢 Operacional',
+        'tecnico_nome': '', 'tecnico_documento': '', 'tecnico_registro': '',
+        'email': '', 'linha': '', 'fluido': 'R410A', 'serie_cond': '',
+        'local_cond': '', 'tipo_servico': 'Manutenção Preventiva',
+        'data': '2024', 'laudo': ''
+    }
 
 # ==============================================================================
 # 2. DEFINIÇÃO DAS FUNÇÕES DAS ABAS (renderizar_aba_1, etc.)
