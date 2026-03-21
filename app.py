@@ -190,8 +190,8 @@ st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dado
             # --------------------------------------------------------------------------
     # --- INTERFACE DE ABA ÚNICA ---
     # Criamos a aba e já selecionamos o primeiro índice para evitar erro de variável nula
-    tabs = st.tabs(["📋 Identificação e Equipamento"])
-    tab1 = tabs[0]
+tabs = st.tabs(["📋 Identificação e Equipamento"])
+tab1 = tabs[0]
 
     with tab1:
        # ==============================================================================
