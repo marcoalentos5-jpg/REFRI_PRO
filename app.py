@@ -591,12 +591,12 @@ if "Home" in aba_selecionada:
     st.header("Bem-vindo, Marcos!")
 
 elif "Cadastro" in aba_selecionada:
-    renderizar_aba_1()
+    ifrenderizar_aba_1()
 
 elif "Diagn" in aba_selecionada:
     # Verificação de segurança para não travar o site
     if 'renderizar_aba_diagnosticos' in globals():
-        renderizar_aba_diagnosticos()
+        ifrenderizar_aba_diagnosticos()
     else:
         st.warning("Aba de Diagnósticos em manutenção.")
 
