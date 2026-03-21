@@ -329,58 +329,194 @@ with st.sidebar:
 # ==============================================================================
 # 4. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
 # ==============================================================================
-# Use a seleção do sidebar para chamar a função correta
-if aba_selecionada == "Home":
-    # --- NOVA APRESENTAÇÃO DA ABA HOME (COM LOGO MPN SOLUÇÕES ) ---
-    st.markdown("<br>", unsafe_allow_html=True) # Espaçamento superior
 
-    # 1. CENTRALIZAÇÃO E EXIBIÇÃO DA LOGOMARCA
+# =============================
+# FUNÇÃO DA ABA DIAGNÓSTICOS (CORRIGIDA)
+# =============================
+
+def renderizar_aba_diagnosticos():
+
+    st.header("DIAGNÓSTICO")
+    st.subheader("🤖 Diagnóstico IA")
+
+    # =============================
+    # PROTEÇÃO DE VARIÁVEIS
+    # =============================
+    def seguro(v):
+        try:
+            if v is None:
+                return 0
+            return float(v)
+        except:
+            return 0
+
+    # Proteção (evita erro se variável não existir ainda)
+    variaveis = ["sh_val","sc_val","p_suc","p_liq","t_suc_tubo","ts_suc","t_liq_tubo","ts_liq","a_med","rla_comp","diff_v"]
+
+    for var in variaveis:
+        if var not in globals():
+            globals()[var] = 0
+
+    sh_val_ = seguro(globals().get("sh_val"))
+    sc_val_ = seguro(globals().get("sc_val"))
+    p_suc_ = seguro(globals().get("p_suc"))
+    p_liq_ = seguro(globals().get("p_liq"))
+    t_suc_tubo_ = seguro(globals().get("t_suc_tubo"))
+    ts_suc_ = seguro(globals().get("ts_suc"))
+    t_liq_tubo_ = seguro(globals().get("t_liq_tubo"))
+    ts_liq_ = seguro(globals().get("ts_liq"))
+    a_med_ = seguro(globals().get("a_med"))
+    rla_comp_ = seguro(globals().get("rla_comp"))
+    diff_v_ = seguro(globals().get("diff_v"))
+
+    diagnostico = []
+    probabilidades = {}
+
+    def registrar(msg, falha=None, prob=0):
+        diagnostico.append(msg)
+        if falha:
+            probabilidades[falha] = prob
+
+    # =============================
+    # LÓGICA DE DIAGNÓSTICO
+    # =============================
+
+    # Ciclo
+    if sh_val_ > 15 and sc_val_ < 3:
+        registrar("Baixa carga de refrigerante", "Vazamento de refrigerante", 80)
+
+    elif sh_val_ < 3 and sc_val_ > 10:
+        registrar("Excesso de refrigerante", "Excesso de fluido refrigerante", 75)
+
+    elif 5 <= sh_val_ <= 12 and 5 <= sc_val_ <= 10:
+        registrar("Sistema operando normalmente")
+
+    # Pressões
+    if p_suc_ < 90:
+        registrar("Pressão de sucção baixa", "Evaporador sujo", 60)
+
+    elif p_suc_ > 160:
+        registrar("Pressão de sucção alta", "Retorno de líquido", 55)
+
+    if p_liq_ > 420:
+        registrar("Alta pressão de condensação", "Condensador sujo", 75)
+
+    # Eficiência
+    delta_evap = t_suc_tubo_ - ts_suc_
+    delta_cond = ts_liq_ - t_liq_tubo_
+
+    try:
+        cop_aprox = round((delta_cond + 1) / (delta_evap + 1), 2)
+    except:
+        cop_aprox = 0
+
+    # Resultado
+    if not diagnostico:
+        diagnostico.append("Sistema operando dentro dos parâmetros")
+
+    diag_ia = " | ".join(diagnostico)
+
+    if probabilidades:
+        ranking = sorted(probabilidades.items(), key=lambda x: x[1], reverse=True)
+        prob_txt = " | ".join([f"{f} ({p}%)" for f, p in ranking])
+    else:
+        prob_txt = "Nenhuma falha crítica detectada"
+
+    # Contramedidas
+    contramedidas = []
+
+    for falha in probabilidades:
+        if "refrigerante" in falha.lower():
+            contramedidas.append("Verificar vazamentos e carga de gás")
+        if "condensador" in falha.lower():
+            contramedidas.append("Limpar condensador")
+        if "evaporador" in falha.lower():
+            contramedidas.append("Limpar evaporador")
+
+    if not contramedidas:
+        contramedidas.append("Nenhuma ação necessária")
+
+    contramedidas_txt = " | ".join(contramedidas)
+
+    # =============================
+    # EXIBIÇÃO
+    # =============================
+
+    st.write("### 🔎 Análise do Sistema")
+    st.write(diag_ia)
+
+    st.write("### 📊 Probabilidade de Falhas")
+    st.write(prob_txt)
+
+    st.write("### 🛠️ Contramedidas")
+    st.write(contramedidas_txt)
+
+    st.write("### ⚡ COP (Eficiência)")
+    st.write(cop_aprox)
+
+    # Relatório
+    relatorio_txt = f"""
+RELATORIO TECNICO HVAC
+
+Diagnostico:
+{diag_ia}
+
+Falhas:
+{prob_txt}
+
+Acoes:
+{contramedidas_txt}
+
+COP:
+{cop_aprox}
+"""
+
+    st.text_area("📄 Relatório Técnico", relatorio_txt, height=220)
+
+    st.markdown(
+        f"""
+        <button onclick="navigator.clipboard.writeText(`{relatorio_txt}`)"
+        style="padding:10px;font-size:16px;border-radius:6px;">
+        📋 Copiar Relatório
+        </button>
+        """,
+        unsafe_allow_html=True
+    )
+
+
+# =============================
+# CONTROLE DAS ABAS
+# =============================
+
+if aba_selecionada == "Home":
+    st.markdown("<br>", unsafe_allow_html=True)
+
     col1, col2, col3 = st.columns([1, 2, 1]) 
     with col2: 
-        # NOME DO ARQUIVO DE IMAGEM QUE ESTÁ SENDO USADO
         NOME_ARQUIVO_LOGO = "logo.png"
         
-        # VERIFICAÇÃO ADICIONAL DO ARQUIVO NO DISCO (PARA AJUDAR NO DIAGNÓSTICO)
         if os.path.exists(NOME_ARQUIVO_LOGO):
             try:
-                # SE O ARQUIVO EXISTE, TENTA EXIBIR
                 st.image(NOME_ARQUIVO_LOGO, use_container_width=True) 
             except Exception as e:
-                st.error(f"⚠️ Erro ao tentar abrir a imagem '{NOME_ARQUIVO_LOGO}'. Verifique se o arquivo está corrompido.")
-                st.write(f"Detalhes do erro do sistema: {e}")
+                st.error(f"Erro ao abrir imagem: {e}")
         else:
-            st.error(f"⚠️ Erro: Arquivo '{NOME_ARQUIVO_LOGO}' não encontrado na pasta raiz.")
-            st.info("Verifique se o nome do arquivo salvo no computador é EXATAMENTE 'logo.png' (maiúsculas/minúsculas importam).")
+            st.error("Arquivo logo.png não encontrado")
 
-    st.markdown("<br><br>", unsafe_allow_html=True) 
+    st.markdown("<br><br>", unsafe_allow_html=True)
 
-    # 2. TÍTULO E BOAS-VINDAS CENTRALIZADOS E ESTILIZADOS
     st.markdown("""
         <div style="text-align: center;">
-            <h1 style="color: #0d47a1; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-                MPN Soluções
-            </h1>
-            <p style="color: #1976d2; font-size: 1.3em;">
-                Soluções em Refrigeração e Climatização
-            </p>
-            <hr style="border: 1px solid #90caf9; width: 60%; margin: 20px auto;">
-            <p style="color: #455a64; font-size: 1.1em; font-weight: bold;">
-                Bem-vindo ao Sistema HVAC Pro de Gestão Inteligente.
-            </p>
-            <p style="color: #546e7a; font-size: 1.0em;">
-                Selecione uma opção no Painel de Controle lateral para iniciar sua inspeção ou diagnóstico.
-            </p>
+            <h1 style="color: #0d47a1;">MPN Soluções</h1>
+            <p style="color: #1976d2;">Sistema HVAC Pro</p>
         </div>
     """, unsafe_allow_html=True)
-    # ------------------------------------------------
 
 elif aba_selecionada == "1. Cadastro de Equipamentos":
-    renderizar_aba_1() # Chama a função que contém todo o código da Aba 1
+    renderizar_aba_1()
 
 elif aba_selecionada == "2. Diagnósticos":
-    renderizar_aba_diagnosticos() # Chama a função que contém o esqueleto da Aba 2
+    renderizar_aba_diagnosticos()
 
 elif aba_selecionada == "Relatórios":
     st.header("Página de Relatórios (Em desenvolvimento)")
-    st.write("Em breve: Visualização e exportação de relatórios.")
-# ==============================================================================
