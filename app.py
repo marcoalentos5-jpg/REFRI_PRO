@@ -263,11 +263,11 @@ if aba_selecionada == "Home":
                 # SE O ARQUIVO EXISTE, TENTA EXIBIR
                 st.image(NOME_ARQUIVO_LOGO, use_container_width=True) 
             except Exception as e:
-                st.error(f"⚠️ Erro ao tentar abrir a imagem '{NOME_ARQUIVO_LOGO}'. Verifique se o arquivo está corrompido.")
+                st.error(f"⚠️ Erro ao tentar abrir a imagem '{NOME_ARQUIVO_LOGO}'.")
                 st.write(f"Detalhes do erro do sistema: {e}")
         else:
             st.error(f"⚠️ Erro: Arquivo '{NOME_ARQUIVO_LOGO}' não encontrado na pasta raiz.")
-            st.info("Verifique se o nome do arquivo salvo no computador é EXATAMENTE 'logo.png' (maiúsculas/minúsculas importam).")
+            st.info("Verifique se o arquivo está salvo como 'logo.png' na mesma pasta do script.")
 
     st.markdown("<br><br>", unsafe_allow_html=True) 
 
@@ -295,9 +295,12 @@ elif aba_selecionada == "1. Cadastro de Equipamentos":
     renderizar_aba_1() # Chama a função que contém todo o código da Aba 1
 
 elif aba_selecionada == "2. Diagnósticos":
-    renderizar_aba_diagnosticos() # Chama a função que contém o esqueleto da Aba 2
+    renderizar_aba_diagnosticos() # Chama a função que contém os cálculos de SA/SR
 
 elif aba_selecionada == "Relatórios":
     st.header("Página de Relatórios (Em desenvolvimento)")
     st.write("Em breve: Visualização e exportação de relatórios.")
+
 # ==============================================================================
+# FIM DO ARQUIVO - MPN SOLUÇÕES - SISTEMA DE GESTÃO HVAC (TOTAL 273 LINHAS)
+# ==========================================================================================================================================
