@@ -299,22 +299,23 @@ def renderizar_aba_diagnosticos():
     with col2:
         st.number_input("P. Descarga (PSI):", key="p_des_val")
         st.number_input("T. Líquido (°C):", key="t_liq_val")
-
+        
 # ==============================================================================
 # EXECUÇÃO FINAL DO MOTOR DO APLICATIVO
 # ==============================================================================
 
 def main():
-    # Renderiza a Aba 1 por padrão. Para alternar, use st.sidebar.radio ou tabs.
+    # Renderiza apenas a interface ativa
     renderizar_aba_1()
     
-    # Espaço reservado para a renderização da Aba 2 se necessário
+    # Se quiser mostrar a Aba 2 abaixo da 1 para teste:
     # renderizar_aba_diagnosticos()
 
 if __name__ == "__main__":
     main()
 
 # FINALIZAÇÃO DO ARQUIVO - TOTAL DE LINHAS FISCALIZADAS: 257
+
 # Use a seleção do sidebar para chamar a função correta
 if aba_selecionada == "Home":
     # --- NOVA APRESENTAÇÃO DA ABA HOME (COM LOGO MPN SOLUÇÕES ) ---
