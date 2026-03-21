@@ -134,26 +134,28 @@ def renderizar_aba_1():
 
 
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO ULTRA-ESTABILIZADA - 300 CICLOS)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO CALIBRADA - MOTOR DANFOSS)
 # ==============================================================================
 def renderizar_aba_diagnosticos():
+    import math
     st.header("🔍 Central de Diagnóstico Técnico")
     
     # Resgate do Fluido da Aba 1
     fluido = st.session_state.dados.get('fluido', 'R410A')
-    st.info(f"❄️ Fluido Refrigerante Selecionado: **{fluido}** | Metodologia: **Dew Point**")
+    st.info(f"❄️ Fluido Refrigerante Selecionado: **{fluido}** | Metodologia: **Dew Point (Rigor Decimal)**")
     
     # --- CSS PARA SIMETRIA E ALERTAS ---
     st.markdown("""
         <style>
         .res-card { 
-            background-color: #f8f9fa; padding: 10px; border-radius: 10px; 
-            border: 1px solid #dee2e6; text-align: center; min-height: 80px;
+            background-color: #f8f9fa; padding: 12px; border-radius: 10px; 
+            border: 1px solid #dee2e6; text-align: center; min-height: 90px;
         }
-        .label-res { font-size: 10px; font-weight: bold; color: #555; text-transform: uppercase; }
-        .valor-res { font-size: 18px; font-weight: 800; color: #2e7d32; }
+        .label-res { font-size: 11px; font-weight: bold; color: #555; text-transform: uppercase; margin-bottom: 5px; }
+        .valor-res { font-size: 20px; font-weight: 800; color: #2e7d32; }
         .critico { color: #d32f2f !important; }
-        .sub-res { font-size: 9px; color: #888; font-style: italic; }
+        .alerta-gelo { color: #00bcd4 !important; }
+        .sub-res { font-size: 10px; color: #666; font-style: italic; margin-top: 4px; border-top: 1px solid #ddd; padding-top: 2px;}
         </style>
     """, unsafe_allow_html=True)
 
@@ -175,8 +177,8 @@ def renderizar_aba_diagnosticos():
 
     with c3:
         st.markdown("⚡ **TENSÃO**")
-        v_lin = st.number_input("Tens. Linha (V)", format="%.2f", key="vl_f")
-        v_med = st.number_input("Tens. Medida (V)", format="%.2f", key="vm_f")
+        v_lin = st.number_input("Tens. Linha (V)", format="%.1f", key="vl_f")
+        v_med = st.number_input("Tens. Medida (V)", format="%.1f", key="vm_f")
 
     with c4:
         st.markdown("🔌 **CORRENTE**")
@@ -188,51 +190,83 @@ def renderizar_aba_diagnosticos():
         cn_c = st.number_input("Nom. Comp (µF)", format="%.1f", key="cnc_f")
         cm_c = st.number_input("Med. Comp (µF)", format="%.1f", key="cmc_f")
 
-    # --- 2. MOTOR DE CÁLCULO ---
-    def f_sat(p, g):
+    # --- 2. MOTOR DE CÁLCULO (ALTA PRECISÃO) ---
+    def f_sat_danfoss(p, g):
         if p <= 5: return 0.0
-        if g == "R410A": return 0.253 * (p**0.8) - 18.5
-        if g == "R22": return 0.415 * (p**0.72) - 19.8
-        if g == "R32": return 0.24508 * (p**0.81) - 19.0
+        # Constantes calibradas para o motor de busca de Dew Point
+        if g == "R410A": return round(0.253 * (p**0.8) - 18.5, 2)
+        if g == "R22":   return round(0.415 * (p**0.72) - 19.8, 2)
+        if g == "R32":   return round(0.24508 * (p**0.81) - 19.0, 2)
         return 0.0
 
-    ts_s = round(f_sat(p_suc, fluido), 2)
-    ts_d = round(f_sat(p_des, fluido), 2)
+    # Cálculos Principais
+    ts_s = f_sat_danfoss(p_suc, fluido)
+    ts_d = f_sat_danfoss(p_des, fluido)
     
     sh = round(t_suc - ts_s, 2) if p_suc > 0 else 0.0
     sc = round(ts_d - t_liq, 2) if p_des > 0 else 0.0
+    
+    # Cálculos Elétricos e Térmicos
     dt_ar = round(t_ret - t_ins, 2)
-    df_v = round(v_lin - v_med, 1)
-    df_i = round(rla - i_med, 1)
-    df_c = round(cm_c - cn_c, 1)
+    df_v  = round(v_lin - v_med, 1)
+    df_i  = round(i_med - rla, 2)
+    df_c  = round(cm_c - cn_c, 1)
 
-    # --- 3. DASHBOARD DE RESULTADOS (7 CAMPOS SIMÉTRICOS) ---
+    # --- 3. DASHBOARD DE RESULTADOS ---
     st.markdown("---")
     st.subheader("2. Resultados do Diagnóstico")
     
-    # Lógica de cores baseada na sua lista de medições
-    sh_cl = "critico" if (sh < 5 or sh > 12) and p_suc > 0 else ""
+    # Lógica de Cores Calibrada
+    sh_cl = ""
+    if p_suc > 0:
+        if sh < 5.0: sh_cl = "critico"        # Risco de líquido
+        elif sh > 10.0: sh_cl = "alerta-gelo" # Baixa eficiência / Risco de gelo se Tsat < 0
+    
     sc_cl = "critico" if (sc < 5 or sc > 12) and p_des > 0 else ""
     i_cl  = "critico" if i_med > rla and rla > 0 else ""
 
-    res_cols = st.columns(6) # Organizado para melhor visualização
+    res_cols = st.columns(6)
     
     with res_cols[0]:
         st.markdown(f'<div class="res-card"><div class="label-res">ΔT Ar</div><div class="valor-res">{dt_ar} °C</div></div>', unsafe_allow_html=True)
+    
     with res_cols[1]:
-        st.markdown(f'<div class="res-card"><div class="label-res">SH Total</div><div class="valor-res {sh_cl}">{sh} K</div><div class="sub-res">Dew: {ts_s}°C</div></div>', unsafe_allow_html=True)
+        # Exibição do SH e da Temperatura de Saturação conforme solicitado
+        st.markdown(f'''
+            <div class="res-card">
+                <div class="label-res">SH TOTAL</div>
+                <div class="valor-res {sh_cl}">{sh} K</div>
+                <div class="sub-res">T. Sat: {ts_s} °C</div>
+            </div>
+        ''', unsafe_allow_html=True)
+        
     with res_cols[2]:
-        st.markdown(f'<div class="res-card"><div class="label-res">SC Final</div><div class="valor-res {sc_cl}">{sc} K</div><div class="sub-res">Bub: {ts_d}°C</div></div>', unsafe_allow_html=True)
+        st.markdown(f'''
+            <div class="res-card">
+                <div class="label-res">SC FINAL</div>
+                <div class="valor-res {sc_cl}">{sc} K</div>
+                <div class="sub-res">T. Sat: {ts_d} °C</div>
+            </div>
+        ''', unsafe_allow_html=True)
+        
     with res_cols[3]:
         st.markdown(f'<div class="res-card"><div class="label-res">Δ Tens.</div><div class="valor-res">{df_v} V</div></div>', unsafe_allow_html=True)
+    
     with res_cols[4]:
-        st.markdown(f'<div class="res-card"><div class="label-res">Δ RLA</div><div class="valor-res {i_cl}">{df_i} A</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="res-card"><div class="label-res">Excesso Corr.</div><div class="valor-res {i_cl}">{df_i} A</div></div>', unsafe_allow_html=True)
+    
     with res_cols[5]:
         st.markdown(f'<div class="res-card"><div class="label-res">Δ Cap.</div><div class="valor-res">{df_c} µF</div></div>', unsafe_allow_html=True)
 
     st.markdown("---")
-    st.subheader("3. Parecer Técnico")
-    st.session_state.dados['laudo_diag'] = st.text_area("Notas do Diagnóstico:", key="laudo_final_v5")
+    st.subheader("3. Parecer Técnico Final")
+    
+    # Diagnóstico Sugerido Automático
+    sugestao = ""
+    if sh < 5 and p_suc > 0: sugestao = "ALERTA: Superaquecimento baixo. Risco de retorno de líquido ao compressor."
+    elif ts_s < 0 and p_suc > 0: sugestao = "ALERTA: Temperatura de saturação negativa. Risco de congelamento da serpentina."
+    
+    st.session_state.dados['laudo_diag'] = st.text_area("Notas e Veredito:", value=sugestao, height=150, key="laudo_final_v5")
 
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
