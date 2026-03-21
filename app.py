@@ -94,7 +94,7 @@ def renderizar_aba_1():
         with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
             c1, c2, c3 = st.columns([2, 1, 1])
             # CORREÇÃO DA LINHA 91: USO DE .GET E KEY EXCLUSIVA
-            st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados.get('nome', ''), key="k_cli_nome")
+            st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados.get('nome', ''), key="key_unico_nome_v4")
             d_raw = c2.text_input("CPF (000.000.000-00)", value=st.session_state.dados.get('cpf_cnpj', ''), key="k_cli_doc")
             st.session_state.dados['cpf_cnpj'] = formatar_cpf(d_raw)
             z_raw = c3.text_input("WhatsApp (XX-X-XXXX-XXXX) *", value=st.session_state.dados.get('whatsapp', ''), key="k_cli_zap")
@@ -306,11 +306,11 @@ def renderizar_aba_diagnosticos():
 
 def main():
     # Renderiza apenas a interface ativa
-    renderizar_aba_1()
-    
-    # Se quiser mostrar a Aba 2 abaixo da 1 para teste:
-    # renderizar_aba_diagnosticos()
+    # LINHA 309 (O ERRO ESTÁ AQUI)
+def main():
+    renderizar_aba_1()  # <--- Aqui ele chama a função pela segunda vez no arquivo
 
+# LINHA 315
 if __name__ == "__main__":
     main()
 
