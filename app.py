@@ -184,6 +184,10 @@ def renderizar_aba_diagnosticos():
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
 # ==============================================================================
+
+# ==============================================================================
+# 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
+# ==============================================================================
 # Mudamos esta seção para antes da Lógica de Exibição das Abas para definir aba_selecionada
 with st.sidebar:
     st.title("🚀 Painel de Controle")
