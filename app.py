@@ -159,7 +159,6 @@ def renderizar_aba_diagnosticos():
 
     # Cálculo das Temperaturas de Saturação
     t_sat_suc = calcular_t_sat(pres_suc, fluido) if pres_suc > 0 else 0.0
-    t_sat_des = calcular_t_sat(pres_des, fluido) if pres_des > 0 else 0.0
     
     # Cálculo Final de SH e SC
     # Superaquecimento (SH) = Temp. Linha Sucção - Temp. Saturação Baixa
@@ -291,8 +290,7 @@ elif aba_selecionada == "1. Cadastro de Equipamentos":
     renderizar_aba_1() # Chama a função que contém todo o código da Aba 1
 
 elif aba_selecionada == "2. Diagnósticos":
-    renderizar_aba_diagnosticos() # Chama a função que contém o esqueleto da Aba 2
-
+   
 elif aba_selecionada == "Relatórios":
     st.header("Página de Relatórios (Em desenvolvimento)")
     st.write("Em breve: Visualização e exportação de relatórios.")
