@@ -270,4 +270,60 @@ elif aba_selecionada == "2. Diagnósticos":
 elif aba_selecionada == "Relatórios":
     st.header("Página de Relatórios (Em desenvolvimento)")
     st.write("Em breve: Visualização e exportação de relatórios.")
-# ==============================================================================
+# [COLE AQUI - Logo após o fim da renderizar_aba_1]
+
+def renderizar_aba_diagnosticos():
+    st.header("🔍 Central de Diagnóstico Técnico")
+    # Busca o fluido que você selecionou na Aba 1
+    fluido_selecionado = st.session_state.dados.get('fluido', 'R410A')
+    st.info(f"❄️ Fluido Refrigerante em Análise: **{fluido_selecionado}**")
+    st.markdown("---")
+
+    # --- BLOCO 1: ENTRADA DE MEDIÇÕES ---
+    st.subheader("1. Medições de Campo")
+    col_suc, col_des = st.columns(2)
+    
+    with col_suc:
+        st.markdown("### 🔵 Baixa Pressão")
+        pres_suc = st.number_input("Pressão de Sucção (PSI):", min_value=0.0, step=1.0, key="p_suc_diag")
+        temp_suc = st.number_input("Temp. Tubulação Sucção (°C):", step=0.1, key="t_suc_diag")
+
+    with col_des:
+        st.markdown("### 🔴 Alta Pressão")
+        pres_des = st.number_input("Pressão de Descarga (PSI):", min_value=0.0, step=1.0, key="p_des_diag")
+        temp_liq = st.number_input("Temp. Tubulação Líquido (°C):", step=0.1, key="t_liq_diag")
+
+    st.markdown("---")
+
+    # --- BLOCO 2: PROCESSAMENTO (CÁLCULOS) ---
+    # Nota: No próximo passo, inseriremos a tabela PT aqui
+    t_sat_suc = 0.0  
+    t_sat_des = 0.0  
+    
+    sh = temp_suc - t_sat_suc
+    sc = t_sat_des - temp_liq
+
+    # --- BLOCO 3: EXIBIÇÃO DE RESULTADOS ---
+    st.subheader("2. Resultados Calculados")
+    res1, res2 = st.columns(2)
+    
+    with res1:
+        st.metric(label="Superaquecimento (SH)", value=f"{sh:.1f} K")
+        if 5 <= sh <= 7: st.success("✅ SH dentro do padrão (5K a 7K)")
+        elif sh < 5: st.error("⚠️ SH Baixo: Risco de retorno de líquido")
+        else: st.warning("⚠️ SH Alto: Possível falta de fluido ou restrição")
+
+    with res2:
+        st.metric(label="Sub-resfriamento (SC)", value=f"{sc:.1f} K")
+        if 4 <= sc <= 7: st.success("✅ SC dentro do padrão (4K a 7K)")
+        else: st.info("ℹ️ SC fora do padrão: Verifique condensação")
+
+    st.markdown("---")
+
+    # --- BLOCO 4: CONCLUSÃO E LAUDO ---
+    st.subheader("3. Parecer Técnico Final")
+    st.session_state.dados['laudo_diag'] = st.text_area(
+        "Descreva o diagnóstico ou anomalias encontradas:",
+        placeholder="Ex: Sistema operando com pressões estáveis, superaquecimento normal...",
+        key="laudo_area_diag"
+    )
