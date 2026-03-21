@@ -96,81 +96,73 @@ def renderizar_aba_1():
     tab1 = tabs[0]
 
     with tab1:
-        # --- SUBSEÇÃO: DADOS DO CLIENTE ---
         with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
             # Linha 1: Nome, CPF, WhatsApp
             c1, c2, c3 = st.columns([2, 1, 1])
-            st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="f_nome")
+            st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="cli_nome")
             
-            d_input = c2.text_input("CPF (000.000.000-00)", value=st.session_state.dados['cpf_cnpj'], key="f_doc")
+            d_input = c2.text_input("CPF (000.000.000-00)", value=st.session_state.dados['cpf_cnpj'], key="cli_cpf")
             st.session_state.dados['cpf_cnpj'] = formatar_cpf(d_input)
             
-            z_input = c3.text_input("WhatsApp (XX-X-XXXX-XXXX) *", value=st.session_state.dados['whatsapp'], key="f_zap")
+            z_input = c3.text_input("WhatsApp (XX-X-XXXX-XXXX) *", value=st.session_state.dados['whatsapp'], key="cli_whatsapp")
             st.session_state.dados['whatsapp'] = formatar_telefone(z_input)
 
             # Linha 2: Celular, Telefone Fixo, E-mail
             cx1, cx2, cx3 = st.columns([1, 1, 2])
-            cel_in = cx1.text_input("Cel. (XX-X-XXXX-XXXX):", value=st.session_state.dados['celular'], key="f_cel")
+            cel_in = cx1.text_input("Cel. (XX-X-XXXX-XXXX):", value=st.session_state.dados['celular'], key="cli_celular")
             st.session_state.dados['celular'] = formatar_telefone(cel_in)
             
-            fix_in = cx2.text_input("Telefone Fixo (XX-XXXX-XXXX):", value=st.session_state.dados['tel_fixo'], key="f_fixo")
+            fix_in = cx2.text_input("Telefone Fixo (XX-XXXX-XXXX):", value=st.session_state.dados['tel_fixo'], key="cli_fixo")
             st.session_state.dados['tel_fixo'] = formatar_telefone(fix_in)
             
-            st.session_state.dados['email'] = cx3.text_input("E-mail do Cliente:", value=st.session_state.dados['email'], key="f_email")
+            st.session_state.dados['email'] = cx3.text_input("E-mail do Cliente:", value=st.session_state.dados['email'], key="cli_email")
 
             st.markdown("---")
             
             # Linha 3: Automação de CEP
             ce1, ce2, ce3 = st.columns([1, 2, 1])
-            cep_digito = ce1.text_input("CEP (Brasil) *", value=st.session_state.dados['cep'], key="f_cep")
+            cep_digito = ce1.text_input("CEP (Brasil) *", value=st.session_state.dados['cep'], key="cli_cep")
             if cep_digito != st.session_state.dados['cep']:
                 st.session_state.dados['cep'] = cep_digito
                 if buscar_cep(cep_digito):
                     st.rerun()
 
-            st.session_state.dados['endereco'] = ce2.text_input("Logradouro / Rua:", value=st.session_state.dados['endereco'], key="f_end")
-            st.session_state.dados['numero'] = ce3.text_input("Nº / Apto:", value=st.session_state.dados['numero'], key="f_num")
+            st.session_state.dados['endereco'] = ce2.text_input("Logradouro / Rua:", value=st.session_state.dados['endereco'], key="cli_rua")
+            st.session_state.dados['numero'] = ce3.text_input("Nº / Apto:", value=st.session_state.dados['numero'], key="cli_num")
 
             # Linha 4: Endereço Unificado (Complemento, Bairro, Cidade, UF)
             ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.4]) 
-            st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados['complemento'], key="f_comp")
-            st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'], key="f_bair")
-            st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'], key="f_cid")
-            
-            # Campo UF formatado para 2 dígitos na mesma linha
-            st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'], max_chars=2, key="f_uf")
+            st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados['complemento'], key="cli_complemento")
+            st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'], key="cli_bairro")
+            st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'], key="cli_cidade")
+            st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'], max_chars=2, key="cli_uf")
 
         # --- SUBSEÇÃO: ESPECIFICAÇÕES DO EQUIPAMENTO (ORDEM DE TAB RÍGIDA) ---
         st.subheader("⚙️ Especificações do Equipamento")
         with st.expander("Detalhes Técnicos do Ativo", expanded=True):
             
-            # 1. Fabricante, Modelo e Linha
+            # Ordem seq_1 a seq_10 para controle de TAB
             e1, e2, e3 = st.columns(3)
             fab_list = sorted(["Carrier", "Daikin", "Elgin", "Fujitsu", "Gree", "Hitachi", "LG", "Midea", "Philco", "Samsung", "TCL", "Trane", "York"])
             st.session_state.dados['fabricante'] = e1.selectbox("Fabricante:", fab_list, key="seq_1")
             st.session_state.dados['modelo'] = e2.text_input("Modelo:", value=st.session_state.dados['modelo'], key="seq_2")
             st.session_state.dados['linha'] = e3.selectbox("Linha:", ["Residencial", "Comercial", "Industrial"], key="seq_3")
 
-            # 2. Nº de Série (Evaporadora e Condensadora)
             e4, e5 = st.columns(2)
             st.session_state.dados['serie_evap'] = e4.text_input("Nº de Série da Evaporadora:", value=st.session_state.dados['serie_evap'], key="seq_4")
             st.session_state.dados['serie_cond'] = e5.text_input("Nº de Série da Condensadora:", value=st.session_state.dados['serie_cond'], key="seq_5")
 
-            # 3. Localização (Evaporadora e Condensadora)
             e6, e7 = st.columns(2)
             st.session_state.dados['local_evap'] = e6.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'], key="seq_6")
             st.session_state.dados['local_cond'] = e7.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'], key="seq_7")
 
-            # 4. Capacidade, Fluído e Identificação TAG
             e8, e9, e10 = st.columns(3)
-            cap_list = ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"]
-            st.session_state.dados['capacidade'] = e8.selectbox("Capacidade (BTU):", cap_list, key="seq_8")
-            gas_list = ["R410A", "R22", "R32", "R134a", "R290", "R407C"]
-            st.session_state.dados['fluido'] = e9.selectbox("Fluído Refrigerante:", gas_list, key="seq_9")
+            st.session_state.dados['capacidade'] = e8.selectbox("Capacidade (BTU):", ["9.000", "12.000", "18.000", "24.000", "30.000", "60.000"], key="seq_8")
+            st.session_state.dados['fluido'] = e9.selectbox("Fluído Refrigerante:", ["R410A", "R22", "R32", "R134a", "R290"], key="seq_9")
             st.session_state.dados['tag_id'] = e10.text_input("TAG Identificação:", value=st.session_state.dados['tag_id'], key="seq_10")
             
             st.markdown("---")
-            st.session_state.dados['status_maquina'] = st.radio("Condição Atual do Equipamento:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], horizontal=True, key="status_f")
+            st.session_state.dados['status_maquina'] = st.radio("Condição Atual:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], horizontal=True, key="status_final")
 
 # ==============================================================================
 # 4. FUNÇÃO DA ABA 2: DIAGNÓSTICOS TÉCNICOS (ESTRUTURA INICIAL)
@@ -178,37 +170,29 @@ def renderizar_aba_1():
 
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
+    fluido_selecionado = st.session_state.dados.get('fluido', 'R410A')
+    st.info(f"Análise baseada no Fluído: **{fluido_selecionado}**")
     
-    # Bloco de Fluido e Contexto
-    fluido_atual = st.session_state.dados.get('fluido', 'R410A')
-    st.info(f"Análise baseada no Fluído Refrigerante selecionado: **{fluido_atual}**")
-    
-    # --- BLOCO 1: ENTRADA DE MEDIÇÕES TÉCNICAS ---
     col_suc, col_des = st.columns(2)
-    
     with col_suc:
         st.subheader("Lado de Baixa")
-        pres_suc = st.number_input("Pressão de Sucção (PSI):", min_value=0.0, step=1.0, key="p_suc_diag")
-        temp_suc = st.number_input("Temp. Tubulação Sucção (°C):", step=0.1, key="t_suc_diag")
+        p_suc = st.number_input("Pressão de Sucção (PSI):", min_value=0.0, key="p_suc_diag")
+        t_suc = st.number_input("Temp. Tubulação Sucção (°C):", key="t_suc_diag")
         
     with col_des:
         st.subheader("Lado de Alta")
-        pres_des = st.number_input("Pressão de Descarga (PSI):", min_value=0.0, step=1.0, key="p_des_diag")
-        temp_liq = st.number_input("Temp. Linha de Líquido (°C):", step=0.1, key="t_liq_diag")
+        p_des = st.number_input("Pressão de Descarga (PSI):", min_value=0.0, key="p_des_diag")
+        t_liq = st.number_input("Temp. Linha de Líquido (°C):", key="t_liq_diag")
 
     st.markdown("---")
-    
-    # Os cálculos de SH e SC serão inseridos aqui conforme o Bloco 2 solicitado anteriormente.
-    st.write("Aguardando medições para cálculo de Superaquecimento e Sub-resfriamento...")
+    st.write("Aguardando medições para diagnóstico...")
 
 # ==============================================================================
 # EXECUÇÃO DO APLICATIVO
 # ==============================================================================
 
 def main():
-    # Sidebar preservado conforme orientação
     renderizar_aba_1()
-    # Para visualizar a segunda aba, você chamaria renderizar_aba_diagnosticos() aqui ou via tabs.
 
 if __name__ == "__main__":
     main()
