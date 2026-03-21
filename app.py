@@ -180,13 +180,13 @@ ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.5]) # 4 colunas com larguras a
 st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados['complemento'])
             
             # 2ª Coluna: Bairro
-            st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'])
+st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'])
             
             # 3ª Coluna: Cidade
-            st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'])
+st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'])
             
             # 4ª Coluna: UF (Coluna mais estreita)
-            st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'])
+st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'])
             # --------------------------------------------------------------------------
     # --- INTERFACE DE ABA ÚNICA ---
     # Criamos a aba e já selecionamos o primeiro índice para evitar erro de variável nula
