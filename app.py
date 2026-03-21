@@ -63,18 +63,23 @@ st.markdown("""
 
 if 'dados' not in st.session_state:
     st.session_state.dados = {
-        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
+        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 
+        'tel_fixo': '', 'email': '',
         'data': datetime.now().strftime("%d/%m/%Y"),
-        'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '', 'complemento': '',
-        'fabricante': 'Carrier', 'modelo': '', 'linha': 'Residencial', 'capacidade': '12.000', 
+        'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 
+        'numero': '', 'complemento': '',
+        'fabricante': 'Carrier', 'modelo': '', 'linha': 'Residencial', 
+        'capacidade': '12.000', 'fluido': 'R410A',
         'serie_evap': '', 'serie_cond': '', 'local_evap': '', 'local_cond': '',
-        'fluido': 'R410A', 'tag_id': 'TAG-01', 'tipo_servico': 'Manutenção Preventiva',
-        'status_maquina': '🟢 Operacional'
+        'tag_id': 'TAG-01', 'tipo_servico': 'Manutenção Preventiva',
+        'status_maquina': '🟢 Operacional',
+        'tecnico_nome': '', 'tecnico_documento': '', 'tecnico_registro': ''
     }
 
-# MANUTENÇÃO DO SIDEBAR E LOGO
+# MANUTENÇÃO DO SIDEBAR E LOGO (ESTRUTURA ORIGINAL)
 with st.sidebar:
-    if os.path.exists("logo.png"): st.image("logo.png", use_container_width=True)
+    if os.path.exists("logo.png"): 
+        st.image("logo.png", use_container_width=True)
     st.title("MPN Soluções")
     st.markdown("---")
     st.info("Sistema de Laudos HVAC v3.0")
