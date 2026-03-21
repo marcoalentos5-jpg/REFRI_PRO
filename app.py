@@ -330,8 +330,8 @@ with st.sidebar:
 # =============================
 def renderizar_aba_diagnosticos():
 
-    st.header("DIAGNÓSTICO")
-    st.subheader("🤖 Diagnóstico IA")
+    st.header("DIAGNÓSTICO AVANÇADO")
+    st.subheader("🧠 Engenharia HVAC Inteligente")
 
     # =============================
     # FUNÇÃO SEGURA
@@ -345,7 +345,7 @@ def renderizar_aba_diagnosticos():
             return 0
 
     # =============================
-    # VARIÁVEIS (NUNCA QUEBRA)
+    # ENTRADAS
     # =============================
     sh = seguro(globals().get("sh_val", 0))
     sc = seguro(globals().get("sc_val", 0))
@@ -359,22 +359,20 @@ def renderizar_aba_diagnosticos():
     rla = seguro(globals().get("rla_comp", 0))
     dv = seguro(globals().get("diff_v", 0))
 
-    # =============================
-    # DEBUG (AGORA SEMPRE APARECE ALGO)
-    # =============================
-    st.write("### 📥 Dados Recebidos")
-    st.write({
-        "SH": sh, "SC": sc,
-        "Sucção": ps, "Descarga": pl,
-        "Temp Suc": tsuc, "Temp Tubo": tsuct,
-        "Temp Líq": tliq, "Sat Líq": tliq_sat,
-        "Corrente": amp, "RLA": rla,
-        "ΔV": dv
-    })
+    fluido = globals().get("fluido", "R410A")
 
     # =============================
-    # MOTOR
+    # FAIXAS POR FLUIDO
     # =============================
+    faixas = {
+        "R410A": (105,135,300,420),
+        "R32": (95,125,280,400),
+        "R22": (60,75,220,260),
+        "R134a": (25,40,140,180)
+    }
+
+    suc_min, suc_max, liq_min, liq_max = faixas.get(fluido, faixas["R410A"])
+
     diagnostico = []
     probabilidades = {}
 
@@ -383,21 +381,43 @@ def renderizar_aba_diagnosticos():
         if falha:
             probabilidades[falha] = prob
 
-    # Lógica
+    # =============================
+    # ANÁLISE AVANÇADA
+    # =============================
+
+    # Carga refrigerante
     if sh > 15 and sc < 3:
-        registrar("Baixa carga de refrigerante", "Vazamento", 80)
+        registrar("Baixa carga de refrigerante", "Vazamento", 85)
 
     elif sh < 3 and sc > 10:
-        registrar("Excesso de refrigerante", "Excesso", 75)
+        registrar("Excesso de refrigerante", "Sobrecarga", 80)
 
-    elif 5 <= sh <= 12 and 5 <= sc <= 10:
-        registrar("Sistema operando normalmente")
+    # Pressões por fluido
+    if ps < suc_min:
+        registrar("Sucção abaixo da faixa", "Evaporador restrito ou falta de gás", 75)
 
-    if ps < 90:
-        registrar("Sucção baixa", "Evaporador sujo", 60)
+    elif ps > suc_max:
+        registrar("Sucção elevada", "Retorno de líquido", 70)
 
-    if pl > 420:
-        registrar("Alta pressão", "Condensador sujo", 75)
+    if pl > liq_max:
+        registrar("Alta pressão de condensação", "Condensador sujo", 85)
+
+    elif pl < liq_min:
+        registrar("Baixa pressão de condensação", "Baixa carga", 75)
+
+    # Compressor
+    if rla > 0:
+        carga = (amp / rla) * 100
+
+        if carga > 120:
+            registrar("Compressor sobrecarregado", "Alta pressão", 80)
+
+        elif carga < 40:
+            registrar("Baixa carga no compressor", "Baixa demanda térmica", 65)
+
+    # Tensão
+    if abs(dv) > 10:
+        registrar("Instabilidade elétrica", "Rede elétrica", 90)
 
     # COP
     try:
@@ -407,40 +427,94 @@ def renderizar_aba_diagnosticos():
     except:
         cop = 0
 
-    if not diagnostico:
-        diagnostico.append("Sem dados suficientes")
+    # =============================
+    # SCORE DE SAÚDE
+    # =============================
+    score = 100
 
-    diag_txt = " | ".join(diagnostico)
+    if sh > 15 or sh < 2: score -= 20
+    if sc < 3 or sc > 12: score -= 20
+    if ps < suc_min or ps > suc_max: score -= 15
+    if pl > liq_max or pl < liq_min: score -= 15
+    if abs(dv) > 10: score -= 10
 
-    if probabilidades:
-        prob_txt = " | ".join([f"{k} ({v}%)" for k, v in probabilidades.items()])
+    score = max(score, 0)
+
+    # Classificação
+    if score > 85:
+        status = "🟢 Excelente"
+    elif score > 60:
+        status = "🟡 Atenção"
     else:
-        prob_txt = "Nenhuma falha detectada"
+        status = "🔴 Crítico"
+
+    # =============================
+    # RESULTADOS
+    # =============================
+    diag_txt = " | ".join(diagnostico) if diagnostico else "Sistema normal"
+
+    ranking = sorted(probabilidades.items(), key=lambda x: x[1], reverse=True)
+    prob_txt = " | ".join([f"{f} ({p}%)" for f,p in ranking]) if ranking else "Sem falhas"
+
+    # Contramedidas
+    acoes = []
+
+    for f,_ in ranking:
+        if "Vazamento" in f:
+            acoes.append("Realizar teste de estanqueidade e recarga")
+        if "Condensador" in f:
+            acoes.append("Limpar serpentina do condensador")
+        if "Evaporador" in f:
+            acoes.append("Verificar fluxo de ar e limpeza")
+        if "Rede elétrica" in f:
+            acoes.append("Verificar alimentação elétrica")
+
+    if not acoes:
+        acoes.append("Sistema operando normalmente")
+
+    acoes_txt = " | ".join(set(acoes))
+
+    # =============================
+    # LAUDO AUTOMÁTICO
+    # =============================
+    laudo = f"""
+O sistema operando com fluido {fluido} apresenta condição classificada como {status}.
+
+O COP estimado é de {cop}, indicando eficiência {'adequada' if cop > 2 else 'baixa'}.
+
+Principais ocorrências identificadas:
+{diag_txt}
+
+Probabilidade de falhas:
+{prob_txt}
+
+Recomenda-se:
+{acoes_txt}
+"""
 
     # =============================
     # EXIBIÇÃO
     # =============================
-    st.write("### 🔎 Diagnóstico")
-    st.write(diag_txt)
+    st.write("### 📊 Status do Sistema")
+    st.write(status)
 
-    st.write("### 📊 Falhas")
-    st.write(prob_txt)
+    st.write("### ❤️ Saúde (%)")
+    st.write(f"{score}%")
 
     st.write("### ⚡ COP")
     st.write(cop)
 
-    relatorio = f"""
-Diagnóstico:
-{diag_txt}
+    st.write("### 🔎 Diagnóstico")
+    st.write(diag_txt)
 
-Falhas:
-{prob_txt}
+    st.write("### 🚨 Falhas Prováveis")
+    st.write(prob_txt)
 
-COP:
-{cop}
-"""
+    st.write("### 🛠️ Ações Recomendadas")
+    st.write(acoes_txt)
 
-    st.text_area("📄 Relatório", relatorio, height=200)
+    st.write("### 📄 Laudo Técnico")
+    st.text_area("", laudo, height=250)
 
 # ==============================================================================
 # 4. LÓGICA DE EXIBIÇÃO DAS ABAS (CORRIGIDA)
