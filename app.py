@@ -325,16 +325,10 @@ with st.sidebar:
                 st.session_state.dados[key] = ""
         st.rerun()
 
-
-# ==============================================================================
-# 4. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
-# ==============================================================================
-
 # =============================
-# FUNÇÃO DA ABA DIAGNÓSTICOS (CORRIGIDA)
+# FUNÇÃO DIAGNÓSTICO (100% FUNCIONAL)
 # =============================
-st.write("DEBUG ABA:", aba_selecionada)
-    def renderizar_aba_diagnosticos():
+def renderizar_aba_diagnosticos():
 
     st.header("DIAGNÓSTICO")
     st.subheader("🤖 Diagnóstico IA")
@@ -351,7 +345,7 @@ st.write("DEBUG ABA:", aba_selecionada)
             return 0
 
     # =============================
-    # CAPTURA DE VARIÁVEIS
+    # VARIÁVEIS (NUNCA QUEBRA)
     # =============================
     sh = seguro(globals().get("sh_val", 0))
     sc = seguro(globals().get("sc_val", 0))
@@ -366,32 +360,20 @@ st.write("DEBUG ABA:", aba_selecionada)
     dv = seguro(globals().get("diff_v", 0))
 
     # =============================
-    # DEBUG (AGORA VOCÊ VÊ OS DADOS)
+    # DEBUG (AGORA SEMPRE APARECE ALGO)
     # =============================
     st.write("### 📥 Dados Recebidos")
     st.write({
-        "SH": sh,
-        "SC": sc,
-        "P_suc": ps,
-        "P_liq": pl,
-        "T_suc": tsuc,
-        "T_tubo_suc": tsuct,
-        "T_liq": tliq,
-        "T_sat_liq": tliq_sat,
-        "Corrente": amp,
-        "RLA": rla,
+        "SH": sh, "SC": sc,
+        "Sucção": ps, "Descarga": pl,
+        "Temp Suc": tsuc, "Temp Tubo": tsuct,
+        "Temp Líq": tliq, "Sat Líq": tliq_sat,
+        "Corrente": amp, "RLA": rla,
         "ΔV": dv
     })
 
     # =============================
-    # VERIFICAÇÃO CRÍTICA
-    # =============================
-    if sh == 0 and sc == 0 and ps == 0 and pl == 0:
-        st.warning("⚠️ Nenhum dado carregado. Preencha a aba anterior primeiro.")
-        st.info("Dica: vá na aba de medições e insira os valores.")
-    
-    # =============================
-    # MOTOR DIAGNÓSTICO
+    # MOTOR
     # =============================
     diagnostico = []
     probabilidades = {}
@@ -401,12 +383,12 @@ st.write("DEBUG ABA:", aba_selecionada)
         if falha:
             probabilidades[falha] = prob
 
-    # Lógica básica
+    # Lógica
     if sh > 15 and sc < 3:
         registrar("Baixa carga de refrigerante", "Vazamento", 80)
 
     elif sh < 3 and sc > 10:
-        registrar("Excesso de refrigerante", "Excesso de gás", 75)
+        registrar("Excesso de refrigerante", "Excesso", 75)
 
     elif 5 <= sh <= 12 and 5 <= sc <= 10:
         registrar("Sistema operando normalmente")
@@ -425,9 +407,8 @@ st.write("DEBUG ABA:", aba_selecionada)
     except:
         cop = 0
 
-    # Resultado
     if not diagnostico:
-        diagnostico.append("Sem dados suficientes para diagnóstico")
+        diagnostico.append("Sem dados suficientes")
 
     diag_txt = " | ".join(diagnostico)
 
@@ -437,9 +418,8 @@ st.write("DEBUG ABA:", aba_selecionada)
         prob_txt = "Nenhuma falha detectada"
 
     # =============================
-    # EXIBIÇÃO FINAL
+    # EXIBIÇÃO
     # =============================
-
     st.write("### 🔎 Diagnóstico")
     st.write(diag_txt)
 
@@ -449,7 +429,6 @@ st.write("DEBUG ABA:", aba_selecionada)
     st.write("### ⚡ COP")
     st.write(cop)
 
-    # RELATÓRIO
     relatorio = f"""
 Diagnóstico:
 {diag_txt}
@@ -463,169 +442,19 @@ COP:
 
     st.text_area("📄 Relatório", relatorio, height=200)
 
-    # =============================
-    # PROTEÇÃO DE VARIÁVEIS
-    # =============================
-    def seguro(v):
-        try:
-            if v is None:
-                return 0
-            return float(v)
-        except:
-            return 0
-
-    # Proteção (evita erro se variável não existir ainda)
-    variaveis = ["sh_val","sc_val","p_suc","p_liq","t_suc_tubo","ts_suc","t_liq_tubo","ts_liq","a_med","rla_comp","diff_v"]
-
-    for var in variaveis:
-        if var not in globals():
-            globals()[var] = 0
-
-    sh_val_ = seguro(globals().get("sh_val"))
-    sc_val_ = seguro(globals().get("sc_val"))
-    p_suc_ = seguro(globals().get("p_suc"))
-    p_liq_ = seguro(globals().get("p_liq"))
-    t_suc_tubo_ = seguro(globals().get("t_suc_tubo"))
-    ts_suc_ = seguro(globals().get("ts_suc"))
-    t_liq_tubo_ = seguro(globals().get("t_liq_tubo"))
-    ts_liq_ = seguro(globals().get("ts_liq"))
-    a_med_ = seguro(globals().get("a_med"))
-    rla_comp_ = seguro(globals().get("rla_comp"))
-    diff_v_ = seguro(globals().get("diff_v"))
-
-    diagnostico = []
-    probabilidades = {}
-
-    def registrar(msg, falha=None, prob=0):
-        diagnostico.append(msg)
-        if falha:
-            probabilidades[falha] = prob
-
-    # =============================
-    # LÓGICA DE DIAGNÓSTICO
-    # =============================
-
-    # Ciclo
-    if sh_val_ > 15 and sc_val_ < 3:
-        registrar("Baixa carga de refrigerante", "Vazamento de refrigerante", 80)
-
-    elif sh_val_ < 3 and sc_val_ > 10:
-        registrar("Excesso de refrigerante", "Excesso de fluido refrigerante", 75)
-
-    elif 5 <= sh_val_ <= 12 and 5 <= sc_val_ <= 10:
-        registrar("Sistema operando normalmente")
-
-    # Pressões
-    if p_suc_ < 90:
-        registrar("Pressão de sucção baixa", "Evaporador sujo", 60)
-
-    elif p_suc_ > 160:
-        registrar("Pressão de sucção alta", "Retorno de líquido", 55)
-
-    if p_liq_ > 420:
-        registrar("Alta pressão de condensação", "Condensador sujo", 75)
-
-    # Eficiência
-    delta_evap = t_suc_tubo_ - ts_suc_
-    delta_cond = ts_liq_ - t_liq_tubo_
-
-    try:
-        cop_aprox = round((delta_cond + 1) / (delta_evap + 1), 2)
-    except:
-        cop_aprox = 0
-
-    # Resultado
-    if not diagnostico:
-        diagnostico.append("Sistema operando dentro dos parâmetros")
-
-    diag_ia = " | ".join(diagnostico)
-
-    if probabilidades:
-        ranking = sorted(probabilidades.items(), key=lambda x: x[1], reverse=True)
-        prob_txt = " | ".join([f"{f} ({p}%)" for f, p in ranking])
-    else:
-        prob_txt = "Nenhuma falha crítica detectada"
-
-    # Contramedidas
-    contramedidas = []
-
-    for falha in probabilidades:
-        if "refrigerante" in falha.lower():
-            contramedidas.append("Verificar vazamentos e carga de gás")
-        if "condensador" in falha.lower():
-            contramedidas.append("Limpar condensador")
-        if "evaporador" in falha.lower():
-            contramedidas.append("Limpar evaporador")
-
-    if not contramedidas:
-        contramedidas.append("Nenhuma ação necessária")
-
-    contramedidas_txt = " | ".join(contramedidas)
-
-    # =============================
-    # EXIBIÇÃO
-    # =============================
-
-    st.write("### 🔎 Análise do Sistema")
-    st.write(diag_ia)
-
-    st.write("### 📊 Probabilidade de Falhas")
-    st.write(prob_txt)
-
-    st.write("### 🛠️ Contramedidas")
-    st.write(contramedidas_txt)
-
-    st.write("### ⚡ COP (Eficiência)")
-    st.write(cop_aprox)
-
-    # Relatório
-    relatorio_txt = f"""
-RELATORIO TECNICO HVAC
-
-Diagnostico:
-{diag_ia}
-
-Falhas:
-{prob_txt}
-
-Acoes:
-{contramedidas_txt}
-
-COP:
-{cop_aprox}
-"""
-
-    st.text_area("📄 Relatório Técnico", relatorio_txt, height=220)
-
-    st.markdown(
-        f"""
-        <button onclick="navigator.clipboard.writeText(`{relatorio_txt}`)"
-        style="padding:10px;font-size:16px;border-radius:6px;">
-        📋 Copiar Relatório
-        </button>
-        """,
-        unsafe_allow_html=True
-    )
-
-
-# =============================
-# CONTROLE DAS ABAS
-# =============================
+# ==============================================================================
+# 4. LÓGICA DE EXIBIÇÃO DAS ABAS (CORRIGIDA)
+# ==============================================================================
 
 if aba_selecionada == "Home":
     st.markdown("<br>", unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns([1, 2, 1]) 
     with col2: 
-        NOME_ARQUIVO_LOGO = "logo.png"
-        
-        if os.path.exists(NOME_ARQUIVO_LOGO):
-            try:
-                st.image(NOME_ARQUIVO_LOGO, use_container_width=True) 
-            except Exception as e:
-                st.error(f"Erro ao abrir imagem: {e}")
+        if os.path.exists("logo.png"):
+            st.image("logo.png", use_container_width=True)
         else:
-            st.error("Arquivo logo.png não encontrado")
+            st.warning("Logo não encontrada")
 
     st.markdown("<br><br>", unsafe_allow_html=True)
 
@@ -639,8 +468,9 @@ if aba_selecionada == "Home":
 elif aba_selecionada == "1. Cadastro de Equipamentos":
     renderizar_aba_1()
 
-elif aba_selecionada == "2. Diagnósticos":
+# 🔥 CORREÇÃO PRINCIPAL AQUI
+elif "Diagn" in aba_selecionada:
     renderizar_aba_diagnosticos()
 
 elif aba_selecionada == "Relatórios":
-    st.header("Página de Relatórios (Em desenvolvimento)")
+    st.header("Relatórios (Em desenvolvimento)")
