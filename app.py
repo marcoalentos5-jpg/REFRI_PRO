@@ -6,6 +6,44 @@ from datetime import datetime
 import requests
 import urllib.parse
 import os # Biblioteca para verificar arquivos no sistema
+import re  
+
+# ==============================================================================
+# 0. FUNÇÕES DE FORMATAÇÃO (COLE EXATAMENTE AQUI)
+# ==============================================================================
+
+def formatar_cpf(valor):
+    nums = re.sub(r'\D', '', valor)
+    if len(nums) == 11:
+        return f"{nums[:3]}.{nums[3:6]}.{nums[6:9]}-{nums[9:]}"
+    return valor
+
+def formatar_cep(valor):
+    nums = re.sub(r'\D', '', valor)
+    if len(nums) == 8:
+        return f"{nums[:5]}-{nums[5:]}"
+    return valor
+
+def formatar_telefone(valor):
+    nums = re.sub(r'\D', '', valor)
+    if len(nums) == 11: # Celular
+        return f"({nums[:2]}) {nums[2:7]}-{nums[7:]}"
+    elif len(nums) == 10: # Fixo
+        return f"({nums[:2]}) {nums[2:6]}-{nums[6:]}"
+    return valor
+
+# ==============================================================================
+# 1. INICIALIZAÇÃO DO SESSION STATE (DADOS)
+# ==============================================================================
+if 'dados' not in st.session_state:
+    st.session_state.dados = { ... seu dicionário de dados aqui ... }
+
+# ==============================================================================
+# 2. DEFINIÇÃO DAS FUNÇÕES DAS ABAS (renderizar_aba_1, etc.)
+# ==============================================================================
+# Agora sim você coloca a função que usa o 'formatar_cpf'
+def renderizar_aba_1():
+    # ... código da aba ...
 
 # 1. CONFIGURAÇÃO INICIAL (TESTADA)
 st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
