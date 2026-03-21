@@ -138,109 +138,62 @@ def renderizar_aba_1():
 
 
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO REESTRUTURADA - R2)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO SIMPLIFICADA - PULE OS ERROS)
 # ==============================================================================
 def renderizar_aba_diagnosticos():
     st.header("📋 Central de Diagnósticos")
     st.write("---")
     
-    # 1. RECUPERAÇÃO DO FLUIDO (Garante que sempre haja um valor)
-    if 'dados' not in st.session_state:
-        st.error("⚠️ Erro: Dados não inicializados. Volte à aba 1.")
-        return
+    # 1. DADOS INICIAIS
+    f = st.session_state.dados.get('fluido', 'R410A')
+    st.info(f"Fluido: {f}")
 
-    fluido_sel = st.session_state.dados.get('fluido', 'R410A')
-    st.info(f"Fluido Selecionado: **{fluido_sel}**")
-
-    # 2. LÓGICA DE CÁLCULO P/T (PRESSÃO PARA SATURAÇÃO)
-    def calc_tsat(pressao, tipo_ciclo):
-        if fluido_sel == "R410A": 
-            return (pressao * 0.17) - 16.5 if tipo_ciclo == "baixa" else (pressao * 0.11) + 2.5
-        elif fluido_sel == "R22": 
-            return (pressao * 0.28) - 14.5 if tipo_ciclo == "baixa" else (pressao * 0.18) + 8.5
-        elif fluido_sel == "R32": 
-            return (pressao * 0.17) - 17.8 if tipo_ciclo == "baixa" else (pressao * 0.11) + 1.2
-        return 0.0
-
-    # 3. BLOCO DE SUPERAQUECIMENTO (Lado de Baixa)
-    st.subheader("❄️ Superaquecimento")
-    c1, c2 = st.columns(2)
-    p_baixa = c1.number_input("Pressão de Baixa (PSI)", value=118.0, key="pb_input")
-    t_suc_real = c2.number_input("Temperatura de Sucção (°C)", value=12.0, key="ts_input")
+    # 2. ENTRADA DE DADOS (UMA EMBAIXO DA OUTRA PARA NÃO DAR ERRO)
+    pb = st.number_input("Pressão de Baixa (PSI)", value=118.0, key="pb_diag")
+    ts = st.number_input("Temp. Sucção (°C)", value=12.0, key="ts_diag")
     
-    t_sat_baixa = calc_tsat(p_baixa, "baixa")
-    sa_resultado = t_suc_real - t_sat_baixa
-    
-    # Exibição de Resultados de Baixa
-    r1, r2 = st.columns(2)
-    r1.metric("T. Sat. Sucção", f"{t_sat_baixa:.1f} °C")
-    r2.metric("SA TOTAL", f"{sa_resultado:.1f} K", delta=f"{sa_resultado-7:.1f}K", delta_color="inverse")
+    pa = st.number_input("Pressão de Alta (PSI)", value=340.0, key="pa_diag")
+    tl = st.number_input("Temp. Linha Líquido (°C)", value=35.0, key="tl_diag")
 
+    # 3. CÁLCULOS RÁPIDOS
+    if f == "R410A":
+        tsat_b = (pb * 0.17) - 16.5
+        tsat_a = (pa * 0.11) + 2.5
+    else:
+        tsat_b = (pb * 0.28) - 14.5
+        tsat_a = (pa * 0.18) + 8.5
+
+    sa = ts - tsat_b
+    sr = tsat_a - tl
+
+    # 4. EXIBIÇÃO DOS RESULTADOS
     st.write("---")
-
-    # 4. BLOCO DE SUBRESFRIAMENTO (Lado de Alta)
-    st.subheader("🔥 Subresfriamento")
-    ca1, ca2 = st.columns(2)
-    p_alta = ca1.number_input("Pressão de Alta (PSI)", value=340.0, key="pa_input")
-    t_liq_real = ca2.number_input("Temperatura Linha Líquido (°C)", value=35.0, key="tl_input")
+    st.success(f"**Superaquecimento (SA):** {sa:.1f} K")
+    st.success(f"**Subresfriamento (SR):** {sr:.1f} K")
     
-    t_sat_alta = calc_tsat(p_alta, "alta")
-    sr_resultado = t_sat_alta - t_liq_real
-    
-    # Exibição de Resultados de Alta
-    ra1, ra2 = st.columns(2)
-    ra1.metric("T. Sat. Descarga", f"{t_sat_alta:.1f} °C")
-    ra2.metric("SR TOTAL", f"{sr_resultado:.1f} K", delta=f"{sr_resultado-5:.1f}K")
-
-    st.write("---")
-
-    # 5. DELTA T DO AR
-    st.subheader("🌡️ Diferencial (Ar)")
-    cd1, cd2, cd3 = st.columns(3)
-    t_retorno = cd1.number_input("T. Retorno Ar (°C)", value=24.0, key="tr_input")
-    t_insufla = cd2.number_input("T. Insuflamento (°C)", value=12.0, key="ti_input")
-    delta_t_ar = t_retorno - t_insufla
-    cd3.metric("Delta T", f"{delta_t_ar:.1f} °C")
-
-    # 6. PERSISTÊNCIA PARA O WHATSAPP
-    st.session_state.dados['perf'] = f"SA:{sa_resultado:.1f}K | SR:{sr_resultado:.1f}K | DT:{delta_t_ar:.1f}C"
-
-# ==============================================================================
+    # SALVA PARA O ZAP
+    st.session_state.dados['perf'] = f"SA:{sa:.1f}K | SR:{sr:.1f}K"
 
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO
 # ==============================================================================
 with st.sidebar:
-    st.title("🚀 Painel de Controle")
-    opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
-    aba_selecionada = st.sidebar.radio("Selecione a Aba:", opcoes_abas)
+    st.title("🚀 MPN Soluções")
     
-    st.markdown("---")
-    st.subheader("👤 Técnico Responsável")
-    st.session_state.dados['tecnico_nome'] = st.text_input("Nome:", value=st.session_state.dados['tecnico_nome'])
-    st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ:", value=st.session_state.dados['tecnico_documento'])
-    st.session_state.dados['tecnico_registro'] = st.text_input("Registro (CFT/CREA):", value=st.session_state.dados['tecnico_registro'])
+    # IMPORTANTE: Os nomes aqui devem ser simples
+    opcoes = ["Home", "Cadastro", "Diagnostico", "Relatorio"]
+    aba_selecionada = st.radio("Menu:", opcoes)
     
-    st.markdown("---")
-    # VALIDAÇÃO
-    if not st.session_state.dados['nome'] or not st.session_state.dados['whatsapp']:
-        st.error("📋 STATUS: PENDENTE")
-    else:
-        st.success("📋 STATUS: PRONTO")
-        
-    # MENSAGEM WHATSAPP COM OS RESULTADOS DO CAPÍTULO 2
-    msg_zap = (
-        f"*LAUDO TÉCNICO HVAC*\n\n"
-        f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
-        f"⚙️ *EQUIPAMENTO:* {st.session_state.dados['tag_id']}\n"
-        f"❄️ Fluido: {st.session_state.dados['fluido']}\n"
-        f"📊 *PERFORMANCE:* {st.session_state.dados.get('perf', 'N/A')}\n\n"
-        f"👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}\n"
-        f"📅 Data: {st.session_state.dados['data']}"
-    )
+    st.write("---")
+    st.subheader("👤 Técnico")
+    st.session_state.dados['tecnico_nome'] = st.text_input("Seu Nome:", value=st.session_state.dados.get('tecnico_nome', ''))
     
-    link = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_zap)}"
-    st.link_button("📲 Enviar Laudo WhatsApp", link, use_container_width=True)
+    # BOTÃO WHATSAPP
+    msg = f"Laudo: {st.session_state.dados.get('perf', 'N/A')}"
+    link = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg)}"
+    st.link_button("📲 Enviar WhatsApp", link)
+
+# ==============================================================================
     
 # ==============================================================================
 # 4. LÓGICA DE EXIBIÇÃO DAS ABAS (CORREÇÃO DE GATILHO)
