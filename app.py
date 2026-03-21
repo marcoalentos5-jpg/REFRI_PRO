@@ -36,7 +36,7 @@ def formatar_telefone(valor):
 # 1. INICIALIZAÇÃO DO SESSION STATE (DADOS)
 # ==============================================================================
 if 'dados' not in st.session_state:
-    st.session_state.dados = { ... seu dicionário de dados aqui ... }
+st.session_state.dados = { ... seu dicionário de dados aqui ... }
 
 # ==============================================================================
 # 2. DEFINIÇÃO DAS FUNÇÕES DAS ABAS (renderizar_aba_1, etc.)
