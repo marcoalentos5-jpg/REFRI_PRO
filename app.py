@@ -1,7 +1,11 @@
 import streamlit as st
-from datetime import datetime
-import requests
-import urllib.parse
+import numpy as np
+from datetime import date, datetime
+from fpdf import FPDF
+import io
+import sqlite3
+import pandas as pd
+import unicodedata
 
 st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="⚙️")
 
@@ -239,9 +243,19 @@ def renderizar_aba_1():
 # ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (PARTE 2 - ESQUELETO INSERIDO)
 # ==============================================================================
-def renderizar_aba_diagnosticos():
-    st.header("📋 Central de Diagnósticos")
-    st.markdown("---")
+diagnostico = []
+probabilidades = {}
+
+def registrar(msg, falha=None, prob=0):
+    diagnostico.append(msg)
+    if falha:
+        probabilidades[falha] = prob
+
+# lógica mínima para evitar erro
+diag_ia = "Sistema operando"
+prob_txt = "Sem falhas"
+contramedidas_txt = "Nenhuma ação necessária"
+cop_aprox = 0
     
     # 1. SELEÇÃO DO EQUIPAMENTO (Dependência da Aba 1)
     # equipments = db_utils.buscar_equipamentos_cadastrados()
