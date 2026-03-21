@@ -140,13 +140,11 @@ if d_raw:
     if buscar_cep(cep_in): st.rerun()
         st.session_state.dados['endereco'] = ce2.text_input("Rua:", value=st.session_state.dados.get('endereco', ''), key="k_cli_rua")
         st.session_state.dados['numero'] = ce3.text_input("Nº:", value=st.session_state.dados.get('numero', ''), key="k_cli_num")
-
         ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.4]) 
         st.session_state.dados['complemento'] = ce4.text_input("Comp:", value=st.session_state.dados.get('complemento', ''), key="k_cli_comp")
         st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados.get('bairro', ''), key="k_cli_bair")
         st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados.get('cidade', ''), key="k_cli_cid")
         st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados.get('uf', ''), max_chars=2, key="k_cli_uf")
-
         st.subheader("⚙️ Especificações do Equipamento")
         with st.expander("Detalhes Técnicos", expanded=True):
         e1, e2, e3 = st.columns(3)
