@@ -7,6 +7,78 @@ import requests
 import urllib.parse
 import os # Biblioteca para verificar arquivos no sistema
 
+# ==============================================================================
+# 1. FUNÇÕES DE APOIO (MÁSCARAS E CEP)
+# ==============================================================================
+
+def buscar_cep(cep):
+    """Busca endereço via API ViaCEP e atualiza o session_state"""
+    cep_limpo = "".join(filter(str.isdigit, str(cep)))
+    if len(cep_limpo) == 8:
+        try:
+            r = requests.get(f"https://viacep.com.br/ws/{cep_limpo}/json/")
+            if r.status_code == 200:
+                d = r.json()
+                if "erro" not in d:
+                    st.session_state.dados['endereco'] = d.get('logradouro', '')
+                    st.session_state.dados['bairro'] = d.get('bairro', '')
+                    st.session_state.dados['cidade'] = d.get('localidade', '')
+                    st.session_state.dados['uf'] = d.get('uf', '')[:2].upper()
+                    return True
+        except:
+            pass
+    return False
+
+def formatar_cpf(v):
+    v = "".join(filter(str.isdigit, str(v)))
+    if len(v) == 11:
+        return f"{v[:3]}.{v[3:6]}.{v[6:9]}-{v[9:]}"
+    return v
+
+def formatar_celular(v):
+    v = "".join(filter(str.isdigit, str(v)))
+    if len(v) == 11: # Formato: (XX) 9 XXXX-XXXX
+        return f"({v[:2]}) {v[2:3]} {v[3:7]}-{v[7:]}"
+    return v
+
+def formatar_fixo(v):
+    v = "".join(filter(str.isdigit, str(v)))
+    if len(v) == 10: # Formato: (XX) XXXX-XXXX
+        return f"({v[:2]}) {v[2:6]}-{v[6:]}"
+    return v
+
+def formatar_cep_mask(v):
+    v = "".join(filter(str.isdigit, str(v)))
+    if len(v) == 8: # Formato: 00000-000
+        return f"{v[:5]}-{v[5:]}"
+    return v
+with st.expander("👤 Dados de Contato", expanded=True):
+    col1, col2, col3, col4 = st.columns([1.5, 1, 1, 1])
+
+    # CPF
+    cpf_raw = col1.text_input("CPF (000.000.000-00)", 
+                              value=st.session_state.dados.get('cpf_cnpj', ''), 
+                              key="input_cpf")
+    st.session_state.dados['cpf_cnpj'] = formatar_cpf(cpf_raw)
+
+    # WhatsApp / Celular (XX-X-XXXX-XXXX)
+    zap_raw = col2.text_input("WhatsApp", 
+                              value=st.session_state.dados.get('whatsapp', ''), 
+                              key="input_zap")
+    st.session_state.dados['whatsapp'] = formatar_celular(zap_raw)
+
+    # Celular Adicional
+    cel_raw = col3.text_input("Cel. (Opcional)", 
+                              value=st.session_state.dados.get('celular', ''), 
+                              key="input_cel")
+    st.session_state.dados['celular'] = formatar_celular(cel_raw)
+
+    # Fixo (XX-XXXX-XXXX)
+    fixo_raw = col4.text_input("Fixo", 
+                               value=st.session_state.dados.get('fixo', ''), 
+                               key="input_fixo")
+    st.session_state.dados['fixo'] = formatar_fixo(fixo_raw)
+    
 # 1. CONFIGURAÇÃO INICIAL (TESTADA)
 st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
 
