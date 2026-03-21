@@ -198,7 +198,7 @@ with tab1:
 # 1. FUNÇÃO DA ABA 1: CADASTRO (LAYOUT EM LINHA ÚNICA)
 # ==============================================================================
     def renderizar_aba_1():
-    st.header("📋 Cadastro de Equipamento")
+st.header("📋 Cadastro de Equipamento")
     
     # --- SEÇÃO CLIENTE ---
 with st.expander("👤 Dados do Cliente", expanded=True):
