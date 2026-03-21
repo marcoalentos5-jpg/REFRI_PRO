@@ -140,42 +140,70 @@ def renderizar_aba_diagnosticos():
     st.header("📋 Central de Diagnósticos")
     st.markdown("---")
 
-# --- BLOCO 2: PROCESSAMENTO (CÁLCULOS TÉCNICOS COM TABELA PT) ---
-    fluido = st.session_state.dados.get('fluido', 'R410A')
+# ==============================================================================
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (CORRIGIDA - ORDEM DE EXECUÇÃO)
+# ==============================================================================
+def renderizar_aba_diagnosticos():
+    st.header("🔍 Central de Diagnóstico Técnico")
     
-    # Fórmulas de conversão simplificadas (Pressão PSI -> Temp Saturação °C)
+    # Puxa o fluido da Aba 1 ou usa R410A como padrão
+    fluido_selecionado = st.session_state.dados.get('fluido', 'R410A')
+    st.info(f"❄️ Fluido Refrigerante em Análise: **{fluido_selecionado}**")
+    st.markdown("---")
+
+    # --- BLOCO 1: ENTRADA DE MEDIÇÕES (DEFINIÇÃO DAS VARIÁVEIS) ---
+    st.subheader("1. Medições de Campo")
+    col_suc, col_des = st.columns(2)
+    
+    with col_suc:
+        st.markdown("### 🔵 Baixa Pressão")
+        # Definimos pres_suc ANTES de usá-la nos cálculos abaixo
+        pres_suc = st.number_input("Pressão de Sucção (PSI):", min_value=0.0, step=1.0, key="p_suc_diag")
+        temp_suc = st.number_input("Temp. Tubulação Sucção (°C):", step=0.1, key="t_suc_diag")
+
+    with col_des:
+        st.markdown("### 🔴 Alta Pressão")
+        # Definimos pres_des ANTES de usá-la nos cálculos abaixo
+        pres_des = st.number_input("Pressão de Descarga (PSI):", min_value=0.0, step=1.0, key="p_des_diag")
+        temp_liq = st.number_input("Temp. Tubulação Líquido (°C):", step=0.1, key="t_liq_diag")
+
+    st.markdown("---")
+
+    # --- BLOCO 2: PROCESSAMENTO (CÁLCULOS TÉCNICOS) ---
     def calcular_t_sat(p, gas):
-        if gas == "R410A":
-            # Curva aproximada para R410A
-            return 0.253 * (p**0.8) - 18.5
-        elif gas == "R22":
-            # Curva aproximada para R22
-            return 0.415 * (p**0.72) - 19.8
-        elif gas == "R32":
-            return 0.245 * (p**0.81) - 19.0
-        elif gas == "R134a":
-            return 0.65 * (p**0.62) - 25.0
+        if p <= 0: return 0.0
+        if gas == "R410A": return 0.253 * (p**0.8) - 18.5
+        elif gas == "R22": return 0.415 * (p**0.72) - 19.8
+        elif gas == "R134a": return 0.65 * (p**0.62) - 25.0
+        elif gas == "R32": return 0.245 * (p**0.81) - 19.0
         return 0.0
 
-    # Cálculo das Temperaturas de Saturação
-    t_sat_suc = calcular_t_sat(pres_suc, fluido) if pres_suc > 0 else 0.0
-    t_sat_des = calcular_t_sat(pres_des, fluido) if pres_des > 0 else 0.0
+    # Agora o Python encontra as variáveis pres_suc e pres_des sem erro
+    t_sat_suc = calcular_t_sat(pres_suc, fluido_selecionado)
+    t_sat_des = calcular_t_sat(pres_des, fluido_selecionado)
     
     # Cálculo Final de SH e SC
-    # Superaquecimento (SH) = Temp. Linha Sucção - Temp. Saturação Baixa
     sh = temp_suc - t_sat_suc if pres_suc > 0 else 0.0
-    
-    # Sub-resfriamento (SC) = Temp. Saturação Alta - Temp. Linha Líquido
     sc = t_sat_des - temp_liq if pres_des > 0 else 0.0
 
-    # Exibição auxiliar (Opcional: ajuda o técnico a ver se a leitura está correta)
-    st.caption(f"ℹ️ Temp. Saturação (Orvalho/Bolha): Sucção: {t_sat_suc:.1f}°C | Descarga: {t_sat_des:.1f}°C")
+    # --- BLOCO 3: EXIBIÇÃO DE RESULTADOS ---
+    st.subheader("2. Resultados Calculados")
+    res1, res2 = st.columns(2)
     
-    # 1. SELEÇÃO DO EQUIPAMENTO (Dependência da Aba 1)
-    # equipments = db_utils.buscar_equipamentos_cadastrados()
-    # equipamento_id = st.selectbox("Selecione o Equipamento para Diagnóstico:", list(equipments.keys()), format_func=lambda x: equipments[x])
-    
-    st.info("Aba de Diagnósticos em desenvolvimento. Implemente a lógica aqui.")
+    with res1:
+        st.metric(label="Superaquecimento (SH)", value=f"{sh:.1f} K")
+        if 5 <= sh <= 7: st.success("✅ SH dentro do padrão")
+        elif sh < 5: st.error("⚠️ SH Baixo: Risco de líquido no compressor")
+        else: st.warning("⚠️ SH Alto: Baixo rendimento / Falta de fluido")
+
+    with res2:
+        st.metric(label="Sub-resfriamento (SC)", value=f"{sc:.1f} K")
+        if 4 <= sc <= 7: st.success("✅ SC dentro do padrão")
+        else: st.info("ℹ️ SC fora do padrão: Verifique a condensação")
+
+    st.markdown("---")
+    st.subheader("3. Parecer Técnico")
+    st.session_state.dados['laudo_diag'] = st.text_area("Notas do Diagnóstico:", key="laudo_diag_area")
 
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
