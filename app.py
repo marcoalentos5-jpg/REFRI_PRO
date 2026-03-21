@@ -193,7 +193,7 @@ st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dado
 tabs = st.tabs(["📋 Identificação e Equipamento"])
 tab1 = tabs[0]
 
-    with tab1:
+with tab1:
        # ==============================================================================
 # 1. FUNÇÃO DA ABA 1: CADASTRO (LAYOUT EM LINHA ÚNICA)
 # ==============================================================================
@@ -201,14 +201,14 @@ def renderizar_aba_1():
     st.header("📋 Cadastro de Equipamento")
     
     # --- SEÇÃO CLIENTE ---
-    with st.expander("👤 Dados do Cliente", expanded=True):
+with st.expander("👤 Dados do Cliente", expanded=True):
         c1, c2, c3 = st.columns([2, 1, 1])
         st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="cli_nome")
         st.session_state.dados['cpf_cnpj'] = c2.text_input("CPF ou CNPJ", value=st.session_state.dados['cpf_cnpj'], key="cli_doc")
         st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp (DDD) *", value=st.session_state.dados['whatsapp'], key="cli_zap")
 
     # --- SEÇÃO ENDEREÇO (OTIMIZADA) ---
-    with st.expander("📍 Endereço e Localização", expanded=True):
+with st.expander("📍 Endereço e Localização", expanded=True):
         ce1, ce2, ce3 = st.columns([1, 2, 1])
         cep_input = ce1.text_input("CEP *", value=st.session_state.dados['cep'])
         if cep_input != st.session_state.dados['cep']:
@@ -227,7 +227,7 @@ def renderizar_aba_1():
 
     # --- SEÇÃO EQUIPAMENTO ---
     st.subheader("⚙️ Especificações Técnicas")
-    with st.expander("Detalhes do Ativo", expanded=True):
+with st.expander("Detalhes do Ativo", expanded=True):
         e1, e2, e3 = st.columns(3)
         with e1:
             st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", ["Carrier", "Daikin", "LG", "Samsung", "Trane"], index=0)
