@@ -138,95 +138,57 @@ def renderizar_aba_1():
 
 
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO SIMPLIFICADA - PULE OS ERROS)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (REMOVIDA CONFORME SOLICITAÇÃO)
 # ==============================================================================
+# Esta seção foi desativada para simplificação do sistema.
 def renderizar_aba_diagnosticos():
-    st.header("📋 Central de Diagnósticos")
-    st.write("---")
-    
-    # 1. DADOS INICIAIS
-    f = st.session_state.dados.get('fluido', 'R410A')
-    st.info(f"Fluido: {f}")
-
-    # 2. ENTRADA DE DADOS (UMA EMBAIXO DA OUTRA PARA NÃO DAR ERRO)
-    pb = st.number_input("Pressão de Baixa (PSI)", value=118.0, key="pb_diag")
-    ts = st.number_input("Temp. Sucção (°C)", value=12.0, key="ts_diag")
-    
-    pa = st.number_input("Pressão de Alta (PSI)", value=340.0, key="pa_diag")
-    tl = st.number_input("Temp. Linha Líquido (°C)", value=35.0, key="tl_diag")
-
-    # 3. CÁLCULOS RÁPIDOS
-    if f == "R410A":
-        tsat_b = (pb * 0.17) - 16.5
-        tsat_a = (pa * 0.11) + 2.5
-    else:
-        tsat_b = (pb * 0.28) - 14.5
-        tsat_a = (pa * 0.18) + 8.5
-
-    sa = ts - tsat_b
-    sr = tsat_a - tl
-
-    # 4. EXIBIÇÃO DOS RESULTADOS
-    st.write("---")
-    st.success(f"**Superaquecimento (SA):** {sa:.1f} K")
-    st.success(f"**Subresfriamento (SR):** {sr:.1f} K")
-    
-    # SALVA PARA O ZAP
-    st.session_state.dados['perf'] = f"SA:{sa:.1f}K | SR:{sr:.1f}K"
+    st.warning("Esta aba foi removida do sistema.")
 
 # ==============================================================================
-# 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO
+# 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (REVISADA)
 # ==============================================================================
 with st.sidebar:
-    st.title("🚀 MPN Soluções")
-    
-    # IMPORTANTE: Os nomes aqui devem ser simples
-    opcoes = ["Home", "Cadastro", "Diagnostico", "Relatorio"]
-    aba_selecionada = st.radio("Menu:", opcoes)
-    
-    st.write("---")
-    st.subheader("👤 Técnico")
-    st.session_state.dados['tecnico_nome'] = st.text_input("Seu Nome:", value=st.session_state.dados.get('tecnico_nome', ''))
-    
-    # BOTÃO WHATSAPP
-    msg = f"Laudo: {st.session_state.dados.get('perf', 'N/A')}"
-    link = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg)}"
-    st.link_button("📲 Enviar WhatsApp", link)
+    st.title("🚀 Painel de Controle")
 
-# ==============================================================================
+    # A. NAVEGAÇÃO SIMPLIFICADA (SEM DIAGNÓSTICOS)
+    opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "Relatórios"]
+    aba_selecionada = st.sidebar.radio("Selecione a Aba:", opcoes_abas)
     
+    st.markdown("---")
+    
+    # B. DADOS DO TÉCNICO RESPONSÁVEL
+    st.subheader("👤 Técnico Responsável")
+    st.session_state.dados['tecnico_nome'] = st.text_input("Nome:", value=st.session_state.dados.get('tecnico_nome', ''))
+    st.session_state.dados['tecnico_documento'] = st.text_input("Doc:", value=st.session_state.dados.get('tecnico_documento', ''))
+    
+    st.markdown("---")
+    
+    # MENSAGEM WHATSAPP (SEM OS DADOS DE PERFORMANCE)
+    msg_zap = (
+        f"*LAUDO TÉCNICO HVAC*\n\n"
+        f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
+        f"⚙️ *EQUIPAMENTO:* {st.session_state.dados['tag_id']}\n"
+        f"👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}\n"
+        f"📅 Data: {st.session_state.dados['data']}"
+    )
+    
+    link_final = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_zap)}"
+    st.link_button("📲 Enviar Laudo via WhatsApp", link_final, use_container_width=True)
 # ==============================================================================
-# 4. LÓGICA DE EXIBIÇÃO DAS ABAS (CORREÇÃO DE GATILHO)
+# 4. LÓGICA DE EXIBIÇÃO DAS ABAS (REVISADA)
 # ==============================================================================
-
-# 1. GARANTE QUE A VARIÁVEL DE SELEÇÃO EXISTE
-if 'aba_selecionada' not in locals():
-    aba_selecionada = "Home"
-
-# 2. BLOCO DE DECISÃO DE EXIBIÇÃO (O CORAÇÃO DO SISTEMA)
 if aba_selecionada == "Home":
-    st.subheader("🏠 Bem-vindo à MPN Soluções")
-    st.info("Selecione uma das abas ao lado para começar.")
-    # (Opcional: Insira aqui o bloco da Logo que te mandei antes)
+    st.subheader("🏠 MPN Soluções")
+    st.write("Sistema de Cadastro de Equipamentos.")
 
-elif "1." in aba_selecionada:
+elif aba_selecionada == "1. Cadastro de Equipamentos":
     renderizar_aba_1()
 
-elif "2." in aba_selecionada:
-    # FORÇA A CHAMADA DA FUNÇÃO DE DIAGNÓSTICOS
-    renderizar_aba_diagnosticos()
-
-elif "Relatórios" in aba_selecionada:
+elif aba_selecionada == "Relatórios":
     st.header("📋 Relatórios")
-    st.write("Área em desenvolvimento.")
-
-# 3. VERIFICAÇÃO DE ERRO DE CARREGAMENTO
-else:
-    st.warning("⚠️ Selecione uma opção válida no menu lateral.")
+    st.write("Em desenvolvimento.")
 
 # ==============================================================================
-# FIM DO ARQUIVO - SISTEMA HVAC MPN
+# FIM DO ARQUIVO - MPN SOLUÇÕES
 # ==============================================================================
-# ==============================================================================
-# FIM DO ARQUIVO - MPN SOLUÇÕES - SISTEMA DE GESTÃO HVAC (TOTAL 273 LINHAS)
 # ==========================================================================================================================================
