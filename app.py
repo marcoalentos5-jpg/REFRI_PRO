@@ -1,17 +1,12 @@
-# ==============================================================================
-# 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES (CONGELADO)
-# ==============================================================================
 import streamlit as st
-from datetime import datetime
-import requests
+import os
 import urllib.parse
-import os # Biblioteca para verificar arquivos no sistema
-import re  
+import re
 
-# ==============================================================================
-# 0. FUNÇÕES DE FORMATAÇÃO (COLE EXATAMENTE AQUI)
-# ==============================================================================
+# 1. CONFIGURAÇÃO DA PÁGINA (Sempre no topo, sem espaços na esquerda)
+st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
 
+# 2. FUNÇÕES DE FORMATAÇÃO (Sem espaços na esquerda)
 def formatar_cpf(valor):
     nums = re.sub(r'\D', '', valor)
     if len(nums) == 11:
@@ -26,17 +21,14 @@ def formatar_cep(valor):
 
 def formatar_telefone(valor):
     nums = re.sub(r'\D', '', valor)
-    if len(nums) == 11: # Celular
+    if len(nums) == 11:
         return f"({nums[:2]}) {nums[2:7]}-{nums[7:]}"
-    elif len(nums) == 10: # Fixo
+    elif len(nums) == 10:
         return f"({nums[:2]}) {nums[2:6]}-{nums[6:]}"
     return valor
 
-# ==============================================================================
-# 0. INICIALIZAÇÃO DO BANCO DE DADOS (SESSION STATE)
-# ==============================================================================
+# 3. INICIALIZAÇÃO DE DADOS
 if 'dados' not in st.session_state:
-    # Esta linha abaixo PRECISA de 4 espaços de recuo (Tab)
     st.session_state.dados = {
         'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'cep': '',
         'endereco': '', 'numero': '', 'complemento': '', 'bairro': '',
@@ -49,12 +41,10 @@ if 'dados' not in st.session_state:
         'data': '2024', 'laudo': ''
     }
 
-# ==============================================================================
-# 2. DEFINIÇÃO DAS FUNÇÕES DAS ABAS (renderizar_aba_1, etc.)
-# ==============================================================================
-# Agora sim você coloca a função que usa o 'formatar_cpf'
+# 4. FUNÇÕES DAS ABAS (O código dentro delas PRECISA de 4 espaços de recuo)
 def renderizar_aba_1():
-    # ... código da aba ...
+    st.header("📋 Cadastro de Equipamento")
+    # ... resto do código da aba com recuo ...
 
 # 1. CONFIGURAÇÃO INICIAL (TESTADA)
 st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
