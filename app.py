@@ -6,6 +6,10 @@ import io
 import sqlite3
 import pandas as pd
 import unicodedata
+import requests
+import urllib.parse  # <--- ESSA LINHA É A QUE ESTÁ FALTANDO!
+import os
+
 
 st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="⚙️")
 
