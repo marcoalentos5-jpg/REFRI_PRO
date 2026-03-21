@@ -172,7 +172,8 @@ with st.sidebar:
             if key not in chaves_tecnico:
                 st.session_state.dados[key] = valores_padrao.get(key, "")
         st.rerun()
-        # ==============================================================================
+        
+# ==============================================================================
 # 1. FUNÇÃO DA ABA 1: CADASTRO (ESTRUTURA CORRIGIDA)
 # ==============================================================================
 def renderizar_aba_1():
