@@ -1,42 +1,60 @@
 import streamlit as st
 from datetime import datetime
-import requests
-import urllib.parse
 import os
 
-# ==============================================================================
-# 0. FUNÇÕES DE SUPORTE E MÁSCARAS (AUTOMAÇÃO E FORMATAÇÃO)
-# ==============================================================================
+# --- CONFIGURAÇÃO INICIAL (Linha 1-15) ---
+st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
 
-def buscar_cep(cep):
-    """Busca automática de endereço em todo o Brasil via API ViaCEP."""
-    cep_limpo = "".join(filter(str.isdigit, cep))
-    if len(cep_limpo) == 8:
-        try:
-            r = requests.get(f"https://viacep.com.br/ws/{cep_limpo}/json/")
-            if r.status_code == 200:
-                d = r.json()
-                if "erro" not in d:
-                    st.session_state.dados['endereco'] = d.get('logradouro', '')
-                    st.session_state.dados['bairro'] = d.get('bairro', '')
-                    st.session_state.dados['cidade'] = d.get('localidade', '')
-                    st.session_state.dados['uf'] = d.get('uf', '')[:2].upper()
-                    return True
-        except: pass
-    return False
+if 'dados' not in st.session_state:
+    st.session_state.dados = {
+        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'fabricante': 'Carrier',
+        'tecnico_nome': '', 'tecnico_documento': '', 'tecnico_registro': ''
+    }
 
-def formatar_cpf(valor):
-    """Aplica máscara XXX.XXX.XXX-XX"""
-    v = "".join(filter(str.isdigit, valor))
-    if len(v) == 11: return f"{v[:3]}.{v[3:6]}.{v[6:9]}-{v[9:]}"
-    return v
+# --- SIDEBAR E LOGO (A LOGO FICA AQUI) ---
+with st.sidebar:
+    # Procura a logo na pasta raiz do projeto
+    if os.path.exists("logo.png"): 
+        st.image("logo.png", use_container_width=True)
+    st.title("MPN Soluções")
+    st.markdown("---")
+    st.info("Sistema de Laudos HVAC v3.0")
 
-def formatar_telefone(valor):
-    """Aplica máscara XX-X-XXXX-XXXX ou XX-XXXX-XXXX"""
-    v = "".join(filter(str.isdigit, valor))
-    if len(v) == 11: return f"{v[:2]}-{v[2:3]}-{v[3:7]}-{v[7:]}"
-    elif len(v) == 10: return f"{v[:2]}-{v[2:6]}-{v[6:]}"
-    return v
+# --- DEFINIÇÃO DAS ABAS (ORGANIZAÇÃO) ---
+# Criamos as abas UMA ÚNICA VEZ aqui fora
+aba1, aba2 = st.tabs(["🏠 Home / Identificação", "🔍 2. Diagnósticos e Relatórios"])
+
+with aba1:
+    st.header("Identificação do Cliente e Equipamento")
+    with st.expander("👤 Dados do Cliente", expanded=True):
+        c1, c2 = st.columns([2, 1])
+        # CHAVE ÚNICA (KEY) PARA EVITAR O ERRO DE DUPLICIDADE
+        st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", 
+                                                      value=st.session_state.dados.get('nome', ''), 
+                                                      key="key_home_nome_unico")
+        st.session_state.dados['cpf_cnpj'] = c2.text_input("CPF/CNPJ", 
+                                                          value=st.session_state.dados.get('cpf_cnpj', ''), 
+                                                          key="key_home_cpf_unico")
+
+with aba2:
+    st.header("Diagnóstico Técnico")
+    with st.expander("👷 Identificação do Técnico", expanded=True):
+        t1, t2 = st.columns(2)
+        st.session_state.dados['tecnico_nome'] = t1.text_input("Nome do Técnico", 
+                                                              value=st.session_state.dados.get('tecnico_nome', ''), 
+                                                              key="key_diag_tec_unico")
+        st.session_state.dados['tecnico_registro'] = t2.text_input("Registro (CFT/CREA)", 
+                                                                  value=st.session_state.dados.get('tecnico_registro', ''), 
+                                                                  key="key_diag_reg_unico")
+
+# --- EXECUÇÃO FINAL (INDENTAÇÃO CORRIGIDA) ---
+def main():
+    # Como as abas já foram renderizadas acima, a main pode apenas 
+    # conter lógicas de finalização ou cálculos.
+    pass
+
+if __name__ == "__main__":
+    main()
 
 # ==============================================================================
 # 1. CONFIGURAÇÃO DE INTERFACE E ESTILIZAÇÃO CSS
