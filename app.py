@@ -88,7 +88,7 @@ def renderizar_aba_1():
     with tabs[0]:
         with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
             c1, c2, c3 = st.columns([2, 1, 1])
-           st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados.get('nome', ''), key="cli_nome_unico_v3")
+           st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados.get('nome', ''), key="key_nome_cliente_final")
             doc_raw = c2.text_input("CPF (000.000.000-00)", value=st.session_state.dados['cpf_cnpj'], key="cli_d")
             st.session_state.dados['cpf_cnpj'] = formatar_cpf(doc_raw)
             zap_raw = c3.text_input("WhatsApp (XX-X-XXXX-XXXX) *", value=st.session_state.dados['whatsapp'], key="cli_w")
