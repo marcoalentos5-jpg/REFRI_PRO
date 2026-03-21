@@ -132,26 +132,32 @@ if d_raw:
     st.session_state.dados['tel_fixo'] = formatar_telefone(cx2.text_input("Fixo:", value=st.session_state.dados.get('tel_fixo', ''), key="k_cli_fix"))
     st.session_state.dados['email'] = cx3.text_input("E-mail:", value=st.session_state.dados.get('email', ''), key="k_cli_mail")
 
-    st.markdown("---")
-    ce1, ce2, ce3 = st.columns([1, 2, 1])
-    cep_in = ce1.text_input("CEP *", value=st.session_state.dados.get('cep', ''), key="k_cli_cep")
-    if cep_in != st.session_state.dados['cep']:
-        st.session_state.dados['cep'] = cep_in
-    if buscar_cep(cep_in): st.rerun()
+   st.markdown("---")
+        ce1, ce2, ce3 = st.columns([1, 2, 1])
+        cep_in = ce1.text_input("CEP *", value=st.session_state.dados.get('cep', ''), key="k_cli_cep")
+        
+        if cep_in != st.session_state.dados['cep']:
+            st.session_state.dados['cep'] = cep_in
+            if buscar_cep(cep_in): 
+                st.rerun()
+
+        # CAMPOS DE ENDEREÇO (Alinhados fora do IF do CEP)
         st.session_state.dados['endereco'] = ce2.text_input("Rua:", value=st.session_state.dados.get('endereco', ''), key="k_cli_rua")
         st.session_state.dados['numero'] = ce3.text_input("Nº:", value=st.session_state.dados.get('numero', ''), key="k_cli_num")
+        
         ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.4]) 
         st.session_state.dados['complemento'] = ce4.text_input("Comp:", value=st.session_state.dados.get('complemento', ''), key="k_cli_comp")
         st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados.get('bairro', ''), key="k_cli_bair")
         st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados.get('cidade', ''), key="k_cli_cid")
         st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados.get('uf', ''), max_chars=2, key="k_cli_uf")
+
         st.subheader("⚙️ Especificações do Equipamento")
         with st.expander("Detalhes Técnicos", expanded=True):
-        e1, e2, e3 = st.columns(3)
-        f_list = sorted(["Carrier", "Daikin", "Elgin", "Fujitsu", "Gree", "LG", "Midea", "Samsung", "TCL", "Trane", "York"])
-        st.session_state.dados['fabricante'] = e1.selectbox("Fabricante:", f_list, key="seq_1")
-        st.session_state.dados['modelo'] = e2.text_input("Modelo:", value=st.session_state.dados.get('modelo', ''), key="seq_2")
-        st.session_state.dados['linha'] = e3.selectbox("Linha:", ["Residencial", "Comercial", "Industrial"], key="seq_3")
+            e1, e2, e3 = st.columns(3)
+            f_list = sorted(["Carrier", "Daikin", "Elgin", "Fujitsu", "Gree", "LG", "Midea", "Samsung", "TCL", "Trane", "York"])
+            st.session_state.dados['fabricante'] = e1.selectbox("Fabricante:", f_list, key="seq_1")
+            st.session_state.dados['modelo'] = e2.text_input("Modelo:", value=st.session_state.dados.get('modelo', ''), key="seq_2")
+            st.session_state.dados['linha'] = e3.selectbox("Linha:", ["Residencial", "Comercial", "Industrial"], key="seq_3")
 
             e4, e5 = st.columns(2)
             st.session_state.dados['serie_evap'] = e4.text_input("Série Evap:", value=st.session_state.dados.get('serie_evap', ''), key="seq_4")
@@ -166,8 +172,7 @@ if d_raw:
             st.session_state.dados['fluido'] = e9.selectbox("Gás:", ["R410A", "R22", "R32", "R134a"], key="seq_9")
             st.session_state.dados['tag_id'] = e10.text_input("TAG:", value=st.session_state.dados.get('tag_id', ''), key="seq_10")
             
-            st.session_state.dados['status_maquina'] = st.radio("Condição:", ["🟢 OK", "🟡 Atenção", "🔴 Parado"], horizontal=True, key="st_f")
-# ==============================================================================
+            st.session_state.dados['status_maquina'] = st.radio("Condição:", ["🟢 OK", "🟡 Atenção", "🔴 Parado"], horizontal=True, key="st_f")# ==============================================================================
 # 4. FUNÇÃO DA ABA 2: DIAGNÓSTICOS TÉCNICOS
 # ==============================================================================
 
