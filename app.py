@@ -1,17 +1,16 @@
+# ==============================================================================
+# 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES (CONGELADO)
+# ==============================================================================
 import streamlit as st
-import numpy as np
-from datetime import date, datetime
-from fpdf import FPDF
-import io
-import sqlite3
-import pandas as pd
-import unicodedata
+from datetime import datetime
 import requests
-import urllib.parse  # <--- ESSA LINHA É A QUE ESTÁ FALTANDO!
-import os
+import urllib.parse
+import os # Biblioteca para verificar arquivos no sistema
 
-st.set_page_config(page_title="HVAC Pro - Marcos Alexandre", layout="wide", page_icon="⚙️")
+# 1. CONFIGURAÇÃO INICIAL (TESTADA)
+st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
 
+# CSS: Estilização (CONGELADO)
 st.markdown("""
     <style>
     .stTextInput>div>div>input[aria-label="Data da Visita:"] {
@@ -29,6 +28,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# 2. MOTOR DE SESSÃO (CHAVES VERIFICADAS)
 if 'dados' not in st.session_state:
     st.session_state.dados = {
         'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
@@ -54,84 +54,132 @@ def buscar_cep(cep):
                     st.session_state.dados['cidade'] = d.get('localidade', '')
                     st.session_state.dados['uf'] = d.get('uf', '')
                     return True
-        except Exception:
-            return False
+        except: pass
     return False
 
-tabs = st.tabs(["📋 Identificação e Equipamento"])
-tab1 = tabs[0]
 
-with tab1:
-    with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
-        c1, c2, c3 = st.columns([2, 1, 1])
-        st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="cli_nome")
-        st.session_state.dados['cpf_cnpj'] = c2.text_input("CPF ou CNPJ", value=st.session_state.dados['cpf_cnpj'], key="cli_doc")
-        st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp (DDD) *", value=st.session_state.dados['whatsapp'], key="cli_zap")
+# ==============================================================================
+# 1. FUNÇÃO DA ABA 1: Identificação e Equipamento (CÓDIGO COMPLETO E CORRIGIDO)
+# ==============================================================================
+def renderizar_aba_1():
+    # --- INTERFACE DE ABA ÚNICA ---
+    # Criamos a aba e já selecionamos o primeiro índice para evitar erro de variável nula
+    tabs = st.tabs(["📋 Identificação e Equipamento"])
+    tab1 = tabs[0]
 
-        cx1, cx2, cx3 = st.columns([1, 1, 2])
-        st.session_state.dados['celular'] = cx1.text_input("Cel.:", value=st.session_state.dados['celular'], key="cli_cel")
-        st.session_state.dados['tel_fixo'] = cx2.text_input("Telefone Fixo:", value=st.session_state.dados['tel_fixo'], key="cli_tel")
-        st.session_state.dados['email'] = cx3.text_input("E-mail:", value=st.session_state.dados['email'], key="cli_email")
+    with tab1:
+        # --- SEÇÃO CLIENTE ---
+        with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
+            c1, c2, c3 = st.columns([2, 1, 1])
+            st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="cli_nome")
+            st.session_state.dados['cpf_cnpj'] = c2.text_input("CPF ou CNPJ", value=st.session_state.dados['cpf_cnpj'], key="cli_doc")
+            st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp (DDD) *", value=st.session_state.dados['whatsapp'], key="cli_zap")
 
-        st.markdown("---")
-        ce1, ce2, ce3 = st.columns([1, 2, 1])
+            cx1, cx2, cx3 = st.columns([1, 1, 2])
+            st.session_state.dados['celular'] = cx1.text_input("Cel.:", value=st.session_state.dados['celular'])
+            st.session_state.dados['tel_fixo'] = cx2.text_input("Telefone Fixo:", value=st.session_state.dados['tel_fixo'])
+            st.session_state.dados['email'] = cx3.text_input("E-mail:", value=st.session_state.dados['email'])
 
-        cep_input = ce1.text_input("CEP *", value=st.session_state.dados['cep'], key="cli_cep")
+            st.markdown("---")
+            ce1, ce2, ce3 = st.columns([1, 2, 1])
+            cep_input = ce1.text_input("CEP *", value=st.session_state.dados['cep'])
+            if cep_input != st.session_state.dados['cep']:
+                st.session_state.dados['cep'] = cep_input
+                if buscar_cep(cep_input): st.rerun()
 
-        if cep_input != st.session_state.dados['cep']:
-            st.session_state.dados['cep'] = cep_input
-            buscar_cep(cep_input)
+            st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados['endereco'])
+            st.session_state.dados['numero'] = ce3.text_input("Número/Apto:", value=st.session_state.dados['numero'])
 
-        st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados['endereco'], key="cli_end")
-        st.session_state.dados['numero'] = ce3.text_input("Número/Apto:", value=st.session_state.dados['numero'], key="cli_num")
+            # --- CORREÇÃO DO LAYOUT DO ENDEREÇO (Bairro entre Complemento e Cidade) ---
+            ce4, ce5, ce6 = st.columns([1, 1, 1]) # Criamos apenas 3 colunas
+            
+            # 1ª Coluna: Complemento
+            st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados['complemento'])
+            
+            # 2ª Coluna: Bairro (POSIÇÃO CORRIGIDA)
+            st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'])
+            
+            # 3ª Coluna: Cidade
+            st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'])
 
-        ce4, ce5, ce6, ce7 = st.columns([1, 1, 1, 1])
-        st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados['complemento'], key="cli_comp")
-        st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'], key="cli_bairro")
-        st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'], key="cli_cidade")
-        st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'], key="cli_uf")
+            # Uma linha separada para a UF (Estado), com uma coluna menor
+            col_uf = st.columns([1])
+            with col_uf[0]:
+                st.session_state.dados['uf'] = st.text_input("UF:", value=st.session_state.dados['uf'])
+            # -----------------------------------------------
 
-    col_titulo, col_data = st.columns([3, 1])
-    with col_titulo: st.subheader("⚙️ Especificações do Equipamento")
-    with col_data: st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'], key="cli_data")
+        # --- SEÇÃO EQUIPAMENTO ---
+        col_titulo, col_data = st.columns([3, 1])
+        with col_titulo: st.subheader("⚙️ Especificações do Equipamento")
+        with col_data: st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'])
 
-    with st.expander("Detalhes Técnicos do Ativo", expanded=True):
-        e1, e2, e3 = st.columns(3)
-        with e1:
-            fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
-            fab_val = st.session_state.dados.get('fabricante', 'Carrier')
-            fab_idx = fab_list.index(fab_val) if fab_val in fab_list else 0
-            st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx)
-            st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados['modelo'], key="eq_modelo")
-            st.session_state.dados['linha'] = st.selectbox("Linha:", ["Residencial", "Comercial", "Industrial"], index=0)
-            st.session_state.dados['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], horizontal=True)
+        with st.expander("Detalhes Técnicos do Ativo", expanded=True):
+            e1, e2, e3 = st.columns(3)
+            with e1:
+                fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
+                fab_val = st.session_state.dados.get('fabricante', 'Carrier')
+                fab_idx = fab_list.index(fab_val) if fab_val in fab_list else 0
+                st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx)
+                st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados['modelo'])
+                st.session_state.dados['linha'] = st.selectbox("Linha:", ["Residencial", "Comercial", "Industrial"], index=0)
+                st.session_state.dados['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], horizontal=True)
 
-        with e2:
-            st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados['serie_evap'], key="eq_sevap")
-            st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND)", value=st.session_state.dados['serie_cond'], key="eq_scond")
-            st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'], key="eq_levap")
-            st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'], key="eq_lcond")
+            with e2:
+                st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados['serie_evap'])
+                st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND)", value=st.session_state.dados['serie_cond'])
+                st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'])
+                st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
 
-        with e3:
-            st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], index=1)
-            st.session_state.dados['fluido'] = st.selectbox("Fluido:", ["R410A", "R134a", "R22", "R32", "R290"], index=0)
-            st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
-            st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'], key="eq_tag")
+            with e3:
+                st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], index=1)
+                st.session_state.dados['fluido'] = st.selectbox("Fluido:", ["R410A", "R134a", "R22", "R32", "R290"], index=0)
+                st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
+                st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
 
+
+# ==============================================================================
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (PARTE 2 - ESQUELETO INSERIDO)
+# ==============================================================================
+def renderizar_aba_diagnosticos():
+    st.header("📋 Central de Diagnósticos")
+    st.markdown("---")
+    
+    # 1. SELEÇÃO DO EQUIPAMENTO (Dependência da Aba 1)
+    # equipments = db_utils.buscar_equipamentos_cadastrados()
+    # equipamento_id = st.selectbox("Selecione o Equipamento para Diagnóstico:", list(equipments.keys()), format_func=lambda x: equipments[x])
+    
+    st.info("Aba de Diagnósticos em desenvolvimento. Implemente a lógica aqui.")
+
+
+# ==============================================================================
+# 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
+# ==============================================================================
+# Mudamos esta seção para antes da Lógica de Exibição das Abas para definir aba_selecionada
 with st.sidebar:
     st.title("🚀 Painel de Controle")
-    st.subheader("👤 Técnico Responsável")
-    st.session_state.dados['tecnico_nome'] = st.text_input("Nome:", value=st.session_state.dados['tecnico_nome'], key="tec_nome")
-    st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ Técnico:", value=st.session_state.dados['tecnico_documento'], key="tec_doc")
-    st.session_state.dados['tecnico_registro'] = st.text_input("Inscrição (CFT/CREA):", value=st.session_state.dados['tecnico_registro'], key="tec_reg")
 
+    # A. NAVEGAÇÃO E EXIBIÇÃO DAS ABAS (ATIVADA AQUI)
+    opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
+    # Use st.sidebar.radio para criar os botões de seleção de aba e DEFINIR a variável
+    aba_selecionada = st.sidebar.radio("Selecione a Aba:", opcoes_abas)
+    
     st.markdown("---")
-
+    
+    # B. DADOS DO TÉCNICO RESPONSÁVEL
+    st.subheader("👤 Técnico Responsável")
+    st.session_state.dados['tecnico_nome'] = st.text_input("Nome:", value=st.session_state.dados['tecnico_nome'])
+    st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ Técnico:", value=st.session_state.dados['tecnico_documento'])
+    st.session_state.dados['tecnico_registro'] = st.text_input("Inscrição (CFT/CREA):", value=st.session_state.dados['tecnico_registro'])
+    
+    st.markdown("---")
+    
+    # VALIDAÇÃO DE CAMPOS OBRIGATÓRIOS
     if not st.session_state.dados['nome'] or not st.session_state.dados['whatsapp']:
         st.error("📋 STATUS: PENDENTE (Preencha Cliente e WhatsApp)")
     else:
         st.success("📋 STATUS: PRONTO PARA ENVIO")
-
+        
+    # MENSAGEM WHATSAPP - ENVIO DE TODOS OS DADOS SEM EXCEÇÃO
     msg_zap = (
         f"*LAUDO TÉCNICO HVAC*\n\n"
         f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
@@ -151,292 +199,75 @@ with st.sidebar:
         f"📜 Registro: {st.session_state.dados['tecnico_registro']}\n"
         f"📅 Data: {st.session_state.dados['data']}"
     )
-
-    zap_limpo = "".join(filter(str.isdigit, st.session_state.dados['whatsapp']))
-    link_final = f"https://wa.me/55{zap_limpo}?text={urllib.parse.quote(msg_zap)}"
+    
+    link_final = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_zap)}"
     st.link_button("📲 Enviar Laudo via WhatsApp", link_final, use_container_width=True)
 
     st.markdown("---")
-
+    # LIMPAR FORMULÁRIO (PROTEGENDO DADOS DO TÉCNICO)
     if st.button("🗑️ Limpar Formulário", use_container_width=True):
         chaves_tecnico = ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']
-        valores_padrao = {
-            'status_maquina': '🟢 Operacional',
-            'fabricante': 'Carrier',
-            'capacidade': '12.000',
-            'linha': 'Residencial',
-            'fluido': 'R410A',
-            'tipo_servico': 'Manutenção Preventiva'
-        }
         for key in st.session_state.dados.keys():
             if key not in chaves_tecnico:
-                st.session_state.dados[key] = valores_padrao.get(key, "")
+                st.session_state.dados[key] = ""
         st.rerun()
-        # ==============================================================================
-# 1. FUNÇÃO DA ABA 1: CADASTRO (ESTRUTURA CORRIGIDA)
-# ==============================================================================
-def renderizar_aba_1():
-    st.header("📋 Cadastro de Equipamento")
-    
-    # --- SEÇÃO CLIENTE ---
-    with st.expander("👤 Dados do Cliente", expanded=True):
-        c1, c2, c3 = st.columns([2, 1, 1])
-        
-        st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'])
-        st.session_state.dados['cpf_cnpj'] = c2.text_input("CPF ou CNPJ", value=st.session_state.dados['cpf_cnpj'])
-        st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp (DDD) *", value=st.session_state.dados['whatsapp'])
 
-    # --- SEÇÃO ENDEREÇO (OTIMIZADA) ---
-    with st.expander("📍 Endereço e Localização", expanded=True):
-        ce1, ce2, ce3 = st.columns([1, 2, 1])
-        
-        cep_input = ce1.text_input("CEP *", value=st.session_state.dados['cep'])
-        if cep_input != st.session_state.dados['cep']:
-            st.session_state.dados['cep'] = cep_input
-            if 'buscar_cep' in globals() and buscar_cep(cep_input): 
-                st.rerun()
-
-        st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados['endereco'])
-        st.session_state.dados['numero'] = ce3.text_input("Nº/Apto:", value=st.session_state.dados['numero'])
-
-        # NOVA LINHA: COMPLEMENTO, BAIRRO, CIDADE E UF JUNTOS (DENTRO DO EXPANDER)
-        l1, l2, l3, l4 = st.columns([1.2, 1.2, 1.2, 0.5])
-        st.session_state.dados['complemento'] = l1.text_input("Complemento:", value=st.session_state.dados['complemento'])
-        st.session_state.dados['bairro'] = l2.text_input("Bairro:", value=st.session_state.dados['bairro'])
-        st.session_state.dados['cidade'] = l3.text_input("Cidade:", value=st.session_state.dados['cidade'])
-        st.session_state.dados['uf'] = l4.text_input("UF:", value=st.session_state.dados['uf'])
-
-    # --- SEÇÃO EQUIPAMENTO ---
-    st.subheader("⚙️ Especificações Técnicas")
-    with st.expander("Detalhes do Ativo", expanded=True):
-        e1, e2, e3 = st.columns(3)
-        with e1:
-            fabricantes = ["Carrier", "Daikin", "LG", "Samsung", "Trane"]
-            idx_fab = fabricantes.index(st.session_state.dados['fabricante']) if st.session_state.dados['fabricante'] in fabricantes else 0
-            st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fabricantes, index=idx_fab)
-            st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados['modelo'])
-            st.session_state.dados['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🔴 Parado"], horizontal=True)
-        with e2:
-            st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados['serie_evap'])
-            st.session_state.dados['local_evap'] = st.text_input("Local (Ambiente):", value=st.session_state.dados['local_evap'])
-        with e3:
-            capacidades = ["9.000", "12.000", "18.000", "24.000"]
-            idx_cap = capacidades.index(st.session_state.dados['capacidade']) if st.session_state.dados['capacidade'] in capacidades else 1
-            st.session_state.dados['capacidade'] = st.selectbox("Capacidade (BTU):", capacidades, index=idx_cap)
-            st.session_state.dados['tag_id'] = st.text_input("TAG/Patrimônio:", value=st.session_state.dados['tag_id'])
 
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (CAMPOS TÉCNICOS)
+# 4. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
 # ==============================================================================
-def renderizar_aba_diagnosticos():
-    st.header("🔍 Diagnóstico do Ciclo Frigorífico")
-    
-    # Recupera o fluido selecionado na Aba 1
-    fluido = st.session_state.dados.get('fluido', 'R410A')
-    st.info(f"⚙️ Fluido de Referência: **{fluido}**")
+# Use a seleção do sidebar para chamar a função correta
+if aba_selecionada == "Home":
+    # --- NOVA APRESENTAÇÃO DA ABA HOME (COM LOGO MPN SOLUÇÕES ) ---
+    st.markdown("<br>", unsafe_allow_html=True) # Espaçamento superior
 
-    # --- ENTRADA DE DADOS ---
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.subheader("❄️ Lado de Baixa (Evaporação)")
-        p_baixa = st.number_input("Pressão de Baixa (PSI)", value=118.0)
-        t_suc = st.number_input("Temp. Tubo Sucção (°C)", value=12.0)
-        
-    with col2:
-        st.subheader("🔥 Lado de Alta (Condensação)")
-        p_alta = st.number_input("Pressão de Alta (PSI)", value=340.0)
-        t_liq = st.number_input("Temp. Tubo Líquido (°C)", value=35.0)
-
-    st.divider()
-
-    # --- LÓGICA DE CÁLCULO (EXEMPLO SIMPLIFICADO P/ R410A) ---
-    # Em um sistema real, usaríamos uma tabela P/T completa.
-    if fluido == "R410A":
-        t_sat_baixa = (p_baixa * 0.17) - 16.5
-        t_sat_alta = (p_alta * 0.11) + 2.5
-    else: # Exemplo genérico para outros
-        t_sat_baixa = (p_baixa * 0.28) - 14.5
-        t_sat_alta = (p_alta * 0.18) + 8.5
-
-    sa = t_suc - t_sat_baixa
-    sr = t_sat_alta - t_liq
-
-    # --- EXIBIÇÃO DOS RESULTADOS (MÉTRICAS) ---
-    res1, res2, res3 = st.columns(3)
-    
-    res1.metric("Superaquecimento (SA)", f"{sa:.1f} K", 
-                delta="Ideal: 5 a 7K", delta_color="normal")
-    
-    res2.metric("Subresfriamento (SR)", f"{sr:.1f} K", 
-                delta="Ideal: 4 a 7K", delta_color="normal")
-    
-    # Status simplificado
-    status_diag = "🟢 Normal" if (5 <= sa <= 9) else "🟡 Reavaliar Carga"
-    res3.metric("Status do Ciclo", status_diag)
-
-    # --- LAUDO AUTOMÁTICO ---
-    st.subheader("📝 Parecer Técnico Preliminar")
-    laudo_sugerido = f"O equipamento apresenta SA de {sa:.1f}K e SR de {sr:.1f}K. "
-    if sa > 9:
-        laudo_sugerido += "Possível falta de fluido ou baixa carga."
-    elif sa < 5:
-        laudo_sugerido += "Possível excesso de fluido ou baixa troca na evaporadora."
-    else:
-        laudo_sugerido += "Parâmetros de operação dentro da normalidade."
-
-    st.text_area("Diagnóstico Sugerido:", value=laudo_sugerido, height=100)
-    
-    # Salva no sistema para o WhatsApp
-    st.session_state.dados['diagnostico_resumo'] = f"SA:{sa:.1f} | SR:{sr:.1f} | {status_diag}"
-
-# ==============================================================================
-# 3. SIDEBAR E DEFINIÇÃO DE FUNÇÕES (VERSÃO LIMPA E CORRIGIDA)
-# ==============================================================================
-
-# A. SIDEBAR - NAVEGAÇÃO E DADOS DO TÉCNICO
-with st.sidebar:
-    st.title("🚀 Painel de Controle")
-    
-    # NAVEGAÇÃO PRINCIPAL (ÚNICA)
-    opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
-    aba_selecionada = st.radio("Selecione a Aba:", opcoes_abas, key="nav_principal")
-    
-    st.markdown("---")
-    
-    # B. DADOS DO TÉCNICO RESPONSÁVEL
-    st.subheader("👤 Técnico Responsável")
-    st.session_state.dados['tecnico_nome'] = st.text_input("Nome:", value=st.session_state.dados['tecnico_nome'])
-    st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ Técnico:", value=st.session_state.dados['tecnico_documento'])
-    st.session_state.dados['tecnico_registro'] = st.text_input("Inscrição (CFT/CREA):", value=st.session_state.dados['tecnico_registro'])
-    
-    st.markdown("---")
-    
-    # VALIDAÇÃO DE STATUS
-    if not st.session_state.dados['nome'] or not st.session_state.dados['whatsapp']:
-        st.error("📋 STATUS: PENDENTE")
-    else:
-        st.success("📋 STATUS: PRONTO PARA ENVIO")
-        
-    # WHATSAPP LINK (Gerado apenas se houver número)
-    zap = "".join(filter(str.isdigit, st.session_state.dados['whatsapp']))
-    if zap:
-        msg_zap = f"*LAUDO TÉCNICO HVAC*\n\n👤 *CLIENTE:* {st.session_state.dados['nome']}\n🛠️ Técnico: {st.session_state.dados['tecnico_nome']}"
-        link_final = f"https://wa.me/55{zap}?text={urllib.parse.quote(msg_zap)}"
-        st.link_button("📲 Enviar via WhatsApp", link_final, use_container_width=True)
-
-# ==============================================================================
-# FUNÇÃO DIAGNÓSTICO (FORA DO SIDEBAR PARA NÃO DUPLICAR)
-# ==============================================================================
-def renderizar_aba_diagnosticos():
-    st.title("🔍 Diagnóstico Inteligente")
-    
-    # Função auxiliar para evitar erros de valor nulo
-    def seguro(v):
-        try: return float(v) if v is not None else 0
-        except: return 0
-
-    # Puxa os valores do session_state (Certifique-se que sh_val, etc, existem no seu estado)
-    sh = seguro(st.session_state.get("sh_val", 0))
-    sc = seguro(st.session_state.get("sc_val", 0))
-    
-    # --- LÓGICA DE DIAGNÓSTICO ---
-    diagnostico = []
-    if sh > 15 and sc < 3:
-        diagnostico.append("Possível Baixa Carga de Fluido")
-    elif sh < 3 and sc > 10:
-        diagnostico.append("Possível Excesso de Fluido")
-    
-    # Exibição simples para teste
-    if not diagnostico:
-        st.success("✅ Sistema operando dentro dos parâmetros normais.")
-    else:
-        for d in diagnostico:
-            st.warning(f"⚠️ {d}")
-
-    # Área de Laudo
-    laudo_sugerido = f"Diagnóstico técnico realizado. Status: {'Normal' if not diagnostico else 'Anormal'}."
-    st.text_area("📄 Sugestão de Laudo:", value=laudo_sugerido, height=150)
-    
-# ==============================================================================
-# 4. LÓGICA DE EXIBIÇÃO FINAL (ESTRUTURA ANTI-ERRO 1.55.0)
-# ==============================================================================
-
-# IMPORTANTE: Esta parte deve vir LOGO APÓS a criação da variável 'aba_selecionada' no Sidebar
-if "Home" in aba_selecionada:
-    st.markdown("<br>", unsafe_allow_html=True)
+    # 1. CENTRALIZAÇÃO E EXIBIÇÃO DA LOGOMARCA
     col1, col2, col3 = st.columns([1, 2, 1]) 
     with col2: 
-        if os.path.exists("logo.png"):
-            st.image("logo.png", width='stretch')
-        else:
-            st.info("🏠 MPN SOLUÇÕES HVAC")
-    st.header("Bem-vindo, Marcos!")
-    st.write("Selecione uma opção no menu lateral para começar.")
-
-elif "Cadastro" in aba_selecionada:
-    # Chama a função de cadastro que você corrigiu
-    renderizar_aba_1()
-    
-    st.divider()
-    # O botão de limpar agora fica PROTEGIDO dentro deste elif para não duplicar
-    if st.button("🗑️ Limpar Formulário", width='stretch'):
-        for chave in st.session_state.dados.keys():
-            st.session_state.dados[chave] = ""
-        st.success("Formulário reiniciado!")
-        st.rerun()
-
-elif "Diagn" in aba_selecionada:
-    if 'renderizar_aba_diagnosticos' in globals():
-        renderizar_aba_diagnosticos()
+        # NOME DO ARQUIVO DE IMAGEM QUE ESTÁ SENDO USADO
+        NOME_ARQUIVO_LOGO = "logo.png"
         
-        # --- BLOCO 5: EXIBIÇÃO DE RESULTADOS (INCORPORADO AQUI) ---
-        # Só exibe se as variáveis de cálculo existirem no contexto
-        if 'status' in locals():
-            st.divider()
-            res1, res2, res3 = st.columns(3)
-            res1.metric("📊 Status", status)
-            res2.metric("❤️ Saúde", f"{score}%")
-            res3.metric("⚡ COP", cop)
+        # VERIFICAÇÃO ADICIONAL DO ARQUIVO NO DISCO (PARA AJUDAR NO DIAGNÓSTICO)
+        if os.path.exists(NOME_ARQUIVO_LOGO):
+            try:
+                # SE O ARQUIVO EXISTE, TENTA EXIBIR
+                st.image(NOME_ARQUIVO_LOGO, use_container_width=True) 
+            except Exception as e:
+                st.error(f"⚠️ Erro ao tentar abrir a imagem '{NOME_ARQUIVO_LOGO}'. Verifique se o arquivo está corrompido.")
+                st.write(f"Detalhes do erro do sistema: {e}")
+        else:
+            st.error(f"⚠️ Erro: Arquivo '{NOME_ARQUIVO_LOGO}' não encontrado na pasta raiz.")
+            st.info("Verifique se o nome do arquivo salvo no computador é EXATAMENTE 'logo.png' (maiúsculas/minúsculas importam).")
 
-            st.info(f"🔎 **Diagnóstico:** {diag_txt}")
-            st.warning(f"🚨 **Falhas:** {prob_txt}")
-            st.success(f"🛠️ **Ações:** {acoes_txt}")
+    st.markdown("<br><br>", unsafe_allow_html=True) 
 
-            st.subheader("📄 Laudo Técnico")
-            laudo_texto = st.session_state.dados.get('laudo', 'Laudo não gerado.')
-            st.text_area("Texto do Laudo", laudo_texto, height=200, label_visibility="collapsed")
-    else:
-        st.warning("Aba de Diagnósticos em manutenção.")
+    # 2. TÍTULO E BOAS-VINDAS CENTRALIZADOS E ESTILIZADOS
+    st.markdown("""
+        <div style="text-align: center;">
+            <h1 style="color: #0d47a1; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                MPN Soluções
+            </h1>
+            <p style="color: #1976d2; font-size: 1.3em;">
+                Soluções em Refrigeração e Climatização
+            </p>
+            <hr style="border: 1px solid #90caf9; width: 60%; margin: 20px auto;">
+            <p style="color: #455a64; font-size: 1.1em; font-weight: bold;">
+                Bem-vindo ao Sistema HVAC Pro de Gestão Inteligente.
+            </p>
+            <p style="color: #546e7a; font-size: 1.0em;">
+                Selecione uma opção no Painel de Controle lateral para iniciar sua inspeção ou diagnóstico.
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
+    # ------------------------------------------------
 
-elif "Relat" in aba_selecionada:
-    st.header("📋 Relatórios")
-    st.info("Módulo de geração de PDF em desenvolvimento.")
+elif aba_selecionada == "1. Cadastro de Equipamentos":
+    renderizar_aba_1() # Chama a função que contém todo o código da Aba 1
 
-# ==============================================================================
-# FIM DO ARQUIVO - NÃO ADICIONE NADA ABAIXO DESTA LINHA
-# ==============================================================================
+elif aba_selecionada == "2. Diagnósticos":
+    renderizar_aba_diagnosticos() # Chama a função que contém o esqueleto da Aba 2
 
-# ==============================================================================
-# 5. EXIBIÇÃO DE RESULTADOS (OCULTA SE NÃO HOUVER DADOS)
-# ==============================================================================
-# Só exibe se estiver na aba de Diagnóstico E se as variáveis de cálculo existirem
-if "Diagn" in aba_selecionada and 'status' in locals():
-    st.divider()
-    res1, res2, res3 = st.columns(3)
-    res1.metric("📊 Status", status)
-    res2.metric("❤️ Saúde", f"{score}%")
-    res3.metric("⚡ COP", cop)
-
-    st.info(f"🔎 **Diagnóstico:** {diag_txt}")
-    st.warning(f"🚨 **Falhas:** {prob_txt}")
-    st.success(f"🛠️ **Ações:** {acoes_txt}")
-
-    st.subheader("📄 Laudo Técnico")
-    # Usando o dicionário de dados para evitar erro de variável vazia
-    laudo_texto = st.session_state.dados.get('laudo', 'Laudo não gerado.')
-    st.text_area("Texto do Laudo", laudo_texto, height=200, label_visibility="collapsed")
-
-# ==============================================================================
-# FIM DO ARQUIVO
+elif aba_selecionada == "Relatórios":
+    st.header("Página de Relatórios (Em desenvolvimento)")
+    st.write("Em breve: Visualização e exportação de relatórios.")
 # ==============================================================================
