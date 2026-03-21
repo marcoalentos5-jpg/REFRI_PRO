@@ -333,7 +333,7 @@ with st.sidebar:
 # =============================
 # FUNÇÃO DA ABA DIAGNÓSTICOS (CORRIGIDA)
 # =============================
-
+st.write("DEBUG ABA:", aba_selecionada)
     def renderizar_aba_diagnosticos():
 
     st.header("DIAGNÓSTICO")
