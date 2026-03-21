@@ -560,46 +560,13 @@ Recomenda-se:
     st.write("### 📄 Laudo Técnico")
     st.text_area("", laudo, height=250)
 
-# ==============================================================================
-# 4. LÓGICA DE EXIBIÇÃO DAS ABAS (VERSÃO UNIFICADA E BLINDADA)
-# ==============================================================================
+st.sidebar.write("Teste de Conexão")
+aba_teste = st.sidebar.radio("Mudar Aba", ["A", "B"])
 
-# 1. DEBUG: Mostra no topo qual aba está ativa (Pode apagar depois de testar)
-st.caption(f"DEBUG: Aba Selecionada -> {aba_selecionada}")
-
-# 2. BLOCO ÚNICO DE DECISÃO
-if "Home" in aba_selecionada:
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns([1, 2, 1]) 
-    with col2: 
-        if os.path.exists("logo.png"):
-            st.image("logo.png", use_container_width=True)
-        else:
-            st.info("🏠 MPN SOLUÇÕES HVAC")
-
-    st.markdown("""
-        <div style="text-align: center;">
-            <h1 style="color: #0d47a1;">MPN Soluções</h1>
-            <p style="color: #1976d2; font-size: 1.2em;">Sistema HVAC Pro - Gestão Inteligente</p>
-            <hr style="width: 50%; margin: auto;">
-        </div>
-    """, unsafe_allow_html=True)
-
-elif "Cadastro" in aba_selecionada:
-    renderizar_aba_1()
-
-elif "Diagn" in aba_selecionada:
-    # Garante que a função existe antes de chamar
-    if 'renderizar_aba_diagnosticos' in globals():
-        renderizar_aba_diagnosticos()
-    else:
-        st.error("⚠️ Função de Diagnóstico não encontrada no código.")
-
-elif "Relat" in aba_selecionada:
-    st.header("📋 Relatórios")
-    st.write("Módulo em desenvolvimento.")
-
+if aba_teste == "A":
+    st.write("O site está VIVO e respondendo na Aba A")
+else:
+    st.write("O site está VIVO e respondendo na Aba B")
 # ==============================================================================
 # 5. EXIBIÇÃO DE RESULTADOS (APENAS SE AS VARIÁVEIS EXISTIREM)
 # ==============================================================================
