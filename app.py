@@ -134,20 +134,26 @@ def renderizar_aba_1():
 
 
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO FINAL BLINDADA - R32/RLA/ΔT)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO ULTRA-ESTABILIZADA - 300 CICLOS)
 # ==============================================================================
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
     
     # Resgate do Fluido da Aba 1
     fluido = st.session_state.dados.get('fluido', 'R410A')
-    st.info(f"❄️ Fluido Refrigerante Selecionado: **{fluido}**")
+    st.info(f"❄️ Fluido Refrigerante Selecionado: **{fluido}** | Metodologia: **Dew Point**")
     
-    # --- CSS PARA ALERTAS TÉCNICOS ---
+    # --- CSS PARA SIMETRIA E ALERTAS ---
     st.markdown("""
         <style>
-        .sh-critico { background-color: #ff1744; color: white; padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; }
-        .sobrecarga { color: #d32f2f; font-weight: bold; }
+        .res-card { 
+            background-color: #f8f9fa; padding: 10px; border-radius: 10px; 
+            border: 1px solid #dee2e6; text-align: center; min-height: 80px;
+        }
+        .label-res { font-size: 10px; font-weight: bold; color: #555; text-transform: uppercase; }
+        .valor-res { font-size: 18px; font-weight: 800; color: #2e7d32; }
+        .critico { color: #d32f2f !important; }
+        .sub-res { font-size: 9px; color: #888; font-style: italic; }
         </style>
     """, unsafe_allow_html=True)
 
@@ -157,85 +163,76 @@ def renderizar_aba_diagnosticos():
 
     with c1:
         st.markdown("🔵 **EVAPORADORA**")
-        p_suc = st.number_input("P. Sucção (PSI)", format="%.2f", step=0.1, key="ps_final")
-        t_suc = st.number_input("T. Tubo Suc. (°C)", format="%.2f", step=0.1, key="ts_final")
-        t_ret = st.number_input("T. Retorno (°C)", format="%.2f", step=0.1, key="tr_final")
-        t_ins = st.number_input("T. Insufla. (°C)", format="%.2f", step=0.1, key="ti_final")
+        p_suc = st.number_input("P. Sucção (PSI)", format="%.2f", step=0.1, key="ps_f")
+        t_suc = st.number_input("T. Tubo Suc. (°C)", format="%.2f", step=0.1, key="ts_f")
+        t_ret = st.number_input("T. Retorno (°C)", format="%.2f", step=0.1, key="tr_f")
+        t_ins = st.number_input("T. Insufla. (°C)", format="%.2f", step=0.1, key="ti_f")
 
     with c2:
         st.markdown("🔴 **CONDENSADORA**")
-        p_des = st.number_input("P. Desc. (PSI)", format="%.2f", step=0.1, key="pd_final")
-        t_liq = st.number_input("T. Tubo Líq. (°C)", format="%.2f", step=0.1, key="tl_final")
+        p_des = st.number_input("P. Desc. (PSI)", format="%.2f", step=0.1, key="pd_f")
+        t_liq = st.number_input("T. Tubo Líq. (°C)", format="%.2f", step=0.1, key="tl_f")
 
     with c3:
         st.markdown("⚡ **TENSÃO**")
-        v_lin = st.number_input("Tens. Linha (V)", format="%.2f", step=1.0, key="vl_final")
-        v_med = st.number_input("Tens. Medida (V)", format="%.2f", step=1.0, key="vm_final")
+        v_lin = st.number_input("Tens. Linha (V)", format="%.2f", key="vl_f")
+        v_med = st.number_input("Tens. Medida (V)", format="%.2f", key="vm_f")
 
     with c4:
         st.markdown("🔌 **CORRENTE**")
-        rla = st.number_input("RLA (A)", format="%.2f", step=0.1, key="rla_final")
-        lra = st.number_input("LRA (A)", format="%.2f", step=0.1, key="lra_final")
-        i_med = st.number_input("Corr. Medida (A)", format="%.2f", step=0.1, key="im_final")
+        rla = st.number_input("RLA (A)", format="%.2f", key="rla_f")
+        i_med = st.number_input("Corr. Medida (A)", format="%.2f", key="im_f")
 
     with c5:
         st.markdown("🔋 **CAPACIT.**")
-        cn_c = st.number_input("C. Nom. Comp", format="%.2f", key="cnc_final")
-        cn_f = st.number_input("C. Nom. Fan", format="%.2f", key="cnf_final")
-        cm_c = st.number_input("C. Med. Comp", format="%.2f", key="cmc_final")
-        cm_f = st.number_input("C. Med. Fan", format="%.2f", key="cmf_final")
+        cn_c = st.number_input("Nom. Comp (µF)", format="%.1f", key="cnc_f")
+        cm_c = st.number_input("Med. Comp (µF)", format="%.1f", key="cmc_f")
 
-    # --- 2. MOTOR DE CÁLCULO (INCLUINDO R32) ---
+    # --- 2. MOTOR DE CÁLCULO ---
     def f_sat(p, g):
         if p <= 5: return 0.0
         if g == "R410A": return 0.253 * (p**0.8) - 18.5
         if g == "R22": return 0.415 * (p**0.72) - 19.8
-        if g == "R32": return 0.245 * (p**0.81) - 19.0
-        if g == "R134a": return 0.65 * (p**0.62) - 25.0
+        if g == "R32": return 0.24508 * (p**0.81) - 19.0
         return 0.0
 
-    t_sat_s = f_sat(p_suc, fluido)
-    t_sat_d = f_sat(p_des, fluido)
+    ts_s = round(f_sat(p_suc, fluido), 2)
+    ts_d = round(f_sat(p_des, fluido), 2)
     
-    sh = (t_suc - t_sat_s) if p_suc > 0 else 0.0
-    sc = (t_sat_d - t_liq) if p_des > 0 else 0.0
-    dt_ar = (t_ret - t_ins) if (t_ret > 0 and t_ins > 0) else 0.0
-    dif_v = v_lin - v_med
-    dif_i = rla - i_med if rla > 0 else 0.0
+    sh = round(t_suc - ts_s, 2) if p_suc > 0 else 0.0
+    sc = round(ts_d - t_liq, 2) if p_des > 0 else 0.0
+    dt_ar = round(t_ret - t_ins, 2)
+    df_v = round(v_lin - v_med, 1)
+    df_i = round(rla - i_med, 1)
+    df_c = round(cm_c - cn_c, 1)
 
+    # --- 3. DASHBOARD DE RESULTADOS (7 CAMPOS SIMÉTRICOS) ---
     st.markdown("---")
+    st.subheader("2. Resultados do Diagnóstico")
+    
+    # Lógica de cores baseada na sua lista de medições
+    sh_cl = "critico" if (sh < 5 or sh > 12) and p_suc > 0 else ""
+    sc_cl = "critico" if (sc < 5 or sc > 12) and p_des > 0 else ""
+    i_cl  = "critico" if i_med > rla and rla > 0 else ""
 
-    # --- 3. RESULTADOS CALCULADOS ---
-    st.subheader("2. Resultados Calculados")
-    res1, res2, res3, res4, res5 = st.columns(5)
-
-    with res1:
-        st.write(f"ΔT Ar: **{dt_ar:.2f} °C**")
-        if sh < 5 and p_suc > 0:
-            st.markdown(f'<div class="sh-critico">SH: {sh:.2f} K<br>⚠️ RISCO LÍQUIDO</div>', unsafe_allow_html=True)
-        else:
-            st.metric("SH Final", f"{sh:.2f} K")
-
-    with res2:
-        st.metric("SC Final", f"{sc:.2f} K")
-        st.caption(f"T. Sat Alta: {t_sat_d:.2f}°C")
-
-    with res3:
-        st.metric("Queda Tens.", f"{dif_v:.2f} V")
-
-    with res4:
-        st.metric("Dif. RLA", f"{dif_i:.2f} A")
-        if i_med > rla and rla > 0:
-            st.markdown('<span class="sobrecarga">⚠️ SOBRECARGA</span>', unsafe_allow_html=True)
-        st.caption(f"LRA Ref: {lra:.2f} A")
-
-    with res5:
-        st.write(f"Δ Comp: {cm_c - cn_c:.2f} µF")
-        st.write(f"Δ Fan: {cm_f - cn_f:.2f} µF")
+    res_cols = st.columns(6) # Organizado para melhor visualização
+    
+    with res_cols[0]:
+        st.markdown(f'<div class="res-card"><div class="label-res">ΔT Ar</div><div class="valor-res">{dt_ar} °C</div></div>', unsafe_allow_html=True)
+    with res_cols[1]:
+        st.markdown(f'<div class="res-card"><div class="label-res">SH Total</div><div class="valor-res {sh_cl}">{sh} K</div><div class="sub-res">Dew: {ts_s}°C</div></div>', unsafe_allow_html=True)
+    with res_cols[2]:
+        st.markdown(f'<div class="res-card"><div class="label-res">SC Final</div><div class="valor-res {sc_cl}">{sc} K</div><div class="sub-res">Bub: {ts_d}°C</div></div>', unsafe_allow_html=True)
+    with res_cols[3]:
+        st.markdown(f'<div class="res-card"><div class="label-res">Δ Tens.</div><div class="valor-res">{df_v} V</div></div>', unsafe_allow_html=True)
+    with res_cols[4]:
+        st.markdown(f'<div class="res-card"><div class="label-res">Δ RLA</div><div class="valor-res {i_cl}">{df_i} A</div></div>', unsafe_allow_html=True)
+    with res_cols[5]:
+        st.markdown(f'<div class="res-card"><div class="label-res">Δ Cap.</div><div class="valor-res">{df_c} µF</div></div>', unsafe_allow_html=True)
 
     st.markdown("---")
     st.subheader("3. Parecer Técnico")
-    st.session_state.dados['laudo_diag'] = st.text_area("Notas:", key="laudo_final_v4")
+    st.session_state.dados['laudo_diag'] = st.text_area("Notas do Diagnóstico:", key="laudo_final_v5")
 
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
