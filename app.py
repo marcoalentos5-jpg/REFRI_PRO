@@ -212,62 +212,57 @@ with st.sidebar:
                 st.session_state.dados[key] = ""
         st.rerun()
 
-
 # ==============================================================================
-# 4. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
+# 4. LÓGICA DE EXIBIÇÃO FINAL (ESTRUTURA ANTI-ERRO 1.55.0)
 # ==============================================================================
-# Use a seleção do sidebar para chamar a função correta
-if aba_selecionada == "Home":
-    # --- NOVA APRESENTAÇÃO DA ABA HOME (COM LOGO MPN SOLUÇÕES ) ---
-    st.markdown("<br>", unsafe_allow_html=True) # Espaçamento superior
 
-    # 1. CENTRALIZAÇÃO E EXIBIÇÃO DA LOGOMARCA
+# IMPORTANTE: Esta parte deve vir LOGO APÓS a criação da variável 'aba_selecionada' no Sidebar
+if "Home" in aba_selecionada:
+    st.markdown("<br>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1]) 
     with col2: 
-        # NOME DO ARQUIVO DE IMAGEM QUE ESTÁ SENDO USADO
-        NOME_ARQUIVO_LOGO = "logo.png"
-        
-        # VERIFICAÇÃO ADICIONAL DO ARQUIVO NO DISCO (PARA AJUDAR NO DIAGNÓSTICO)
-        if os.path.exists(NOME_ARQUIVO_LOGO):
-            try:
-                # SE O ARQUIVO EXISTE, TENTA EXIBIR
-                st.image(NOME_ARQUIVO_LOGO, use_container_width=True) 
-            except Exception as e:
-                st.error(f"⚠️ Erro ao tentar abrir a imagem '{NOME_ARQUIVO_LOGO}'. Verifique se o arquivo está corrompido.")
-                st.write(f"Detalhes do erro do sistema: {e}")
+        if os.path.exists("logo.png"):
+            st.image("logo.png", width='stretch')
         else:
-            st.error(f"⚠️ Erro: Arquivo '{NOME_ARQUIVO_LOGO}' não encontrado na pasta raiz.")
-            st.info("Verifique se o nome do arquivo salvo no computador é EXATAMENTE 'logo.png' (maiúsculas/minúsculas importam).")
+            st.info("🏠 MPN SOLUÇÕES HVAC")
+    st.header("Bem-vindo, Marcos!")
+    st.write("Selecione uma opção no menu lateral para começar.")
 
-    st.markdown("<br><br>", unsafe_allow_html=True) 
+elif "Cadastro" in aba_selecionada:
+    # Chama a função de cadastro que você corrigiu
+    renderizar_aba_1()
+    
+    st.divider()
+    # O botão de limpar agora fica PROTEGIDO dentro deste elif para não duplicar
+    if st.button("🗑️ Limpar Formulário", width='stretch'):
+        for chave in st.session_state.dados.keys():
+            st.session_state.dados[chave] = ""
+        st.success("Formulário reiniciado!")
+        st.rerun()
 
-    # 2. TÍTULO E BOAS-VINDAS CENTRALIZADOS E ESTILIZADOS
-    st.markdown("""
-        <div style="text-align: center;">
-            <h1 style="color: #0d47a1; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-                MPN Soluções
-            </h1>
-            <p style="color: #1976d2; font-size: 1.3em;">
-                Soluções em Refrigeração e Climatização
-            </p>
-            <hr style="border: 1px solid #90caf9; width: 60%; margin: 20px auto;">
-            <p style="color: #455a64; font-size: 1.1em; font-weight: bold;">
-                Bem-vindo ao Sistema HVAC Pro de Gestão Inteligente.
-            </p>
-            <p style="color: #546e7a; font-size: 1.0em;">
-                Selecione uma opção no Painel de Controle lateral para iniciar sua inspeção ou diagnóstico.
-            </p>
-        </div>
-    """, unsafe_allow_html=True)
-    # ------------------------------------------------
+elif "Diagn" in aba_selecionada:
+    if 'renderizar_aba_diagnosticos' in globals():
+        renderizar_aba_diagnosticos()
+        
+        # --- BLOCO 5: EXIBIÇÃO DE RESULTADOS (INCORPORADO AQUI) ---
+        # Só exibe se as variáveis de cálculo existirem no contexto
+        if 'status' in locals():
+            st.divider()
+            res1, res2, res3 = st.columns(3)
+            res1.metric("📊 Status", status)
+            res2.metric("❤️ Saúde", f"{score}%")
+            res3.metric("⚡ COP", cop)
 
-elif aba_selecionada == "1. Cadastro de Equipamentos":
-    renderizar_aba_1() # Chama a função que contém todo o código da Aba 1
+            st.info(f"🔎 **Diagnóstico:** {diag_txt}")
+            st.warning(f"🚨 **Falhas:** {prob_txt}")
+            st.success(f"🛠️ **Ações:** {acoes_txt}")
 
-elif aba_selecionada == "2. Diagnósticos":
-    renderizar_aba_diagnosticos() # Chama a função que contém o esqueleto da Aba 2
+            st.subheader("📄 Laudo Técnico")
+            laudo_texto = st.session_state.dados.get('laudo', 'Laudo não gerado.')
+            st.text_area("Texto do Laudo", laudo_texto, height=200, label_visibility="collapsed")
+    else:
+        st.warning("Aba de Diagnósticos em manutenção.")
 
-elif aba_selecionada == "Relatórios":
-    st.header("Página de Relatórios (Em desenvolvimento)")
-    st.write("Em breve: Visualização e exportação de relatórios.")
-# ==============================================================================
+elif "Relat" in aba_selecionada:
+    st.header("📋 Relatórios")
+    st.info("Módulo de geração de PDF em desenvolvimento.")
