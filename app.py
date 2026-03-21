@@ -151,17 +151,17 @@ def renderizar_aba_diagnosticos():
     st.info("Aba de Diagnósticos em desenvolvimento. Implemente a lógica aqui.")
 
 
+ ==============================================================================
+# 3. SIDEBAR E DEFINIÇÃO DE FUNÇÕES (VERSÃO LIMPA E CORRIGIDA)
 # ==============================================================================
-# 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
-# ==============================================================================
-# Mudamos esta seção para antes da Lógica de Exibição das Abas para definir aba_selecionada
+
+# A. SIDEBAR - NAVEGAÇÃO E DADOS DO TÉCNICO
 with st.sidebar:
     st.title("🚀 Painel de Controle")
-
-    # A. NAVEGAÇÃO E EXIBIÇÃO DAS ABAS (ATIVADA AQUI)
+    
+    # NAVEGAÇÃO PRINCIPAL (ÚNICA)
     opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
-    # Use st.sidebar.radio para criar os botões de seleção de aba e DEFINIR a variável
-    aba_selecionada = st.sidebar.radio("Selecione a Aba:", opcoes_abas)
+    aba_selecionada = st.radio("Selecione a Aba:", opcoes_abas, key="nav_principal")
     
     st.markdown("---")
     
@@ -173,44 +173,51 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # VALIDAÇÃO DE CAMPOS OBRIGATÓRIOS
+    # VALIDAÇÃO DE STATUS
     if not st.session_state.dados['nome'] or not st.session_state.dados['whatsapp']:
-        st.error("📋 STATUS: PENDENTE (Preencha Cliente e WhatsApp)")
+        st.error("📋 STATUS: PENDENTE")
     else:
         st.success("📋 STATUS: PRONTO PARA ENVIO")
         
-    # MENSAGEM WHATSAPP - ENVIO DE TODOS OS DADOS SEM EXCEÇÃO
-    msg_zap = (
-        f"*LAUDO TÉCNICO HVAC*\n\n"
-        f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
-        f"🆔 CPF/CNPJ: {st.session_state.dados['cpf_cnpj']}\n"
-        f"📍 END: {st.session_state.dados['endereco']}, {st.session_state.dados['numero']} - {st.session_state.dados['bairro']}\n"
-        f"🏙️ {st.session_state.dados['cidade']}/{st.session_state.dados['uf']} | CEP: {st.session_state.dados['cep']}\n"
-        f"📞 Contato: {st.session_state.dados['whatsapp']} | Email: {st.session_state.dados['email']}\n\n"
-        f"⚙️ *EQUIPAMENTO:*\n"
-        f"📌 TAG: {st.session_state.dados['tag_id']} | Linha: {st.session_state.dados['linha']}\n"
-        f"🏭 Fab: {st.session_state.dados['fabricante']} | Mod: {st.session_state.dados['modelo']}\n"
-        f"❄️ Cap: {st.session_state.dados['capacidade']} BTU | Fluido: {st.session_state.dados['fluido']}\n"
-        f"🔢 S.Evap: {st.session_state.dados['serie_evap']} | S.Cond: {st.session_state.dados['serie_cond']}\n"
-        f"📍 Loc.Evap: {st.session_state.dados['local_evap']} | Loc.Cond: {st.session_state.dados['local_cond']}\n"
-        f"🛠️ Serviço: {st.session_state.dados['tipo_servico']}\n"
-        f"🩺 Status: {st.session_state.dados['status_maquina']}\n\n"
-        f"👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}\n"
-        f"📜 Registro: {st.session_state.dados['tecnico_registro']}\n"
-        f"📅 Data: {st.session_state.dados['data']}"
-    )
-    
-    link_final = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_zap)}"
-    st.link_button("📲 Enviar Laudo via WhatsApp", link_final, use_container_width=True)
+    # WHATSAPP LINK (Gerado apenas se houver número)
+    zap = "".join(filter(str.isdigit, st.session_state.dados['whatsapp']))
+    if zap:
+        msg_zap = f"*LAUDO TÉCNICO HVAC*\n\n👤 *CLIENTE:* {st.session_state.dados['nome']}\n🛠️ Técnico: {st.session_state.dados['tecnico_nome']}"
+        link_final = f"https://wa.me/55{zap}?text={urllib.parse.quote(msg_zap)}"
+        st.link_button("📲 Enviar via WhatsApp", link_final, use_container_width=True)
 
-    st.markdown("---")
-    # LIMPAR FORMULÁRIO (PROTEGENDO DADOS DO TÉCNICO)
-    if st.button("🗑️ Limpar Formulário", use_container_width=True):
-        chaves_tecnico = ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']
-        for key in st.session_state.dados.keys():
-            if key not in chaves_tecnico:
-                st.session_state.dados[key] = ""
-        st.rerun()
+# ==============================================================================
+# FUNÇÃO DIAGNÓSTICO (FORA DO SIDEBAR PARA NÃO DUPLICAR)
+# ==============================================================================
+def renderizar_aba_diagnosticos():
+    st.title("🔍 Diagnóstico Inteligente")
+    
+    # Função auxiliar para evitar erros de valor nulo
+    def seguro(v):
+        try: return float(v) if v is not None else 0
+        except: return 0
+
+    # Puxa os valores do session_state (Certifique-se que sh_val, etc, existem no seu estado)
+    sh = seguro(st.session_state.get("sh_val", 0))
+    sc = seguro(st.session_state.get("sc_val", 0))
+    
+    # --- LÓGICA DE DIAGNÓSTICO ---
+    diagnostico = []
+    if sh > 15 and sc < 3:
+        diagnostico.append("Possível Baixa Carga de Fluido")
+    elif sh < 3 and sc > 10:
+        diagnostico.append("Possível Excesso de Fluido")
+    
+    # Exibição simples para teste
+    if not diagnostico:
+        st.success("✅ Sistema operando dentro dos parâmetros normais.")
+    else:
+        for d in diagnostico:
+            st.warning(f"⚠️ {d}")
+
+    # Área de Laudo
+    laudo_sugerido = f"Diagnóstico técnico realizado. Status: {'Normal' if not diagnostico else 'Anormal'}."
+    st.text_area("📄 Sugestão de Laudo:", value=laudo_sugerido, height=150)
 
 # ==============================================================================
 # 4. LÓGICA DE EXIBIÇÃO FINAL (ESTRUTURA ANTI-ERRO 1.55.0)
