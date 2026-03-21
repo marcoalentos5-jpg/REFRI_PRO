@@ -144,7 +144,11 @@ def renderizar_aba_diagnosticos():
     st.header("📋 Central de Diagnósticos")
     st.markdown("---")
     
-    # 1. IDENTIFICAÇÃO DO FLUIDO (Vem da Aba 1)
+    # 1. IDENTIFICAÇÃO DO FLUIDO (Vem da Aba 1 ou assume R410A por segurança)
+    if 'dados' not in st.session_state:
+        st.error("Erro: Dados não inicializados.")
+        return
+
     fluido = st.session_state.dados.get('fluido', 'R410A')
     st.info(f"Análise Técnica para o Fluido: **{fluido}**")
 
@@ -156,34 +160,33 @@ def renderizar_aba_diagnosticos():
         return 0.0
 
     # 2. SEÇÃO DE SUPERAQUECIMENTO (MEDICÕES E RESULTADOS)
-    with st.container(border=True):
+    with st.container():
         st.subheader("❄️ Superaquecimento (Lado de Baixa)")
         c1, c2, c3, c4 = st.columns(4)
-        p_b = c1.number_input("P. Baixa (PSI)", min_value=0.0, key="pb_diag")
+        p_b = c1.number_input("P. Baixa (PSI)", min_value=0.0, value=118.0, step=1.0, key="pb_diag")
         t_sat_b = get_tsat(p_b, "baixa")
         c2.metric("T. Sat (Baixa)", f"{t_sat_b:.1f}°C")
-        t_suc = c3.number_input("T. Sucção (°C)", key="ts_diag")
+        t_suc = c3.number_input("T. Sucção (°C)", min_value=-50.0, value=12.0, step=0.1, key="ts_diag")
         sa_t = t_suc - t_sat_b
-        # Métrica com cor: Ideal entre 5K e 9K (seta indica desvio de 7K)
-        c4.metric("SA TOTAL", f"{sa_t:.1f} K", delta=f"{sa_t-7:.1f}", delta_color="inverse")
+        c4.metric("SA TOTAL", f"{sa_t:.1f} K", delta=f"{sa_t-7:.1f}K", delta_color="inverse")
 
     # 3. SEÇÃO DE SUBRESFRIAMENTO (MEDIÇÕES E RESULTADOS)
-    with st.container(border=True):
+    with st.container():
         st.subheader("🔥 Subresfriamento (Lado de Alta)")
         ca1, ca2, ca3, ca4 = st.columns(4)
-        p_a = ca1.number_input("P. Alta (PSI)", min_value=0.0, key="pa_diag")
+        p_a = ca1.number_input("P. Alta (PSI)", min_value=0.0, value=340.0, step=1.0, key="pa_diag")
         t_sat_a = get_tsat(p_a, "alta")
         ca2.metric("T. Sat (Alta)", f"{t_sat_a:.1f}°C")
-        t_liq = ca3.number_input("T. Linha Líq (°C)", key="tl_diag")
+        t_liq = ca3.number_input("T. Linha Líq (°C)", min_value=-50.0, value=35.0, step=0.1, key="tl_diag")
         sr_t = t_sat_a - t_liq
-        # Métrica com cor: Ideal entre 4K e 7K (seta indica desvio de 5K)
-        ca4.metric("SR TOTAL", f"{sr_t:.1f} K", delta=f"{sr_t-5:.1f}", delta_color="normal")
+        ca4.metric("SR TOTAL", f"{sr_t:.1f} K", delta=f"{sr_t-5:.1f}K", delta_color="normal")
 
     # 4. DELTA T DO AR E PERSISTÊNCIA
     st.markdown("---")
+    st.subheader("🌡️ Diferencial de Temperatura (Delta T)")
     cd1, cd2, cd3 = st.columns(3)
-    t_ret = cd1.number_input("Ar Retorno (°C)", value=24.0)
-    t_ins = cd2.number_input("Ar Insuflamento (°C)", value=12.0)
+    t_ret = cd1.number_input("Ar Retorno (°C)", value=24.0, step=0.1, key="tr_ar")
+    t_ins = cd2.number_input("Ar Insuflamento (°C)", value=12.0, step=0.1, key="ti_ar")
     dt_ar = t_ret - t_ins
     cd3.metric("Delta T Ar", f"{dt_ar:.1f} °C")
     
