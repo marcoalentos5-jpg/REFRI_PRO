@@ -140,7 +140,8 @@ def renderizar_aba_1():
 import streamlit as st
 import math
 
-def exibir_aba_diagnostico_v10():
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO V10 - MATRIZ DE PRECISÃO REAL)
+def renderizar_aba_diagnosticos():
     import streamlit as st
 
     # --- CONFIGURAÇÃO DE ESTILO (TEXTO PRETO / FUNDOS FIXOS) ---
@@ -185,17 +186,15 @@ def exibir_aba_diagnostico_v10():
         t_ret = st.number_input("Retorno", value=24.0)
         t_ins = st.number_input("Insufl.", value=12.0)
 
-    # --- MOTOR DE CÁLCULO V10 (REVISADO 1000X) ---
+    # --- MOTOR DE CÁLCULO V10 (REVISADO 1000X - R32 & R410A) ---
     if gas == "R32":
         # Alvo: 100 PSI = -0.87°C | 134 PSI = 7.68°C | 160 PSI = 13.32°C
         tsat = (0.000305 * (p_suc**2)) + (0.1572 * p_suc) - 19.64
         sh_min, sh_max = 5.5, 7.5 # Miolo verde ideal R32
-        sh_limite_alerta = 8.0     # Limite para Luz Amarela R32
     else: # R410A
         # Alvo: 100 PSI = -0.3°C | 134 PSI = 8.1°C | 160 PSI = 13.6°C
         tsat = (0.000285 * (p_suc**2)) + (0.15735 * p_suc) - 18.88
         sh_min, sh_max = 5.0, 12.0 # Margem padrão R410A
-        sh_limite_alerta = 12.0
 
     tsat = round(tsat, 1)
     sh = round(t_suc - tsat, 1)
@@ -231,10 +230,9 @@ def exibir_aba_diagnostico_v10():
     with r_col1:
         st.metric("Superaquecimento", f"{sh} K", delta=f"Sat: {tsat}°C", delta_color="off")
     with r_col2:
-        st.metric("Delta T do Ar", f"{dt_ar} °C", help="Diferença entre Retorno e Insuflamento")
+        st.metric("Delta T do Ar", f"{dt_ar} °C")
     with r_col3:
         st.markdown(f'<div class="card-diagnostico" style="background-color: {cor};">{msg}</div>', unsafe_allow_html=True)
-
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
 # ==============================================================================
