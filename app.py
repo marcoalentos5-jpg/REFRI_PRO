@@ -489,129 +489,124 @@ def renderizar_aba_diagnosticos():
     )
 
 # ==============================================================================
-# BLOCO 5: RELATÓRIOS E LAUDOS - Matriz de Diagnóstico Termodinâmico V17
+# BLOCO 5: RELATÓRIOS E LAUDOS - Modelo Matriz de Inspeção V17
 # ==============================================================================
 
 import streamlit as st
 from fpdf import FPDF
 from datetime import datetime
 
-class LaudoMestreV17(FPDF):
+class RelatorioMatrizV17(FPDF):
     def header(self):
-        # Tenta inserir o logo. Se não existir, desenha um cabeçalho de texto profissional
+        # Cabeçalho com Estilo de Prancha Técnica
         try:
-            self.image("logo.png", 10, 8, 33)
+            self.image("logo.png", 10, 8, 30)
         except:
-            self.set_font('Arial', 'B', 12)
-            self.set_text_color(0, 51, 102)
-            self.cell(0, 10, 'MPN SOLUÇÕES - SISTEMA V17', 0, 1, 'L')
-            
-        self.set_font('Arial', 'B', 15)
-        self.set_text_color(0, 51, 102) 
-        self.cell(0, 10, 'LAUDO TÉCNICO DE PERFORMANCE TERMODINÂMICA', 0, 1, 'R')
+            pass
+        self.set_font('Arial', 'B', 14)
+        self.set_text_color(0, 51, 102)
+        self.cell(0, 10, 'RELATÓRIO DE INSPEÇÃO TERMODINÂMICA', 0, 1, 'R')
+        self.set_font('Arial', 'I', 9)
+        self.set_text_color(128, 128, 128)
+        self.cell(0, 5, f'Emissão: {datetime.now().strftime("%d/%m/%Y %H:%M")}', 0, 1, 'R')
         self.ln(10)
 
-    def secao_azul(self, titulo):
-        self.set_fill_color(0, 51, 102)
-        self.set_text_color(255, 255, 255)
+    def secao_titulo(self, texto):
+        self.set_fill_color(230, 230, 230)
+        self.set_text_color(0, 51, 102)
         self.set_font('Arial', 'B', 10)
-        self.cell(0, 8, f" {titulo.upper()}", 1, 1, 'L', True)
+        self.cell(0, 8, f"  {texto.upper()}", 1, 1, 'L', True)
 
-    def linha_info(self, l1, v1, l2, v2):
-        self.set_draw_color(0, 51, 102)
-        self.set_fill_color(240, 245, 255)
-        
-        # Limpeza de dados: Se o valor for vazio ou zero, coloca '---'
-        val1 = str(v1) if v1 not in [None, '', 0, 0.0] else "---"
-        val2 = str(v2) if v2 not in [None, '', 0, 0.0] else "---"
-        
-        self.set_font('Arial', 'B', 8); self.set_text_color(50)
-        self.cell(40, 7, f" {l1}", 1, 0, 'L', True)
-        self.set_font('Arial', '', 9); self.set_text_color(0)
-        self.cell(55, 7, f" {val1}", 1, 0, 'L')
-        
-        self.set_font('Arial', 'B', 8); self.set_text_color(50)
-        self.cell(40, 7, f" {l2}", 1, 0, 'L', True)
-        self.set_font('Arial', '', 9); self.set_text_color(0)
-        self.cell(55, 7, f" {val2}", 1, 1, 'L')
+    def grid_duplo(self, label1, valor1, label2, valor2):
+        self.set_font('Arial', 'B', 8)
+        self.set_text_color(100)
+        # Linha de Labels
+        self.cell(47.5, 5, f" {label1}", 'LTR', 0, 'L')
+        self.cell(47.5, 5, f" {label2}", 'TR', 1, 'L')
+        # Linha de Valores
+        self.set_font('Arial', '', 10)
+        self.set_text_color(0)
+        v1 = str(valor1) if valor1 not in [None, '', 0, 0.0] else "---"
+        v2 = str(valor2) if valor2 not in [None, '', 0, 0.0] else "---"
+        self.cell(47.5, 8, f" {v1}", 'LBR', 0, 'L')
+        self.cell(47.5, 8, f" {v2}", 'BR', 1, 'L')
 
-def gerar_laudo_v17():
-    # --- 1. RESGATE TOTAL DE DADOS (GARANTE QUE NÃO SAIA VAZIO) ---
-    # Buscamos as chaves exatas que o Streamlit usa para guardar os inputs
+def gerar_novo_modelo_v17():
+    # --- RESGATE DINÂMICO DE DADOS ---
     d = st.session_state.get('dados', {})
     
-    # Resgate do Sidebar (Seus dados) - Ajuste os nomes se necessário
-    tecnico = st.session_state.get('nome_tecnico', 'Técnico Responsável')
-    cnpj_tec = st.session_state.get('cnpj_tecnico', '---')
-    
-    pdf = LaudoMestreV17()
+    # Busca dados do profissional (Sidebar)
+    # Certifique-se que no sidebar as chaves sejam 'nome_tecnico' e 'cnpj_tecnico'
+    nome_prof = st.session_state.get('nome_tecnico', 'TÉCNICO NÃO IDENTIFICADO')
+    cnpj_prof = st.session_state.get('cnpj_tecnico', '---')
+
+    pdf = RelatorioMatrizV17()
     pdf.add_page()
 
-    # 1. IDENTIFICAÇÃO (Cliente e Cadastro)
-    pdf.secao_azul("1. Identificação")
-    pdf.linha_info("CLIENTE:", d.get('nome_cliente'), "CPF/CNPJ:", d.get('cpf_cliente'))
-    pdf.linha_info("ENDEREÇO:", d.get('endereco'), "CONTATO:", d.get('contato'))
-    pdf.ln(4)
+    # BLOCO 1: DADOS DO ATENDIMENTO
+    pdf.secao_titulo("1. Identificação do Cliente e Local")
+    pdf.grid_duplo("CLIENTE / RAZÃO SOCIAL", d.get('nome_cliente'), "CPF / CNPJ", d.get('cpf_cliente'))
+    pdf.grid_duplo("ENDEREÇO DA INSTALAÇÃO", d.get('endereco'), "TELEFONE / CONTATO", d.get('contato'))
+    pdf.ln(5)
 
-    # 2. EQUIPAMENTO
-    pdf.secao_azul("2. Equipamento")
-    pdf.linha_info("FABRICANTE:", d.get('fabricante'), "MODELO/BTU:", f"{d.get('modelo')} / {d.get('capacidade')}")
-    pdf.linha_info("TAG/ID ATIVO:", d.get('tag_id'), "FLUIDO:", d.get('fluido', 'R410A'))
-    pdf.linha_info("SÉRIE EVAP:", d.get('serial_evap'), "SÉRIE COND:", d.get('serial_cond'))
-    pdf.ln(4)
+    # BLOCO 2: ESPECIFICAÇÕES DO EQUIPAMENTO
+    pdf.secao_titulo("2. Dados do Equipamento Inspeccionado")
+    pdf.grid_duplo("FABRICANTE", d.get('fabricante'), "MODELO / CAPACIDADE", f"{d.get('modelo')} / {d.get('capacidade')}")
+    pdf.grid_duplo("TAG / IDENTIFICAÇÃO", d.get('tag_id'), "FLUIDO REFRIGERANTE", d.get('fluido', 'R410A'))
+    pdf.grid_duplo("SÉRIE EVAPORADORA", d.get('serial_evap'), "SÉRIE CONDENSADORA", d.get('serial_cond'))
+    pdf.ln(5)
 
-    # 3. MATRIZ DE PERFORMANCE (Os cálculos do App)
-    pdf.secao_azul("3. Matriz de Performance Termodinâmica")
-    pdf.linha_info("PRESSÃO SUCÇÃO:", f"{d.get('p_suc', 0)} PSI", "T. SATURAÇÃO:", f"{d.get('t_sat', 0)} °C")
-    pdf.linha_info("TEMP. TUBO SUC:", f"{d.get('t_suc', 0)} °C", "SUPERAQUEC. (SH):", f"{d.get('sh', 0)} K")
-    pdf.linha_info("T. RETORNO AR:", f"{d.get('t_ret', 0)} °C", "T. INSUFLAÇÃO:", f"{d.get('t_ins', 0)} °C")
-    pdf.linha_info("DELTA T (AR):", f"{d.get('dt_ar', 0)} °C", "STATUS FLUIDO:", "Análise Concluída")
-    pdf.ln(4)
+    # BLOCO 3: MÉTRICAS DE PERFORMANCE (O CORAÇÃO DO APP)
+    pdf.secao_titulo("3. Análise Termodinâmica e Elétrica")
+    pdf.grid_duplo("PRESSÃO DE SUCÇÃO", f"{d.get('p_suc', 0)} PSI", "TEMP. DE SATURAÇÃO", f"{d.get('t_sat', 0)} °C")
+    pdf.grid_duplo("TEMP. TUBO SUCÇÃO", f"{d.get('t_suc', 0)} °C", "SUPERAQUECIMENTO (SH)", f"{d.get('sh', 0)} K")
+    pdf.grid_duplo("DELTA T (AR)", f"{d.get('dt_ar', 0)} °C", "CORRENTE NOMINAL (I)", f"{d.get('i_med', 0)} A")
+    pdf.ln(5)
 
-    # 4. ELÉTRICA
-    pdf.secao_azul("4. Elétrica")
-    pdf.linha_info("TENSÃO (V):", f"{d.get('v_lin', 0)} V", "CORRENTE (I):", f"{d.get('i_med', 0)} A")
-    pdf.linha_info("CAPACITOR:", f"{d.get('cm_c', 0)} uF", "TIPO PARTIDA:", d.get('partida_tipo', 'Direta'))
-    pdf.ln(4)
-
-    # 5. PARECER E VEREDITO
-    pdf.secao_azul("5. Parecer Técnico e Veredito")
-    pdf.set_font('Arial', 'B', 10); pdf.set_text_color(0, 51, 102)
-    veredito = d.get('diag_final_status', 'NECESSITA REVISÃO TÉCNICA / CARGA')
-    pdf.cell(0, 10, f" DIAGNÓSTICO FINAL: {veredito}", 1, 1, 'C')
+    # BLOCO 4: PARECER TÉCNICO FINAL
+    pdf.secao_titulo("4. Parecer e Recomendações")
+    pdf.set_font('Arial', 'B', 11)
+    veredito = d.get('diag_final_status', 'EM ANÁLISE')
+    pdf.set_text_color(200, 0, 0) if "ALERTA" in veredito else pdf.set_text_color(0, 102, 0)
+    pdf.cell(0, 10, f" STATUS: {veredito}", 1, 1, 'C')
     
-    pdf.set_font('Arial', '', 9); pdf.set_text_color(0)
-    pdf.multi_cell(0, 7, f"\nNOTAS ADICIONAIS:\n{d.get('laudo_v17_final', 'Nenhuma observação informada.')}", 1, 'L')
+    pdf.ln(2)
+    pdf.set_font('Arial', '', 9)
+    pdf.set_text_color(0)
+    obs = d.get('laudo_v17_final', 'Nenhuma observação técnica adicional registrada.')
+    pdf.multi_cell(0, 6, f"OBSERVAÇÕES:\n{obs}", 1, 'L')
 
-    # --- ASSINATURAS NO FIM DA PÁGINA ---
-    pdf.set_y(-55)
-    pdf.line(20, pdf.get_y()+10, 85, pdf.get_y()+10)   # Linha Técnico
-    pdf.line(125, pdf.get_y()+10, 190, pdf.get_y()+10) # Linha Cliente
+    # BLOCO 5: ASSINATURAS E RESPONSABILIDADE
+    pdf.set_y(-50)
+    y_final = pdf.get_y()
+    pdf.set_draw_color(180)
     
-    pdf.set_y(pdf.get_y()+12)
-    pdf.set_font('Arial', 'B', 9)
-    # Puxa o Nome do Técnico (Sidebar) e Nome do Cliente (Cadastro)
-    pdf.set_x(20); pdf.cell(65, 5, tecnico.upper(), 0, 0, 'C')
-    pdf.set_x(125); pdf.cell(65, 5, str(d.get('nome_cliente', 'CLIENTE')).upper(), 0, 1, 'C')
+    # Campos de Assinatura
+    pdf.line(15, y_final + 10, 90, y_final + 10)
+    pdf.line(120, y_final + 10, 195, y_final + 10)
     
-    pdf.set_font('Arial', '', 8)
-    # Puxa o CNPJ do Técnico (Sidebar) e CPF do Cliente (Cadastro)
-    pdf.set_x(20); pdf.cell(65, 4, f"CNPJ: {cnpj_tec}", 0, 0, 'C')
-    pdf.set_x(125); pdf.cell(65, 4, f"CPF/CNPJ: {d.get('cpf_cliente', '---')}", 0, 1, 'C')
+    pdf.set_y(y_final + 12)
+    pdf.set_font('Arial', 'B', 8)
+    # Assinatura do Técnico (Resgatado do Sidebar)
+    pdf.set_x(15); pdf.cell(75, 4, nome_prof.upper(), 0, 0, 'C')
+    # Assinatura do Cliente (Resgatado do Cadastro)
+    pdf.set_x(120); pdf.cell(75, 4, str(d.get('nome_cliente', 'CLIENTE')).upper(), 0, 1, 'C')
+    
+    pdf.set_font('Arial', '', 7)
+    pdf.set_x(15); pdf.cell(75, 4, f"CNPJ: {cnpj_prof}", 0, 0, 'C')
+    pdf.set_x(120); pdf.cell(75, 4, f"CPF/CNPJ: {d.get('cpf_cliente', '---')}", 0, 1, 'C')
 
     return pdf.output(dest='S').encode('latin-1')
 
-# --- BOTÃO PARA EXIBIR NO STREAMLIT ---
-st.markdown("---")
-if st.button("🚀 GERAR LAUDO EDITÁVEL COMPLETO"):
+# --- BOTÃO DE ACIONAMENTO ---
+if st.button("📊 GERAR MATRIZ DE INSPEÇÃO PROFISSIONAL"):
     try:
-        pdf_bytes = gerar_laudo_v17()
+        pdf_matrix = gerar_novo_modelo_v17()
         st.download_button(
-            label="📥 Baixar Laudo Técnico Oficial",
-            data=pdf_bytes,
-            file_name=f"Laudo_V17_{datetime.now().strftime('%d%m%Y')}.pdf",
+            label="📥 Baixar Novo Modelo de Laudo",
+            data=pdf_matrix,
+            file_name=f"Inspecao_V17_{datetime.now().strftime('%H%M%S')}.pdf",
             mime="application/pdf"
         )
-        st.success("Dados processados! Se algum campo saiu com '---', certifique-se de preenchê-lo nas abas anteriores.")
     except Exception as e:
-        st.error(f"Erro ao compilar documento: {e}")
+        st.error(f"Erro ao gerar: {e}. Verifique se as variáveis no Sidebar coincidem.")
