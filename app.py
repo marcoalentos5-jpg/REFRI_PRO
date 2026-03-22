@@ -489,124 +489,119 @@ def renderizar_aba_diagnosticos():
     )
 
 # ==============================================================================
-# BLOCO 5: RELATÓRIOS E LAUDOS - Modelo Matriz de Inspeção V17
+# BLOCO 5: RELATÓRIOS E LAUDOS - Modelo Prontuário de Engenharia V17
 # ==============================================================================
 
 import streamlit as st
 from fpdf import FPDF
 from datetime import datetime
 
-class RelatorioMatrizV17(FPDF):
+class ProntuarioV17(FPDF):
     def header(self):
-        # Cabeçalho com Estilo de Prancha Técnica
+        # Layout de Topo com Barra Lateral de Identificação
+        self.set_fill_color(0, 51, 102)
+        self.rect(0, 0, 5, 297, 'F') # Barra decorativa lateral
+        
         try:
-            self.image("logo.png", 10, 8, 30)
+            self.image("logo.png", 15, 10, 30)
         except:
             pass
+            
         self.set_font('Arial', 'B', 14)
         self.set_text_color(0, 51, 102)
-        self.cell(0, 10, 'RELATÓRIO DE INSPEÇÃO TERMODINÂMICA', 0, 1, 'R')
-        self.set_font('Arial', 'I', 9)
-        self.set_text_color(128, 128, 128)
-        self.cell(0, 5, f'Emissão: {datetime.now().strftime("%d/%m/%Y %H:%M")}', 0, 1, 'R')
-        self.ln(10)
+        self.set_x(50)
+        self.cell(0, 10, 'PRONTUÁRIO DE MANUTENÇÃO E PERFORMANCE', 0, 1, 'L')
+        self.set_font('Arial', '', 9)
+        self.set_x(50)
+        self.cell(0, 5, f'SISTEMA ESPECIALISTA TERMODINÂMICO | V17 OFICIAL', 0, 1, 'L')
+        self.ln(15)
 
-    def secao_titulo(self, texto):
-        self.set_fill_color(230, 230, 230)
-        self.set_text_color(0, 51, 102)
+    def titulo_secao(self, num, texto):
+        self.set_fill_color(240, 240, 240)
         self.set_font('Arial', 'B', 10)
-        self.cell(0, 8, f"  {texto.upper()}", 1, 1, 'L', True)
+        self.set_text_color(0, 51, 102)
+        self.cell(0, 8, f"  {num}. {texto.upper()}", 1, 1, 'L', True)
+        self.ln(2)
 
-    def grid_duplo(self, label1, valor1, label2, valor2):
-        self.set_font('Arial', 'B', 8)
+    def bloco_dados(self, label, valor, largura):
+        self.set_font('Arial', 'B', 7)
         self.set_text_color(100)
-        # Linha de Labels
-        self.cell(47.5, 5, f" {label1}", 'LTR', 0, 'L')
-        self.cell(47.5, 5, f" {label2}", 'TR', 1, 'L')
-        # Linha de Valores
+        # Se o valor for nulo ou zero, destaca em vermelho suave ou coloca traço
+        exibir = str(valor) if valor not in [None, '', 0, 0.0, "0", "0.0"] else "---"
+        
+        self.cell(largura, 4, f" {label.upper()}", 'LTR', 1, 'L')
         self.set_font('Arial', '', 10)
         self.set_text_color(0)
-        v1 = str(valor1) if valor1 not in [None, '', 0, 0.0] else "---"
-        v2 = str(valor2) if valor2 not in [None, '', 0, 0.0] else "---"
-        self.cell(47.5, 8, f" {v1}", 'LBR', 0, 'L')
-        self.cell(47.5, 8, f" {v2}", 'BR', 1, 'L')
+        self.cell(largura, 7, f" {exibir}", 'LBR', 0, 'L')
 
-def gerar_novo_modelo_v17():
-    # --- RESGATE DINÂMICO DE DADOS ---
+def gerar_prontuario_v17():
+    # --- RESGATE MULTICAMADA (O segredo para não sair vazio) ---
     d = st.session_state.get('dados', {})
     
-    # Busca dados do profissional (Sidebar)
-    # Certifique-se que no sidebar as chaves sejam 'nome_tecnico' e 'cnpj_tecnico'
-    nome_prof = st.session_state.get('nome_tecnico', 'TÉCNICO NÃO IDENTIFICADO')
-    cnpj_prof = st.session_state.get('cnpj_tecnico', '---')
-
-    pdf = RelatorioMatrizV17()
+    # Busca dados do técnico no Sidebar ou na memória global
+    nome_tec = st.session_state.get('nome_tecnico') or st.session_state.get('nome_tec', 'TÉCNICO NÃO INFORMADO')
+    cnpj_tec = st.session_state.get('cnpj_tecnico') or st.session_state.get('cnpj_tec', '---')
+    
+    pdf = ProntuarioV17()
     pdf.add_page()
 
-    # BLOCO 1: DADOS DO ATENDIMENTO
-    pdf.secao_titulo("1. Identificação do Cliente e Local")
-    pdf.grid_duplo("CLIENTE / RAZÃO SOCIAL", d.get('nome_cliente'), "CPF / CNPJ", d.get('cpf_cliente'))
-    pdf.grid_duplo("ENDEREÇO DA INSTALAÇÃO", d.get('endereco'), "TELEFONE / CONTATO", d.get('contato'))
-    pdf.ln(5)
+    # --- SEÇÃO 1: CLIENTE ---
+    pdf.titulo_secao(1, "Identificação do Cliente")
+    pdf.bloco_dados("Cliente / Razão Social", d.get('nome_cliente'), 180); pdf.ln(12)
+    pdf.bloco_dados("CPF / CNPJ", d.get('cpf_cliente'), 90); pdf.set_xy(105, pdf.get_y()-11)
+    pdf.bloco_dados("Contato / Telefone", d.get('contato'), 85); pdf.ln(12)
 
-    # BLOCO 2: ESPECIFICAÇÕES DO EQUIPAMENTO
-    pdf.secao_titulo("2. Dados do Equipamento Inspeccionado")
-    pdf.grid_duplo("FABRICANTE", d.get('fabricante'), "MODELO / CAPACIDADE", f"{d.get('modelo')} / {d.get('capacidade')}")
-    pdf.grid_duplo("TAG / IDENTIFICAÇÃO", d.get('tag_id'), "FLUIDO REFRIGERANTE", d.get('fluido', 'R410A'))
-    pdf.grid_duplo("SÉRIE EVAPORADORA", d.get('serial_evap'), "SÉRIE CONDENSADORA", d.get('serial_cond'))
-    pdf.ln(5)
+    # --- SEÇÃO 2: EQUIPAMENTO ---
+    pdf.titulo_secao(2, "Ativo e Equipamento")
+    pdf.bloco_dados("Fabricante", d.get('fabricante'), 60); pdf.set_xy(75, pdf.get_y()-11)
+    pdf.bloco_dados("Modelo / Capacidade", f"{d.get('modelo')} / {d.get('capacidade')}", 120); pdf.ln(12)
+    pdf.bloco_dados("TAG / Identificação", d.get('tag_id'), 90); pdf.set_xy(105, pdf.get_y()-11)
+    pdf.bloco_dados("Fluido Refrigerante", d.get('fluido'), 85); pdf.ln(15)
 
-    # BLOCO 3: MÉTRICAS DE PERFORMANCE (O CORAÇÃO DO APP)
-    pdf.secao_titulo("3. Análise Termodinâmica e Elétrica")
-    pdf.grid_duplo("PRESSÃO DE SUCÇÃO", f"{d.get('p_suc', 0)} PSI", "TEMP. DE SATURAÇÃO", f"{d.get('t_sat', 0)} °C")
-    pdf.grid_duplo("TEMP. TUBO SUCÇÃO", f"{d.get('t_suc', 0)} °C", "SUPERAQUECIMENTO (SH)", f"{d.get('sh', 0)} K")
-    pdf.grid_duplo("DELTA T (AR)", f"{d.get('dt_ar', 0)} °C", "CORRENTE NOMINAL (I)", f"{d.get('i_med', 0)} A")
-    pdf.ln(5)
+    # --- SEÇÃO 3: PERFORMANCE (GRID TÉCNICO) ---
+    pdf.titulo_secao(3, "Análise de Ciclo Termodinâmico")
+    # Linha 1
+    pdf.bloco_dados("P. Sucção (PSI)", d.get('p_suc'), 45); pdf.set_xy(60, pdf.get_y()-11)
+    pdf.bloco_dados("T. Saturação (°C)", d.get('t_sat'), 45); pdf.set_xy(105, pdf.get_y()-11)
+    pdf.bloco_dados("T. Tubo (°C)", d.get('t_suc'), 45); pdf.set_xy(150, pdf.get_y()-11)
+    pdf.bloco_dados("S.H. (K)", d.get('sh'), 40); pdf.ln(12)
+    # Linha 2
+    pdf.bloco_dados("Delta T Ar (°C)", d.get('dt_ar'), 60); pdf.set_xy(75, pdf.get_y()-11)
+    pdf.bloco_dados("Corrente (A)", d.get('i_med'), 60); pdf.set_xy(135, pdf.get_y()-11)
+    pdf.bloco_dados("Tensão (V)", d.get('v_lin'), 55); pdf.ln(15)
 
-    # BLOCO 4: PARECER TÉCNICO FINAL
-    pdf.secao_titulo("4. Parecer e Recomendações")
+    # --- SEÇÃO 4: DIAGNÓSTICO ---
+    pdf.titulo_secao(4, "Veredito Técnico")
     pdf.set_font('Arial', 'B', 11)
-    veredito = d.get('diag_final_status', 'EM ANÁLISE')
-    pdf.set_text_color(200, 0, 0) if "ALERTA" in veredito else pdf.set_text_color(0, 102, 0)
-    pdf.cell(0, 10, f" STATUS: {veredito}", 1, 1, 'C')
-    
+    status = str(d.get('diag_final_status', 'AGUARDANDO DADOS')).upper()
+    pdf.cell(0, 10, f" STATUS: {status}", 1, 1, 'C')
     pdf.ln(2)
     pdf.set_font('Arial', '', 9)
-    pdf.set_text_color(0)
-    obs = d.get('laudo_v17_final', 'Nenhuma observação técnica adicional registrada.')
-    pdf.multi_cell(0, 6, f"OBSERVAÇÕES:\n{obs}", 1, 'L')
+    pdf.multi_cell(0, 6, f"PARECER:\n{d.get('laudo_v17_final', 'Sem observações.')}", 1, 'L')
 
-    # BLOCO 5: ASSINATURAS E RESPONSABILIDADE
+    # --- SEÇÃO 5: ASSINATURAS ---
     pdf.set_y(-50)
-    y_final = pdf.get_y()
-    pdf.set_draw_color(180)
-    
-    # Campos de Assinatura
-    pdf.line(15, y_final + 10, 90, y_final + 10)
-    pdf.line(120, y_final + 10, 195, y_final + 10)
-    
-    pdf.set_y(y_final + 12)
+    pdf.line(20, pdf.get_y()+10, 85, pdf.get_y()+10)
+    pdf.line(125, pdf.get_y()+10, 190, pdf.get_y()+10)
+    pdf.set_y(pdf.get_y()+12)
     pdf.set_font('Arial', 'B', 8)
-    # Assinatura do Técnico (Resgatado do Sidebar)
-    pdf.set_x(15); pdf.cell(75, 4, nome_prof.upper(), 0, 0, 'C')
-    # Assinatura do Cliente (Resgatado do Cadastro)
-    pdf.set_x(120); pdf.cell(75, 4, str(d.get('nome_cliente', 'CLIENTE')).upper(), 0, 1, 'C')
-    
+    pdf.set_x(20); pdf.cell(65, 4, nome_tec.upper(), 0, 0, 'C')
+    pdf.set_x(125); pdf.cell(65, 4, str(d.get('nome_cliente', 'CLIENTE')).upper(), 0, 1, 'C')
     pdf.set_font('Arial', '', 7)
-    pdf.set_x(15); pdf.cell(75, 4, f"CNPJ: {cnpj_prof}", 0, 0, 'C')
-    pdf.set_x(120); pdf.cell(75, 4, f"CPF/CNPJ: {d.get('cpf_cliente', '---')}", 0, 1, 'C')
+    pdf.set_x(20); pdf.cell(65, 4, f"Responsável Técnico | CNPJ: {cnpj_tec}", 0, 0, 'C')
+    pdf.set_x(125); pdf.cell(65, 4, f"Documento: {d.get('cpf_cliente', '---')}", 0, 1, 'C')
 
     return pdf.output(dest='S').encode('latin-1')
 
-# --- BOTÃO DE ACIONAMENTO ---
-if st.button("📊 GERAR MATRIZ DE INSPEÇÃO PROFISSIONAL"):
+# --- BOTÃO ---
+if st.button("📊 GERAR NOVO PRONTUÁRIO TÉCNICO"):
     try:
-        pdf_matrix = gerar_novo_modelo_v17()
+        pdf_bytes = gerar_prontuario_v17()
         st.download_button(
-            label="📥 Baixar Novo Modelo de Laudo",
-            data=pdf_matrix,
-            file_name=f"Inspecao_V17_{datetime.now().strftime('%H%M%S')}.pdf",
+            label="📥 Baixar Prontuário Oficial V17",
+            data=pdf_bytes,
+            file_name=f"Prontuario_V17_{datetime.now().strftime('%H%M')}.pdf",
             mime="application/pdf"
         )
     except Exception as e:
-        st.error(f"Erro ao gerar: {e}. Verifique se as variáveis no Sidebar coincidem.")
+        st.error(f"Erro ao capturar dados: {e}")
