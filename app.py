@@ -153,7 +153,7 @@ def renderizar_aba_1():
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO V17 - MATRIZ DE PRECISÃO REAL)
 # ==============================================================================
 
-elif aba == "2. Diagnósticos"
+elif aba == "2. Diagnósticos":
     # --- CABEÇALHO ---
     st.header("🔍 Central de Diagnóstico Técnico (Precisão V17)")
     
@@ -216,7 +216,7 @@ elif aba == "2. Diagnósticos"
         cn_c = st.number_input("Nominal (µF)", value=35.0, key="cnc_v17")
         cm_c = st.number_input("Medida (µF)", value=33.0, key="cmc_v17")
 
-    # --- MOTOR V28: CÁLCULOS (PRESERVADOS) ---
+    # --- MOTOR V28: CÁLCULOS ---
     def f_sat_v17(psi, gas):
         if psi <= 5: return 0.0
         if gas == "R22":
@@ -238,7 +238,6 @@ elif aba == "2. Diagnósticos"
     st.subheader("2. Resultados do Diagnóstico")
     res_cols = st.columns(6)
 
-    # Lógica de Cores
     cl_sh = "card-bom"
     if fluido == "R22":
         if p_suc < 60.0 or p_suc > 75.0: cl_sh = "card-alerta"
@@ -285,7 +284,7 @@ elif aba == "2. Diagnósticos"
         </div>
     """, unsafe_allow_html=True)
 
-    # --- LIMPEZA CIRÚRGICA: O campo 'Parecer Técnico' foi REMOVIDO daqui ---
+    # --- LIMPEZA CIRÚRGICA CONCLUÍDA ---
     st.write("")
     st.info("ℹ️ Medições concluídas. Prossiga para a aba 'Relatórios' para emitir o laudo.")
 
