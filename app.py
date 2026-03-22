@@ -501,8 +501,7 @@ from datetime import datetime
 class LaudoIndustrialV17(FPDF):
     def header(self):
         try:
-            # Logo aumentada para 60mm conforme solicitado
-            self.image("logo.png", 10, 10, 60)
+            self.image("logo.png", 10, 10, 60) # Logo 60mm para autoridade visual
         except:
             pass
         
@@ -513,16 +512,13 @@ class LaudoIndustrialV17(FPDF):
         self.ln(15)
 
     def titulo_secao_com_data(self, texto, data_visita):
-        self.set_fill_color(230, 230, 230)
-        self.set_text_color(0, 51, 102)
+        self.set_fill_color(230, 230, 230); self.set_text_color(0, 51, 102)
         self.set_font('Helvetica', 'B', 10)
         self.cell(130, 7, f" {texto.upper()}", 'LTB', 0, 'L', True)
-        self.set_font('Helvetica', 'B', 10)
         self.cell(60, 7, f"DATA DA VISITA: {data_visita} ", 'RTB', 1, 'R', True)
 
     def titulo_secao(self, texto):
-        self.set_fill_color(240, 240, 240)
-        self.set_text_color(0, 51, 102)
+        self.set_fill_color(240, 240, 240); self.set_text_color(0, 51, 102)
         self.set_font('Helvetica', 'B', 10)
         self.cell(0, 7, f" {texto.upper()}", 1, 1, 'L', True)
 
@@ -533,10 +529,9 @@ class LaudoIndustrialV17(FPDF):
         self.ln()
         self.set_font('Helvetica', '', 9); self.set_text_color(0)
         for i, valor in enumerate(valores):
-            # Limpeza de emojis e nulos para o padrão PDF (Latin-1)
             txt = str(valor) if valor not in [None, ''] else "---"
-            txt = txt.replace('🟢', '[OK]').replace('🔴', '[ALERTA]').replace('🟡', '[ATENCAO]')
-            # Correção de caracteres especiais para evitar erros de renderização
+            txt = txt.replace('🟢', '[OK]').replace('🔴', '[ALERTA]').replace('🟡', '[AVISO]')
+            # Limpeza de caracteres para o padrão PDF (Evita erro de renderização)
             txt = txt.encode('latin-1', 'replace').decode('latin-1')
             self.cell(larguras[i], 7, f" {txt}", 'LBR', 0, 'L')
         self.ln(8)
@@ -554,18 +549,18 @@ def gerar_laudo_v17_final_corrigido():
     pdf.grade(["NOME DO PROFISSIONAL", "REGISTRO PROFISSIONAL", "CONTATO / CNPJ"],
              [d.get('tecnico_nome'), d.get('tecnico_registro'), d.get('tecnico_documento')], [80, 55, 55])
 
-    # --- 2. DADOS DO CLIENTE E LOCALIZAÇÃO ---
+    # --- 2. DADOS DO CLIENTE ---
     pdf.titulo_secao("2. Dados do Cliente e Localização")
     pdf.grade(["CLIENTE / RAZÃO SOCIAL", "CPF / CNPJ", "E-MAIL"], 
              [d.get('nome'), d.get('cpf_cnpj'), d.get('email')], [85, 45, 60])
     pdf.grade(["ENDEREÇO", "Nº", "BAIRRO", "CIDADE / UF", "WHATSAPP"],
              [d.get('endereco'), d.get('numero'), d.get('bairro'), f"{d.get('cidade')}/{d.get('uf')}", d.get('whatsapp')], [60, 15, 35, 40, 40])
 
-    # --- 3. INFORMAÇÕES DO EQUIPAMENTO ---
+    # --- 3. EQUIPAMENTO ---
     pdf.titulo_secao("3. Informações do Equipamento")
     pdf.grade(["FABRICANTE", "MODELO", "CAPACIDADE", "TAG / ID", "FLUIDO"],
              [d.get('fabricante'), d.get('modelo'), d.get('capacidade'), d.get('tag_id'), d.get('fluido')], [40, 40, 35, 35, 40])
-    pdf.grade(["SÉRIE EVAPORADORA", "SÉRIE CONDENSADORA", "LOCAL EVAP.", "LOCAL COND."],
+    pdf.grade(["SÉRIE EVAP.", "SÉRIE COND.", "LOCAL EVAP.", "LOCAL COND."],
              [d.get('serie_evap'), d.get('serie_cond'), d.get('local_evap'), d.get('local_cond')], [45, 45, 50, 50])
 
     # --- 4. TERMODINÂMICA ---
@@ -578,7 +573,7 @@ def gerar_laudo_v17_final_corrigido():
     pdf.grade(["TENSÃO (V)", "CORRENTE (A)", "CAPACITÂNCIA (uF)", "STATUS"],
              [d.get('v_lin', 0), d.get('i_med', 0), d.get('capacitancia', '---'), d.get('status_maquina')], [47, 47, 47, 49])
 
-    # --- 6. PARECER TÉCNICO / NOTAS ADICIONAIS ---
+    # --- 6. PARECER TÉCNICO ---
     pdf.titulo_secao("6. Parecer Técnico / Notas Adicionais")
     pdf.set_font('Helvetica', 'B', 8); pdf.set_text_color(100)
     pdf.cell(0, 5, " OBSERVAÇÕES REGISTRADAS PELO TÉCNICO:", 'LTR', 1, 'L')
@@ -586,43 +581,43 @@ def gerar_laudo_v17_final_corrigido():
     obs = d.get('parecer_tecnico') or "Nenhuma observação registrada."
     pdf.multi_cell(0, 6, limpar(obs), 'LBR', 'L')
 
-    # --- ASSINATURAS FINAIS ---
+    # --- ASSINATURAS ---
     pdf.set_y(-45)
-    pdf.set_draw_color(180)
     pdf.line(20, pdf.get_y(), 90, pdf.get_y()); pdf.line(120, pdf.get_y(), 190, pdf.get_y())
     pdf.set_y(pdf.get_y() + 2); pdf.set_font('Helvetica', 'B', 9)
-    pdf.set_x(20); pdf.cell(70, 5, limpar(d.get('tecnico_nome', 'TECNICO')).upper(), 0, 0, 'C')
-    pdf.set_x(120); pdf.cell(70, 5, limpar(d.get('nome', 'CLIENTE')).upper(), 0, 1, 'C')
-    pdf.set_font('Helvetica', '', 8); pdf.set_text_color(80)
-    pdf.set_x(20); pdf.cell(70, 4, f"CNPJ: {d.get('tecnico_documento', '---')}", 0, 0, 'C')
-    pdf.set_x(120); pdf.cell(70, 4, f"CPF: {d.get('cpf_cnpj', '---')}", 0, 1, 'C')
+    pdf.set_x(20); pdf.cell(70, 5, limpar(d.get('tecnico_nome')).upper(), 0, 0, 'C')
+    pdf.set_x(120); pdf.cell(70, 5, limpar(d.get('nome')).upper(), 0, 1, 'C')
 
-    # CORREÇÃO: output(dest='S') no FPDF2 já retorna bytes, não precisa de .encode()
-    return pdf.output(dest='S')
+    # Retorno seguro em bytes para o download_button
+    return bytes(pdf.output())
 
-# --- ABA EXCLUSIVA DE PARECER TÉCNICO ---
-# Certifique-se de que este bloco só exista uma vez no seu código (na aba final)
-st.markdown("### 📝 6. Parecer Técnico / Notas Adicionais")
+# ==============================================================================
+# ABA EXCLUSIVA: PARECER TÉCNICO E GERAÇÃO DE LAUDO
+# ==============================================================================
+# Certifique-se de que este bloco seja o ÚNICO lugar onde o parecer aparece.
+
+st.markdown("### 📝 Conclusão do Atendimento")
 st.session_state.dados['parecer_tecnico'] = st.text_area(
-    "Insira aqui o diagnóstico final e observações adicionais:",
+    "Insira aqui o diagnóstico final, peças trocadas ou recomendações importantes:",
     value=st.session_state.dados.get('parecer_tecnico', ''),
-    height=250
+    height=300,
+    placeholder="Ex: Identificado baixo rendimento por sujeira na condensadora. Realizada higienização completa..."
 )
 
 st.write("") 
 
 if st.button("🚀 FINALIZAR E GERAR LAUDO COMPLETO"):
     try:
-        # Gerar o PDF (agora retorna bytes corretamente)
-        pdf_bytes = gerar_laudo_v17_final_corrigido()
+        pdf_final = gerar_laudo_v17_final_corrigido()
         
-        if pdf_bytes:
+        if pdf_final:
             st.success("✅ Laudo gerado com sucesso!")
             st.download_button(
-                label="📥 Baixar PDF Agora",
-                data=pdf_bytes,
+                label="📥 Baixar PDF Oficial",
+                data=pdf_final,
                 file_name=f"Laudo_{st.session_state.dados.get('nome', 'Cliente')}.pdf",
                 mime="application/pdf"
             )
     except Exception as e:
-        st.error(f"❌ Erro ao processar dados: {e}")
+        st.error(f"❌ Ocorreu um erro ao fabricar o PDF: {e}")
+        
