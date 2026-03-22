@@ -374,67 +374,13 @@ with st.sidebar:
 
 
 # ==============================================================================
-# 4. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
+# 4. LÓGICA DE EXIBIÇÃO E FUNÇÕES DE APOIO (INTEGRADO)
 # ==============================================================================
-# Use a seleção do sidebar para chamar a função correta
-if aba_selecionada == "Home":
-    # --- NOVA APRESENTAÇÃO DA ABA HOME (COM LOGO MPN SOLUÇÕES ) ---
-    st.markdown("<br>", unsafe_allow_html=True) # Espaçamento superior
-
-    # 1. CENTRALIZAÇÃO E EXIBIÇÃO DA LOGOMARCA
-    col1, col2, col3 = st.columns([1, 2, 1]) 
-    with col2: 
-        # NOME DO ARQUIVO DE IMAGEM QUE ESTÁ SENDO USADO
-        NOME_ARQUIVO_LOGO = "logo.png"
-        
-        # VERIFICAÇÃO ADICIONAL DO ARQUIVO NO DISCO (PARA AJUDAR NO DIAGNÓSTICO)
-        if os.path.exists(NOME_ARQUIVO_LOGO):
-            try:
-                # SE O ARQUIVO EXISTE, TENTA EXIBIR
-                st.image(NOME_ARQUIVO_LOGO, use_container_width=True) 
-            except Exception as e:
-                st.error(f"⚠️ Erro ao tentar abrir a imagem '{NOME_ARQUIVO_LOGO}'. Verifique se o arquivo está corrompido.")
-                st.write(f"Detalhes do erro do sistema: {e}")
-        else:
-            st.error(f"⚠️ Erro: Arquivo '{NOME_ARQUIVO_LOGO}' não encontrado na pasta raiz.")
-            st.info("Verifique se o nome do arquivo salvo no computador é EXATAMENTE 'logo.png' (maiúsculas/minúsculas importam).")
-
-    st.markdown("<br><br>", unsafe_allow_html=True) 
-
-    # 2. TÍTULO E BOAS-VINDAS CENTRALIZADOS E ESTILIZADOS
-    st.markdown("""
-        <div style="text-align: center;">
-            <h1 style="color: #0d47a1; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-                MPN Soluções
-            </h1>
-            <p style="color: #1976d2; font-size: 1.3em;">
-                Soluções em Refrigeração e Climatização
-            </p>
-            <hr style="border: 1px solid #90caf9; width: 60%; margin: 20px auto;">
-            <p style="color: #455a64; font-size: 1.1em; font-weight: bold;">
-                Bem-vindo ao Sistema HVAC Pro de Gestão Inteligente.
-            </p>
-            <p style="color: #546e7a; font-size: 1.0em;">
-                Selecione uma opção no Painel de Controle lateral para iniciar sua inspeção ou diagnóstico.
-            </p>
-        </div>
-    """, unsafe_allow_html=True)
-    # ------------------------------------------------
-
-elif aba_selecionada == "1. Cadastro de Equipamentos":
-    renderizar_aba_1() # Chama a função que contém todo o código da Aba 1
-
-elif aba_selecionada == "2. Diagnósticos":
-    renderizar_aba_diagnosticos() # Chama a função que contém o esqueleto da Aba 2
-
-elif aba_selecionada == "Relatórios":
-    st.header("Página de Relatórios (Em desenvolvimento)")
-    st.write("Em breve: Visualização e exportação de relatórios.")
-# [COLE AQUI - Logo após o fim da renderizar_aba_1]
 
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
-    # Busca o fluido que você selecionou na Aba 1
+    
+    # Busca o fluido selecionado na Aba 1
     fluido_selecionado = st.session_state.dados.get('fluido', 'R410A')
     st.info(f"❄️ Fluido Refrigerante em Análise: **{fluido_selecionado}**")
     st.markdown("---")
@@ -445,23 +391,28 @@ def renderizar_aba_diagnosticos():
     
     with col_suc:
         st.markdown("### 🔵 Baixa Pressão")
-        pres_suc = st.number_input("Pressão de Sucção (PSI):", min_value=0.0, step=1.0, key="p_suc_diag")
-        temp_suc = st.number_input("Temp. Tubulação Sucção (°C):", step=0.1, key="t_suc_diag")
+        # Armazena no estado global para o PDF
+        st.session_state.dados['ps_v17'] = st.number_input("Pressão de Sucção (PSI):", min_value=0.0, step=1.0, value=float(st.session_state.dados.get('ps_v17', 0.0)), key="p_suc_diag")
+        st.session_state.dados['ts_v17'] = st.number_input("Temp. Tubulação Sucção (°C):", step=0.1, value=float(st.session_state.dados.get('ts_v17', 0.0)), key="t_suc_diag")
 
     with col_des:
         st.markdown("### 🔴 Alta Pressão")
-        pres_des = st.number_input("Pressão de Descarga (PSI):", min_value=0.0, step=1.0, key="p_des_diag")
-        temp_liq = st.number_input("Temp. Tubulação Líquido (°C):", step=0.1, key="t_liq_diag")
+        st.session_state.dados['pd_v17'] = st.number_input("Pressão de Descarga (PSI):", min_value=0.0, step=1.0, value=float(st.session_state.dados.get('pd_v17', 0.0)), key="p_des_diag")
+        st.session_state.dados['tl_v17'] = st.number_input("Temp. Tubulação Líquido (°C):", step=0.1, value=float(st.session_state.dados.get('tl_v17', 0.0)), key="t_liq_diag")
 
     st.markdown("---")
 
     # --- BLOCO 2: PROCESSAMENTO (CÁLCULOS) ---
-    # Nota: No próximo passo, inseriremos a tabela PT aqui
+    # Nota: No futuro aqui entrará a Tabela PT para calcular t_sat automaticamente
     t_sat_suc = 0.0  
     t_sat_des = 0.0  
     
-    sh = temp_suc - t_sat_suc
-    sc = t_sat_des - temp_liq
+    sh = st.session_state.dados['ts_v17'] - t_sat_suc
+    sc = t_sat_des - st.session_state.dados['tl_v17']
+    
+    # Salva cálculos para o PDF
+    st.session_state.dados['sh'] = round(sh, 2)
+    st.session_state.dados['sc'] = round(sc, 2)
 
     # --- BLOCO 3: EXIBIÇÃO DE RESULTADOS ---
     st.subheader("2. Resultados Calculados")
@@ -480,13 +431,65 @@ def renderizar_aba_diagnosticos():
 
     st.markdown("---")
 
-    # --- BLOCO 4: CONCLUSÃO E LAUDO ---
+    # --- BLOCO 4: PARECER TÉCNICO ---
     st.subheader("3. Parecer Técnico Final")
-    st.session_state.dados['laudo_diag'] = st.text_area(
+    st.session_state.dados['parecer_tecnico'] = st.text_area(
         "Descreva o diagnóstico ou anomalias encontradas:",
-        placeholder="Ex: Sistema operando com pressões estáveis, superaquecimento normal...",
+        value=st.session_state.dados.get('parecer_tecnico', ''),
+        placeholder="Ex: Sistema operando com pressões estáveis...",
         key="laudo_area_diag"
     )
+
+# ==============================================================================
+# NAVEGAÇÃO ENTRE ABAS
+# ==============================================================================
+
+if aba_selecionada == "Home":
+    st.markdown("<br>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 2, 1]) 
+    with col2: 
+        if os.path.exists("logo.png"):
+            st.image("logo.png", use_container_width=True) 
+        else:
+            st.error("⚠️ Arquivo 'logo.png' não encontrado.")
+
+    st.markdown("""
+        <div style="text-align: center;">
+            <h1 style="color: #0d47a1;">MPN Soluções</h1>
+            <p style="color: #1976d2; font-size: 1.3em;">Soluções em Refrigeração e Climatização</p>
+            <hr style="border: 1px solid #90caf9; width: 60%; margin: 20px auto;">
+            <p style="font-weight: bold;">Bem-vindo ao Sistema HVAC Pro.</p>
+        </div>
+    """, unsafe_allow_html=True)
+
+elif aba_selecionada == "1. Cadastro de Equipamentos":
+    renderizar_aba_1() 
+
+elif aba_selecionada == "2. Diagnósticos":
+    renderizar_aba_diagnosticos() 
+
+elif aba_selecionada == "Relatórios":
+    st.header("📄 Finalização e Emissão de Laudo")
+    st.write("Revise os dados e clique no botão abaixo para gerar o PDF oficial.")
+    
+    st.markdown("---")
+    
+    if st.button("🚀 FINALIZAR E GERAR PDF AGORA", use_container_width=True):
+        try:
+            with st.spinner("Gerando documento..."):
+                # Chama a função do Bloco 5
+                pdf_bytes = gerar_laudo_v17_final_corrigido()
+                
+                st.success("✅ Laudo pronto para download!")
+                st.download_button(
+                    label="📥 Clique aqui para baixar o PDF",
+                    data=pdf_bytes,
+                    file_name=f"Laudo_{st.session_state.dados.get('tag_id', 'HVAC')}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )
+        except Exception as e:
+            st.error(f"Erro ao processar o PDF: {e}")
 # ==============================================================================
 # BLOCO 5: RELATÓRIOS E LAUDOS - Versão Final Corrigida
 # ==============================================================================
@@ -608,12 +611,21 @@ def gerar_laudo_v17_final_corrigido():
 
     return bytes(pdf.output(dest='S'))
 
-# --- BOTAO DE GERAR ---
-if st.button("🚀 FINALIZAR E GERAR LAUDO COMPLETO"):
-    pdf_out = gerar_laudo_v17_final_corrigido()
-    st.download_button(
-        label="📥 Baixar PDF Agora",
-        data=pdf_out,
-        file_name=f"Laudo_{st.session_state.dados['nome']}.pdf",
-        mime="application/pdf"
-    )
+def gerar_laudo_v17_final_corrigido():
+    d = st.session_state.dados 
+    pdf = LaudoFinalV17()
+    pdf.add_page()
+    
+    # ... (todo o seu código de pdf.grade, etc, continua igual) ...
+
+    # --- FINALIZAÇÃO SEGURA ---
+    # Em fpdf2, o output() já pode retornar bytes. 
+    # Usamos 'dest' apenas se for a versão antiga.
+    try:
+        pdf_output = pdf.output() # Tenta o padrão da fpdf2
+    except:
+        pdf_output = pdf.output(dest='S') # Caso seja a fpdf antiga
+        
+    if isinstance(pdf_output, str):
+        return pdf_output.encode('latin-1', 'replace')
+    return pdf_output
