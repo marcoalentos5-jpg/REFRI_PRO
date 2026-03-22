@@ -153,7 +153,7 @@ def renderizar_aba_1():
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO V17 - MATRIZ DE PRECISÃO REAL)
 # ==============================================================================
 
-elif aba == "2. Diagnósticos":
+    elif aba == "2. Diagnósticos":
     # --- CABEÇALHO ---
     st.header("🔍 Central de Diagnóstico Técnico (Precisão V17)")
     
