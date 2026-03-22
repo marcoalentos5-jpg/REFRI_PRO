@@ -489,17 +489,17 @@ def renderizar_aba_diagnosticos():
     )
 
 # ==============================================================================
-# BLOCO 5: RELATÓRIOS E LAUDOS - Modelo Industrial Premium V17
+# BLOCO 5: RELATÓRIOS E LAUDOS - Modelo Especialista V17
 # ==============================================================================
 
 import streamlit as st
 from fpdf import FPDF
 from datetime import datetime
 
-class LaudoDefinitivoV17(FPDF):
+class LaudoEspecialistaV17(FPDF):
     def header(self):
         try:
-            # Logo com tamanho aumentado (60mm)
+            # Logo com tamanho máximo (60mm)
             self.image("logo.png", 10, 10, 60)
         except:
             pass
@@ -514,9 +514,7 @@ class LaudoDefinitivoV17(FPDF):
         self.set_fill_color(230, 230, 230)
         self.set_text_color(0, 51, 102)
         self.set_font('Helvetica', 'B', 10)
-        # Título à esquerda
         self.cell(130, 7, f" {texto.upper()}", 'LTB', 0, 'L', True)
-        # Data à direita em negrito
         self.set_font('Helvetica', 'B', 10)
         self.cell(60, 7, f"DATA DA VISITA: {data_visita} ", 'RTB', 1, 'R', True)
 
@@ -527,24 +525,22 @@ class LaudoDefinitivoV17(FPDF):
         self.cell(0, 7, f" {texto.upper()}", 1, 1, 'L', True)
 
     def grade_dados(self, labels, valores, larguras):
-        # Cabeçalho da grade
         self.set_font('Helvetica', 'B', 7); self.set_text_color(100)
         for i, label in enumerate(labels):
             self.cell(larguras[i], 4, f" {label}", 'LTR', 0, 'L')
         self.ln()
-        # Valores da grade
         self.set_font('Helvetica', '', 9); self.set_text_color(0)
         for i, valor in enumerate(valores):
             txt = str(valor).replace('🟢', '[OK]').replace('🔴', '[ALERTA]').replace('🟡', '[AVISO]') if valor else "---"
             self.cell(larguras[i], 7, f" {txt}", 'LBR', 0, 'L')
         self.ln(8)
 
-def gerar_laudo_definitivo_v17():
+def gerar_laudo_v17_completo():
     d = st.session_state.dados 
-    pdf = LaudoDefinitivoV17()
+    pdf = LaudoEspecialistaV17()
     pdf.add_page()
     
-    # --- 1. RESPONSÁVEL TÉCNICO (COM DATA NA DIREITA) ---
+    # --- 1. RESPONSÁVEL TÉCNICO ---
     pdf.titulo_secao_com_data("1. Responsável Técnico", d.get('data', '---'))
     pdf.grade_dados(
         ["NOME DO PROFISSIONAL", "REGISTRO PROFISSIONAL", "CONTATO / CNPJ"],
@@ -555,51 +551,54 @@ def gerar_laudo_definitivo_v17():
     # --- 2. DADOS DO CLIENTE E LOCALIZAÇÃO ---
     pdf.titulo_secao("2. Dados do Cliente e Localização")
     pdf.grade_dados(
-        ["CLIENTE / RAZÃO SOCIAL", "CPF / CNPJ", "WHATSAPP / CELULAR"],
-        [d.get('nome'), d.get('cpf_cnpj'), f"{d.get('whatsapp')} / {d.get('celular')}"],
-        [90, 50, 50]
+        ["CLIENTE / RAZÃO SOCIAL", "CPF / CNPJ", "E-MAIL"],
+        [d.get('nome'), d.get('cpf_cnpj'), d.get('email')],
+        [85, 45, 60]
     )
     pdf.grade_dados(
-        ["ENDEREÇO", "Nº", "COMPLEMENTO", "BAIRRO", "CIDADE / UF"],
-        [d.get('endereco'), d.get('numero'), d.get('complemento'), d.get('bairro'), f"{d.get('cidade')}/{d.get('uf')}"],
+        ["ENDEREÇO", "Nº", "BAIRRO", "CIDADE / UF", "WHATSAPP"],
+        [d.get('endereco'), d.get('numero'), d.get('bairro'), f"{d.get('cidade')}/{d.get('uf')}", d.get('whatsapp')],
         [60, 15, 35, 40, 40]
     )
 
     # --- 3. DADOS DO EQUIPAMENTO ---
     pdf.titulo_secao("3. Informações do Equipamento")
     pdf.grade_dados(
-        ["FABRICANTE", "MODELO", "CAPACIDADE", "TAG / ID", "LINHA"],
-        [d.get('fabricante'), d.get('modelo'), d.get('capacidade'), d.get('tag_id'), d.get('linha')],
+        ["FABRICANTE", "MODELO", "CAPACIDADE", "TAG / ID", "FLUIDO"],
+        [d.get('fabricante'), d.get('modelo'), d.get('capacidade'), d.get('tag_id'), d.get('fluido')],
         [40, 40, 35, 35, 40]
     )
     pdf.grade_dados(
-        ["SÉRIE EVAPORADORA", "SÉRIE CONDENSADORA", "FLUIDO", "LOCALIZAÇÃO (EVAP / COND)"],
-        [d.get('serie_evap'), d.get('serie_cond'), d.get('fluido'), f"{d.get('local_evap')} / {d.get('local_cond')}"],
-        [50, 50, 30, 60]
+        ["SÉRIE EVAPORADORA", "SÉRIE CONDENSADORA", "LOCAL EVAP.", "LOCAL COND."],
+        [d.get('serie_evap'), d.get('serie_cond'), d.get('local_evap'), d.get('local_cond')],
+        [45, 45, 50, 50]
     )
 
-    # --- 4. TERMODINÂMICA E ELÉTRICA ---
-    pdf.titulo_secao("4. Análise de Performance e Grandezas")
+    # --- 4. TERMODINÂMICA (NOME ALTERADO) ---
+    pdf.titulo_secao("4. Termodinâmica")
     pdf.grade_dados(
-        ["P. SUCÇÃO (PSI)", "S.H. TOTAL (K)", "DELTA T AR (°C)", "TENSÃO (V)", "CORRENTE (A)"],
-        [d.get('p_suc', 0), d.get('sh', 0), d.get('dt_ar', 0), d.get('v_lin', 0), d.get('i_med', 0)],
-        [38, 38, 38, 38, 38]
+        ["P. SUCÇÃO (PSI)", "S.H. TOTAL (K)", "DELTA T AR (°C)", "T. TUBO (°C)"],
+        [d.get('p_suc', 0), d.get('sh', 0), d.get('dt_ar', 0), d.get('t_suc', 0)],
+        [47, 47, 47, 49]
     )
 
-    # --- 5. PARECER TÉCNICO E STATUS ---
-    pdf.titulo_secao("5. Parecer Técnico e Veredito")
+    # --- 5. ELÉTRICA (NOVO CAMPO) ---
+    pdf.titulo_secao("5. Elétrica")
     pdf.grade_dados(
-        ["TIPO DE SERVIÇO EXECUTADO", "STATUS FINAL DA MÁQUINA"],
-        [d.get('tipo_servico'), d.get('status_maquina')],
-        [95, 95]
+        ["TENSÃO (V)", "CORRENTE (A)", "CAPACITÂNCIA (uF)", "STATUS GERAL"],
+        [d.get('v_lin', 0), d.get('i_med', 0), d.get('capacitancia', '---'), d.get('status_maquina')],
+        [47, 47, 47, 49]
     )
-    
-    # Caixa de texto grande para o Parecer/Observações
+
+    # --- 6. PARECER TÉCNICO / NOTAS ADICIONAIS ---
+    pdf.titulo_secao("6. Parecer Técnico / Notas Adicionais")
     pdf.set_font('Helvetica', 'B', 8); pdf.set_text_color(100)
-    pdf.cell(0, 5, " OBSERVAÇÕES E PARECER DO ESPECIALISTA:", 'LTR', 1, 'L')
+    pdf.cell(0, 5, " OBSERVAÇÕES REGISTRADAS PELO TÉCNICO:", 'LTR', 1, 'L')
     pdf.set_font('Helvetica', '', 9); pdf.set_text_color(0)
-    parecer = str(d.get('parecer_tecnico', 'Nenhuma observação adicional registrada.')).replace('🟢', '[OK]')
-    pdf.multi_cell(0, 6, parecer, 'LBR', 'L')
+    
+    # Busca exatamente o campo de observações do seu formulário
+    parecer_final = str(d.get('parecer_tecnico', 'Sem notas adicionais.')).replace('🟢', '[OK]')
+    pdf.multi_cell(0, 6, parecer_final, 'LBR', 'L')
 
     # --- ASSINATURAS FINAIS ---
     pdf.set_y(-45)
@@ -608,29 +607,29 @@ def gerar_laudo_definitivo_v17():
     pdf.line(120, pdf.get_y(), 190, pdf.get_y()) 
     
     pdf.set_y(pdf.get_y() + 2)
-    pdf.set_font('Helvetica', 'B', 9)
-    # Assinaturas
-    pdf.set_x(20); pdf.cell(70, 5, str(d.get('tecnico_nome')).upper(), 0, 0, 'C')
-    pdf.set_x(120); pdf.cell(70, 5, str(d.get('nome')).upper(), 0, 1, 'C')
+    pdf.set_font('Helvetica', 'B', 9); pdf.set_text_color(0)
+    # Nomes
+    pdf.set_x(20); pdf.cell(70, 5, str(d.get('tecnico_nome', 'MARCOS ALEXANDRE')).upper(), 0, 0, 'C')
+    pdf.set_x(120); pdf.cell(70, 5, str(d.get('nome', 'CLIENTE')).upper(), 0, 1, 'C')
     
-    # Documentos
+    # Documentos logo abaixo
     pdf.set_font('Helvetica', '', 8); pdf.set_text_color(80)
     pdf.set_x(20); pdf.cell(70, 4, f"CNPJ: {d.get('tecnico_documento')}", 0, 0, 'C')
-    pdf.set_x(120); pdf.cell(70, 4, f"CPF/CNPJ: {d.get('cpf_cnpj')}", 0, 1, 'C')
+    pdf.set_x(120); pdf.cell(70, 4, f"CPF: {d.get('cpf_cnpj')}", 0, 1, 'C')
 
     return bytes(pdf.output(dest='S'))
 
 # --- INTERFACE ---
 st.markdown("---")
-if st.button("📊 GERAR LAUDO FINAL V17"):
+if st.button("📊 GERAR LAUDO V17 COMPLETO"):
     try:
-        pdf_final = gerar_laudo_definitivo_v17()
+        pdf_ready = gerar_laudo_v17_completo()
         st.download_button(
-            label="📥 Baixar PDF Oficial",
-            data=pdf_final,
-            file_name=f"Laudo_Tecnico_{st.session_state.dados['nome']}.pdf",
+            label="📥 Baixar Laudo Oficial",
+            data=pdf_ready,
+            file_name=f"Laudo_V17_{st.session_state.dados['nome']}.pdf",
             mime="application/pdf"
         )
-        st.success("Documento pronto para envio!")
+        st.success("Laudo compilado com todas as disciplinas!")
     except Exception as e:
-        st.error(f"Erro na compilação final: {e}")
+        st.error(f"Erro ao gerar PDF: {e}")
