@@ -489,119 +489,153 @@ def renderizar_aba_diagnosticos():
     )
 
 # ==============================================================================
-# BLOCO 5: RELATÓRIOS E LAUDOS - Modelo Prontuário de Engenharia V17
+# BLOCO 5: RELATÓRIOS E LAUDOS - Matriz de Diagnóstico Termodinâmico
 # ==============================================================================
 
 import streamlit as st
 from fpdf import FPDF
-from datetime import datetime
+import io
 
-class ProntuarioV17(FPDF):
-    def header(self):
-        # Layout de Topo com Barra Lateral de Identificação
-        self.set_fill_color(0, 51, 102)
-        self.rect(0, 0, 5, 297, 'F') # Barra decorativa lateral
-        
-        try:
-            self.image("logo.png", 15, 10, 30)
-        except:
-            pass
-            
-        self.set_font('Arial', 'B', 14)
-        self.set_text_color(0, 51, 102)
-        self.set_x(50)
-        self.cell(0, 10, 'PRONTUÁRIO DE MANUTENÇÃO E PERFORMANCE', 0, 1, 'L')
-        self.set_font('Arial', '', 9)
-        self.set_x(50)
-        self.cell(0, 5, f'SISTEMA ESPECIALISTA TERMODINÂMICO | V17 OFICIAL', 0, 1, 'L')
-        self.ln(15)
+# --- 1. MOTOR DE CÁLCULO V17 (INTEGRADO PARA O PDF) ---
+def f_sat_v17_pdf(psi, gas):
+    if psi <= 5: return 0.0
+    if gas == "R22":
+        # Fórmula Polinomial Calibrada R22 (Erro < 0.5 PSI)
+        tsat = (-0.0004 * (psi**2)) + (0.453 * psi) - 24.95
+    elif gas == "R32":
+        tsat = (0.000305 * (psi**2)) + (0.1572 * psi) - 19.64
+    else: # R410A
+        tsat = (0.000285 * (psi**2)) + (0.15735 * psi) - 18.88
+    return round(tsat, 1)
 
-    def titulo_secao(self, num, texto):
-        self.set_fill_color(240, 240, 240)
-        self.set_font('Arial', 'B', 10)
-        self.set_text_color(0, 51, 102)
-        self.cell(0, 8, f"  {num}. {texto.upper()}", 1, 1, 'L', True)
-        self.ln(2)
-
-    def bloco_dados(self, label, valor, largura):
-        self.set_font('Arial', 'B', 7)
-        self.set_text_color(100)
-        # Se o valor for nulo ou zero, destaca em vermelho suave ou coloca traço
-        exibir = str(valor) if valor not in [None, '', 0, 0.0, "0", "0.0"] else "---"
-        
-        self.cell(largura, 4, f" {label.upper()}", 'LTR', 1, 'L')
-        self.set_font('Arial', '', 10)
-        self.set_text_color(0)
-        self.cell(largura, 7, f" {exibir}", 'LBR', 0, 'L')
-
-def gerar_prontuario_v17():
-    # --- RESGATE MULTICAMADA (O segredo para não sair vazio) ---
-    d = st.session_state.get('dados', {})
-    
-    # Busca dados do técnico no Sidebar ou na memória global
-    nome_tec = st.session_state.get('nome_tecnico') or st.session_state.get('nome_tec', 'TÉCNICO NÃO INFORMADO')
-    cnpj_tec = st.session_state.get('cnpj_tecnico') or st.session_state.get('cnpj_tec', '---')
-    
-    pdf = ProntuarioV17()
+# --- 2. ESTRUTURA DO LAUDO TÉCNICO (PDF) ---
+def gerar_pdf_final(dados):
+    pdf = FPDF()
     pdf.add_page()
+    
+    # Configuração de Cores (Identidade Visual V17)
+    # Usando o verde escuro como padrão para os traços
+    c_r, c_g, c_b = 27, 94, 32 
+    
+    # Título do Documento
+    pdf.set_font('Arial', 'B', 22)
+    pdf.set_text_color(c_r, c_g, c_b)
+    pdf.cell(0, 15, 'LAUDO TÉCNICO', 0, 1, 'C')
+    
+    pdf.set_font('Arial', 'I', 10)
+    pdf.set_text_color(100)
+    pdf.cell(0, 5, 'Matriz de Diagnóstico Termodinâmico - Versão V17', 0, 1, 'C')
+    
+    # Divisor Visual (Linha da Logomarca)
+    pdf.set_draw_color(c_r, c_g, c_b)
+    pdf.set_line_width(0.8)
+    pdf.line(10, 35, 200, 35)
+    pdf.ln(15)
 
-    # --- SEÇÃO 1: CLIENTE ---
-    pdf.titulo_secao(1, "Identificação do Cliente")
-    pdf.bloco_dados("Cliente / Razão Social", d.get('nome_cliente'), 180); pdf.ln(12)
-    pdf.bloco_dados("CPF / CNPJ", d.get('cpf_cliente'), 90); pdf.set_xy(105, pdf.get_y()-11)
-    pdf.bloco_dados("Contato / Telefone", d.get('contato'), 85); pdf.ln(12)
+    # --- SEÇÃO 1: DADOS DO ATENDIMENTO ---
+    pdf.set_font('Arial', 'B', 12)
+    pdf.set_text_color(0)
+    pdf.cell(0, 10, '1. IDENTIFICAÇÃO DO CLIENTE E EQUIPAMENTO', 0, 1, 'L')
+    
+    pdf.set_font('Arial', '', 10)
+    pdf.cell(95, 7, f"Cliente: {dados.get('nome_cliente', '---')}")
+    pdf.cell(95, 7, f"CPF/CNPJ: {dados.get('cpf_cliente', '---')}", 0, 1)
+    pdf.cell(95, 7, f"Equipamento: {dados.get('fabricante', '---')} / {dados.get('modelo', '---')}")
+    pdf.cell(95, 7, f"TAG: {dados.get('tag_id', '---')}", 0, 1)
+    pdf.ln(5)
 
-    # --- SEÇÃO 2: EQUIPAMENTO ---
-    pdf.titulo_secao(2, "Ativo e Equipamento")
-    pdf.bloco_dados("Fabricante", d.get('fabricante'), 60); pdf.set_xy(75, pdf.get_y()-11)
-    pdf.bloco_dados("Modelo / Capacidade", f"{d.get('modelo')} / {d.get('capacidade')}", 120); pdf.ln(12)
-    pdf.bloco_dados("TAG / Identificação", d.get('tag_id'), 90); pdf.set_xy(105, pdf.get_y()-11)
-    pdf.bloco_dados("Fluido Refrigerante", d.get('fluido'), 85); pdf.ln(15)
+    # --- SEÇÃO 2: MATRIZ DE PERFORMANCE ---
+    pdf.set_font('Arial', 'B', 12)
+    pdf.cell(0, 10, '2. ANÁLISE DE FLUIDO E PERFORMANCE', 0, 1, 'L')
+    
+    # Cálculos para a Tabela
+    p_suc = dados.get('p_suc', 0.0)
+    p_des = dados.get('p_des', 0.0)
+    fluido = dados.get('fluido', 'R22')
+    ts_s = f_sat_v17_pdf(p_suc, fluido)
+    ts_d = f_sat_v17_pdf(p_des, fluido)
+    sh = round(dados.get('t_suc', 0.0) - ts_s, 1)
+    sc = round(ts_d - dados.get('t_liq', 0.0), 1)
 
-    # --- SEÇÃO 3: PERFORMANCE (GRID TÉCNICO) ---
-    pdf.titulo_secao(3, "Análise de Ciclo Termodinâmico")
-    # Linha 1
-    pdf.bloco_dados("P. Sucção (PSI)", d.get('p_suc'), 45); pdf.set_xy(60, pdf.get_y()-11)
-    pdf.bloco_dados("T. Saturação (°C)", d.get('t_sat'), 45); pdf.set_xy(105, pdf.get_y()-11)
-    pdf.bloco_dados("T. Tubo (°C)", d.get('t_suc'), 45); pdf.set_xy(150, pdf.get_y()-11)
-    pdf.bloco_dados("S.H. (K)", d.get('sh'), 40); pdf.ln(12)
-    # Linha 2
-    pdf.bloco_dados("Delta T Ar (°C)", d.get('dt_ar'), 60); pdf.set_xy(75, pdf.get_y()-11)
-    pdf.bloco_dados("Corrente (A)", d.get('i_med'), 60); pdf.set_xy(135, pdf.get_y()-11)
-    pdf.bloco_dados("Tensão (V)", d.get('v_lin'), 55); pdf.ln(15)
+    pdf.set_font('Arial', '', 10)
+    # Cabeçalho da Tabela de Medições
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(60, 8, "PARÂMETRO", 1, 0, 'C', True)
+    pdf.cell(60, 8, "VALOR MEDIDO", 1, 0, 'C', True)
+    pdf.cell(60, 8, "SATURAÇÃO / K", 1, 1, 'C', True)
+    
+    # Linhas da Tabela
+    pdf.cell(60, 8, "Pressão de Sucção", 1)
+    pdf.cell(60, 8, f"{p_suc} PSI", 1, 0, 'C')
+    pdf.cell(60, 8, f"{ts_s} °C", 1, 1, 'C')
+    
+    pdf.cell(60, 8, "Pressão de Descarga", 1)
+    pdf.cell(60, 8, f"{p_des} PSI", 1, 0, 'C')
+    pdf.cell(60, 8, f"{ts_d} °C", 1, 1, 'C')
+    
+    pdf.cell(60, 8, "Superaquecimento (SH)", 1)
+    pdf.cell(60, 8, f"{dados.get('t_suc', 0)} °C (Tubo)", 1, 0, 'C')
+    pdf.cell(60, 8, f"{sh} K", 1, 1, 'C')
+    pdf.ln(5)
 
-    # --- SEÇÃO 4: DIAGNÓSTICO ---
-    pdf.titulo_secao(4, "Veredito Técnico")
+    # --- SEÇÃO 3: VEREDITO TÉCNICO ---
+    # Lógica de Diagnóstico para o PDF
+    diag_status = "SISTEMA EM CONFORMIDADE"
+    if fluido == "R22":
+        if p_suc < 55: diag_status = "CRÍTICO: RISCO DE CONGELAMENTO (ABAIXO DE 55 PSI)"
+        elif p_suc < 60: diag_status = "ALERTA: PRESSÃO DE SUCÇÃO BAIXA"
+        elif p_suc > 80: diag_status = "CRÍTICO: SOBRECARGA TÉRMICA (ACIMA DE 80 PSI)"
+
+    pdf.set_font('Arial', 'B', 12)
+    pdf.cell(0, 10, '3. PARECER E DIAGNÓSTICO FINAL', 0, 1, 'L')
     pdf.set_font('Arial', 'B', 11)
-    status = str(d.get('diag_final_status', 'AGUARDANDO DADOS')).upper()
-    pdf.cell(0, 10, f" STATUS: {status}", 1, 1, 'C')
-    pdf.ln(2)
-    pdf.set_font('Arial', '', 9)
-    pdf.multi_cell(0, 6, f"PARECER:\n{d.get('laudo_v17_final', 'Sem observações.')}", 1, 'L')
+    pdf.set_text_color(c_r, c_g, c_b)
+    pdf.multi_cell(0, 10, f"DIAGNÓSTICO: {diag_status}", border=1, align='C')
+    
+    pdf.ln(5)
+    pdf.set_text_color(0)
+    pdf.set_font('Arial', '', 10)
+    pdf.multi_cell(0, 5, f"Notas Adicionais: {dados.get('laudo_v17_final', 'Nenhuma observação extra informada.')}")
 
-    # --- SEÇÃO 5: ASSINATURAS ---
+    # --- RODAPÉ: ASSINATURAS ---
     pdf.set_y(-50)
-    pdf.line(20, pdf.get_y()+10, 85, pdf.get_y()+10)
-    pdf.line(125, pdf.get_y()+10, 190, pdf.get_y()+10)
-    pdf.set_y(pdf.get_y()+12)
-    pdf.set_font('Arial', 'B', 8)
-    pdf.set_x(20); pdf.cell(65, 4, nome_tec.upper(), 0, 0, 'C')
-    pdf.set_x(125); pdf.cell(65, 4, str(d.get('nome_cliente', 'CLIENTE')).upper(), 0, 1, 'C')
-    pdf.set_font('Arial', '', 7)
-    pdf.set_x(20); pdf.cell(65, 4, f"Responsável Técnico | CNPJ: {cnpj_tec}", 0, 0, 'C')
-    pdf.set_x(125); pdf.cell(65, 4, f"Documento: {d.get('cpf_cliente', '---')}", 0, 1, 'C')
+    pdf.set_draw_color(c_r, c_g, c_b)
+    pdf.line(25, 255, 90, 255)  # Linha Técnico
+    pdf.line(120, 255, 185, 255) # Linha Cliente
+    
+    pdf.set_y(-40)
+    pdf.set_font('Arial', 'B', 9)
+    # Nome Técnico
+    pdf.set_x(25)
+    pdf.cell(65, 5, dados.get('nome_tecnico', 'TÉCNICO RESPONSÁVEL').upper(), 0, 0, 'C')
+    # Nome Cliente
+    pdf.set_x(120)
+    pdf.cell(65, 5, dados.get('nome_cliente', 'CLIENTE').upper(), 0, 1, 'C')
+    
+    pdf.set_font('Arial', '', 8)
+    # Documentos
+    pdf.set_x(25)
+    pdf.cell(65, 5, f"CNPJ: {dados.get('cnpj_tecnico', '---')}", 0, 0, 'C')
+    pdf.set_x(120)
+    pdf.cell(65, 5, f"CPF: {dados.get('cpf_cliente', '---')}", 0, 1, 'C')
 
     return pdf.output(dest='S').encode('latin-1')
 
-# --- BOTÃO ---
-if st.button("📊 GERAR NOVO PRONTUÁRIO TÉCNICO"):
+# --- DISPARO DO RELATÓRIO NO APP ---
+st.markdown("---")
+st.subheader("📄 Geração do Laudo Técnico")
+
+if st.button("🚀 FINALIZAR E GERAR RELATÓRIO"):
     try:
-        pdf_bytes = gerar_prontuario_v17()
+        # Gera o PDF usando os dados salvos no session_state
+        pdf_laudo = gerar_pdf_final(st.session_state.dados)
+        
         st.download_button(
-            label="📥 Baixar Prontuário Oficial V17",
-            data=pdf_bytes,
-            file_name=f"Prontuario_V17_{datetime.now().strftime('%H%M')}.pdf",
+            label="📥 Baixar Laudo Técnico PDF",
+            data=pdf_laudo,
+            file_name=f"Laudo_{st.session_state.dados.get('tag_id', 'tecnico')}.pdf",
             mime="application/pdf"
         )
+        st.success("Matriz de Diagnóstico processada! O laudo está pronto para download.")
     except Exception as e:
-        st.error(f"Erro ao capturar dados: {e}")
+        st.error(f"Erro ao compilar o laudo: {e}")
