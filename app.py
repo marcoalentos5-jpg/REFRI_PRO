@@ -489,16 +489,15 @@ def renderizar_aba_diagnosticos():
     )
 
 # ==============================================================================
-# BLOCO 5: RELATÓRIOS E LAUDOS - Versão Final Sincronizada
+# BLOCO 5: RELATÓRIOS E LAUDOS - Versão Final Anti-Erro Unicode
 # ==============================================================================
 
 import streamlit as st
 from fpdf import FPDF
 from datetime import datetime
 
-class LaudoV17Sincronizado(FPDF):
+class LaudoV17Final(FPDF):
     def header(self):
-        # Cabeçalho Azul Profissional
         self.set_fill_color(0, 51, 102)
         self.rect(0, 0, 210, 18, 'F')
         self.set_font('Arial', 'B', 14)
@@ -507,77 +506,67 @@ class LaudoV17Sincronizado(FPDF):
         self.cell(0, 10, 'RELATÓRIO TÉCNICO DE CAMPO - V17', 0, 1, 'C')
         self.ln(10)
 
-    def secao(self, titulo):
-        self.set_fill_color(230, 235, 245)
-        self.set_text_color(0, 51, 102)
-        self.set_font('Arial', 'B', 10)
-        self.cell(0, 8, f" {titulo.upper()}", 0, 1, 'L', True)
-        self.ln(2)
+def limpar_texto(texto):
+    """Remove emojis e caracteres especiais que travam o FPDF"""
+    if not texto: return "---"
+    return str(texto).replace('🟢', '[OK]').replace('🔴', '[ALERTA]').replace('🟡', '[ATENÇÃO]')
 
 def gerar_laudo_v17_oficial():
     # 1. ACESSO AO SEU MOTOR DE SESSÃO
-    # Importante: Usamos st.session_state.dados conforme seu Bloco 2
     d = st.session_state.dados 
 
-    pdf = LaudoV17Sincronizado()
+    pdf = LaudoV17Final()
     pdf.add_page()
     
-    # --- SEÇÃO 1: CLIENTE (USANDO SUAS CHAVES) ---
-    pdf.secao("1. Identificação do Cliente")
-    pdf.set_font('Arial', 'B', 9); pdf.set_text_color(100)
-    pdf.cell(100, 5, "NOME / RAZÃO SOCIAL:", 0, 0); pdf.cell(90, 5, "CPF / CNPJ:", 0, 1)
-    pdf.set_font('Arial', '', 11); pdf.set_text_color(0)
-    pdf.cell(100, 7, str(d.get('nome', '---')), 0, 0)
-    pdf.cell(90, 7, str(d.get('cpf_cnpj', '---')), 0, 1)
+    # --- SEÇÃO 1: CLIENTE ---
+    pdf.set_fill_color(230, 235, 245)
+    pdf.set_font('Arial', 'B', 10); pdf.set_text_color(0, 51, 102)
+    pdf.cell(0, 8, " 1. IDENTIFICAÇÃO DO CLIENTE", 0, 1, 'L', True)
     
     pdf.set_font('Arial', 'B', 9); pdf.set_text_color(100)
-    pdf.cell(100, 5, "ENDEREÇO:", 0, 0); pdf.cell(90, 5, "WHATSAPP:", 0, 1)
-    pdf.set_font('Arial', '', 10); pdf.set_text_color(0)
-    end_completo = f"{d.get('endereco', '---')}, {d.get('numero', '')}"
-    pdf.cell(100, 7, end_completo, 0, 0)
-    pdf.cell(90, 7, str(d.get('whatsapp', '---')), 0, 1)
+    pdf.ln(2)
+    pdf.cell(100, 5, "NOME / RAZÃO SOCIAL:", 0, 0); pdf.cell(90, 5, "CPF / CNPJ:", 0, 1)
+    pdf.set_font('Arial', '', 11); pdf.set_text_color(0)
+    pdf.cell(100, 7, limpar_texto(d.get('nome')), 0, 0)
+    pdf.cell(90, 7, limpar_texto(d.get('cpf_cnpj')), 0, 1)
     pdf.ln(5)
 
     # --- SEÇÃO 2: EQUIPAMENTO ---
-    pdf.secao("2. Informações do Equipamento")
+    pdf.set_fill_color(230, 235, 245)
+    pdf.set_font('Arial', 'B', 10); pdf.set_text_color(0, 51, 102)
+    pdf.cell(0, 8, " 2. INFORMAÇÕES DO EQUIPAMENTO", 0, 1, 'L', True)
+    
     pdf.set_font('Arial', 'B', 9); pdf.set_text_color(100)
+    pdf.ln(2)
     pdf.cell(63, 5, "FABRICANTE:", 0, 0); pdf.cell(63, 5, "MODELO:", 0, 0); pdf.cell(63, 5, "TAG / ID:", 0, 1)
     pdf.set_font('Arial', '', 10); pdf.set_text_color(0)
-    pdf.cell(63, 7, str(d.get('fabricante', '---')), 0, 0)
-    pdf.cell(63, 7, str(d.get('modelo', '---')), 0, 0)
-    pdf.cell(63, 7, str(d.get('tag_id', '---')), 0, 1)
+    pdf.cell(63, 7, limpar_texto(d.get('fabricante')), 0, 0)
+    pdf.cell(63, 7, limpar_texto(d.get('modelo')), 0, 0)
+    pdf.cell(63, 7, limpar_texto(d.get('tag_id')), 0, 1)
+    pdf.ln(5)
+
+    # --- SEÇÃO 3: VEREDITO (TRATADO) ---
+    pdf.set_fill_color(230, 235, 245)
+    pdf.set_font('Arial', 'B', 10); pdf.set_text_color(0, 51, 102)
+    pdf.cell(0, 8, " 3. STATUS E DIAGNÓSTICO", 0, 1, 'L', True)
     
-    pdf.set_font('Arial', 'B', 9); pdf.set_text_color(100)
-    pdf.cell(63, 5, "SÉRIE EVAP:", 0, 0); pdf.cell(63, 5, "SÉRIE COND:", 0, 0); pdf.cell(63, 5, "FLUIDO:", 0, 1)
-    pdf.set_font('Arial', '', 10); pdf.set_text_color(0)
-    pdf.cell(63, 7, str(d.get('serie_evap', '---')), 0, 0)
-    pdf.cell(63, 7, str(d.get('serie_cond', '---')), 0, 0)
-    pdf.cell(63, 7, str(d.get('fluido', '---')), 0, 1)
-    pdf.ln(5)
-
-    # --- SEÇÃO 3: VEREDITO ---
-    pdf.secao("3. Status e Diagnóstico")
+    pdf.ln(2)
     pdf.set_font('Arial', 'B', 12)
-    pdf.set_text_color(0, 100, 0) # Verde para o status
-    pdf.cell(0, 10, f" SITUAÇÃO ATUAL: {d.get('status_maquina', '---')}", 1, 1, 'C')
-    pdf.ln(5)
+    status_limpo = limpar_texto(d.get('status_maquina'))
+    pdf.set_text_color(0, 100, 0) if "OK" in status_limpo else pdf.set_text_color(200, 0, 0)
+    pdf.cell(0, 10, f" SITUAÇÃO ATUAL: {status_limpo}", 1, 1, 'C')
+    pdf.ln(10)
 
-    # --- ASSINATURAS (TÉCNICO DO MOTOR DE SESSÃO) ---
+    # --- ASSINATURAS ---
     pdf.set_y(-50)
     pdf.set_draw_color(0, 51, 102)
-    pdf.line(20, pdf.get_y()+10, 85, pdf.get_y()+10)
-    pdf.line(125, pdf.get_y()+10, 190, pdf.get_y()+10)
+    pdf.line(20, pdf.get_y(), 85, pdf.get_y())
+    pdf.line(125, pdf.get_y(), 190, pdf.get_y())
     
-    pdf.set_y(pdf.get_y()+12)
     pdf.set_font('Arial', 'B', 9); pdf.set_text_color(0)
-    pdf.set_x(20); pdf.cell(65, 4, str(d.get('tecnico_nome', 'MARCOS ALEXANDRE')).upper(), 0, 0, 'C')
-    pdf.set_x(125); pdf.cell(65, 4, str(d.get('nome', 'CLIENTE')).upper(), 0, 1, 'C')
-    
-    pdf.set_font('Arial', '', 8)
-    pdf.set_x(20); pdf.cell(65, 4, f"REGISTRO: {d.get('tecnico_registro', '---')}", 0, 0, 'C')
-    pdf.set_x(125); pdf.cell(65, 4, "ASSINATURA DO CLIENTE", 0, 1, 'C')
+    pdf.set_x(20); pdf.cell(65, 5, limpar_texto(d.get('tecnico_nome')).upper(), 0, 0, 'C')
+    pdf.set_x(125); pdf.cell(65, 5, limpar_texto(d.get('nome')).upper(), 0, 1, 'C')
 
-    # Retorno seguro em Bytes
     return bytes(pdf.output(dest='S'))
 
 # --- INTERFACE DE DOWNLOAD ---
@@ -586,11 +575,11 @@ if st.button("📊 GERAR RELATÓRIO FINAL V17"):
     try:
         pdf_final = gerar_laudo_v17_oficial()
         st.download_button(
-            label="📥 Baixar Laudo PDF",
+            label="📥 Baixar Laudo PDF Oficial",
             data=pdf_final,
             file_name=f"Relatorio_{st.session_state.dados['nome']}.pdf",
             mime="application/pdf"
         )
-        st.success("Laudo gerado com as informações do sistema!")
+        st.success("PDF compilado com sucesso!")
     except Exception as e:
-        st.error(f"Erro ao capturar dados do motor: {e}")
+        st.error(f"Erro ao capturar dados: {e}")
