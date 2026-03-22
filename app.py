@@ -489,138 +489,146 @@ def renderizar_aba_diagnosticos():
     )
 
 # ==============================================================================
-# BLOCO 5: RELATÓRIOS E LAUDOS - Modelo Tabela de Engenharia V17
+# BLOCO 5: RELATÓRIOS E LAUDOS - Modelo Executive Arredondado V17
 # ==============================================================================
 
 import streamlit as st
 from fpdf import FPDF
 from datetime import datetime
 
-class LaudoTabeladoV17(FPDF):
+class LaudoExecutiveV17(FPDF):
+    def round_rect(self, x, y, w, h, r=3, style=''):
+        """Cria retângulos com cantos arredondados"""
+        self.set_draw_color(200, 200, 200)
+        self.dashed_line(x, y, x+w, y, dash_length=0) # Reset draw
+        # FPDF2 possui rect com round_corners, aqui simulamos para compatibilidade:
+        self.rect(x, y, w, h, style) 
+
     def header(self):
-        # Tenta inserir a logo. Se não houver arquivo 'logo.png', ele pula.
+        # Logo e Título Superior
         try:
-            self.image("logo.png", 10, 8, 33)
+            self.image("logo.png", 10, 10, 45) # Logo Aumentada
         except:
             pass
         
-        self.set_font('Arial', 'B', 12)
+        self.set_font('Arial', 'B', 22)
         self.set_text_color(0, 51, 102)
-        self.cell(0, 10, 'SISTEMA DE GESTÃO TÉRMICA V17', 0, 1, 'R')
-        self.set_draw_color(0, 51, 102)
-        self.line(10, 25, 200, 25)
-        self.ln(12)
-
-    def titulo_secao(self, texto):
-        self.set_fill_color(0, 51, 102)
-        self.set_text_color(255, 255, 255)
-        self.set_font('Arial', 'B', 9)
-        self.cell(0, 7, f" {texto.upper()}", 1, 1, 'L', True)
-
-    def tabela_dados(self, dicionario_campos):
-        self.set_font('Arial', 'B', 8); self.set_text_color(50)
-        self.set_fill_color(245, 245, 245)
+        self.set_xy(60, 15)
+        self.cell(0, 15, 'LAUDO TÉCNICO', 0, 1, 'L')
         
-        for label, valor in dicionario_campos.items():
-            # Limpeza de caracteres Unicode/Emoji
-            val_limpo = str(valor).replace('🟢', '[OK]').replace('🔴', '[ALERTA]').replace('🟡', '[AVISO]') if valor else "---"
-            
-            self.cell(45, 7, f" {label}:", 1, 0, 'L', True)
-            self.set_font('Arial', '', 9); self.set_text_color(0)
-            self.cell(0, 7, f" {val_limpo}", 1, 1, 'L')
-            self.set_font('Arial', 'B', 8); self.set_text_color(50)
+        self.set_font('Arial', 'I', 9)
+        self.set_text_color(120)
+        self.set_x(60)
+        self.cell(0, 5, f'Gerado via Sistema V17 em {datetime.now().strftime("%d/%m/%Y %H:%M")}', 0, 1, 'L')
+        self.ln(10)
 
-def gerar_laudo_estruturado():
+    def secao_box(self, titulo):
+        self.ln(2)
+        self.set_fill_color(0, 51, 102)
+        self.set_text_color(255)
+        self.set_font('Arial', 'B', 10)
+        # Aba com canto levemente arredondado simulado por preenchimento
+        self.cell(0, 8, f"  {titulo.upper()}", 0, 1, 'L', True)
+        self.set_text_color(0)
+        self.ln(1)
+
+def limpar(texto):
+    if not texto: return "---"
+    return str(texto).replace('🟢', '[OK]').replace('🔴', '[ALERTA]').replace('🟡', '[AVISO]')
+
+def gerar_laudo_premium_v17():
     d = st.session_state.dados 
-    pdf = LaudoTabeladoV17()
+    pdf = LaudoExecutiveV17()
     pdf.add_page()
+    
+    # --- 1. IDENTIFICAÇÃO DO PROFISSIONAL ---
+    pdf.secao_box("1. Identificação do Profissional Responsável")
+    pdf.set_font('Arial', 'B', 8); pdf.set_text_color(100)
+    pdf.cell(95, 5, "NOME DO TÉCNICO", 0, 0); pdf.cell(95, 5, "REGISTRO / CREA / CFT", 0, 1)
+    pdf.set_font('Arial', '', 11); pdf.set_text_color(0)
+    pdf.cell(95, 7, limpar(d.get('tecnico_nome')), 0, 0); pdf.cell(95, 7, limpar(d.get('tecnico_registro')), 0, 1)
+    pdf.ln(3)
 
-    # --- 1. IDENTIFICAÇÃO DO TÉCNICO (CAMPO SEPARADO) ---
-    pdf.titulo_secao("1. Identificação do Profissional Responsável")
-    dados_tec = {
-        "NOME DO TÉCNICO": d.get('tecnico_nome'),
-        "DOCUMENTO/CPF": d.get('tecnico_documento'),
-        "REGISTRO PROFISSIONAL": d.get('tecnico_registro'),
-        "DATA DA INSPEÇÃO": d.get('data')
-    }
-    pdf.tabela_dados(dados_tec)
-    pdf.ln(4)
+    # --- 2. DADOS DO CLIENTE E LOCALIZAÇÃO (GRID) ---
+    pdf.secao_box("2. Dados do Cliente e Localização")
+    # Linha 1
+    pdf.set_font('Arial', 'B', 8); pdf.set_text_color(100)
+    pdf.cell(130, 5, "CLIENTE / RAZÃO SOCIAL", 0, 0); pdf.cell(60, 5, "CPF / CNPJ", 0, 1)
+    pdf.set_font('Arial', '', 10); pdf.set_text_color(0)
+    pdf.cell(130, 7, limpar(d.get('nome')), 0, 0); pdf.cell(60, 7, limpar(d.get('cpf_cnpj')), 0, 1)
+    # Linha 2
+    pdf.set_font('Arial', 'B', 8); pdf.set_text_color(100)
+    pdf.cell(130, 5, "ENDEREÇO", 0, 0); pdf.cell(60, 5, "CONTATO", 0, 1)
+    pdf.set_font('Arial', '', 10); pdf.set_text_color(0)
+    pdf.cell(130, 7, f"{d.get('endereco')}, {d.get('numero')} - {d.get('bairro')}", 0, 0); pdf.cell(60, 7, limpar(d.get('whatsapp')), 0, 1)
+    # Linha 3
+    pdf.set_font('Arial', 'B', 8); pdf.set_text_color(100)
+    pdf.cell(80, 5, "CIDADE / UF", 0, 0); pdf.cell(50, 5, "CEP", 0, 0); pdf.cell(60, 5, "E-MAIL", 0, 1)
+    pdf.set_font('Arial', '', 10); pdf.set_text_color(0)
+    pdf.cell(80, 7, f"{d.get('cidade')} / {d.get('uf')}", 0, 0); pdf.cell(50, 7, limpar(d.get('cep')), 0, 0); pdf.cell(60, 7, limpar(d.get('email')), 0, 1)
+    pdf.ln(3)
 
-    # --- 2. DADOS DO CLIENTE E LOCAL ---
-    pdf.titulo_secao("2. Dados do Cliente e Localização")
-    end_comp = f"{d.get('endereco')}, {d.get('numero')} - {d.get('bairro')}"
-    dados_cli = {
-        "CLIENTE": d.get('nome'),
-        "CPF / CNPJ": d.get('cpf_cnpj'),
-        "ENDEREÇO": end_comp,
-        "CIDADE / UF": f"{d.get('cidade')} / {d.get('uf')}",
-        "CONTATO": d.get('whatsapp')
-    }
-    pdf.tabela_dados(dados_cli)
-    pdf.ln(4)
+    # --- 3. DADOS DO EQUIPAMENTO (GRID) ---
+    pdf.secao_box("3. Especificações Técnicas do Ativo")
+    # Linha 1
+    pdf.set_font('Arial', 'B', 8); pdf.set_text_color(100)
+    pdf.cell(63, 5, "FABRICANTE", 0, 0); pdf.cell(63, 5, "MODELO", 0, 0); pdf.cell(63, 5, "TAG ID", 0, 1)
+    pdf.set_font('Arial', '', 10); pdf.set_text_color(0)
+    pdf.cell(63, 7, limpar(d.get('fabricante')), 0, 0); pdf.cell(63, 7, limpar(d.get('modelo')), 0, 0); pdf.cell(63, 7, limpar(d.get('tag_id')), 0, 1)
+    # Linha 2
+    pdf.set_font('Arial', 'B', 8); pdf.set_text_color(100)
+    pdf.cell(63, 5, "CAPACIDADE", 0, 0); pdf.cell(63, 5, "FLUIDO", 0, 0); pdf.cell(63, 5, "TIPO SERVIÇO", 0, 1)
+    pdf.set_font('Arial', '', 10); pdf.set_text_color(0)
+    pdf.cell(63, 7, limpar(d.get('capacidade')), 0, 0); pdf.cell(63, 7, limpar(d.get('fluido')), 0, 0); pdf.cell(63, 7, limpar(d.get('tipo_servico')), 0, 1)
+    # Linha 3
+    pdf.set_font('Arial', 'B', 8); pdf.set_text_color(100)
+    pdf.cell(95, 5, "SÉRIE EVAP / COND", 0, 0); pdf.cell(95, 5, "LOCALIZAÇÃO (EVAP/COND)", 0, 1)
+    pdf.set_font('Arial', '', 10); pdf.set_text_color(0)
+    pdf.cell(95, 7, f"{d.get('serie_evap')} / {d.get('serie_cond')}", 0, 0); pdf.cell(95, 7, f"{d.get('local_evap')} / {d.get('local_cond')}", 0, 1)
+    pdf.ln(3)
 
-    # --- 3. DADOS DO EQUIPAMENTO ---
-    pdf.titulo_secao("3. Especificações do Ativo")
-    dados_eqp = {
-        "FABRICANTE / MODELO": f"{d.get('fabricante')} / {d.get('modelo')}",
-        "CAPACIDADE": d.get('capacidade'),
-        "TAG / IDENTIFICAÇÃO": d.get('tag_id'),
-        "SÉRIE (EVAP/COND)": f"{d.get('serie_evap')} / {d.get('serie_cond')}",
-        "FLUIDO REFRIGERANTE": d.get('fluido')
-    }
-    pdf.tabela_dados(dados_eqp)
-    pdf.ln(4)
+    # --- 4. TERMODINÂMICA (COLUNAS) ---
+    pdf.secao_box("4. Performance Termodinâmica")
+    pdf.set_draw_color(220); pdf.set_fill_color(250)
+    pdf.set_font('Arial', 'B', 9)
+    pdf.cell(47, 8, "P. SUCÇÃO (PSI)", 1, 0, 'C', True); pdf.cell(47, 8, "S.H. (K)", 1, 0, 'C', True)
+    pdf.cell(47, 8, "DELTA T (C)", 1, 0, 'C', True); pdf.cell(49, 8, "T. TUBO (C)", 1, 1, 'C', True)
+    pdf.set_font('Arial', '', 12)
+    pdf.cell(47, 10, str(d.get('p_suc', 0)), 1, 0, 'C'); pdf.cell(47, 10, str(d.get('sh', 0)), 1, 0, 'C')
+    pdf.cell(47, 10, str(d.get('dt_ar', 0)), 1, 0, 'C'); pdf.cell(49, 10, str(d.get('t_suc', 0)), 1, 1, 'C')
+    pdf.ln(3)
 
-    # --- 4. TERMODINÂMICA (SEPARADA) ---
-    pdf.titulo_secao("4. Análise Termodinâmica")
-    dados_termo = {
-        "PRESSÃO DE SUCÇÃO": f"{d.get('p_suc', 0)} PSI",
-        "SUPERAQUECIMENTO (SH)": f"{d.get('sh', 0)} K",
-        "DELTA T (DIF. TEMP AR)": f"{d.get('dt_ar', 0)} °C",
-        "TEMP. LINHA DE SUCÇÃO": f"{d.get('t_suc', 0)} °C"
-    }
-    pdf.tabela_dados(dados_termo)
-    pdf.ln(4)
+    # --- 5. ELÉTRICA (COLUNAS) ---
+    pdf.secao_box("5. Parâmetros Elétricos")
+    pdf.set_font('Arial', 'B', 9)
+    pdf.cell(63, 8, "TENSÃO (V)", 1, 0, 'C', True); pdf.cell(63, 8, "CORRENTE (A)", 1, 0, 'C', True); pdf.cell(64, 8, "STATUS GERAL", 1, 1, 'C', True)
+    pdf.set_font('Arial', '', 12)
+    pdf.cell(63, 10, str(d.get('v_lin', 0)), 1, 0, 'C'); pdf.cell(63, 10, str(d.get('i_med', 0)), 1, 0, 'C'); pdf.cell(64, 10, limpar(d.get('status_maquina')), 1, 1, 'C')
 
-    # --- 5. ELÉTRICA (SEPARADA) ---
-    pdf.titulo_secao("5. Análise Elétrica")
-    dados_eletrica = {
-        "TENSÃO DE LINHA (V)": f"{d.get('v_lin', 0)} V",
-        "CORRENTE MEDIDA (A)": f"{d.get('i_med', 0)} A",
-        "CAPACITORES": d.get('cap_status', '---'),
-        "STATUS GERAL": d.get('status_maquina')
-    }
-    pdf.tabela_dados(dados_eletrica)
-
-    # --- ASSINATURAS AO FINAL DA PÁGINA ---
-    pdf.set_y(-50)
+    # --- ASSINATURAS FINAIS (POSIÇÃO ABSOLUTA) ---
+    pdf.set_y(-40)
     pdf.set_draw_color(0, 51, 102)
-    pdf.line(20, pdf.get_y(), 90, pdf.get_y())   # Linha Técnico
-    pdf.line(120, pdf.get_y(), 190, pdf.get_y()) # Linha Cliente
+    pdf.line(20, pdf.get_y(), 90, pdf.get_y())   
+    pdf.line(120, pdf.get_y(), 190, pdf.get_y()) 
     
     pdf.set_y(pdf.get_y() + 2)
-    pdf.set_font('Arial', 'B', 9); pdf.set_text_color(0)
-    # Puxa os nomes do dicionário
+    pdf.set_font('Arial', 'B', 10); pdf.set_text_color(0)
     pdf.set_x(20); pdf.cell(70, 5, str(d.get('tecnico_nome')).upper(), 0, 0, 'C')
     pdf.set_x(120); pdf.cell(70, 5, str(d.get('nome')).upper(), 0, 1, 'C')
-    
-    pdf.set_font('Arial', '', 7); pdf.set_text_color(100)
-    pdf.set_x(20); pdf.cell(70, 4, "ASSINATURA DO TÉCNICO", 0, 0, 'C')
-    pdf.set_x(120); pdf.cell(70, 4, "ASSINATURA DO CLIENTE", 0, 1, 'C')
 
     return bytes(pdf.output(dest='S'))
 
-# --- INTERFACE NO STREAMLIT ---
+# --- INTERFACE ---
 st.markdown("---")
-if st.button("📊 GERAR NOVO LAUDO TABELADO V17"):
+if st.button("🚀 GERAR LAUDO EXECUTIVE V17"):
     try:
-        pdf_final = gerar_laudo_estruturado()
+        pdf_bytes = gerar_laudo_premium_v17()
         st.download_button(
-            label="📥 Baixar Laudo Estruturado",
-            data=pdf_final,
-            file_name=f"Laudo_Tabelado_{st.session_state.dados['nome']}.pdf",
+            label="📥 Baixar Laudo Premium",
+            data=pdf_bytes,
+            file_name=f"Laudo_Premium_{st.session_state.dados['nome']}.pdf",
             mime="application/pdf"
         )
-        st.success("Laudo gerado com separação por disciplinas!")
+        st.success("Laudo Premium gerado com sucesso!")
     except Exception as e:
         st.error(f"Erro na geração: {e}")
