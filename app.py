@@ -417,11 +417,14 @@ elif aba_selecionada == "Relatórios":
 # ==============================================================================
 # 5. MOTOR DE PDF - CLASSE E GERAÇÃO (CORRIGIDO V17)
 # ==============================================================================
+import streamlit as st
+from fpdf import FPDF  # Certifique-se de que esta linha esteja no topo do arquivo
+import os
 
+# Verificação de segurança: O Python precisa ler a classe FPDF antes de criar a sua
 class LaudoFinalV17(FPDF):
     def header(self):
         try:
-            # Tenta carregar o logo se o arquivo existir
             if os.path.exists("logo.png"):
                 self.image("logo.png", 10, 10, 50)
         except:
@@ -452,14 +455,17 @@ class LaudoFinalV17(FPDF):
         self.ln()
         self.set_font('Helvetica', '', 9); self.set_text_color(0)
         for i, valor in enumerate(valores):
+            # Garante que o valor seja string e remove emojis (FPDF não suporta)
             txt = str(valor) if valor not in [None, ''] else "---"
-            # Limpeza de emojis para o PDF não quebrar
             txt = txt.replace('🟢', '[OK]').replace('🔴', '[ALERTA]').replace('🟡', '[ATENCAO]')
             self.cell(larguras[i], 7, f" {txt}", 'LBR', 0, 'L')
         self.ln(8)
 
 def gerar_laudo_v17_final_corrigido():
+    # d aponta para o st.session_state.dados que corrigimos no Bloco 0 e 4
     d = st.session_state.dados 
+    
+    # Instancia a classe corrigida
     pdf = LaudoFinalV17()
     pdf.add_page()
     
@@ -492,7 +498,7 @@ def gerar_laudo_v17_final_corrigido():
         [50, 50, 45, 45]
     )
 
-    # 4. TERMODINÂMICA (Ajustado para as chaves da Aba 2)
+    # 4. TERMODINÂMICA (Puxando do Bloco 4)
     pdf.titulo_secao("4. Termodinâmica e Medições")
     pdf.grade(
         ["P. SUCÇÃO (PSI)", "S.H. TOTAL (K)", "S.C. TOTAL (K)", "T. TUBO (°C)"],
@@ -500,16 +506,8 @@ def gerar_laudo_v17_final_corrigido():
         [47, 47, 47, 49]
     )
 
-    # 5. STATUS E ELÉTRICA
-    pdf.titulo_secao("5. Elétrica e Operacional")
-    pdf.grade(
-        ["TENSÃO (V)", "CORRENTE (A)", "CAPACIDADE (BTU)", "STATUS FINAL"],
-        [f"{d.get('vl_v17', '220')}", f"{d.get('im_v17', '0.0')}", d.get('capacidade'), d.get('status_maquina')],
-        [47, 47, 47, 49]
-    )
-
-    # 6. PARECER TÉCNICO
-    pdf.titulo_secao("6. Parecer Técnico Final")
+    # 5. PARECER TÉCNICO
+    pdf.titulo_secao("5. Parecer Técnico Final")
     pdf.set_font('Helvetica', 'B', 8); pdf.set_text_color(100)
     pdf.cell(0, 5, " CONSIDERAÇÕES DO ESPECIALISTA:", 'LTR', 1, 'L')
     pdf.set_font('Helvetica', '', 10); pdf.set_text_color(0)
@@ -525,4 +523,4 @@ def gerar_laudo_v17_final_corrigido():
     pdf.set_x(20); pdf.cell(70, 5, str(d.get('tecnico_nome', 'TECNICO')).upper(), 0, 0, 'C')
     pdf.set_x(120); pdf.cell(70, 5, str(d.get('nome', 'CLIENTE')).upper(), 0, 1, 'C')
 
-    return pdf.output()
+    return pdf.output(dest='S').encode('latin-1', 'replace') # Retorno em bytes para o Streamlit
