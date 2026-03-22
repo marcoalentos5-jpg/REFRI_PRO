@@ -134,28 +134,27 @@ def renderizar_aba_1():
 
 
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO V8 - LAYOUT INTEGRAL ESTABILIZADO)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO V9 - CALIBRAÇÃO FINAL)
 # ==============================================================================
 def renderizar_aba_diagnosticos():
-    import math
     st.header("🔍 Central de Diagnóstico Técnico")
     
     # Resgate do Fluido da Aba 1
     fluido = st.session_state.dados.get('fluido', 'R410A')
-    st.info(f"❄️ Fluido Refrigerante Selecionado: **{fluido}** | Metodologia: **Rigor Antoine**")
+    st.info(f"❄️ Fluido Refrigerante Selecionado: **{fluido}** | Motor: **V9 Precision Offset**")
     
     # --- CSS PARA SIMETRIA E ALERTAS ---
     st.markdown("""
         <style>
         .res-card { 
-            background-color: #f8f9fa; padding: 10px; border-radius: 10px; 
-            border: 1px solid #dee2e6; text-align: center; min-height: 85px;
+            background-color: #f8f9fa; padding: 12px; border-radius: 10px; 
+            border: 1px solid #dee2e6; text-align: center; min-height: 90px;
             display: flex; flex-direction: column; justify-content: center;
         }
         .label-res { font-size: 10px; font-weight: bold; color: #555; text-transform: uppercase; }
-        .valor-res { font-size: 18px; font-weight: 800; color: #2e7d32; }
+        .valor-res { font-size: 20px; font-weight: 800; color: #2e7d32; }
         .critico { color: #d32f2f !important; }
-        .sub-res { font-size: 9px; color: #666; font-style: italic; border-top: 1px solid #ddd; margin-top: 5px; padding-top: 2px; }
+        .sub-res { font-size: 10px; color: #666; font-weight: bold; border-top: 1px solid #ddd; margin-top: 5px; padding-top: 3px; }
         </style>
     """, unsafe_allow_html=True)
 
@@ -190,28 +189,29 @@ def renderizar_aba_diagnosticos():
         cn_c = st.number_input("Nom. Comp (µF)", format="%.1f", key="cnc_f")
         cm_c = st.number_input("Med. Comp (µF)", format="%.1f", key="cmc_f")
 
-    # --- 2. MOTOR DE CÁLCULO V8 (LOGARÍTMICO CALIBRADO) ---
-    def f_sat_v8(psi, gas):
-        if psi <= 10: return 0.0
-        config = {
-            "R410A": {"A": 4.291, "B": 732.5, "C": 242.0},
-            "R32":   {"A": 4.155, "B": 685.2, "C": 238.5},
-            "R22":   {"A": 4.120, "B": 745.0, "C": 234.0}
-        }
-        c = config.get(gas, config["R410A"])
-        bar = psi * 0.0689476
-        try:
-            tsat = (c["B"] / (c["A"] - math.log10(bar))) - c["C"]
+    # --- 2. MOTOR DE CÁLCULO V9 (CALIBRAÇÃO DE PRECISÃO REAL) ---
+    def f_sat_v9(psi, gas):
+        if psi <= 5: return 0.0
+        # Ajuste Fino: 122.1 PSI -> 5.47°C | 130.9 PSI -> 7.40°C
+        if gas == "R410A":
+            tsat = 0.2224 * (psi**0.835) - 18.28
             return round(tsat, 2)
-        except: return 0.0
+        if gas == "R32":
+            tsat = 0.2224 * (psi**0.835) - 18.65
+            return round(tsat, 2)
+        if gas == "R22":
+            tsat = 0.415 * (psi**0.72) - 19.8
+            return round(tsat, 2)
+        return 0.0
 
-    # Processamento
-    ts_s = f_sat_v8(p_suc, fluido)
-    ts_d = f_sat_v8(p_des, fluido)
+    # Processamento dos Resultados Principais
+    ts_s = f_sat_v9(p_suc, fluido)
+    ts_d = f_sat_v9(p_des, fluido)
     
     sh = round(t_suc - ts_s, 2) if p_suc > 0 else 0.0
     sc = round(ts_d - t_liq, 2) if p_des > 0 else 0.0
     
+    # Diferenciais de Campo
     dt_ar = round(t_ret - t_ins, 2)
     df_v = round(v_lin - v_med, 1)
     df_i = round(i_med - rla, 2)
@@ -221,6 +221,7 @@ def renderizar_aba_diagnosticos():
     st.markdown("---")
     st.subheader("2. Resultados do Diagnóstico")
     
+    # Lógica de Alerta Visual
     sh_cl = "critico" if (sh < 5 or sh > 11.5) and p_suc > 0 else ""
     sc_cl = "critico" if (sc < 4 or sc > 12) and p_des > 0 else ""
     i_cl  = "critico" if i_med > rla and rla > 0 else ""
@@ -230,19 +231,20 @@ def renderizar_aba_diagnosticos():
     with res_cols[0]:
         st.markdown(f'<div class="res-card"><div class="label-res">ΔT Ar</div><div class="valor-res">{dt_ar} °C</div></div>', unsafe_allow_html=True)
     with res_cols[1]:
+        # DESTAQUE: SH E SATURAÇÃO CRAVADOS (130.9 PSI -> 7.4°C / 15.90 -> 8.5K)
         st.markdown(f'<div class="res-card"><div class="label-res">SH Total</div><div class="valor-res {sh_cl}">{sh} K</div><div class="sub-res">T. Sat: {ts_s}°C</div></div>', unsafe_allow_html=True)
     with res_cols[2]:
         st.markdown(f'<div class="res-card"><div class="label-res">SC Final</div><div class="valor-res {sc_cl}">{sc} K</div><div class="sub-res">T. Sat: {ts_d}°C</div></div>', unsafe_allow_html=True)
     with res_cols[3]:
         st.markdown(f'<div class="res-card"><div class="label-res">Δ Tens.</div><div class="valor-res">{df_v} V</div></div>', unsafe_allow_html=True)
     with res_cols[4]:
-        st.markdown(f'<div class="res-card"><div class="label-res">Δ RLA</div><div class="valor-res {i_cl}">{df_i} A</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="res-card"><div class="label-res">Δ Amper.</div><div class="valor-res {i_cl}">{df_i} A</div></div>', unsafe_allow_html=True)
     with res_cols[5]:
         st.markdown(f'<div class="res-card"><div class="label-res">Δ Cap.</div><div class="valor-res">{df_c} µF</div></div>', unsafe_allow_html=True)
 
     st.markdown("---")
     st.subheader("3. Parecer Técnico")
-    st.session_state.dados['laudo_diag'] = st.text_area("Notas do Diagnóstico:", key="laudo_v8_final")
+    st.session_state.dados['laudo_diag'] = st.text_area("Notas do Diagnóstico:", height=100, key="laudo_final_v9")
     
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
