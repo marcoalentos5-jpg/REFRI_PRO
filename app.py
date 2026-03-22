@@ -658,7 +658,7 @@ if st.button("🚀 FINALIZAR E GERAR LAUDO COMPLETO"):
     # --- SAÍDA DE BYTES SEGURA PARA STREAMLIT ---
     try:
         pdf_output = pdf.output() # Tenta o padrão fpdf2
-        if isinstance(pdf_output, str):
+    if isinstance(pdf_output, str):
         return pdf_output.encode('latin-1', 'replace')
         return pdf_output
     except:
