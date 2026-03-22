@@ -127,17 +127,29 @@ def renderizar_aba_1():
                 st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
 
             with e3:
-                st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], index=1)
-                st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
-                st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
-                # 1. Definimos a lista (com a nova ordem que você pediu: R32 primeiro)
-opcoes_fluido = ["R32", "R410A", "R134a", "R22", "R290"]
+                # ... código anterior da aba 1 (colunas e1 e e2) ...
 
-# 2. Descobrimos a posição do gás que já está salvo (para não resetar)
-idx_atual = opcoes_fluido.index(st.session_state.dados['fluido']) if st.session_state.dados['fluido'] in opcoes_fluido else 0
+            with e3:
+                                
+                # 1. CAPACIDADE (COM TRAVA DE MEMÓRIA)
+                caps = ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"]
+                idx_cap = caps.index(st.session_state.dados['capacidade']) if st.session_state.dados['capacidade'] in caps else 1
+                st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", caps, index=idx_cap, key="cap_fix_v1")
 
-# 3. Criamos o campo usando o index dinâmico e uma KEY única
-st.session_state.dados['fluido'] = st.selectbox("Fluido:", opcoes_fluido, index=idx_atual, key="campo_fluido_equip")
+                # 2. FLUIDO (R32 PRIMEIRO + TRAVA DE MEMÓRIA)
+                opcoes_fluido = ["R32", "R410A", "R134a", "R22", "R290"]
+                idx_f = opcoes_fluido.index(st.session_state.dados['fluido']) if st.session_state.dados['fluido'] in opcoes_fluido else 0
+                st.session_state.dados['fluido'] = st.selectbox("Fluido:", opcoes_fluido, index=idx_f, key="gas_fix_v1")
+
+                # 3. TIPO DE SERVIÇO (COM TRAVA DE MEMÓRIA)
+                servs = ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"]
+                idx_serv = servs.index(st.session_state.dados['tipo_servico']) if st.session_state.dados['tipo_servico'] in servs else 0
+                st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", servs, index=idx_serv, key="serv_fix_v1")
+
+                # 4. TAG (COM KEY ÚNICA)
+                st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'], key="tag_fix_v1")
+
+                # === FIM DO BLOCO COPIADO ===
                 
 
 # ==============================================================================
