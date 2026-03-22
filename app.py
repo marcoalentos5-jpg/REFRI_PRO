@@ -489,123 +489,100 @@ def renderizar_aba_diagnosticos():
     )
 
 # ==============================================================================
-# BLOCO 5: RELATÓRIOS E LAUDOS - Modelo Premium V17 (Correção Bytearray)
+# BLOCO 5: RELATÓRIOS E LAUDOS - Sistema Anti-Vazio V17
 # ==============================================================================
 
 import streamlit as st
 from fpdf import FPDF
 from datetime import datetime
 
-class PDF_Premium_V17(FPDF):
+class PDF_V17_Final(FPDF):
     def header(self):
-        # Topo com Identidade Visual
         self.set_fill_color(0, 51, 102)
-        self.rect(0, 0, 210, 15, 'F') # Faixa superior azul
-        
-        self.set_font('Arial', 'B', 15)
-        self.set_text_color(255, 255, 255)
-        self.set_y(2)
-        self.cell(0, 10, 'LAUDO TÉCNICO DE PERFORMANCE TERMODINÂMICA', 0, 1, 'C')
-        
+        self.rect(0, 0, 210, 15, 'F')
+        self.set_font('Arial', 'B', 15); self.set_text_color(255)
+        self.set_y(2); self.cell(0, 10, 'LAUDO TÉCNICO DE PERFORMANCE', 0, 1, 'C')
         self.ln(10)
 
-    def secao_card(self, titulo):
+    def secao(self, titulo):
         self.ln(2)
-        self.set_fill_color(235, 240, 250)
+        self.set_fill_color(240, 240, 240)
         self.set_text_color(0, 51, 102)
         self.set_font('Arial', 'B', 10)
         self.cell(0, 8, f" {titulo.upper()}", 0, 1, 'L', True)
         self.ln(2)
 
-def gerar_laudo_v17_final():
-    # 1. CAPTURA DE DADOS (Dicionário e Sidebar)
+def gerar_relatorio_v17_com_dados():
+    # --- RESGATE FORÇADO DE DADOS ---
+    # Aqui buscamos os dados que o Streamlit salvou via 'key' em todas as abas
+    
+    # 1. Dados do Cadastro (Ajuste os nomes das keys se forem diferentes no seu código)
+    cliente = st.session_state.get('nome_cliente_input', '---')
+    doc_cliente = st.session_state.get('cpf_cliente_input', '---')
+    endereco = st.session_state.get('endereco_input', '---')
+    
+    # 2. Dados do Equipamento
+    fabricante = st.session_state.get('fabricante_input', '---')
+    modelo = st.session_state.get('modelo_input', '---')
+    fluido = st.session_state.get('fluido_input', 'R410A')
+    
+    # 3. Dados de Performance (Vindo do dicionário 'dados' ou keys diretas)
     d = st.session_state.get('dados', {})
+    p_suc = d.get('p_suc', 0)
+    t_suc = d.get('t_suc', 0)
+    sh = d.get('sh', 0)
+    dt_ar = d.get('dt_ar', 0)
+    
+    # 4. Dados do Técnico (Sidebar)
     tecnico = st.session_state.get('nome_tecnico', 'Técnico Responsável')
     cnpj_tec = st.session_state.get('cnpj_tecnico', '---')
 
-    pdf = PDF_Premium_V17()
+    pdf = PDF_V17_Final()
     pdf.add_page()
     
-    # --- BLOCO CLIENTE ---
-    pdf.secao_card("Dados do Atendimento")
+    # SEÇÃO 1
+    pdf.secao("Identificação")
     pdf.set_font('Arial', 'B', 9); pdf.set_text_color(100)
-    pdf.cell(95, 5, "CLIENTE:", 0, 0)
-    pdf.cell(95, 5, "CPF/CNPJ:", 0, 1)
+    pdf.cell(100, 5, "CLIENTE:", 0, 0); pdf.cell(90, 5, "CPF/CNPJ:", 0, 1)
     pdf.set_font('Arial', '', 11); pdf.set_text_color(0)
-    pdf.cell(95, 7, str(d.get('nome_cliente', '---')), 0, 0)
-    pdf.cell(95, 7, str(d.get('cpf_cliente', '---')), 0, 1)
+    pdf.cell(100, 7, str(cliente), 0, 0); pdf.cell(90, 7, str(doc_cliente), 0, 1)
     
-    # --- BLOCO EQUIPAMENTO ---
-    pdf.secao_card("Especificações do Equipamento")
+    # SEÇÃO 2
+    pdf.secao("Equipamento")
     pdf.set_font('Arial', 'B', 9); pdf.set_text_color(100)
-    pdf.cell(63, 5, "FABRICANTE:", 0, 0)
-    pdf.cell(63, 5, "MODELO:", 0, 0)
-    pdf.cell(63, 5, "TAG/ID:", 0, 1)
+    pdf.cell(63, 5, "FABRICANTE:", 0, 0); pdf.cell(63, 5, "MODELO:", 0, 0); pdf.cell(63, 5, "FLUIDO:", 0, 1)
     pdf.set_font('Arial', '', 11); pdf.set_text_color(0)
-    pdf.cell(63, 7, str(d.get('fabricante', '---')), 0, 0)
-    pdf.cell(63, 7, str(d.get('modelo', '---')), 0, 0)
-    pdf.cell(63, 7, str(d.get('tag_id', '---')), 0, 1)
+    pdf.cell(63, 7, str(fabricante), 0, 0); pdf.cell(63, 7, str(modelo), 0, 0); pdf.cell(63, 7, str(fluido), 0, 1)
 
-    # --- BLOCO PERFORMANCE (TABELA TÉCNICA) ---
-    pdf.secao_card("Matriz de Performance Termodinâmica")
-    pdf.set_draw_color(200)
-    pdf.set_fill_color(250, 250, 250)
-    pdf.set_font('Arial', 'B', 9)
-    # Cabeçalho
-    pdf.cell(45, 8, "PRESSÃO (PSI)", 1, 0, 'C', True)
-    pdf.cell(45, 8, "TEMP. TUBO (°C)", 1, 0, 'C', True)
-    pdf.cell(45, 8, "S.H. (K)", 1, 0, 'C', True)
-    pdf.cell(55, 8, "DELTA T AR (°C)", 1, 1, 'C', True)
-    # Valores
-    pdf.set_font('Arial', '', 12)
-    pdf.cell(45, 10, f"{d.get('p_suc', 0)}", 1, 0, 'C')
-    pdf.cell(45, 10, f"{d.get('t_suc', 0)}", 1, 0, 'C')
-    pdf.cell(45, 10, f"{d.get('sh', 0)}", 1, 0, 'C')
-    pdf.cell(55, 10, f"{d.get('dt_ar', 0)}", 1, 1, 'C')
+    # SEÇÃO 3
+    pdf.secao("Performance")
+    pdf.set_font('Arial', 'B', 10)
+    pdf.cell(45, 8, f"Pressão: {p_suc} PSI", 1, 0, 'C')
+    pdf.cell(45, 8, f"T. Tubo: {t_suc} C", 1, 0, 'C')
+    pdf.cell(45, 8, f"S.H.: {sh} K", 1, 0, 'C')
+    pdf.cell(55, 8, f"Delta T: {dt_ar} C", 1, 1, 'C')
 
-    # --- BLOCO PARECER ---
-    pdf.secao_card("Conclusão e Veredito")
-    pdf.set_font('Arial', 'B', 11)
-    status_cor = (0, 102, 0) if "OK" in str(d.get('diag_final_status')).upper() else (200, 0, 0)
-    pdf.set_text_color(*status_cor)
-    pdf.cell(0, 10, f"DIAGNÓSTICO: {d.get('diag_final_status', 'EM ANÁLISE')}", 0, 1, 'C')
-    
-    pdf.ln(2)
-    pdf.set_font('Arial', '', 10); pdf.set_text_color(0)
-    obs = d.get('laudo_v17_final', 'Nenhuma observação adicional registrada.')
-    pdf.multi_cell(0, 6, f"OBSERVAÇÕES TÉCNICAS:\n{obs}", 1, 'L')
-
-    # --- ASSINATURAS ---
+    # ASSINATURAS
     pdf.set_y(-50)
-    pdf.set_draw_color(0, 51, 102)
     pdf.line(20, pdf.get_y()+10, 85, pdf.get_y()+10)
     pdf.line(125, pdf.get_y()+10, 190, pdf.get_y()+10)
-    
-    pdf.set_y(pdf.get_y()+12)
-    pdf.set_font('Arial', 'B', 9)
+    pdf.set_y(pdf.get_y()+12); pdf.set_font('Arial', 'B', 9)
     pdf.set_x(20); pdf.cell(65, 4, str(tecnico).upper(), 0, 0, 'C')
-    pdf.set_x(125); pdf.cell(65, 4, str(d.get('nome_cliente', 'CLIENTE')).upper(), 0, 1, 'C')
-    
-    pdf.set_font('Arial', '', 8)
-    pdf.set_x(20); pdf.cell(65, 4, f"CNPJ: {cnpj_tec}", 0, 0, 'C')
-    pdf.set_x(125); pdf.cell(65, 4, f"CPF/CNPJ: {d.get('cpf_cliente', '---')}", 0, 1, 'C')
+    pdf.set_x(125); pdf.cell(65, 4, str(cliente).upper(), 0, 1, 'C')
 
-    # A SOLUÇÃO DO ERRO ESTÁ AQUI: Converter bytearray para bytes
     return bytes(pdf.output(dest='S'))
 
-# --- INTERFACE ---
-st.markdown("---")
-if st.button("🚀 GERAR LAUDO PREMIUM V17"):
+# --- BOTÃO ---
+st.markdown("### 🖨️ Finalização")
+if st.button("🚀 GERAR LAUDO COM DADOS ATUALIZADOS"):
     try:
-        # Chama a função que agora retorna 'bytes' puros
-        pdf_pronto = gerar_laudo_v17_final()
-        
+        pdf_out = gerar_relatorio_v17_com_dados()
         st.download_button(
-            label="📥 Baixar Laudo PDF Oficial",
-            data=pdf_pronto,
-            file_name=f"Laudo_V17_{datetime.now().strftime('%H%M')}.pdf",
+            label="📥 Baixar PDF Agora",
+            data=pdf_out,
+            file_name="Laudo_V17.pdf",
             mime="application/pdf"
         )
-        st.success("Documento compilado com sucesso!")
+        st.success("PDF gerado! Se ainda estiver sem dados, verifique os nomes (keys) das suas abas de entrada.")
     except Exception as e:
-        st.error(f"Erro ao processar PDF: {e}")
+        st.error(f"Erro: {e}")
