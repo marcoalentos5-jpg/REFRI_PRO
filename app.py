@@ -126,13 +126,12 @@ def renderizar_aba_1():
                 st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'])
                 st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
 
-           # LOCALIZA ESTE BLOCO NA ABA 1 E DEIXE ASSIM:
-
             with e3:
                 st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], index=1)
+                st.session_state.dados['fluido'] = st.selectbox("Fluido:", ["R410A", "R134a", "R22", "R32", "R290"], index=0)
                 st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
                 st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
-                
+
 # ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO V10 - MATRIZ DE PRECISÃO REAL)
 # ==============================================================================
@@ -171,50 +170,6 @@ def renderizar_aba_diagnosticos():
     """, unsafe_allow_html=True)
 
     # --- 1. MEDIÇÕES DE CAMPO (6 COLUNAS) ---
-
-    # ==============================================================================
-# TRECHO ATUALIZADO: CABEÇALHO COM FLUIDO AO LADO DO TÍTULO
-# ==============================================================================
-st.subheader("🔍 Central de Diagnóstico Técnico (Precisão V17)")
-st.markdown("---")
-
-# Criando uma linha especial para o Título + Fluido
-col_tit, col_flu = st.columns([2, 1])
-
-with col_tit:
-    st.subheader("1. Medições de Campo")
-
-with col_flu:
-    # --- CAMPO FLUIDO COM DESTAQUE LATERAL ---
-    lista_fluidos = ["R410A", "R134a", "R22", "R32", "R290"]
-    f_memoria = st.session_state.dados.get('fluido', 'R410A')
-    f_idx = lista_fluidos.index(f_memoria) if f_memoria in lista_fluidos else 0
-    
-    # O selectbox aparece aqui, alinhado ao título
-    st.session_state.dados['fluido'] = st.selectbox(
-        "🔥 GÁS REFRIGERANTE:", 
-        lista_fluidos, 
-        index=f_idx,
-        key="diag_fluido_lateral_v17"
-    )
-
-# Lógica de pressão automática (Mantendo a funcionalidade)
-if st.session_state.dados['fluido'] == "R22":
-    p_suc_ref, p_des_ref = 70.0, 210.0
-else:
-    p_suc_ref, p_des_ref = 134.0, 340.0
-
-# --- NÃO ALTERE AS LINHAS ABAIXO (SUAS COLUNAS ORIGINAIS) ---
-c1, c2, c3 = st.columns(3)
-with c1:
-    st.session_state.dados['p_suc'] = st.number_input(
-        "P. de Sucção (PSI):", 
-        value=p_suc_ref, 
-        format="%.1f",
-        key="in_psuc_v17_fix"
-    )
-    # Continue aqui com seus campos originais (T. Sucção, etc.) sem deletar nada.
-    
     st.subheader("1. Medições de Campo")
     c1, c2, c3, c4, c5, c6 = st.columns(6)
 
