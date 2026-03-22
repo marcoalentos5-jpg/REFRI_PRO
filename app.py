@@ -133,19 +133,18 @@ def renderizar_aba_1():
                 st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
 
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO V11.4 - MEMÓRIA BLINDADA & MOTOR V30.1)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO V11.6 - MATRIZ DE PERSISTÊNCIA REAL)
 # ==============================================================================
 
 import streamlit as st
 import math
 
 def renderizar_aba_diagnosticos():
-    st.header("🔍 Central de Diagnóstico Técnico (Precisão V18.4)")
+    st.header("🔍 Central de Diagnóstico Técnico (Precisão V18.6)")
     
-    # --- BLOCO DE MEMÓRIA CRUCIAL: BUSCA O FLUIDO E TRAVA ---
-    # Garante que o fluido escolhido na Página 1 seja a única fonte de verdade
+    # Recupera o fluido global da sessão
     if 'dados' not in st.session_state:
-        st.session_state.dados = {'fluido': 'R410A'}
+        st.session_state.dados = {}
     
     fluido = st.session_state.dados.get('fluido', 'R410A')
 
@@ -162,73 +161,71 @@ def renderizar_aba_diagnosticos():
         .label-res { font-size: 14px; font-weight: 800; color: #333; text-transform: uppercase; margin-bottom: 8px; }
         .valor-res { font-size: 28px; font-weight: 900; color: #1b5e20; margin: 2px 0; }
         .sub-res { font-size: 13px; color: #d32f2f; font-weight: 700; border-top: 2px dotted #eee; padding-top: 8px; margin-top: 5px; }
-        
         .card-bom { border-top-color: #81c784 !important; }
         .card-alerta { border-top-color: #fff176 !important; }
         .card-critico { border-top-color: #e57373 !important; }
-        
         .card-alerta .valor-res { color: #fbc02d !important; }
         .card-critico .valor-res { color: #d32f2f !important; }
         </style>
     """, unsafe_allow_html=True)
 
+    # --- LÓGICA DE BLINDAGEM: MANTÉM ESCOLHA DO TÉCNICO ---
+    def carregar_valor(chave, padrao_sugerido):
+        if chave in st.session_state:
+            return float(st.session_state[chave])
+        return float(padrao_sugerido)
+
     # --- 1. MEDIÇÕES DE CAMPO (6 COLUNAS) ---
     st.subheader("1. Medições de Campo")
     c1, c2, c3, c4, c5, c6 = st.columns(6)
 
-    # Função interna para garantir que o valor digitado pelo técnico NUNCA mude sozinho
-    def persistir(chave, padrao_inicial):
-        if chave not in st.session_state:
-            st.session_state[chave] = padrao_inicial
-        return st.session_state[chave]
-
     with c1:
         st.markdown("🟢 **AR**")
-        t_ret = st.number_input("T. Retorno (°C)", value=persistir("tr_v17", 24.0), step=0.1, key="tr_v17")
-        t_ins = st.number_input("T. Insuf. (°C)", value=persistir("ti_v17", 12.0), step=0.1, key="ti_v17")
+        t_ret = st.number_input("T. Retorno (°C)", value=carregar_valor("tr_v17", 24.0), step=0.1, key="tr_v17")
+        t_ins = st.number_input("T. Insuf. (°C)", value=carregar_valor("ti_v17", 12.0), step=0.1, key="ti_v17")
     
     with c2:
         st.markdown("🔵 **EVAPORADORA**")
-        # O default só é usado se for a PRIMEIRA vez que o técnico entra na tela
-        padrao_ps = 70.0 if fluido == "R22" else 134.0
-        p_suc = st.number_input("P. Sucção (PSI)", value=persistir("ps_v17", padrao_ps), format="%.1f", key="ps_v17")
-        t_suc = st.number_input("T. Tubo Suc. (°C)", value=persistir("ts_v17", 14.0), format="%.1f", key="ts_v17")
+        # Sugestão inteligente baseada no fluido, mas respeita a edição manual
+        sug_ps = 70.0 if fluido == "R22" else 134.0
+        p_suc = st.number_input("P. Sucção (PSI)", value=carregar_valor("ps_v17", sug_ps), format="%.1f", key="ps_v17")
+        t_suc = st.number_input("T. Tubo Suc. (°C)", value=carregar_valor("ts_v17", 14.0), format="%.1f", key="ts_v17")
     
     with c3:
         st.markdown("🔴 **CONDENSADORA**")
-        padrao_pd = 210.0 if fluido == "R22" else 340.0
-        p_des = st.number_input("P. Desc. (PSI)", value=persistir("pd_v17", padrao_pd), format="%.1f", key="pd_v17")
-        padrao_tl = 35.0 if fluido == "R22" else 38.0
-        t_liq = st.number_input("T. Tubo Líq. (°C)", value=persistir("tl_v17", padrao_tl), format="%.1f", key="tl_v17")
+        sug_pd = 210.0 if fluido == "R22" else 340.0
+        p_des = st.number_input("P. Desc. (PSI)", value=carregar_valor("pd_v17", sug_pd), format="%.1f", key="pd_v17")
+        sug_tl = 35.0 if fluido == "R22" else 38.0
+        t_liq = st.number_input("T. Tubo Líq. (°C)", value=carregar_valor("tl_v17", sug_tl), format="%.1f", key="tl_v17")
     
     with c4:
         st.markdown("⚡ **TENSÃO**")
-        v_lin = st.number_input("Tens. Linha (V)", value=persistir("vl_v17", 220.0), key="vl_v17")
-        v_med = st.number_input("Tens. Medida (V)", value=persistir("vm_v17", 218.0), key="vm_v17")
+        v_lin = st.number_input("Tens. Linha (V)", value=carregar_valor("vl_v17", 220.0), key="vl_v17")
+        v_med = st.number_input("Tens. Medida (V)", value=carregar_valor("vm_v17", 218.0), key="vm_v17")
     
     with c5:
         st.markdown("🔌 **CORRENTE**")
-        rla = st.number_input("RLA (A)", value=persistir("rla_v17", 10.0), key="rla_v17")
-        i_med = st.number_input("Corr. Medida (A)", value=persistir("im_v17", 9.5), key="im_v17")
+        rla = st.number_input("RLA (A)", value=carregar_valor("rla_v17", 10.0), key="rla_v17")
+        i_med = st.number_input("Corr. Medida (A)", value=carregar_valor("im_v17", 9.5), key="im_v17")
     
     with c6:
         st.markdown("🔋 **CAPACIT.**")
-        cn_c = st.number_input("Nominal (µF)", value=persistir("cnc_v17", 35.0), key="cnc_v17")
-        cm_c = st.number_input("Medida (µF)", value=persistir("cmc_v17", 33.0), key="cmc_v17")
+        cn_c = st.number_input("Nominal (µF)", value=carregar_valor("cnc_v17", 35.0), key="cnc_v17")
+        cm_c = st.number_input("Medida (µF)", value=carregar_valor("cmc_v17", 33.0), key="cmc_v17")
 
-    # --- MOTOR V30.1: MATRIZ DE ALTA PRECISÃO ---
+    # --- MOTOR V30.1: MATRIZ DE ALTA PRECISÃO (R32, R410A & R22 RECALIBRADO) ---
     def f_sat_v17(psi, gas):
         if psi <= 5: return 0.0
         if gas == "R32":
             tsat = (0.000305 * (psi**2)) + (0.1572 * psi) - 19.64
         elif gas == "R22":
-            # Calibração solicitada: 50=3.34 / 80=8.61 / 85=10.31
+            # Polinômio de 3ª ordem: 50=3.34 | 80=8.61 | 85=10.31
             tsat = (0.000035 * (psi**3)) - (0.0064 * (psi**2)) + (0.435 * psi) - 13.9
         else: # R410A
             tsat = (0.000285 * (psi**2)) + (0.15735 * psi) - 18.88
         return round(tsat, 2)
 
-    # Cálculos Finais
+    # Cálculos
     ts_s = f_sat_v17(p_suc, fluido)
     ts_d = f_sat_v17(p_des, fluido)
     sh = round(t_suc - ts_s, 2)
@@ -243,7 +240,6 @@ def renderizar_aba_diagnosticos():
     with res_cols[0]:
         st.markdown(f'<div class="res-card card-bom"><div class="label-res">ΔT Ar</div><div class="valor-res">{dt_ar} °C</div><div class="sub-res">Troca</div></div>', unsafe_allow_html=True)
 
-    # Lógica de SH (Superaquecimento)
     if fluido == "R32":
         cl_sh = "card-bom" if 5.5 <= sh <= 7.5 else "card-alerta"
         if sh < 5.0 or sh > 8.0: cl_sh = "card-critico"
@@ -252,16 +248,12 @@ def renderizar_aba_diagnosticos():
 
     with res_cols[1]:
         st.markdown(f'<div class="res-card {cl_sh}"><div class="label-res">SH Total</div><div class="valor-res">{sh} K</div><div class="sub-res">Sat: {ts_s}°C</div></div>', unsafe_allow_html=True)
-
     with res_cols[2]:
         st.markdown(f'<div class="res-card card-bom"><div class="label-res">SC Final</div><div class="valor-res">{sc} K</div><div class="sub-res">Sat: {ts_d}°C</div></div>', unsafe_allow_html=True)
-
     with res_cols[3]:
         st.markdown(f'<div class="res-card card-bom"><div class="label-res">Δ Tens.</div><div class="valor-res">{round(v_lin-v_med,1)} V</div><div class="sub-res">Estável</div></div>', unsafe_allow_html=True)
-
     with res_cols[4]:
         st.markdown(f'<div class="res-card card-bom"><div class="label-res">Δ RLA</div><div class="valor-res">{round(i_med-rla,2)} A</div><div class="sub-res">Carga</div></div>', unsafe_allow_html=True)
-
     with res_cols[5]:
         st.markdown(f'<div class="res-card card-bom"><div class="label-res">Δ Cap.</div><div class="valor-res">{round(cm_c-cn_c,1)} µF</div><div class="sub-res">Saúde</div></div>', unsafe_allow_html=True)
 
@@ -279,7 +271,6 @@ def renderizar_aba_diagnosticos():
             bg_diag = "#fff176"
             diag_final = f"⚠️ ATENÇÃO: Sistema no LIMITE CRÍTICO ({p_suc} PSI)!" if p_suc in [110.0, 150.0] else "⚠️ ALERTA: Pressão fora dos padrões (110-150 PSI)!"
     
-    # Validação Final de SH
     if bg_diag != "#e57373":
         if fluido == "R32" and (sh < 5.0 or sh > 8.0):
             diag_final, bg_diag = "🔴 ALERTA: Bom funcionamento comprometido (SH fora de 5-8K)!", "#e57373"
