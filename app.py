@@ -132,7 +132,6 @@ def renderizar_aba_1():
                 st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
                 st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
 
-
 # ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO V10 - MATRIZ DE PRECISÃO REAL)
 # ==============================================================================
@@ -140,99 +139,151 @@ def renderizar_aba_1():
 import streamlit as st
 import math
 
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO V10 - MATRIZ DE PRECISÃO REAL)
 def renderizar_aba_diagnosticos():
-    import streamlit as st
+    st.header("🔍 Central de Diagnóstico Técnico (Precisão V17)")
+    
+    fluido = st.session_state.dados.get('fluido', 'R410A')
 
-    # --- CONFIGURAÇÃO DE ESTILO (TEXTO PRETO / FUNDOS FIXOS) ---
+    # --- CSS: ESTILO HI-VIS COM ALERTAS E TEXTO PRETO ---
     st.markdown("""
         <style>
-        .card-diagnostico {
-            padding: 20px; border-radius: 10px; color: #000 !important;
-            text-align: center; font-weight: 800; font-size: 16px;
-            min-height: 120px; display: flex; align-items: center;
-            justify-content: center; border: 1px solid rgba(0,0,0,0.1);
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.05);
+        .res-card { 
+            background-color: #ffffff; padding: 15px; border-radius: 10px; 
+            text-align: center; min-height: 150px;
+            box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column; justify-content: center;
+            border-top: 6px solid #1b5e20; 
         }
-        .stNumberInput label { color: #000 !important; font-weight: bold; }
+        .label-res { font-size: 14px; font-weight: 800; color: #333; text-transform: uppercase; margin-bottom: 8px; }
+        .valor-res { font-size: 28px; font-weight: 900; color: #1b5e20; margin: 2px 0; }
+        .sub-res { font-size: 13px; color: #d32f2f; font-weight: 700; border-top: 2px dotted #eee; padding-top: 8px; margin-top: 5px; }
+        
+        /* Cores dos Cards */
+        .card-bom { border-top-color: #81c784 !important; }
+        .card-alerta { border-top-color: #fff176 !important; }
+        .card-critico { border-top-color: #e57373 !important; }
+        
+        /* Ajuste de cor de fonte para alertas específicos */
+        .card-alerta .valor-res { color: #fbc02d !important; }
+        .card-critico .valor-res { color: #d32f2f !important; }
         </style>
     """, unsafe_allow_html=True)
 
-    st.subheader("🔍 Diagnóstico de Performance (Motor de Alta Precisão)")
+    # --- 1. MEDIÇÕES DE CAMPO (6 COLUNAS) ---
+    st.subheader("1. Medições de Campo")
+    c1, c2, c3, c4, c5, c6 = st.columns(6)
 
-    # --- ENTRADA DE DADOS EM 6 COLUNAS (CONSOLIDADO) ---
-    col1, col2, col3, col4, col5, col6 = st.columns(6)
-    with col1:
-        st.caption("🧊 GÁS")
-        gas = st.selectbox("Fluido", ["R32", "R410A"])
-    with col2:
-        st.caption("🔵 SUCÇÃO")
-        p_suc = st.number_input("P. PSI", value=134.0, step=0.5)
-        t_suc = st.number_input("T. Cano °C", value=15.0, step=0.1)
-    with col3:
-        st.caption("🔴 LINHA")
-        p_des = st.number_input("P. Desc.", value=340.0)
-        t_liq = st.number_input("T. Liq.", value=38.0)
-    with col4:
-        st.caption("⚡ ELÉTRICA")
-        v_med = st.number_input("Volts", value=220.0)
-        i_med = st.number_input("Amper.", value=9.5)
-    with col5:
-        st.caption("🔋 CAPACIT.")
-        cn_c = st.number_input("Nominal", value=35.0)
-        cm_c = st.number_input("Medida", value=33.5)
-    with col6:
-        st.caption("🟢 AR")
-        t_ret = st.number_input("Retorno", value=24.0)
-        t_ins = st.number_input("Insufl.", value=12.0)
+    with c1:
+        st.markdown("🟢 **AR**")
+        t_ret = st.number_input("T. Retorno (°C)", value=24.0, step=0.1, key="tr_v17")
+        t_ins = st.number_input("T. Insuf. (°C)", value=12.0, step=0.1, key="ti_v17")
+    with c2:
+        st.markdown("🔵 **EVAPORADORA**")
+        p_suc = st.number_input("P. Sucção (PSI)", value=134.0, format="%.1f", key="ps_v17")
+        t_suc = st.number_input("T. Tubo Suc. (°C)", value=14.0, format="%.1f", key="ts_v17")
+    with c3:
+        st.markdown("🔴 **CONDENSADORA**")
+        p_des = st.number_input("P. Desc. (PSI)", value=340.0, format="%.1f", key="pd_v17")
+        t_liq = st.number_input("T. Tubo Líq. (°C)", value=38.0, format="%.1f", key="tl_v17")
+    with c4:
+        st.markdown("⚡ **TENSÃO**")
+        v_lin = st.number_input("Tens. Linha (V)", value=220.0, key="vl_v17")
+        v_med = st.number_input("Tens. Medida (V)", value=218.0, key="vm_v17")
+    with c5:
+        st.markdown("🔌 **CORRENTE**")
+        rla = st.number_input("RLA (A)", value=10.0, key="rla_v17")
+        i_med = st.number_input("Corr. Medida (A)", value=9.5, key="im_v17")
+    with c6:
+        st.markdown("🔋 **CAPACIT.**")
+        cn_c = st.number_input("Nominal (µF)", value=35.0, key="cnc_v17")
+        cm_c = st.number_input("Medida (µF)", value=33.0, key="cmc_v17")
 
-    # --- MOTOR DE CÁLCULO V10 (REVISADO 1000X - R32 & R410A) ---
-    if gas == "R32":
-        # Alvo: 100 PSI = -0.87°C | 134 PSI = 7.68°C | 160 PSI = 13.32°C
-        tsat = (0.000305 * (p_suc**2)) + (0.1572 * p_suc) - 19.64
-        sh_min, sh_max = 5.5, 7.5 # Miolo verde ideal R32
-    else: # R410A
-        # Alvo: 100 PSI = -0.3°C | 134 PSI = 8.1°C | 160 PSI = 13.6°C
-        tsat = (0.000285 * (p_suc**2)) + (0.15735 * p_suc) - 18.88
-        sh_min, sh_max = 5.0, 12.0 # Margem padrão R410A
+    # --- MOTOR V28: MATRIZ DE PRECISÃO REAL (R32 & R410A) ---
+    def f_sat_v17(psi, gas):
+        if psi <= 5: return 0.0
+        if gas == "R32":
+            # Alvo Danfoss: 100 PSI = -0.87°C | 134 PSI = 7.68°C
+            tsat = (0.000305 * (psi**2)) + (0.1572 * psi) - 19.64
+        else: # R410A
+            # Alvo Danfoss: 100 PSI = -0.3°C | 134 PSI = 8.1°C
+            tsat = (0.000285 * (psi**2)) + (0.15735 * psi) - 18.88
+        return round(tsat, 1)
 
-    tsat = round(tsat, 1)
-    sh = round(t_suc - tsat, 1)
+    # Cálculos
+    ts_s = f_sat_v17(p_suc, fluido)
+    ts_d = f_sat_v17(p_des, fluido)
+    sh = round(t_suc - ts_s, 1)
+    sc = round(ts_d - t_liq, 1)
     dt_ar = round(t_ret - t_ins, 1)
 
-    # --- MATRIZ DE DECISÃO (HIERARQUIA DE ALERTAS) ---
-    msg = "✅ Sistema Operacional em Conformidade"
-    cor = "#81c784" # Verde
+    # --- 2. RESULTADOS DO DIAGNÓSTICO (6 COLUNAS) ---
+    st.markdown("---")
+    st.subheader("2. Resultados do Diagnóstico")
+    res_cols = st.columns(6)
 
-    # 1. Verificação de Extremos de Pressão (Gatilhos 110 e 150)
+    with res_cols[0]:
+        st.markdown(f'<div class="res-card card-bom"><div class="label-res">ΔT Ar</div><div class="valor-res">{dt_ar} °C</div><div class="sub-res">Troca</div></div>', unsafe_allow_html=True)
+
+    # Lógica de Alerta de SH (Diferenciada por Gás)
+    if fluido == "R32":
+        cl_sh = "card-bom" if 5.5 <= sh <= 7.5 else "card-alerta"
+        if sh < 5.0 or sh > 8.0: cl_sh = "card-critico"
+    else: # R410A
+        cl_sh = "card-bom" if 5.0 <= sh <= 12.0 else "card-critico"
+
+    with res_cols[1]:
+        st.markdown(f'<div class="res-card {cl_sh}"><div class="label-res">SH Total</div><div class="valor-res">{sh} K</div><div class="sub-res">Sat: {ts_s}°C</div></div>', unsafe_allow_html=True)
+
+    with res_cols[2]:
+        st.markdown(f'<div class="res-card card-bom"><div class="label-res">SC Final</div><div class="valor-res">{sc} K</div><div class="sub-res">Sat: {ts_d}°C</div></div>', unsafe_allow_html=True)
+
+    with res_cols[3]:
+        st.markdown(f'<div class="res-card card-bom"><div class="label-res">Δ Tens.</div><div class="valor-res">{round(v_lin-v_med,1)} V</div><div class="sub-res">Estável</div></div>', unsafe_allow_html=True)
+
+    with res_cols[4]:
+        st.markdown(f'<div class="res-card card-bom"><div class="label-res">Δ RLA</div><div class="valor-res">{round(i_med-rla,2)} A</div><div class="sub-res">Carga</div></div>', unsafe_allow_html=True)
+
+    with res_cols[5]:
+        st.markdown(f'<div class="res-card card-bom"><div class="label-res">Δ Cap.</div><div class="valor-res">{round(cm_c-cn_c,1)} µF</div><div class="sub-res">Saúde</div></div>', unsafe_allow_html=True)
+
+    # --- 3. DIAGNÓSTICO INTELIGENTE (TEXTO PRETO + ALERTA 110/150) ---
+    diag_final = "✅ Sistema Operacional em Conformidade"
+    bg_diag = "#81c784" # Verde claro
+    
+    # Prioridade 1: Extremos de Pressão
     if p_suc <= 110.0 or p_suc >= 150.0:
-        cor = "#fff176" # Amarelo
+        bg_diag = "#fff176" # Amarelo
         if p_suc == 110.0 or p_suc == 150.0:
-            msg = f"⚠️ ATENÇÃO: Sistema operando no LIMITE CRÍTICO de {p_suc} PSI!"
+            diag_final = f"⚠️ ATENÇÃO: Sistema operando no LIMITE CRÍTICO de {p_suc} PSI!"
         else:
-            msg = "⚠️ ALERTA: Pressão fora dos padrões de funcionamento (110-150 PSI)!"
+            diag_final = "⚠️ ALERTA: Pressão fora dos padrões de funcionamento (110-150 PSI)!"
     
-    # 2. Verificação de Superaquecimento (SH) por Gás
-    elif gas == "R32":
-        if not (5.0 <= sh <= 8.0):
-            msg, cor = "⚠️ ATENÇÃO: Bom funcionamento comprometido (SH fora de 5K-8K)!", "#fff176"
+    # Prioridade 2: Superaquecimento
+    elif fluido == "R32":
+        if sh < 5.0 or sh > 8.0:
+            diag_final = "🔴 ALERTA: Bom funcionamento comprometido (SH fora de 5K-8K)!"
+            bg_diag = "#e57373"
         elif sh < 5.5 or sh > 7.5:
-            msg, cor = "🟡 ATENÇÃO: SH nos limites críticos para R32 (Luz Amarela)!", "#fff176"
-    
-    elif gas == "R410A":
-        if not (5.0 <= sh <= 12.0):
-            msg, cor = "⚠️ ATENÇÃO: Bom funcionamento comprometido (SH fora de 5K-12K)!", "#fff176"
+            diag_final = "🟡 ATENÇÃO: Superaquecimento nos limites (Luz Amarela 5K-8K)!"
+            bg_diag = "#fff176"
+    else: # R410A
+        if sh < 5.0:
+            diag_final = "🔴 ALERTA: Superaquecimento baixo. Risco de golpe de líquido!"
+            bg_diag = "#e57373"
+        elif sh > 12.0:
+            diag_final = "🟠 ALERTA: Superaquecimento alto. Possível falta de fluido ou restrição."
+            bg_diag = "#fff176"
 
-    # --- EXIBIÇÃO FINAL ---
-    st.write("---")
-    r_col1, r_col2, r_col3 = st.columns([1, 1, 2])
-    
-    with r_col1:
-        st.metric("Superaquecimento", f"{sh} K", delta=f"Sat: {tsat}°C", delta_color="off")
-    with r_col2:
-        st.metric("Delta T do Ar", f"{dt_ar} °C")
-    with r_col3:
-        st.markdown(f'<div class="card-diagnostico" style="background-color: {cor};">{msg}</div>', unsafe_allow_html=True)
+    st.markdown(f"""
+        <div style="background-color: {bg_diag}; padding: 18px; border-radius: 10px; color: #000000; text-align: center; font-weight: 800; font-size: 18px; margin-top: 20px; border: 1px solid rgba(0,0,0,0.1);">
+            {diag_final}
+        </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("---")
+    st.subheader("3. Parecer Técnico")
+    st.text_area("Notas Adicionais:", key="laudo_v17_final", height=100)
+
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
 # ==============================================================================
