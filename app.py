@@ -149,21 +149,18 @@ def renderizar_aba_1():
 
                 # === FIM DO BLOCO COPIADO ===
                 
-
 # ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO V17 - MATRIZ DE PRECISÃO REAL)
 # ==============================================================================
 
-import streamlit as st
-import math
-
-def renderizar_aba_diagnosticos():
+elif aba == "2. Diagnósticos":
+    # --- CABEÇALHO ---
     st.header("🔍 Central de Diagnóstico Técnico (Precisão V17)")
     
     # Busca o fluido global. Se não existir, assume R410A
     fluido = st.session_state.dados.get('fluido', 'R410A')
 
-    # --- CSS: ESTILO HI-VIS COM ALERTAS E TEXTO PRETO ---
+    # --- CSS: ESTILO HI-VIS (MANTIDO) ---
     st.markdown("""
         <style>
         .res-card { 
@@ -176,13 +173,9 @@ def renderizar_aba_diagnosticos():
         .label-res { font-size: 14px; font-weight: 800; color: #333; text-transform: uppercase; margin-bottom: 8px; }
         .valor-res { font-size: 28px; font-weight: 900; color: #1b5e20; margin: 2px 0; }
         .sub-res { font-size: 13px; color: #d32f2f; font-weight: 700; border-top: 2px dotted #eee; padding-top: 8px; margin-top: 5px; }
-        
-        /* Cores dos Cards */
         .card-bom { border-top-color: #81c784 !important; }
         .card-alerta { border-top-color: #fff176 !important; }
         .card-critico { border-top-color: #e57373 !important; }
-        
-        /* Ajuste de cor de fonte para alertas específicos */
         .card-alerta .valor-res { color: #fbc02d !important; }
         .card-critico .valor-res { color: #d32f2f !important; }
         </style>
@@ -191,7 +184,6 @@ def renderizar_aba_diagnosticos():
     # --- 1. MEDIÇÕES DE CAMPO (6 COLUNAS) ---
     st.subheader("1. Medições de Campo")
     
-    # Definição dinâmica de valores padrão baseada no Fluido
     if fluido == "R22":
         p_suc_def, p_des_def = 65.0, 210.0
     else:
@@ -224,11 +216,10 @@ def renderizar_aba_diagnosticos():
         cn_c = st.number_input("Nominal (µF)", value=35.0, key="cnc_v17")
         cm_c = st.number_input("Medida (µF)", value=33.0, key="cmc_v17")
 
-    # --- MOTOR V28: MATRIZ DE PRECISÃO REAL (R22, R32 & R410A) ---
+    # --- MOTOR V28: CÁLCULOS (PRESERVADOS) ---
     def f_sat_v17(psi, gas):
         if psi <= 5: return 0.0
         if gas == "R22":
-            # Fórmula Polinomial Calibrada R22 (Erro < 0.5 PSI)
             tsat = (-0.0004 * (psi**2)) + (0.453 * psi) - 24.95
         elif gas == "R32":
             tsat = (0.000305 * (psi**2)) + (0.1572 * psi) - 19.64
@@ -236,7 +227,6 @@ def renderizar_aba_diagnosticos():
             tsat = (0.000285 * (psi**2)) + (0.15735 * psi) - 18.88
         return round(tsat, 1)
 
-    # Cálculos de Performance
     ts_s = f_sat_v17(p_suc, fluido)
     ts_d = f_sat_v17(p_des, fluido)
     sh = round(t_suc - ts_s, 1)
@@ -248,7 +238,7 @@ def renderizar_aba_diagnosticos():
     st.subheader("2. Resultados do Diagnóstico")
     res_cols = st.columns(6)
 
-    # Lógica de Alerta de SH e Card Status
+    # Lógica de Cores
     cl_sh = "card-bom"
     if fluido == "R22":
         if p_suc < 60.0 or p_suc > 75.0: cl_sh = "card-alerta"
@@ -261,57 +251,43 @@ def renderizar_aba_diagnosticos():
 
     with res_cols[0]:
         st.markdown(f'<div class="res-card card-bom"><div class="label-res">ΔT Ar</div><div class="valor-res">{dt_ar} °C</div><div class="sub-res">Troca</div></div>', unsafe_allow_html=True)
-
     with res_cols[1]:
         st.markdown(f'<div class="res-card {cl_sh}"><div class="label-res">SH Total</div><div class="valor-res">{sh} K</div><div class="sub-res">Sat: {ts_s}°C</div></div>', unsafe_allow_html=True)
-
     with res_cols[2]:
         st.markdown(f'<div class="res-card card-bom"><div class="label-res">SC Final</div><div class="valor-res">{sc} K</div><div class="sub-res">Sat: {ts_d}°C</div></div>', unsafe_allow_html=True)
-
     with res_cols[3]:
         st.markdown(f'<div class="res-card card-bom"><div class="label-res">Δ Tens.</div><div class="valor-res">{round(v_lin-v_med,1)} V</div><div class="sub-res">Estável</div></div>', unsafe_allow_html=True)
-
     with res_cols[4]:
         st.markdown(f'<div class="res-card card-bom"><div class="label-res">Δ RLA</div><div class="valor-res">{round(i_med-rla,2)} A</div><div class="sub-res">Carga</div></div>', unsafe_allow_html=True)
-
     with res_cols[5]:
         st.markdown(f'<div class="res-card card-bom"><div class="label-res">Δ Cap.</div><div class="valor-res">{round(cm_c-cn_c,1)} µF</div><div class="sub-res">Saúde</div></div>', unsafe_allow_html=True)
 
-    # --- 3. DIAGNÓSTICO INTELIGENTE (TEXTO PRETO + LÓGICA R22 INTEGRADA) ---
+    # --- 3. DIAGNÓSTICO INTELIGENTE ---
     diag_final = "✅ Sistema Operacional em Conformidade"
     bg_diag = "#81c784" 
     
-    # LÓGICA DE DIAGNÓSTICO PARA R22 (50-85 PSI)
     if fluido == "R22":
         if p_suc < 55.0:
-            diag_final = f"💀 SUPERCRÍTICO BAIXO: {p_suc} PSI. Risco de gelo imediato!"
+            diag_final = f"💀 SUPERCRÍTICO BAIXO: {p_suc} PSI. Risco de gelo!"
             bg_diag = "#e57373"
         elif p_suc < 60.0:
-            diag_final = f"🔴 CRÍTICO: {p_suc} PSI. Pressão abaixo do limite de projeto."
+            diag_final = f"🔴 CRÍTICO: {p_suc} PSI. Pressão Baixa."
             bg_diag = "#fff176"
         elif 60.0 <= p_suc <= 75.0:
-            diag_final = f"🟢 OPERAÇÃO IDEAL: {p_suc} PSI ({ts_s}°C) dentro da faixa segura."
-        elif p_suc <= 80.0:
-            diag_final = f"🟡 ALERTA ALTA: {p_suc} PSI. Verifique condensação externa."
-            bg_diag = "#fff176"
-        else:
-            diag_final = f"💀 SUPERCRÍTICO ALTO: {p_suc} PSI. Sobrecarga térmica severa!"
-            bg_diag = "#e57373"
-            
-    # LÓGICA PARA R410A / R32 (Sua lógica original preservada)
+            diag_final = f"🟢 OPERAÇÃO IDEAL: {p_suc} PSI."
     elif p_suc <= 110.0 or p_suc >= 150.0:
         bg_diag = "#fff176"
-        diag_final = f"⚠️ ALERTA: Pressão fora dos padrões de funcionamento (110-150 PSI)!"
+        diag_final = "⚠️ ALERTA: Pressão fora dos padrões!"
     
     st.markdown(f"""
-        <div style="background-color: {bg_diag}; padding: 18px; border-radius: 10px; color: #000000; text-align: center; font-weight: 800; font-size: 18px; margin-top: 20px; border: 1px solid rgba(0,0,0,0.1);">
+        <div style="background-color: {bg_diag}; padding: 18px; border-radius: 10px; color: #000000; text-align: center; font-weight: 800; font-size: 18px; margin-top: 20px;">
             {diag_final}
         </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("---")
-    st.subheader("4. Parecer Técnico")
-    st.text_area("Notas Adicionais:", key="laudo_v17_final", height=100)
+    # --- LIMPEZA CIRÚRGICA: O campo 'Parecer Técnico' foi REMOVIDO daqui ---
+    st.write("")
+    st.info("ℹ️ Medições concluídas. Prossiga para a aba 'Relatórios' para emitir o laudo.")
 
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
