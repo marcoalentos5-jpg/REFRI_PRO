@@ -137,117 +137,148 @@ def renderizar_aba_1():
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO V10 - MATRIZ DE PRECISÃO REAL)
 # ==============================================================================
 
+import streamlit as st
+from datetime import datetime
+import math
+
 def renderizar_aba_diagnosticos():
-    import math
-    import streamlit as st
+    st.header("🔍 Central de Diagnóstico Técnico (Alta Precisão)")
     
-    st.header("🔍 Central de Diagnóstico Técnico")
+    # Resgate do fluido (ou padrão R410A)
     fluido = st.session_state.dados.get('fluido', 'R410A')
 
-    # --- CSS: ESTABILIZAÇÃO DE COLUNAS 6x6 ---
+    # --- CSS: ESTILO HI-VIS COM ALERTAS DINÂMICOS ---
     st.markdown("""
         <style>
         .res-card { 
-            background-color: #ffffff; padding: 10px; border-radius: 8px; 
-            border-top: 4px solid #1b5e20; text-align: center; min-height: 105px;
-            box-shadow: 0px 2px 4px rgba(0,0,0,0.1);
-            display: flex; flex-direction: column; justify-content: space-between;
+            background-color: #ffffff; padding: 15px; border-radius: 10px; 
+            text-align: center; min-height: 140px;
+            box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column; justify-content: center;
+            border-top: 6px solid #1b5e20; /* Padrão Verde */
         }
-        .label-res { font-size: 9px; font-weight: bold; color: #666; text-transform: uppercase; }
-        .valor-res { font-size: 18px; font-weight: 800; color: #1b5e20; margin: 4px 0; }
-        .sub-res { font-size: 9px; color: #444; font-weight: bold; border-top: 1px dotted #ccc; padding-top: 3px; }
-        .critico { border-top: 4px solid #d32f2f !important; }
-        .critico .valor-res { color: #d32f2f !important; }
+        .label-res { font-size: 14px; font-weight: 800; color: #333; text-transform: uppercase; margin-bottom: 8px; }
+        .valor-res { font-size: 28px; font-weight: 900; color: #1b5e20; margin: 2px 0; }
+        .sub-res { font-size: 13px; color: #444; font-weight: 700; border-top: 2px dotted #eee; padding-top: 8px; margin-top: 5px; }
+        
+        /* Classes de Alerta */
+        .card-bom { border-top-color: #1b5e20 !important; }
+        .card-alerta { border-top-color: #fbc02d !important; }
+        .card-critico { border-top-color: #d32f2f !important; }
+        .card-alerta .valor-res { color: #fbc02d !important; }
+        .card-critico .valor-res { color: #d32f2f !important; }
         </style>
     """, unsafe_allow_html=True)
 
-    # --- 1. MEDIÇÕES DE CAMPO (DISTRIBUIÇÃO 6 COLUNAS UNIFORMES) ---
+    # --- 1. MEDIÇÕES DE CAMPO (6 COLUNAS UNIFORMES) ---
     st.subheader("1. Medições de Campo")
     c1, c2, c3, c4, c5, c6 = st.columns(6)
 
     with c1:
         st.markdown("🟢 **AR**")
-        t_ret_f = st.number_input("T. Retorno (°C)", value=24.0, step=0.1, key="tr_diag")
-        t_ins_f = st.number_input("T. Insuf. (°C)", value=12.0, step=0.1, key="ti_diag")
-
+        t_ret = st.number_input("T. Retorno (°C)", value=24.0, step=0.1, key="tr_diag")
+        t_ins = st.number_input("T. Insuf. (°C)", value=12.0, step=0.1, key="ti_diag")
     with c2:
         st.markdown("🔵 **EVAPORADORA**")
-        p_suc = st.number_input("P. Sucção (PSI)", value=134.0, format="%.2f", key="ps_f")
-        t_suc = st.number_input("T. Tubo Suc. (°C)", value=14.0, format="%.2f", key="ts_f")
-
+        p_suc = st.number_input("P. Sucção (PSI)", value=134.0, format="%.1f", key="ps_f")
+        t_suc = st.number_input("T. Tubo Suc. (°C)", value=14.0, format="%.1f", key="ts_f")
     with c3:
         st.markdown("🔴 **CONDENSADORA**")
-        p_des = st.number_input("P. Desc. (PSI)", value=340.0, format="%.2f", key="pd_f")
-        t_liq = st.number_input("T. Tubo Líq. (°C)", value=38.0, format="%.2f", key="tl_f")
-
+        p_des = st.number_input("P. Desc. (PSI)", value=340.0, format="%.1f", key="pd_f")
+        t_liq = st.number_input("T. Tubo Líq. (°C)", value=38.0, format="%.1f", key="tl_f")
     with c4:
         st.markdown("⚡ **TENSÃO**")
         v_lin = st.number_input("Tens. Linha (V)", value=220.0, key="vl_f")
         v_med = st.number_input("Tens. Medida (V)", value=218.0, key="vm_f")
-
     with c5:
         st.markdown("🔌 **CORRENTE**")
         rla = st.number_input("RLA (A)", value=10.0, key="rla_f")
         i_med = st.number_input("Corr. Medida (A)", value=9.5, key="im_f")
-
     with c6:
         st.markdown("🔋 **CAPACIT.**")
         cn_c = st.number_input("Nominal (µF)", value=35.0, key="cnc_f")
         cm_c = st.number_input("Medida (µF)", value=33.0, key="cmc_f")
 
-    # --- 2. MOTOR V13 CALIBRADO (134 PSI = 8.1°C) ---
-    def f_sat_v13(psi, gas):
-        if psi <= 10: return 0.0
+    # --- MOTOR V15: PRECISÃO DANFOSS (134 PSI = 8.1°C) ---
+    def f_sat_v15(psi, gas, ponto="DEW"):
+        if psi <= 5: return 0.0
         if gas == "R410A":
-            # Calibração Antoine V13 (Margem de erro < 0.1%)
-            A, B, C = 4.1485, 665.50, 230.10
+            # Coeficientes Antoine p/ Ponto de Orvalho (SH) e Bolha (SC)
+            A, B, C = (4.0628, 620.44, 224.22) if ponto == "DEW" else (4.0720, 615.30, 222.10)
             try:
-                P_bar = psi * 0.0689476
-                tsat = (B / (A - math.log10(P_bar))) - C
+                p_abs_bar = (psi + 14.696) * 0.0689476
+                tsat = (B / (A - math.log10(p_abs_bar))) - C
                 return round(tsat, 1)
             except: return 0.0
         return round(0.415 * (psi**0.72) - 19.8, 1)
 
-    # Processamento
-    ts_s = f_sat_v13(p_suc, fluido)
-    ts_d = f_sat_v13(p_des, fluido)
+    # Cálculos Finais
+    ts_s = f_sat_v15(p_suc, fluido, "DEW")    # SH (Orvalho)
+    ts_d = f_sat_v15(p_des, fluido, "BUBBLE") # SC (Bolha)
     sh = round(t_suc - ts_s, 1)
     sc = round(ts_d - t_liq, 1)
-    dt_ar = round(t_ret_f - t_ins_f, 1)
+    dt_ar = round(t_ret - t_ins, 1)
+    dv_tens = round(v_lin - v_med, 1)
+    di_corr = round(i_med - rla, 2)
+    dc_cap = round(cm_c - cn_c, 1)
 
-    # --- 3. RESULTADOS (DASHBOARD 6 COLUNAS) ---
+    # --- 2. RESULTADOS DO DIAGNÓSTICO (ALERTAS COLORIDOS) ---
     st.markdown("---")
     st.subheader("2. Resultados do Diagnóstico")
     res_cols = st.columns(6)
 
-    # Card 1: Delta T Ar
+    # 1. Delta T Ar (Ideal entre 8 e 12)
+    cl_ar = "card-bom" if 8 <= dt_ar <= 15 else "card-alerta"
     with res_cols[0]:
-        st.markdown(f'<div class="res-card"><div class="label-res">ΔT Ar</div><div class="valor-res">{dt_ar} °C</div></div>', unsafe_allow_html=True)
-    
-    # Card 2: SH (Sempre DEW)
+        st.markdown(f'<div class="res-card {cl_ar}"><div class="label-res">ΔT Ar</div><div class="valor-res">{dt_ar} °C</div><div class="sub-res">Fluxo de Ar</div></div>', unsafe_allow_html=True)
+
+    # 2. SH Total (Ideal 5 a 8 / Alerta até 12 / Crítico fora)
+    if 5 <= sh <= 8: cl_sh = "card-bom"
+    elif 8 < sh <= 12: cl_sh = "card-alerta"
+    else: cl_sh = "card-critico"
     with res_cols[1]:
-        sh_cl = "critico" if sh < 5 or sh > 11 else ""
-        st.markdown(f'<div class="res-card {sh_cl}"><div class="label-res">SH Total</div><div class="valor-res">{sh} K</div><div class="sub-res">Sat: {ts_s}°C</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="res-card {cl_sh}"><div class="label-res">SH Total</div><div class="valor-res">{sh} K</div><div class="sub-res">Sat: {ts_s}°C</div></div>', unsafe_allow_html=True)
 
-    # Card 3: SC (Sempre BUBBLE)
+    # 3. SC Final (Ideal 3 a 8)
+    cl_sc = "card-bom" if 3 <= sc <= 9 else "card-alerta"
     with res_cols[2]:
-        st.markdown(f'<div class="res-card"><div class="label-res">SC Final</div><div class="valor-res">{sc} K</div><div class="sub-res">Sat: {ts_d}°C</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="res-card {cl_sc}"><div class="label-res">SC Final</div><div class="valor-res">{sc} K</div><div class="sub-res">Sat: {ts_d}°C</div></div>', unsafe_allow_html=True)
 
-    # Card 4: Delta Tensão
+    # 4. Delta Tensão (Crítico se > 10% de 220V = 22V)
+    cl_v = "card-bom" if abs(dv_tens) <= 15 else "card-critico"
     with res_cols[3]:
-        st.markdown(f'<div class="res-card"><div class="label-res">Δ Tens.</div><div class="valor-res">{round(v_lin-v_med,1)} V</div></div>', unsafe_allow_html=True)
-    
-    # Card 5: Delta Corrente
+        st.markdown(f'<div class="res-card {cl_v}"><div class="label-res">Δ Tens.</div><div class="valor-res">{dv_tens} V</div><div class="sub-res">Queda de V</div></div>', unsafe_allow_html=True)
+
+    # 5. Delta Corrente (RLA)
+    cl_i = "card-bom" if i_med <= rla else "card-critico"
     with res_cols[4]:
-        st.markdown(f'<div class="res-card"><div class="label-res">Δ RLA</div><div class="valor-res">{round(i_med-rla,2)} A</div></div>', unsafe_allow_html=True)
-    
-    # Card 6: Delta Capacitor
+        st.markdown(f'<div class="res-card {cl_i}"><div class="label-res">Δ RLA</div><div class="valor-res">{di_corr} A</div><div class="sub-res">Sobre carga</div></div>', unsafe_allow_html=True)
+
+    # 6. Delta Capacitor (Tolerância 5%)
+    limite_cap = cn_c * 0.05
+    cl_cap = "card-bom" if abs(dc_cap) <= limite_cap else "card-critico"
     with res_cols[5]:
-        st.markdown(f'<div class="res-card"><div class="label-res">Δ Cap.</div><div class="valor-res">{round(cm_c-cn_c,1)} µF</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="res-card {cl_cap}"><div class="label-res">Δ Cap.</div><div class="valor-res">{dc_cap} µF</div><div class="sub-res">Saúde Cap.</div></div>', unsafe_allow_html=True)
+
+    # --- 3. DIAGNÓSTICO INTELIGENTE FINAL ---
+    diag_final = "✅ Sistema Operacional"
+    bg_diag = "#1b5e20"
+    if sh < 5: 
+        diag_final = "🔴 ALERTA: Superaquecimento baixo. Risco de golpe de líquido!"
+        bg_diag = "#d32f2f"
+    elif sh > 12:
+        diag_final = "🟠 ALERTA: Superaquecimento alto. Possível falta de fluido ou restrição."
+        bg_diag = "#fbc02d"
+
+    st.markdown(f"""
+        <div style="background-color: {bg_diag}; padding: 18px; border-radius: 10px; color: white; text-align: center; font-weight: 800; font-size: 18px; margin-top: 20px;">
+            {diag_final}
+        </div>
+    """, unsafe_allow_html=True)
 
     st.markdown("---")
     st.subheader("3. Parecer Técnico")
-    st.text_area("Notas:", key="laudo_v13_final", height=100)
+    st.text_area("Notas Adicionais:", key="laudo_v15_final", height=100)
 
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
