@@ -126,11 +126,7 @@ def renderizar_aba_1():
                 st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'])
                 st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
 
-            with e3:
-                # ... código anterior da aba 1 (colunas e1 e e2) ...
-
-            with e3:
-                                
+            with e3:                              
                 # 1. CAPACIDADE (COM TRAVA DE MEMÓRIA)
                 caps = ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"]
                 idx_cap = caps.index(st.session_state.dados['capacidade']) if st.session_state.dados['capacidade'] in caps else 1
