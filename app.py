@@ -133,14 +133,14 @@ def renderizar_aba_1():
                 st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
 
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO V11.1 - MATRIZ DE ALTA PRECISÃO)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO V11.3 - ESTRUTURA COMPLETA REVISADA)
 # ==============================================================================
 
 import streamlit as st
 import math
 
 def renderizar_aba_diagnosticos():
-    st.header("🔍 Central de Diagnóstico Técnico (Precisão V18.1)")
+    st.header("🔍 Central de Diagnóstico Técnico (Precisão V18.3)")
     
     # Busca o fluido do estado da sessão (Página 1)
     fluido = st.session_state.dados.get('fluido', 'R410A')
@@ -156,7 +156,7 @@ def renderizar_aba_diagnosticos():
             border-top: 6px solid #1b5e20; 
         }
         .label-res { font-size: 14px; font-weight: 800; color: #333; text-transform: uppercase; margin-bottom: 8px; }
-        .valor-res { font-size: 26px; font-weight: 900; color: #1b5e20; margin: 2px 0; }
+        .valor-res { font-size: 28px; font-weight: 900; color: #1b5e20; margin: 2px 0; }
         .sub-res { font-size: 13px; color: #d32f2f; font-weight: 700; border-top: 2px dotted #eee; padding-top: 8px; margin-top: 5px; }
         
         .card-bom { border-top-color: #81c784 !important; }
@@ -172,54 +172,64 @@ def renderizar_aba_diagnosticos():
     st.subheader("1. Medições de Campo")
     c1, c2, c3, c4, c5, c6 = st.columns(6)
 
+    # Função de suporte para manter os dados fixos (Memória do Técnico)
+    def recuperar_valor(chave, padrao):
+        return st.session_state[chave] if chave in st.session_state else padrao
+
     with c1:
         st.markdown("🟢 **AR**")
-        t_ret = st.number_input("T. Retorno (°C)", value=24.0, step=0.1, key="tr_v17")
-        t_ins = st.number_input("T. Insuf. (°C)", value=12.0, step=0.1, key="ti_v17")
+        t_ret = st.number_input("T. Retorno (°C)", value=recuperar_valor("tr_v17", 24.0), step=0.1, key="tr_v17")
+        t_ins = st.number_input("T. Insuf. (°C)", value=recuperar_valor("ti_v17", 12.0), step=0.1, key="ti_v17")
+    
     with c2:
         st.markdown("🔵 **EVAPORADORA**")
-        # Valor default dinâmico baseado no fluido
-        default_ps = 70.0 if fluido == "R22" else 134.0
-        p_suc = st.number_input("P. Sucção (PSI)", value=default_ps, format="%.1f", key="ps_v17")
-        t_suc = st.number_input("T. Tubo Suc. (°C)", value=14.0, format="%.1f", key="ts_v17")
+        def_ps = 70.0 if fluido == "R22" else 134.0
+        p_suc = st.number_input("P. Sucção (PSI)", value=recuperar_valor("ps_v17", def_ps), format="%.1f", key="ps_v17")
+        t_suc = st.number_input("T. Tubo Suc. (°C)", value=recuperar_valor("ts_v17", 14.0), format="%.1f", key="ts_v17")
+    
     with c3:
         st.markdown("🔴 **CONDENSADORA**")
-        default_pd = 210.0 if fluido == "R22" else 340.0
-        p_des = st.number_input("P. Desc. (PSI)", value=default_pd, format="%.1f", key="pd_v17")
-        t_liq = st.number_input("T. Tubo Líq. (°C)", value=38.0 if fluido != "R22" else 35.0, format="%.1f", key="tl_v17")
+        def_pd = 210.0 if fluido == "R22" else 340.0
+        p_des = st.number_input("P. Desc. (PSI)", value=recuperar_valor("pd_v17", def_pd), format="%.1f", key="pd_v17")
+        def_tl = 35.0 if fluido == "R22" else 38.0
+        t_liq = st.number_input("T. Tubo Líq. (°C)", value=recuperar_valor("tl_v17", def_tl), format="%.1f", key="tl_v17")
+    
     with c4:
         st.markdown("⚡ **TENSÃO**")
-        v_lin = st.number_input("Tens. Linha (V)", value=220.0, key="vl_v17")
-        v_med = st.number_input("Tens. Medida (V)", value=218.0, key="vm_v17")
+        v_lin = st.number_input("Tens. Linha (V)", value=recuperar_valor("vl_v17", 220.0), key="vl_v17")
+        v_med = st.number_input("Tens. Medida (V)", value=recuperar_valor("vm_v17", 218.0), key="vm_v17")
+    
     with c5:
         st.markdown("🔌 **CORRENTE**")
-        rla = st.number_input("RLA (A)", value=10.0, key="rla_v17")
-        i_med = st.number_input("Corr. Medida (A)", value=9.5, key="im_v17")
+        rla = st.number_input("RLA (A)", value=recuperar_valor("rla_v17", 10.0), key="rla_v17")
+        i_med = st.number_input("Corr. Medida (A)", value=recuperar_valor("im_v17", 9.5), key="im_v17")
+    
     with c6:
         st.markdown("🔋 **CAPACIT.**")
-        cn_c = st.number_input("Nominal (µF)", value=35.0, key="cnc_v17")
-        cm_c = st.number_input("Medida (µF)", value=33.0, key="cmc_v17")
+        cn_c = st.number_input("Nominal (µF)", value=recuperar_valor("cnc_v17", 35.0), key="cnc_v17")
+        cm_c = st.number_input("Medida (µF)", value=recuperar_valor("cmc_v17", 33.0), key="cmc_v17")
 
-    # --- MOTOR V30.1: MATRIZ DE ALTA PRECISÃO (R32, R410A & R22 RECALIBRADO) ---
+    # --- MOTOR V30.1: MATRIZ DE ALTA PRECISÃO (R32, R410A & R22) ---
     def f_sat_v17(psi, gas):
-        if psi <= 5: return 0.0
+        if psi <= 5: 
+            return 0.0
         if gas == "R32":
             tsat = (0.000305 * (psi**2)) + (0.1572 * psi) - 19.64
         elif gas == "R22":
-            # Polinômio de 3ª ordem para atingir 50=3.34 / 80=8.61 / 85=10.31
+            # Polinômio de 3ª ordem: 50=3.34 / 80=8.61 / 85=10.31
             tsat = (0.000035 * (psi**3)) - (0.0064 * (psi**2)) + (0.435 * psi) - 13.9
         else: # R410A
             tsat = (0.000285 * (psi**2)) + (0.15735 * psi) - 18.88
         return round(tsat, 2)
 
-    # Cálculos
+    # Processamento de Cálculos
     ts_s = f_sat_v17(p_suc, fluido)
     ts_d = f_sat_v17(p_des, fluido)
     sh = round(t_suc - ts_s, 2)
     sc = round(ts_d - t_liq, 2)
     dt_ar = round(t_ret - t_ins, 1)
 
-    # --- 2. RESULTADOS DO DIAGNÓSTICO ---
+    # --- 2. RESULTADOS DO DIAGNÓSTICO (EXPANDIDO) ---
     st.markdown("---")
     st.subheader("2. Resultados do Diagnóstico")
     res_cols = st.columns(6)
@@ -227,10 +237,11 @@ def renderizar_aba_diagnosticos():
     with res_cols[0]:
         st.markdown(f'<div class="res-card card-bom"><div class="label-res">ΔT Ar</div><div class="valor-res">{dt_ar} °C</div><div class="sub-res">Troca</div></div>', unsafe_allow_html=True)
 
+    # Lógica de SH com Alertas Visuais
     if fluido == "R32":
         cl_sh = "card-bom" if 5.5 <= sh <= 7.5 else "card-alerta"
         if sh < 5.0 or sh > 8.0: cl_sh = "card-critico"
-    else: # R410A e R22
+    else: 
         cl_sh = "card-bom" if 5.0 <= sh <= 12.0 else "card-critico"
 
     with res_cols[1]:
@@ -240,35 +251,49 @@ def renderizar_aba_diagnosticos():
         st.markdown(f'<div class="res-card card-bom"><div class="label-res">SC Final</div><div class="valor-res">{sc} K</div><div class="sub-res">Sat: {ts_d}°C</div></div>', unsafe_allow_html=True)
 
     with res_cols[3]:
-        st.markdown(f'<div class="res-card card-bom"><div class="label-res">Δ Tens.</div><div class="valor-res">{round(v_lin-v_med,1)} V</div><div class="sub-res">Estável</div></div>', unsafe_allow_html=True)
+        v_diff = round(v_lin - v_med, 1)
+        st.markdown(f'<div class="res-card card-bom"><div class="label-res">Δ Tens.</div><div class="valor-res">{v_diff} V</div><div class="sub-res">Estável</div></div>', unsafe_allow_html=True)
 
     with res_cols[4]:
-        st.markdown(f'<div class="res-card card-bom"><div class="label-res">Δ RLA</div><div class="valor-res">{round(i_med-rla,2)} A</div><div class="sub-res">Carga</div></div>', unsafe_allow_html=True)
+        i_diff = round(i_med - rla, 2)
+        st.markdown(f'<div class="res-card card-bom"><div class="label-res">Δ RLA</div><div class="valor-res">{i_diff} A</div><div class="sub-res">Carga</div></div>', unsafe_allow_html=True)
 
     with res_cols[5]:
-        st.markdown(f'<div class="res-card card-bom"><div class="label-res">Δ Cap.</div><div class="valor-res">{round(cm_c-cn_c,1)} µF</div><div class="sub-res">Saúde</div></div>', unsafe_allow_html=True)
+        c_diff = round(cm_c - cn_c, 1)
+        st.markdown(f'<div class="res-card card-bom"><div class="label-res">Δ Cap.</div><div class="valor-res">{c_diff} µF</div><div class="sub-res">Saúde</div></div>', unsafe_allow_html=True)
 
-    # --- 3. DIAGNÓSTICO INTELIGENTE ---
+    # --- 3. BLOCO DE DIAGNÓSTICO INTELIGENTE (DETALHADO) ---
     diag_final = "✅ Sistema Operacional em Conformidade"
     bg_diag = "#81c784" 
     
+    # Validação de Pressões R22
     if fluido == "R22":
         if p_suc < 50.0 or p_suc > 85.0:
             diag_final, bg_diag = "⚠️ ALERTA: Pressão fora dos padrões R22 (50-85 PSI)!", "#fff176"
         elif p_suc == 60.0 or p_suc == 75.0:
             diag_final, bg_diag = f"⚠️ ATENÇÃO: R22 operando no LIMITE CRÍTICO de {p_suc} PSI!", "#fff176"
+    
+    # Validação de Pressões Gerais
     else: 
         if p_suc <= 110.0 or p_suc >= 150.0:
             bg_diag = "#fff176"
-            diag_final = f"⚠️ ATENÇÃO: Sistema no LIMITE CRÍTICO ({p_suc} PSI)!" if p_suc in [110.0, 150.0] else "⚠️ ALERTA: Pressão fora dos padrões (110-150 PSI)!"
+            if p_suc in [110.0, 150.0]:
+                diag_final = f"⚠️ ATENÇÃO: Sistema no LIMITE CRÍTICO ({p_suc} PSI)!"
+            else:
+                diag_final = "⚠️ ALERTA: Pressão fora dos padrões (110-150 PSI)!"
     
+    # Validação de Superaquecimento
     if bg_diag != "#e57373":
         if fluido == "R32":
-            if sh < 5.0 or sh > 8.0: diag_final, bg_diag = "🔴 ALERTA: SH R32 fora de 5K-8K!", "#e57373"
+            if sh < 5.0 or sh > 8.0: 
+                diag_final, bg_diag = "🔴 ALERTA: Bom funcionamento comprometido (SH fora de 5-8K)!", "#e57373"
         else:
-            if sh < 5.0: diag_final, bg_diag = "🔴 ALERTA: SH baixo. Risco de golpe de líquido!", "#e57373"
-            elif sh > 12.0: diag_final, bg_diag = "🟠 ALERTA: SH alto. Verifique carga ou restrição.", "#fff176"
+            if sh < 5.0: 
+                diag_final, bg_diag = "🔴 ALERTA: SH baixo. Risco de golpe de líquido!", "#e57373"
+            elif sh > 12.0: 
+                diag_final, bg_diag = "🟠 ALERTA: SH alto. Verifique carga ou restrição.", "#fff176"
 
+    # Renderização do Banner Final
     st.markdown(f'<div style="background-color: {bg_diag}; padding: 18px; border-radius: 10px; color: #000; text-align: center; font-weight: 800; font-size: 18px; margin-top: 20px; border: 1px solid rgba(0,0,0,0.1);">{diag_final}</div>', unsafe_allow_html=True)
 
     st.markdown("---")
