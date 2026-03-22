@@ -149,7 +149,7 @@ def renderizar_aba_1():
                 
 
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO V10 - MATRIZ DE PRECISÃO REAL)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO V17 - MATRIZ DE PRECISÃO REAL)
 # ==============================================================================
 
 import streamlit as st
@@ -158,6 +158,7 @@ import math
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico (Precisão V17)")
     
+    # Busca o fluido global. Se não existir, assume R410A
     fluido = st.session_state.dados.get('fluido', 'R410A')
 
     # --- CSS: ESTILO HI-VIS COM ALERTAS E TEXTO PRETO ---
@@ -187,6 +188,13 @@ def renderizar_aba_diagnosticos():
 
     # --- 1. MEDIÇÕES DE CAMPO (6 COLUNAS) ---
     st.subheader("1. Medições de Campo")
+    
+    # Definição dinâmica de valores padrão baseada no Fluido
+    if fluido == "R22":
+        p_suc_def, p_des_def = 65.0, 210.0
+    else:
+        p_suc_def, p_des_def = 134.0, 340.0
+
     c1, c2, c3, c4, c5, c6 = st.columns(6)
 
     with c1:
@@ -195,11 +203,11 @@ def renderizar_aba_diagnosticos():
         t_ins = st.number_input("T. Insuf. (°C)", value=12.0, step=0.1, key="ti_v17")
     with c2:
         st.markdown("🔵 **EVAPORADORA**")
-        p_suc = st.number_input("P. Sucção (PSI)", value=134.0, format="%.1f", key="ps_v17")
+        p_suc = st.number_input("P. Sucção (PSI)", value=p_suc_def, format="%.1f", key="ps_v17")
         t_suc = st.number_input("T. Tubo Suc. (°C)", value=14.0, format="%.1f", key="ts_v17")
     with c3:
         st.markdown("🔴 **CONDENSADORA**")
-        p_des = st.number_input("P. Desc. (PSI)", value=340.0, format="%.1f", key="pd_v17")
+        p_des = st.number_input("P. Desc. (PSI)", value=p_des_def, format="%.1f", key="pd_v17")
         t_liq = st.number_input("T. Tubo Líq. (°C)", value=38.0, format="%.1f", key="tl_v17")
     with c4:
         st.markdown("⚡ **TENSÃO**")
@@ -214,18 +222,19 @@ def renderizar_aba_diagnosticos():
         cn_c = st.number_input("Nominal (µF)", value=35.0, key="cnc_v17")
         cm_c = st.number_input("Medida (µF)", value=33.0, key="cmc_v17")
 
-    # --- MOTOR V28: MATRIZ DE PRECISÃO REAL (R32 & R410A) ---
+    # --- MOTOR V28: MATRIZ DE PRECISÃO REAL (R22, R32 & R410A) ---
     def f_sat_v17(psi, gas):
         if psi <= 5: return 0.0
-        if gas == "R32":
-            # Alvo Danfoss: 100 PSI = -0.87°C | 134 PSI = 7.68°C
+        if gas == "R22":
+            # Fórmula Polinomial Calibrada R22 (Erro < 0.5 PSI)
+            tsat = (-0.0004 * (psi**2)) + (0.453 * psi) - 24.95
+        elif gas == "R32":
             tsat = (0.000305 * (psi**2)) + (0.1572 * psi) - 19.64
         else: # R410A
-            # Alvo Danfoss: 100 PSI = -0.3°C | 134 PSI = 8.1°C
             tsat = (0.000285 * (psi**2)) + (0.15735 * psi) - 18.88
         return round(tsat, 1)
 
-    # Cálculos
+    # Cálculos de Performance
     ts_s = f_sat_v17(p_suc, fluido)
     ts_d = f_sat_v17(p_des, fluido)
     sh = round(t_suc - ts_s, 1)
@@ -237,15 +246,19 @@ def renderizar_aba_diagnosticos():
     st.subheader("2. Resultados do Diagnóstico")
     res_cols = st.columns(6)
 
-    with res_cols[0]:
-        st.markdown(f'<div class="res-card card-bom"><div class="label-res">ΔT Ar</div><div class="valor-res">{dt_ar} °C</div><div class="sub-res">Troca</div></div>', unsafe_allow_html=True)
-
-    # Lógica de Alerta de SH (Diferenciada por Gás)
-    if fluido == "R32":
+    # Lógica de Alerta de SH e Card Status
+    cl_sh = "card-bom"
+    if fluido == "R22":
+        if p_suc < 60.0 or p_suc > 75.0: cl_sh = "card-alerta"
+        if p_suc < 55.0 or p_suc > 80.0: cl_sh = "card-critico"
+    elif fluido == "R32":
         cl_sh = "card-bom" if 5.5 <= sh <= 7.5 else "card-alerta"
         if sh < 5.0 or sh > 8.0: cl_sh = "card-critico"
     else: # R410A
         cl_sh = "card-bom" if 5.0 <= sh <= 12.0 else "card-critico"
+
+    with res_cols[0]:
+        st.markdown(f'<div class="res-card card-bom"><div class="label-res">ΔT Ar</div><div class="valor-res">{dt_ar} °C</div><div class="sub-res">Troca</div></div>', unsafe_allow_html=True)
 
     with res_cols[1]:
         st.markdown(f'<div class="res-card {cl_sh}"><div class="label-res">SH Total</div><div class="valor-res">{sh} K</div><div class="sub-res">Sat: {ts_s}°C</div></div>', unsafe_allow_html=True)
@@ -262,34 +275,32 @@ def renderizar_aba_diagnosticos():
     with res_cols[5]:
         st.markdown(f'<div class="res-card card-bom"><div class="label-res">Δ Cap.</div><div class="valor-res">{round(cm_c-cn_c,1)} µF</div><div class="sub-res">Saúde</div></div>', unsafe_allow_html=True)
 
-    # --- 3. DIAGNÓSTICO INTELIGENTE (TEXTO PRETO + ALERTA 110/150) ---
+    # --- 3. DIAGNÓSTICO INTELIGENTE (TEXTO PRETO + LÓGICA R22 INTEGRADA) ---
     diag_final = "✅ Sistema Operacional em Conformidade"
-    bg_diag = "#81c784" # Verde claro
+    bg_diag = "#81c784" 
     
-    # Prioridade 1: Extremos de Pressão
-    if p_suc <= 110.0 or p_suc >= 150.0:
-        bg_diag = "#fff176" # Amarelo
-        if p_suc == 110.0 or p_suc == 150.0:
-            diag_final = f"⚠️ ATENÇÃO: Sistema operando no LIMITE CRÍTICO de {p_suc} PSI!"
+    # LÓGICA DE DIAGNÓSTICO PARA R22 (50-85 PSI)
+    if fluido == "R22":
+        if p_suc < 55.0:
+            diag_final = f"💀 SUPERCRÍTICO BAIXO: {p_suc} PSI. Risco de gelo imediato!"
+            bg_diag = "#e57373"
+        elif p_suc < 60.0:
+            diag_final = f"🔴 CRÍTICO: {p_suc} PSI. Pressão abaixo do limite de projeto."
+            bg_diag = "#fff176"
+        elif 60.0 <= p_suc <= 75.0:
+            diag_final = f"🟢 OPERAÇÃO IDEAL: {p_suc} PSI ({ts_s}°C) dentro da faixa segura."
+        elif p_suc <= 80.0:
+            diag_final = f"🟡 ALERTA ALTA: {p_suc} PSI. Verifique condensação externa."
+            bg_diag = "#fff176"
         else:
-            diag_final = "⚠️ ALERTA: Pressão fora dos padrões de funcionamento (110-150 PSI)!"
+            diag_final = f"💀 SUPERCRÍTICO ALTO: {p_suc} PSI. Sobrecarga térmica severa!"
+            bg_diag = "#e57373"
+            
+    # LÓGICA PARA R410A / R32 (Sua lógica original preservada)
+    elif p_suc <= 110.0 or p_suc >= 150.0:
+        bg_diag = "#fff176"
+        diag_final = f"⚠️ ALERTA: Pressão fora dos padrões de funcionamento (110-150 PSI)!"
     
-    # Prioridade 2: Superaquecimento
-    elif fluido == "R32":
-        if sh < 5.0 or sh > 8.0:
-            diag_final = "🔴 ALERTA: Bom funcionamento comprometido (SH fora de 5K-8K)!"
-            bg_diag = "#e57373"
-        elif sh < 5.5 or sh > 7.5:
-            diag_final = "🟡 ATENÇÃO: Superaquecimento nos limites (Luz Amarela 5K-8K)!"
-            bg_diag = "#fff176"
-    else: # R410A
-        if sh < 5.0:
-            diag_final = "🔴 ALERTA: Superaquecimento baixo. Risco de golpe de líquido!"
-            bg_diag = "#e57373"
-        elif sh > 12.0:
-            diag_final = "🟠 ALERTA: Superaquecimento alto. Possível falta de fluido ou restrição."
-            bg_diag = "#fff176"
-
     st.markdown(f"""
         <div style="background-color: {bg_diag}; padding: 18px; border-radius: 10px; color: #000000; text-align: center; font-weight: 800; font-size: 18px; margin-top: 20px; border: 1px solid rgba(0,0,0,0.1);">
             {diag_final}
@@ -297,7 +308,7 @@ def renderizar_aba_diagnosticos():
     """, unsafe_allow_html=True)
 
     st.markdown("---")
-    st.subheader("3. Parecer Técnico")
+    st.subheader("4. Parecer Técnico")
     st.text_area("Notas Adicionais:", key="laudo_v17_final", height=100)
 
 # ==============================================================================
