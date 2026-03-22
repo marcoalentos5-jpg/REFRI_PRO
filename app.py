@@ -655,14 +655,34 @@ if st.button("🚀 FINALIZAR E GERAR LAUDO COMPLETO"):
     pdf.set_x(20); pdf.cell(70, 4, f"DOC: {d.get('tecnico_documento', '---')}", 0, 0, 'C')
     pdf.set_x(120); pdf.cell(70, 4, f"DOC: {d.get('cpf_cnpj', '---')}", 0, 1, 'C')
 
-    # --- SAÍDA DE BYTES SEGURA PARA STREAMLIT ---
+   # --- FINAL DA FUNÇÃO (ESTE BLOCO DEVE ESTAR INDENTADO/PARA DENTRO) ---
     try:
-        pdf_output = pdf.output() # Tenta o padrão fpdf2
-    if isinstance(pdf_output, str):
-        return pdf_output.encode('latin-1', 'replace')
+        pdf_output = pdf.output() 
+        if isinstance(pdf_output, str):
+            return pdf_output.encode('latin-1', 'replace')
         return pdf_output
-    except:
-        return pdf.output(dest='S') # Fallback para fpdf antiga
+    except Exception as e:
+        # Se o modo novo falhar, tenta o modo antigo (S = string/stream)
+        try:
+            return pdf.output(dest='S').encode('latin-1', 'replace')
+        except:
+            return pdf.output()
+
+# --- FIM DA FUNÇÃO: O CÓDIGO ABAIXO VOLTA PARA A MARGEM ESQUERDA ---
+
+if st.button("🚀 FINALIZAR E GERAR LAUDO COMPLETO", use_container_width=True):
+    try:
+        pdf_out = gerar_laudo_v17_final_corrigido()
+        st.success("✅ Laudo gerado com sucesso!")
+        st.download_button(
+            label="📥 Baixar PDF Agora",
+            data=pdf_out,
+            file_name=f"Laudo_{st.session_state.dados.get('nome', 'Cliente')}.pdf",
+            mime="application/pdf",
+            use_container_width=True
+        )
+    except Exception as e:
+        st.error(f"Erro ao processar o PDF: {e}")
 
 # ==============================================================================
 # BOTAO DE GERAR (DEVE ESTAR DENTRO DA ABA DE RELATÓRIOS)
