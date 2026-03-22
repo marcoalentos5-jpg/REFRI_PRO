@@ -58,7 +58,7 @@ def buscar_cep(cep):
     return False
 
 # ==============================================================================
-# 1. FUNÇÃO DA ABA 1: Identificação e Equipamento (VERSÃO COM LAYOUT E MÁSCARAS)
+# 1. FUNÇÃO DA ABA 1: Identificação e Equipamento (VERSÃO ATUALIZADA COM TRAVA)
 # ==============================================================================
 def renderizar_aba_1():
     tabs = st.tabs(["📋 Identificação e Equipamento"])
@@ -66,14 +66,10 @@ def renderizar_aba_1():
 
     with tab1:
         with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
-            # --- CAMPOS COM FORMATAÇÃO (Máscaras sugeridas via placeholder) ---
+            # --- CAMPOS COM FORMATAÇÃO ---
             c1, c2, c3 = st.columns([2, 1, 1])
             st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="cli_nome_v2")
-            
-            # Formatação CPF/CNPJ
             st.session_state.dados['cpf_cnpj'] = c2.text_input("CPF (000.000.000-00)", value=st.session_state.dados['cpf_cnpj'], key="cli_doc_v2")
-            
-            # Formatação WhatsApp
             st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp (XX-X-XXXX-XXXX) *", value=st.session_state.dados['whatsapp'], key="cli_zap_v2")
 
             cx1, cx2, cx3 = st.columns([1, 1, 2])
@@ -83,25 +79,20 @@ def renderizar_aba_1():
 
             st.markdown("---")
             
-            # --- SEÇÃO ENDEREÇO (LINHA 1) ---
+            # --- SEÇÃO ENDEREÇO ---
             ce1, ce2, ce3 = st.columns([1, 2, 1])
             cep_input = ce1.text_input("CEP *", value=st.session_state.dados['cep'], key="cli_cep_v2")
             if cep_input != st.session_state.dados['cep']:
                 st.session_state.dados['cep'] = cep_input
-                if buscar_cep(cep_input): st.rerun()
+                # if buscar_cep(cep_input): st.rerun() # Descomente se tiver a função buscar_cep
 
             st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados['endereco'], key="cli_end_v2")
             st.session_state.dados['numero'] = ce3.text_input("Nº/Apto:", value=st.session_state.dados['numero'], key="cli_num_v2")
 
-            # --- SEÇÃO ENDEREÇO (LINHA 2 - TUDO JUNTO) ---
-            # Dividindo em 4 colunas para caber Complemento, Bairro, Cidade e UF
             ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.4]) 
-            
             st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados['complemento'], key="cli_comp_v2")
             st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'], key="cli_bairro_v2")
             st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'], key="cli_cid_v2")
-            
-            # UF com limite de 2 caracteres e alinhado na mesma linha
             st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'], max_chars=2, key="cli_uf_v2")
 
         # --- SEÇÃO EQUIPAMENTO ---
@@ -132,6 +123,24 @@ def renderizar_aba_1():
                 st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
                 st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
 
+        # --- BOTÃO DE SALVAMENTO DISCRETO (TRAVA O FLUIDO E PRESSÕES) ---
+        st.markdown("---")
+        _, col_btn = st.columns([3, 1]) 
+        with col_btn:
+            if st.button("✅ Confirmar Equipamento", use_container_width=True):
+                # 1. Salva o fluido na trava global
+                fluido_sel = st.session_state.dados['fluido']
+                st.session_state.fluido_travado = fluido_sel
+                
+                # 2. Define sugestões de pressão na memória (Aba 2 usará isso)
+                if fluido_sel == "R22":
+                    st.session_state.ps_v17 = 70.0
+                    st.session_state.pd_v17 = 210.0
+                else: # R410A / R32
+                    st.session_state.ps_v17 = 134.0
+                    st.session_state.pd_v17 = 340.0
+                
+                st.toast(f"Especificações de {fluido_sel} travadas!", icon="✅")
 # ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO V11.9 - PROTOCOLO ANTI-RESET)
 # ==============================================================================
