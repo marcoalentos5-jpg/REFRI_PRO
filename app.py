@@ -140,10 +140,10 @@ import streamlit as st
 import math
 
 def renderizar_aba_diagnosticos():
-    st.header("🔍 Central de Diagnóstico Técnico (Precisão V18)")
+    st.header("🔍 Central de Diagnóstico Técnico (Precisão V17)")
     
-    # Busca o fluido do estado da sessão ou define R410A como padrão
-    fluido_selecionado = st.session_state.dados.get('fluido', 'R410A')
+    # Busca o fluido do estado da sessão (Página 1)
+    fluido = st.session_state.dados.get('fluido', 'R410A')
 
     # --- CSS: ESTILO HI-VIS COM ALERTAS E TEXTO PRETO ---
     st.markdown("""
@@ -159,7 +159,6 @@ def renderizar_aba_diagnosticos():
         .valor-res { font-size: 28px; font-weight: 900; color: #1b5e20; margin: 2px 0; }
         .sub-res { font-size: 13px; color: #d32f2f; font-weight: 700; border-top: 2px dotted #eee; padding-top: 8px; margin-top: 5px; }
         
-        /* Cores dos Cards */
         .card-bom { border-top-color: #81c784 !important; }
         .card-alerta { border-top-color: #fff176 !important; }
         .card-critico { border-top-color: #e57373 !important; }
@@ -174,53 +173,46 @@ def renderizar_aba_diagnosticos():
     c1, c2, c3, c4, c5, c6 = st.columns(6)
 
     with c1:
-        st.markdown("🧊 **FLUIDO**")
-        # Seletor incorpora R22 e mantém sincronia com o estado
-        fluido = st.selectbox("Gás", ["R32", "R410A", "R22"], index=["R32", "R410A", "R22"].index(fluido_selecionado) if fluido_selecionado in ["R32", "R410A", "R22"] else 1, key="gas_v18")
+        st.markdown("🟢 **AR**")
+        t_ret = st.number_input("T. Retorno (°C)", value=24.0, step=0.1, key="tr_v17")
+        t_ins = st.number_input("T. Insuf. (°C)", value=12.0, step=0.1, key="ti_v17")
     with c2:
         st.markdown("🔵 **EVAPORADORA**")
-        # Ajuste automático de valor padrão baseado no gás para facilitar o uso
-        p_init = 70.0 if fluido == "R22" else 134.0
-        p_suc = st.number_input("P. Sucção (PSI)", value=p_init, format="%.1f", key="ps_v18")
-        t_suc = st.number_input("T. Tubo Suc. (°C)", value=14.0, format="%.1f", key="ts_v18")
+        p_suc = st.number_input("P. Sucção (PSI)", value=134.0 if fluido != "R22" else 70.0, format="%.1f", key="ps_v17")
+        t_suc = st.number_input("T. Tubo Suc. (°C)", value=14.0, format="%.1f", key="ts_v17")
     with c3:
         st.markdown("🔴 **CONDENSADORA**")
-        p_des = st.number_input("P. Desc. (PSI)", value=340.0 if fluido != "R22" else 210.0, format="%.1f", key="pd_v18")
-        t_liq = st.number_input("T. Tubo Líq. (°C)", value=38.0 if fluido != "R22" else 35.0, format="%.1f", key="tl_v18")
+        p_des = st.number_input("P. Desc. (PSI)", value=340.0 if fluido != "R22" else 210.0, format="%.1f", key="pd_v17")
+        t_liq = st.number_input("T. Tubo Líq. (°C)", value=38.0 if fluido != "R22" else 35.0, format="%.1f", key="tl_v17")
     with c4:
         st.markdown("⚡ **TENSÃO**")
-        v_lin = st.number_input("Tens. Linha (V)", value=220.0, key="vl_v18")
-        v_med = st.number_input("Tens. Medida (V)", value=218.0, key="vm_v18")
+        v_lin = st.number_input("Tens. Linha (V)", value=220.0, key="vl_v17")
+        v_med = st.number_input("Tens. Medida (V)", value=218.0, key="vm_v17")
     with c5:
         st.markdown("🔌 **CORRENTE**")
-        rla = st.number_input("RLA (A)", value=10.0, key="rla_v18")
-        i_med = st.number_input("Corr. Medida (A)", value=9.5, key="im_v18")
+        rla = st.number_input("RLA (A)", value=10.0, key="rla_v17")
+        i_med = st.number_input("Corr. Medida (A)", value=9.5, key="im_v17")
     with c6:
         st.markdown("🔋 **CAPACIT.**")
-        cn_c = st.number_input("Nominal (µF)", value=35.0, key="cnc_v18")
-        cm_c = st.number_input("Medida (µF)", value=33.0, key="cmc_v18")
+        cn_c = st.number_input("Nominal (µF)", value=35.0, key="cnc_v17")
+        cm_c = st.number_input("Medida (µF)", value=33.0, key="cmc_v17")
 
-    # --- MOTOR V29: MATRIZ DE PRECISÃO (R32, R410A, R22) ---
-    def f_sat_v18(psi, gas):
+    # --- MOTOR V29: MATRIZ DE PRECISÃO (R32, R410A & R22) ---
+    def f_sat_v17(psi, gas):
         if psi <= 5: return 0.0
         if gas == "R32":
             tsat = (0.000305 * (psi**2)) + (0.1572 * psi) - 19.64
-        elif gas == "R410A":
-            tsat = (0.000285 * (psi**2)) + (0.15735 * psi) - 18.88
         elif gas == "R22":
-            # Calibração R22: 70 PSI = 4.45°C | 100 PSI = 14.41°C
             tsat = (0.00015 * (psi**2)) + (0.315 * psi) - 18.5
+        else: # R410A
+            tsat = (0.000285 * (psi**2)) + (0.15735 * psi) - 18.88
         return round(tsat, 1)
 
-    # Cálculos Automáticos
-    ts_s = f_sat_v18(p_suc, fluido)
-    ts_d = f_sat_v18(p_des, fluido)
+    # Cálculos
+    ts_s = f_sat_v17(p_suc, fluido)
+    ts_d = f_sat_v17(p_des, fluido)
     sh = round(t_suc - ts_s, 1)
     sc = round(ts_d - t_liq, 1)
-    
-    # Captura T.Retorno e T.Insuflamento da medição de campo
-    t_ret = st.session_state.get('tr_v17', 24.0)
-    t_ins = st.session_state.get('ti_v17', 12.0)
     dt_ar = round(t_ret - t_ins, 1)
 
     # --- 2. RESULTADOS DO DIAGNÓSTICO ---
@@ -231,7 +223,6 @@ def renderizar_aba_diagnosticos():
     with res_cols[0]:
         st.markdown(f'<div class="res-card card-bom"><div class="label-res">ΔT Ar</div><div class="valor-res">{dt_ar} °C</div><div class="sub-res">Troca</div></div>', unsafe_allow_html=True)
 
-    # Lógica de Cards de SH por Fluido
     if fluido == "R32":
         cl_sh = "card-bom" if 5.5 <= sh <= 7.5 else "card-alerta"
         if sh < 5.0 or sh > 8.0: cl_sh = "card-critico"
@@ -253,47 +244,34 @@ def renderizar_aba_diagnosticos():
     with res_cols[5]:
         st.markdown(f'<div class="res-card card-bom"><div class="label-res">Δ Cap.</div><div class="valor-res">{round(cm_c-cn_c,1)} µF</div><div class="sub-res">Saúde</div></div>', unsafe_allow_html=True)
 
-    # --- 3. DIAGNÓSTICO INTELIGENTE (ALERTA POR FLUIDO) ---
+    # --- 3. DIAGNÓSTICO INTELIGENTE (LIMITES DINÂMICOS) ---
     diag_final = "✅ Sistema Operacional em Conformidade"
-    bg_diag = "#81c784" # Verde
-
-    # Prioridade 1: Extremos de Pressão Individualizados
+    bg_diag = "#81c784" 
+    
     if fluido == "R22":
         if p_suc < 50.0 or p_suc > 85.0:
-            diag_final = "⚠️ ALERTA: Pressão fora dos padrões R22 (50-85 PSI)!"
-            bg_diag = "#fff176"
+            diag_final, bg_diag = "⚠️ ALERTA: Pressão fora dos padrões R22 (50-85 PSI)!", "#fff176"
         elif p_suc == 60.0 or p_suc == 75.0:
-            diag_final = f"⚠️ ATENÇÃO: R22 no LIMITE CRÍTICO de {p_suc} PSI!"
+            diag_final, bg_diag = f"⚠️ ATENÇÃO: R22 operando no LIMITE CRÍTICO de {p_suc} PSI!", "#fff176"
+    else: 
+        if p_suc <= 110.0 or p_suc >= 150.0:
             bg_diag = "#fff176"
-    else: # R32 e R410A
-        if p_suc < 110.0 or p_suc > 150.0:
-            diag_final = "⚠️ ALERTA: Pressão fora dos padrões (110-150 PSI)!"
-            bg_diag = "#fff176"
-        elif p_suc == 110.0 or p_suc == 150.0:
-            diag_final = f"⚠️ ATENÇÃO: Limite crítico de {p_suc} PSI atingido!"
-            bg_diag = "#fff176"
-
-    # Prioridade 2: Superaquecimento (Se a pressão estiver ok ou apenas em alerta)
-    if bg_diag != "#e57373": 
+            diag_final = f"⚠️ ATENÇÃO: Sistema no LIMITE CRÍTICO ({p_suc} PSI)!" if p_suc in [110.0, 150.0] else "⚠️ ALERTA: Pressão fora dos padrões (110-150 PSI)!"
+    
+    if bg_diag != "#e57373":
         if fluido == "R32":
-            if sh < 5.0 or sh > 8.0:
-                diag_final, bg_diag = "🔴 ALERTA: Funcionamento comprometido (SH R32 fora de 5-8K)!", "#e57373"
-            elif 5.0 <= sh < 5.5 or 7.5 < sh <= 8.0:
-                diag_final, bg_diag = "🟡 ATENÇÃO: Superaquecimento R32 em zona de luz amarela!", "#fff176"
-        else: # R410A e R22
-            if not (5.0 <= sh <= 12.0):
-                diag_final = "🟠 ALERTA: Superaquecimento fora da faixa ideal (5K-12K)!"
-                bg_diag = "#fff176"
+            if sh < 5.0 or sh > 8.0: diag_final, bg_diag = "🔴 ALERTA: SH R32 fora de 5K-8K!", "#e57373"
+            elif sh < 5.5 or sh > 7.5: diag_final, bg_diag = "🟡 ATENÇÃO: SH R32 em zona de luz amarela!", "#fff176"
+        else:
+            if sh < 5.0: diag_final, bg_diag = "🔴 ALERTA: SH baixo. Risco de golpe de líquido!", "#e57373"
+            elif sh > 12.0: diag_final, bg_diag = "🟠 ALERTA: SH alto. Verifique carga ou restrição.", "#fff176"
 
-    st.markdown(f"""
-        <div style="background-color: {bg_diag}; padding: 18px; border-radius: 10px; color: #000; text-align: center; font-weight: 800; font-size: 18px; margin-top: 20px; border: 1px solid rgba(0,0,0,0.1);">
-            {diag_final}
-        </div>
-    """, unsafe_allow_html=True)
+    st.markdown(f'<div style="background-color: {bg_diag}; padding: 18px; border-radius: 10px; color: #000; text-align: center; font-weight: 800; font-size: 18px; margin-top: 20px; border: 1px solid rgba(0,0,0,0.1);">{diag_final}</div>', unsafe_allow_html=True)
 
     st.markdown("---")
     st.subheader("3. Parecer Técnico")
     st.text_area("Notas Adicionais:", key="laudo_v17_final", height=100)
+
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
 # ==============================================================================
