@@ -606,14 +606,25 @@ def gerar_laudo_v17_final_corrigido():
     pdf.set_x(20); pdf.cell(70, 4, f"CNPJ: {d.get('tecnico_documento', '---')}", 0, 0, 'C')
     pdf.set_x(120); pdf.cell(70, 4, f"CPF: {d.get('cpf_cnpj', '---')}", 0, 1, 'C')
 
-    return bytes(pdf.output(dest='S'))
+    return pdf.output()
 
-# --- BOTAO DE GERAR ---
-if st.button("🚀 FINALIZAR E GERAR LAUDO COMPLETO"):
-    pdf_out = gerar_laudo_v17_final_corrigido()
-    st.download_button(
-        label="📥 Baixar PDF Agora",
-        data=pdf_out,
-        file_name=f"Laudo_{st.session_state.dados['nome']}.pdf",
-        mime="application/pdf"
-    )
+# --- BOTAO DE GERAR (DENTRO DA ABA RELATÓRIOS) ---
+    st.write("---")
+    if st.button("🚀 FINALIZAR E GERAR LAUDO COMPLETO", use_container_width=True):
+        try:
+            # Chama a função que gera os bytes do PDF
+            pdf_out = gerar_laudo_v17_final_corrigido()
+            
+            # Pega o nome do cliente para o arquivo, ou usa 'Cliente' como padrão
+            nome_arquivo = st.session_state.dados.get('nome', 'Cliente').replace(" ", "_")
+            
+            st.success("✅ Laudo preparado com sucesso!")
+            st.download_button(
+                label="📥 Baixar PDF Agora",
+                data=pdf_out,
+                file_name=f"Laudo_{nome_arquivo}.pdf",
+                mime="application/pdf",
+                use_container_width=True
+            )
+        except Exception as e:
+            st.error(f"Erro ao gerar o PDF: {e}")
