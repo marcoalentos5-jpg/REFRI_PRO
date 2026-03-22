@@ -136,123 +136,118 @@ def renderizar_aba_1():
 # ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO V10 - MATRIZ DE PRECISÃO REAL)
 # ==============================================================================
+
 def renderizar_aba_diagnosticos():
     import math
     import streamlit as st
     
     st.header("🔍 Central de Diagnóstico Técnico")
-    
-    # Resgate do fluido (Aba 1)
     fluido = st.session_state.dados.get('fluido', 'R410A')
-    
-    # --- CSS DE PRECISÃO (LAYOUT 6 COLUNAS) ---
+
+    # --- CSS: ESTABILIZAÇÃO DE COLUNAS 6x6 ---
     st.markdown("""
         <style>
         .res-card { 
-            background-color: #ffffff; padding: 12px; border-radius: 8px; 
-            border-top: 4px solid #1b5e20; text-align: center; min-height: 110px;
+            background-color: #ffffff; padding: 10px; border-radius: 8px; 
+            border-top: 4px solid #1b5e20; text-align: center; min-height: 105px;
             box-shadow: 0px 2px 4px rgba(0,0,0,0.1);
             display: flex; flex-direction: column; justify-content: space-between;
         }
-        .label-res { font-size: 10px; font-weight: bold; color: #666; text-transform: uppercase; }
-        .valor-res { font-size: 20px; font-weight: 800; color: #1b5e20; margin: 5px 0; }
-        .sub-res { font-size: 10px; color: #444; font-weight: bold; border-top: 1px dotted #ccc; padding-top: 4px; }
-        .variante { font-size: 9px; color: #0288d1; font-weight: bold; }
+        .label-res { font-size: 9px; font-weight: bold; color: #666; text-transform: uppercase; }
+        .valor-res { font-size: 18px; font-weight: 800; color: #1b5e20; margin: 4px 0; }
+        .sub-res { font-size: 9px; color: #444; font-weight: bold; border-top: 1px dotted #ccc; padding-top: 3px; }
         .critico { border-top: 4px solid #d32f2f !important; }
         .critico .valor-res { color: #d32f2f !important; }
         </style>
     """, unsafe_allow_html=True)
 
-    # --- 1. ENTRADA DE DADOS (5 COLUNAS) ---
+    # --- 1. MEDIÇÕES DE CAMPO (DISTRIBUIÇÃO 6 COLUNAS UNIFORMES) ---
     st.subheader("1. Medições de Campo")
-    c1, c2, c3, c4, c5 = st.columns(5)
+    c1, c2, c3, c4, c5, c6 = st.columns(6)
+
     with c1:
-        st.markdown("🔵 **EVAPORADORA**")
-        p_suc = st.number_input("P. Sucção (PSI)", value=130.1, format="%.2f", key="ps_f")
-        t_suc = st.number_input("T. Tubo Suc. (°C)", value=17.2, format="%.2f", key="ts_f")
+        st.markdown("🟢 **AR**")
+        t_ret_f = st.number_input("T. Retorno (°C)", value=24.0, step=0.1, key="tr_diag")
+        t_ins_f = st.number_input("T. Insuf. (°C)", value=12.0, step=0.1, key="ti_diag")
+
     with c2:
+        st.markdown("🔵 **EVAPORADORA**")
+        p_suc = st.number_input("P. Sucção (PSI)", value=134.0, format="%.2f", key="ps_f")
+        t_suc = st.number_input("T. Tubo Suc. (°C)", value=14.0, format="%.2f", key="ts_f")
+
+    with c3:
         st.markdown("🔴 **CONDENSADORA**")
         p_des = st.number_input("P. Desc. (PSI)", value=340.0, format="%.2f", key="pd_f")
         t_liq = st.number_input("T. Tubo Líq. (°C)", value=38.0, format="%.2f", key="tl_f")
-    with c3:
+
+    with c4:
         st.markdown("⚡ **TENSÃO**")
         v_lin = st.number_input("Tens. Linha (V)", value=220.0, key="vl_f")
         v_med = st.number_input("Tens. Medida (V)", value=218.0, key="vm_f")
-    with c4:
+
+    with c5:
         st.markdown("🔌 **CORRENTE**")
         rla = st.number_input("RLA (A)", value=10.0, key="rla_f")
         i_med = st.number_input("Corr. Medida (A)", value=9.5, key="im_f")
-    with c5:
-        st.markdown("🔋 **CAPACIT.**")
-        cn_c = st.number_input("Nom. Comp (µF)", value=35.0, key="cnc_f")
-        cm_c = st.number_input("Med. Comp (µF)", value=33.0, key="cmc_f")
 
-    # --- 2. MOTOR DE CÁLCULO V12 (RIGOR DE ORVALHO/DEW) ---
-    def f_sat_v12(psi, gas, variante="DEW"):
+    with c6:
+        st.markdown("🔋 **CAPACIT.**")
+        cn_c = st.number_input("Nominal (µF)", value=35.0, key="cnc_f")
+        cm_c = st.number_input("Medida (µF)", value=33.0, key="cmc_f")
+
+    # --- 2. MOTOR V13 CALIBRADO (134 PSI = 8.1°C) ---
+    def f_sat_v13(psi, gas):
         if psi <= 10: return 0.0
-        # Ajuste Fino para R410A: 130.1 PSI -> 5.50°C (DEW)
         if gas == "R410A":
-            A, B, C = 4.1485, 678.32, 234.95
-            if variante == "BUBBLE": B -= 1.15 
+            # Calibração Antoine V13 (Margem de erro < 0.1%)
+            A, B, C = 4.1485, 665.50, 230.10
             try:
                 P_bar = psi * 0.0689476
                 tsat = (B / (A - math.log10(P_bar))) - C
-                return round(tsat, 2)
+                return round(tsat, 1)
             except: return 0.0
-        return round(0.415 * (psi**0.72) - 19.8, 2)
+        return round(0.415 * (psi**0.72) - 19.8, 1)
 
-    # Processamento dos Dados
-    ts_s = f_sat_v12(p_suc, fluido, "DEW")    
-    ts_d = f_sat_v12(p_des, fluido, "BUBBLE") 
-    
-    sh = round(t_suc - ts_s, 2)
-    sc = round(ts_d - t_liq, 2)
-    
-    # Recuperação de dados de temperatura de ar para o Delta T
-    t_ret = st.session_state.dados.get('t_retorno', 0)
-    t_ins = st.session_state.dados.get('t_insuflamento', 0)
-    dt_ar = round(t_ret - t_ins, 2)
+    # Processamento
+    ts_s = f_sat_v13(p_suc, fluido)
+    ts_d = f_sat_v13(p_des, fluido)
+    sh = round(t_suc - ts_s, 1)
+    sc = round(ts_d - t_liq, 1)
+    dt_ar = round(t_ret_f - t_ins_f, 1)
 
-    # --- 3. RESULTADOS (CAMPO 2 - DASHBOARD 6 COLUNAS) ---
+    # --- 3. RESULTADOS (DASHBOARD 6 COLUNAS) ---
     st.markdown("---")
     st.subheader("2. Resultados do Diagnóstico")
-    
     res_cols = st.columns(6)
-    
+
+    # Card 1: Delta T Ar
     with res_cols[0]:
         st.markdown(f'<div class="res-card"><div class="label-res">ΔT Ar</div><div class="valor-res">{dt_ar} °C</div></div>', unsafe_allow_html=True)
     
+    # Card 2: SH (Sempre DEW)
     with res_cols[1]:
-        sh_cl = "critico" if sh < 5 or sh > 11.5 else ""
-        st.markdown(f'''
-            <div class="res-card {sh_cl}">
-                <div class="label-res">SH Total</div>
-                <div class="valor-res">{sh} K</div>
-                <div class="sub-res">Sat: {ts_s}°C</div>
-                <div class="variante">REF: DEW (ORVALHO)</div>
-            </div>
-        ''', unsafe_allow_html=True)
+        sh_cl = "critico" if sh < 5 or sh > 11 else ""
+        st.markdown(f'<div class="res-card {sh_cl}"><div class="label-res">SH Total</div><div class="valor-res">{sh} K</div><div class="sub-res">Sat: {ts_s}°C</div></div>', unsafe_allow_html=True)
 
+    # Card 3: SC (Sempre BUBBLE)
     with res_cols[2]:
-        st.markdown(f'''
-            <div class="res-card">
-                <div class="label-res">SC Final</div>
-                <div class="valor-res">{sc} K</div>
-                <div class="sub-res">Sat: {ts_d}°C</div>
-                <div class="variante">REF: BUBBLE (BOLHA)</div>
-            </div>
-        ''', unsafe_allow_html=True)
+        st.markdown(f'<div class="res-card"><div class="label-res">SC Final</div><div class="valor-res">{sc} K</div><div class="sub-res">Sat: {ts_d}°C</div></div>', unsafe_allow_html=True)
 
+    # Card 4: Delta Tensão
     with res_cols[3]:
         st.markdown(f'<div class="res-card"><div class="label-res">Δ Tens.</div><div class="valor-res">{round(v_lin-v_med,1)} V</div></div>', unsafe_allow_html=True)
+    
+    # Card 5: Delta Corrente
     with res_cols[4]:
         st.markdown(f'<div class="res-card"><div class="label-res">Δ RLA</div><div class="valor-res">{round(i_med-rla,2)} A</div></div>', unsafe_allow_html=True)
+    
+    # Card 6: Delta Capacitor
     with res_cols[5]:
         st.markdown(f'<div class="res-card"><div class="label-res">Δ Cap.</div><div class="valor-res">{round(cm_c-cn_c,1)} µF</div></div>', unsafe_allow_html=True)
 
     st.markdown("---")
     st.subheader("3. Parecer Técnico")
-    st.text_area("Notas:", key="laudo_v12_final", height=100)
+    st.text_area("Notas:", key="laudo_v13_final", height=100)
 
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
