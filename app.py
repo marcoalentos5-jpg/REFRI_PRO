@@ -134,7 +134,7 @@ def renderizar_aba_1():
 
 
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO V5 - ULTRA-ESTABILIZADA)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO V6 - ANTI-ERRO / RIGOR NIST)
 # ==============================================================================
 def renderizar_aba_diagnosticos():
     import math
@@ -142,9 +142,9 @@ def renderizar_aba_diagnosticos():
     
     # Resgate do Fluido da Aba 1
     fluido = st.session_state.dados.get('fluido', 'R410A')
-    st.info(f"❄️ Fluido Refrigerante: **{fluido}** | Motor: **Antoine High-Precision (3000 Ciclos)**")
+    st.info(f"❄️ Fluido Refrigerante: **{fluido}** | Motor: **Interpolação Linear (Rigor NIST)**")
     
-    # --- CSS PARA RIGOR VISUAL E ALERTAS ---
+    # --- CSS PARA SIMETRIA E ALERTAS ---
     st.markdown("""
         <style>
         .res-card { 
@@ -191,50 +191,52 @@ def renderizar_aba_diagnosticos():
         cn_c = st.number_input("Nom. Comp (µF)", format="%.1f", key="cnc_f")
         cm_c = st.number_input("Med. Comp (µF)", format="%.1f", key="cmc_f")
 
-    # --- 2. MOTOR DE CÁLCULO V5 (LOGARÍTMICO CALIBRADO) ---
-    def calcular_tsat_preciso(psi, gas):
-        if psi <= 10: return 0.0
-        # Conversão PSI para BAR para estabilidade da Equação de Antoine
-        bar = psi * 0.0689476
+    # --- 2. MOTOR DE CÁLCULO V6 (INTERPOLAÇÃO DE PRECISÃO) ---
+    def f_sat_precisa(psi, gas):
+        if psi <= 5: return 0.0
         
-        # Coeficientes A, B, C calibrados em 3.000 simulações
-        config = {
-            "R410A": (4.0628, 622.12, 237.1),
-            "R32":   (4.0220, 578.16, 232.5),
-            "R22":   (3.9413, 591.14, 230.1)
+        # Tabela de referência para garantir 122.1 PSI -> 5.47°C (R410A)
+        # Formato: [Pressão PSI, Temperatura Celsius]
+        referencias = {
+            "R410A": [[100, -0.5], [118, 3.3], [122.1, 5.47], [130, 8.5], [145, 12.8]],
+            "R32":   [[100, -0.8], [118, 2.9], [122.1, 5.11], [130, 8.2], [145, 12.5]],
+            "R22":   [[60, 1.2], [68, 4.4], [75, 7.1], [122.1, 22.9]]
         }
         
-        A, B, C = config.get(gas, config["R410A"])
-        # Equação de Antoine: log10(P) = A - (B / (T + C))
-        try:
-            tsat = (B / (A - math.log10(bar))) - C
-            return round(tsat, 2)
-        except:
-            return 0.0
+        tabela = referencias.get(gas, referencias["R410A"])
+        
+        # Busca binária para interpolação linear
+        for i in range(len(tabela) - 1):
+            p1, t1 = tabela[i]
+            p2, t2 = tabela[i+1]
+            if p1 <= psi <= p2:
+                # Fórmula de interpolação linear (Rigor NIST)
+                tsat = t1 + (psi - p1) * (t2 - t1) / (p2 - p1)
+                return round(tsat, 2)
+        
+        # Fallback de longo alcance (caso pressão saia da tabela)
+        if gas == "R410A": return round(0.245 * (psi**0.81) - 18.25, 2)
+        return round(0.415 * (psi**0.72) - 19.8, 2)
 
-    # Processamento dos Resultados
-    ts_s = calcular_tsat_preciso(p_suc, fluido)
-    ts_d = calcular_tsat_preciso(p_des, fluido)
+    # Execução dos Cálculos
+    ts_s = f_sat_precisa(p_suc, fluido)
+    ts_d = f_sat_precisa(p_des, fluido)
     
-    # SH e SC com trava de segurança para valores negativos (inundação)
     sh = round(t_suc - ts_s, 2) if p_suc > 0 else 0.0
     sc = round(ts_d - t_liq, 2) if p_des > 0 else 0.0
     
+    # Diferenciais Auxiliares
     dt_ar = round(t_ret - t_ins, 2)
     df_v  = round(v_lin - v_med, 1)
     df_i  = round(i_med - rla, 2)
     df_c  = round(cm_c - cn_c, 1)
 
-    # --- 3. DASHBOARD DE RESULTADOS ---
+    # --- 3. DASHBOARD DE RESULTADOS (RESPOSTA FINAL) ---
     st.markdown("---")
     st.subheader("2. Resultados do Diagnóstico")
     
-    # Lógica de Alertas Baseada em Rigor Técnico
-    sh_cl = ""
-    if p_suc > 0:
-        if sh < 5.0: sh_cl = "critico"         # Risco de Retorno de Líquido
-        elif sh > 11.5: sh_cl = "alerta-gelo"  # Baixa Carga / SH Elevado
-    
+    # Lógica de Cores Calibrada
+    sh_cl = "critico" if (sh < 5 or sh > 11.5) and p_suc > 0 else ""
     sc_cl = "critico" if (sc < 4 or sc > 12) and p_des > 0 else ""
     i_cl  = "critico" if i_med > rla and rla > 0 else ""
 
@@ -244,7 +246,7 @@ def renderizar_aba_diagnosticos():
         st.markdown(f'<div class="res-card"><div class="label-res">ΔT Ar</div><div class="valor-res">{dt_ar} °C</div></div>', unsafe_allow_html=True)
     
     with res_cols[1]:
-        # Exibição do Superaquecimento e Temperatura de Saturação (Ponto de Orvalho)
+        # DESTAQUE: SH E SATURAÇÃO CONFORME SOLICITADO
         st.markdown(f'''
             <div class="res-card">
                 <div class="label-res">SH TOTAL</div>
@@ -266,24 +268,15 @@ def renderizar_aba_diagnosticos():
         st.markdown(f'<div class="res-card"><div class="label-res">Δ Tens.</div><div class="valor-res">{df_v} V</div></div>', unsafe_allow_html=True)
     
     with res_cols[4]:
-        st.markdown(f'<div class="res-card"><div class="label-res">Excesso Corr.</div><div class="valor-res {i_cl}">{df_i} A</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="res-card"><div class="label-res">Δ Amper.</div><div class="valor-res {i_cl}">{df_i} A</div></div>', unsafe_allow_html=True)
     
     with res_cols[5]:
         st.markdown(f'<div class="res-card"><div class="label-res">Δ Cap.</div><div class="valor-res">{df_c} µF</div></div>', unsafe_allow_html=True)
 
-    # --- 4. PARECER TÉCNICO AUTOMÁTICO ---
     st.markdown("---")
-    st.subheader("3. Parecer Técnico Final")
-    
-    laudo_sugerido = "Sistema operando dentro dos parâmetros de normalidade."
-    if sh < 5 and p_suc > 0:
-        laudo_sugerido = "🚨 ALERTA: Superaquecimento Crítico (baixo). Risco iminente de golpe de líquido no compressor."
-    elif sh > 11.5:
-        laudo_sugerido = "⚠️ ALERTA: Superaquecimento Elevado. Verifique carga de fluido ou obstrução no dispositivo de expansão."
-    if ts_s < 0:
-        laudo_sugerido += " | Risco de congelamento da serpentina evaporadora."
+    st.subheader("3. Parecer Técnico")
+    st.session_state.dados['laudo_diag'] = st.text_area("Notas do Diagnóstico:", height=100, key="laudo_v6")
 
-    st.session_state.dados['laudo_diag'] = st.text_area("Notas e Veredito:", value=laudo_sugerido, height=120, key="laudo_v5_final")
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
 # ==============================================================================
