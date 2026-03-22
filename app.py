@@ -490,17 +490,13 @@ def renderizar_aba_diagnosticos():
     )
 
 # ==============================================================================
-# BLOCO 5: RELATÓRIOS E LAUDOS - Versão Final Corrigida
+# BLOCO 5: RELATÓRIOS E LAUDOS (EXCLUSIVO DA ABA RELATÓRIOS)
 # ==============================================================================
 elif aba == "Relatórios":
     st.header("Relatório e Parecer Técnico")
     st.markdown("---")
 
-    # Garante que o dicionário de dados exista para não dar erro de KeyError
-    if 'dados' not in st.session_state:
-        st.session_state.dados = {}
-
-    # Campo de Parecer
+    # 1. Campo de texto para o Parecer (Exclusivo desta aba)
     st.session_state.dados['parecer_tecnico'] = st.text_area(
         "Parecer Técnico Final / Notas Adicionais:",
         value=st.session_state.dados.get('parecer_tecnico', ''),
@@ -508,66 +504,48 @@ elif aba == "Relatórios":
         placeholder="Descreva aqui o diagnóstico final e recomendações..."
     )
 
-    # A função deve ser definida antes de ser chamada pelo botão
+    # 2. Função de geração do PDF (Definida dentro da aba)
     def gerar_laudo_v17_final_corrigido():
         d = st.session_state.dados 
-        pdf = LaudoFinalV17() # Certifique-se que a classe LaudoFinalV17 está definida acima
+        pdf = LaudoFinalV17()
         pdf.add_page()
         
+        # Seções do Laudo
         pdf.titulo_secao_com_data("1. Responsável Técnico", d.get('data', '---'))
-        pdf.grade(
-            ["NOME DO PROFISSIONAL", "REGISTRO PROFISSIONAL", "CONTATO / CNPJ"],
-            [d.get('tecnico_nome'), d.get('tecnico_registro'), d.get('tecnico_documento')],
-            [80, 55, 55]
-        )
+        pdf.grade(["NOME DO PROFISSIONAL", "REGISTRO PROFISSIONAL", "CONTATO / CNPJ"],
+                 [d.get('tecnico_nome'), d.get('tecnico_registro'), d.get('tecnico_documento')], [80, 55, 55])
 
         pdf.titulo_secao("2. Dados do Cliente e Localização")
-        pdf.grade(
-            ["CLIENTE / RAZÃO SOCIAL", "CPF / CNPJ", "E-MAIL"],
-            [d.get('nome'), d.get('cpf_cnpj'), d.get('email')],
-            [85, 45, 60]
-        )
+        pdf.grade(["CLIENTE / RAZÃO SOCIAL", "CPF / CNPJ", "E-MAIL"], 
+                 [d.get('nome'), d.get('cpf_cnpj'), d.get('email')], [85, 45, 60])
 
         pdf.titulo_secao("3. Informações do Equipamento")
-        pdf.grade(
-            ["FABRICANTE", "MODELO", "TAG / ID", "FLUIDO"],
-            [d.get('fabricante'), d.get('modelo'), d.get('tag_id'), d.get('fluido')],
-            [50, 50, 45, 45]
-        )
+        pdf.grade(["FABRICANTE", "MODELO", "TAG / ID", "FLUIDO"],
+                 [d.get('fabricante'), d.get('modelo'), d.get('tag_id'), d.get('fluido')], [50, 50, 45, 45])
 
         pdf.titulo_secao("4. Termodinâmica")
-        pdf.grade(
-            ["P. SUCÇÃO (PSI)", "S.H. TOTAL (K)", "DELTA T AR (°C)", "T. TUBO (°C)"],
-            [d.get('ps_v17', '0.0'), d.get('sh', '0.0'), d.get('dt_ar', '0.0'), d.get('ts_v17', '0.0')],
-            [47, 47, 47, 49]
-        )
+        pdf.grade(["P. SUCÇÃO (PSI)", "S.H. TOTAL (K)", "DELTA T AR (°C)", "T. TUBO (°C)"],
+                 [d.get('ps_v17', '0.0'), d.get('sh', '0.0'), d.get('dt_ar', '0.0'), d.get('ts_v17', '0.0')], [47, 47, 47, 49])
 
         pdf.titulo_secao("5. Elétrica")
-        pdf.grade(
-            ["TENSÃO (V)", "CORRENTE (A)", "CAPACITÂNCIA (uF)", "STATUS"],
-            [d.get('vl_v17', '0.0'), d.get('im_v17', '0.0'), d.get('cmc_v17', '---'), "OPERACIONAL"],
-            [47, 47, 47, 49]
-        )
+        pdf.grade(["TENSÃO (V)", "CORRENTE (A)", "CAPACITÂNCIA (uF)", "STATUS"],
+                 [d.get('vl_v17', '0.0'), d.get('im_v17', '0.0'), d.get('cmc_v17', '---'), "OPERACIONAL"], [47, 47, 47, 49])
 
         pdf.titulo_secao("6. Parecer Técnico / Notas Adicionais")
-        pdf.set_font('Helvetica', 'B', 8); pdf.set_text_color(100)
-        pdf.cell(0, 5, " OBSERVAÇÕES REGISTRADAS:", 'LTR', 1, 'L')
-        pdf.set_font('Helvetica', '', 9); pdf.set_text_color(0)
-        
         obs = d.get('parecer_tecnico') or "Nenhuma observação registrada."
-        pdf.multi_cell(0, 6, str(obs), 'LBR', 'L')
+        pdf.set_font('Helvetica', '', 9)
+        pdf.multi_cell(0, 6, str(obs), 1, 'L')
 
-        # Rodapé / Assinaturas
+        # Assinaturas (Rodapé)
         pdf.set_y(-45)
-        pdf.line(20, pdf.get_y(), 90, pdf.get_y())   
-        pdf.line(120, pdf.get_y(), 190, pdf.get_y()) 
+        pdf.line(20, pdf.get_y(), 90, pdf.get_y()); pdf.line(120, pdf.get_y(), 190, pdf.get_y())
         pdf.set_y(pdf.get_y() + 2)
         pdf.set_x(20); pdf.cell(70, 5, str(d.get('tecnico_nome', 'TECNICO')).upper(), 0, 0, 'C')
         pdf.set_x(120); pdf.cell(70, 5, str(d.get('nome', 'CLIENTE')).upper(), 0, 1, 'C')
 
         return bytes(pdf.output(dest='S'))
 
-    # --- BOTÃO DE GERAR (SOMENTE NESTA ABA) ---
+    # 3. Botão de Finalização (Preso à Aba Relatórios)
     st.write("")
     if st.button("🚀 FINALIZAR E GERAR LAUDO COMPLETO", use_container_width=True):
         try:
@@ -582,3 +560,4 @@ elif aba == "Relatórios":
             )
         except Exception as e:
             st.error(f"Erro ao gerar o arquivo: {e}")
+            
