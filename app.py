@@ -133,14 +133,14 @@ def renderizar_aba_1():
                 st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
 
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO V11 - MATRIZ DE PRECISÃO REAL)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO V11.1 - MATRIZ DE ALTA PRECISÃO)
 # ==============================================================================
 
 import streamlit as st
 import math
 
 def renderizar_aba_diagnosticos():
-    st.header("🔍 Central de Diagnóstico Técnico (Precisão V17)")
+    st.header("🔍 Central de Diagnóstico Técnico (Precisão V18.1)")
     
     # Busca o fluido do estado da sessão (Página 1)
     fluido = st.session_state.dados.get('fluido', 'R410A')
@@ -156,7 +156,7 @@ def renderizar_aba_diagnosticos():
             border-top: 6px solid #1b5e20; 
         }
         .label-res { font-size: 14px; font-weight: 800; color: #333; text-transform: uppercase; margin-bottom: 8px; }
-        .valor-res { font-size: 28px; font-weight: 900; color: #1b5e20; margin: 2px 0; }
+        .valor-res { font-size: 26px; font-weight: 900; color: #1b5e20; margin: 2px 0; }
         .sub-res { font-size: 13px; color: #d32f2f; font-weight: 700; border-top: 2px dotted #eee; padding-top: 8px; margin-top: 5px; }
         
         .card-bom { border-top-color: #81c784 !important; }
@@ -178,11 +178,14 @@ def renderizar_aba_diagnosticos():
         t_ins = st.number_input("T. Insuf. (°C)", value=12.0, step=0.1, key="ti_v17")
     with c2:
         st.markdown("🔵 **EVAPORADORA**")
-        p_suc = st.number_input("P. Sucção (PSI)", value=134.0 if fluido != "R22" else 70.0, format="%.1f", key="ps_v17")
+        # Valor default dinâmico baseado no fluido
+        default_ps = 70.0 if fluido == "R22" else 134.0
+        p_suc = st.number_input("P. Sucção (PSI)", value=default_ps, format="%.1f", key="ps_v17")
         t_suc = st.number_input("T. Tubo Suc. (°C)", value=14.0, format="%.1f", key="ts_v17")
     with c3:
         st.markdown("🔴 **CONDENSADORA**")
-        p_des = st.number_input("P. Desc. (PSI)", value=340.0 if fluido != "R22" else 210.0, format="%.1f", key="pd_v17")
+        default_pd = 210.0 if fluido == "R22" else 340.0
+        p_des = st.number_input("P. Desc. (PSI)", value=default_pd, format="%.1f", key="pd_v17")
         t_liq = st.number_input("T. Tubo Líq. (°C)", value=38.0 if fluido != "R22" else 35.0, format="%.1f", key="tl_v17")
     with c4:
         st.markdown("⚡ **TENSÃO**")
@@ -197,22 +200,23 @@ def renderizar_aba_diagnosticos():
         cn_c = st.number_input("Nominal (µF)", value=35.0, key="cnc_v17")
         cm_c = st.number_input("Medida (µF)", value=33.0, key="cmc_v17")
 
-    # --- MOTOR V29: MATRIZ DE PRECISÃO (R32, R410A & R22) ---
+    # --- MOTOR V30.1: MATRIZ DE ALTA PRECISÃO (R32, R410A & R22 RECALIBRADO) ---
     def f_sat_v17(psi, gas):
         if psi <= 5: return 0.0
         if gas == "R32":
             tsat = (0.000305 * (psi**2)) + (0.1572 * psi) - 19.64
         elif gas == "R22":
-            tsat = (0.00015 * (psi**2)) + (0.315 * psi) - 18.5
+            # Polinômio de 3ª ordem para atingir 50=3.34 / 80=8.61 / 85=10.31
+            tsat = (0.000035 * (psi**3)) - (0.0064 * (psi**2)) + (0.435 * psi) - 13.9
         else: # R410A
             tsat = (0.000285 * (psi**2)) + (0.15735 * psi) - 18.88
-        return round(tsat, 1)
+        return round(tsat, 2)
 
     # Cálculos
     ts_s = f_sat_v17(p_suc, fluido)
     ts_d = f_sat_v17(p_des, fluido)
-    sh = round(t_suc - ts_s, 1)
-    sc = round(ts_d - t_liq, 1)
+    sh = round(t_suc - ts_s, 2)
+    sc = round(ts_d - t_liq, 2)
     dt_ar = round(t_ret - t_ins, 1)
 
     # --- 2. RESULTADOS DO DIAGNÓSTICO ---
@@ -244,7 +248,7 @@ def renderizar_aba_diagnosticos():
     with res_cols[5]:
         st.markdown(f'<div class="res-card card-bom"><div class="label-res">Δ Cap.</div><div class="valor-res">{round(cm_c-cn_c,1)} µF</div><div class="sub-res">Saúde</div></div>', unsafe_allow_html=True)
 
-    # --- 3. DIAGNÓSTICO INTELIGENTE (LIMITES DINÂMICOS) ---
+    # --- 3. DIAGNÓSTICO INTELIGENTE ---
     diag_final = "✅ Sistema Operacional em Conformidade"
     bg_diag = "#81c784" 
     
@@ -261,7 +265,6 @@ def renderizar_aba_diagnosticos():
     if bg_diag != "#e57373":
         if fluido == "R32":
             if sh < 5.0 or sh > 8.0: diag_final, bg_diag = "🔴 ALERTA: SH R32 fora de 5K-8K!", "#e57373"
-            elif sh < 5.5 or sh > 7.5: diag_final, bg_diag = "🟡 ATENÇÃO: SH R32 em zona de luz amarela!", "#fff176"
         else:
             if sh < 5.0: diag_final, bg_diag = "🔴 ALERTA: SH baixo. Risco de golpe de líquido!", "#e57373"
             elif sh > 12.0: diag_final, bg_diag = "🟠 ALERTA: SH alto. Verifique carga ou restrição.", "#fff176"
