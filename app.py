@@ -112,7 +112,7 @@ def renderizar_aba_1():
         with st.expander("Detalhes Técnicos do Ativo", expanded=True):
             e1, e2, e3 = st.columns(3)
             with e1:
-                fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
+                fab_list = sorted(["Carrier", "Daikin", "Elgin", "Gree", "Fujitsu", "hitachi", "LG", "Midea", "Philco", "Samsung", "TCL", "Trane", "York"])
                 fab_val = st.session_state.dados.get('fabricante', 'Carrier')
                 fab_idx = fab_list.index(fab_val) if fab_val in fab_list else 0
                 st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx)
