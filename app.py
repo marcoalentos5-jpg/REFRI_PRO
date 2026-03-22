@@ -310,6 +310,7 @@ def renderizar_aba_diagnosticos():
     st.markdown("---")
     st.subheader("4. Parecer Técnico")
     st.text_area("Notas Adicionais:", key="laudo_v17_final", height=100)
+    st.info("ℹ️ Medições concluídas. Prossiga para a aba 'Relatórios'.")
 
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
