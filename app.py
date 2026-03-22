@@ -128,9 +128,17 @@ def renderizar_aba_1():
 
             with e3:
                 st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], index=1)
-                st.session_state.dados['fluido'] = st.selectbox("Fluido:", ["R410A", "R134a", "R22", "R32", "R290"], index=0)
                 st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
                 st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
+                # 1. Definimos a lista (com a nova ordem que você pediu: R32 primeiro)
+opcoes_fluido = ["R32", "R410A", "R134a", "R22", "R290"]
+
+# 2. Descobrimos a posição do gás que já está salvo (para não resetar)
+idx_atual = opcoes_fluido.index(st.session_state.dados['fluido']) if st.session_state.dados['fluido'] in opcoes_fluido else 0
+
+# 3. Criamos o campo usando o index dinâmico e uma KEY única
+st.session_state.dados['fluido'] = st.selectbox("Fluido:", opcoes_fluido, index=idx_atual, key="campo_fluido_equip")
+                
 
 # ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO V10 - MATRIZ DE PRECISÃO REAL)
