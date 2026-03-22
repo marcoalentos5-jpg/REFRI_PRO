@@ -502,7 +502,7 @@ class PDF_Tecnico_V17(FPDF):
         self.set_text_color(40, 40, 40)
         self.cell(0, 10, 'RELATÓRIO TÉCNICO DE SISTEMAS TÉRMICOS', 0, 1, 'L')
         self.set_draw_color(0, 51, 102)
-        self.line(10, 22, 200, 22) # Linha decorativa superior
+        self.line(10, 22, 200, 22) 
         self.ln(5)
 
     def footer(self):
@@ -511,7 +511,7 @@ class PDF_Tecnico_V17(FPDF):
         self.cell(0, 10, f'Página {self.page_no()} | V17 Automação', 0, 0, 'C')
 
 def gerar_laudo_personalizado():
-    # 1. RESGATE DE DADOS (Dicionário e Sidebar)
+    # 1. RESGATE DE DADOS
     d = st.session_state.get('dados', {})
     nome_tecnico = st.session_state.get('nome_tecnico', 'Técnico Não Informado')
     cnpj_tecnico = st.session_state.get('cnpj_tecnico', '---')
@@ -519,7 +519,7 @@ def gerar_laudo_personalizado():
     pdf = PDF_Tecnico_V17()
     pdf.add_page()
     
-    # --- SEÇÃO: DADOS DO CLIENTE ---
+    # --- SEÇÃO 1: CLIENTE ---
     pdf.set_fill_color(245, 245, 245)
     pdf.set_font('Arial', 'B', 10)
     pdf.cell(0, 8, " 1. IDENTIFICAÇÃO DO CLIENTE", 0, 1, 'L', True)
@@ -530,31 +530,27 @@ def gerar_laudo_personalizado():
                          f"Endereço: {d.get('endereco', '---')}")
     pdf.ln(5)
 
-    # --- SEÇÃO: ESPECIFICAÇÕES ---
+    # --- SEÇÃO 2: EQUIPAMENTO ---
     pdf.set_font('Arial', 'B', 10)
     pdf.cell(0, 8, " 2. ESPECIFICAÇÕES DO EQUIPAMENTO", 0, 1, 'L', True)
     pdf.set_font('Arial', '', 10)
     pdf.ln(2)
-    col_w = 95
-    pdf.cell(col_w, 6, f"Fabricante: {d.get('fabricante', '---')}", 0, 0)
-    pdf.cell(col_w, 6, f"Fluido: {d.get('fluido', '---')}", 0, 1)
-    pdf.cell(col_w, 6, f"Modelo: {d.get('modelo', '---')}", 0, 0)
-    pdf.cell(col_w, 6, f"TAG: {d.get('tag_id', '---')}", 0, 1)
+    pdf.cell(95, 6, f"Fabricante: {d.get('fabricante', '---')}", 0, 0)
+    pdf.cell(95, 6, f"Fluido: {d.get('fluido', '---')}", 0, 1)
+    pdf.cell(95, 6, f"Modelo: {d.get('modelo', '---')}", 0, 0)
+    pdf.cell(95, 6, f"TAG: {d.get('tag_id', '---')}", 0, 1)
     pdf.ln(5)
 
-    # --- SEÇÃO: PERFORMANCE (TABELA DINÂMICA) ---
+    # --- SEÇÃO 3: PERFORMANCE ---
     pdf.set_font('Arial', 'B', 10)
-    pdf.cell(0, 8, " 3. DADOS DE PERFORMANCE TERMODINÂMICA", 0, 1, 'L', True)
+    pdf.cell(0, 8, " 3. PERFORMANCE TERMODINÂMICA", 0, 1, 'L', True)
     pdf.ln(2)
-    
-    # Cabeçalho da Tabela
     pdf.set_font('Arial', 'B', 9)
     pdf.cell(45, 7, "Pressão Sucção", 1, 0, 'C')
     pdf.cell(45, 7, "Temp. Tubo", 1, 0, 'C')
     pdf.cell(45, 7, "S.H. (K)", 1, 0, 'C')
     pdf.cell(55, 7, "Delta T Ar", 1, 1, 'C')
     
-    # Dados da Tabela
     pdf.set_font('Arial', '', 10)
     pdf.cell(45, 8, f"{d.get('p_suc', 0)} PSI", 1, 0, 'C')
     pdf.cell(45, 8, f"{d.get('t_suc', 0)} °C", 1, 0, 'C')
@@ -562,7 +558,7 @@ def gerar_laudo_personalizado():
     pdf.cell(55, 8, f"{d.get('dt_ar', 0)} °C", 1, 1, 'C')
     pdf.ln(10)
 
-    # --- PARECER FINAL ---
+    # --- SEÇÃO 4: PARECER ---
     pdf.set_font('Arial', 'B', 10)
     pdf.cell(0, 8, " 4. PARECER TÉCNICO", 0, 1, 'L', True)
     pdf.set_font('Arial', '', 10)
@@ -574,24 +570,27 @@ def gerar_laudo_personalizado():
     pdf.set_font('Arial', 'B', 9)
     pdf.cell(95, 10, "__________________________", 0, 0, 'C')
     pdf.cell(95, 10, "__________________________", 0, 1, 'C')
-    pdf.cell(95, 4, nome_tecnico.upper(), 0, 0, 'C')
+    pdf.cell(95, 4, str(nome_tecnico).upper(), 0, 0, 'C')
     pdf.cell(95, 4, str(d.get('nome_cliente', 'CLIENTE')).upper(), 0, 1, 'C')
     pdf.set_font('Arial', '', 8)
     pdf.cell(95, 4, f"CNPJ: {cnpj_tecnico}", 0, 0, 'C')
     pdf.cell(95, 4, f"CPF: {d.get('cpf_cliente', '---')}", 0, 1, 'C')
 
-    # CORREÇÃO AQUI: Retornar diretamente o output binário
-    return pdf.output(dest='S')
+    return pdf.output(dest='S') # Retorna bytes diretamente
 
-# --- BOTÃO NO STREAMLIT ---
+# --- INTERFACE ---
+st.markdown("---")
 if st.button("📊 GERAR NOVO LAUDO PERSONALIZADO"):
     try:
-        pdf_final = gerar_laudo_personalized() # Chama a função corrigida
+        # Chamando a função com o nome CORRIGIDO
+        pdf_final = gerar_laudo_personalizado() 
+        
         st.download_button(
             label="📥 Baixar Laudo PDF",
-            data=pdf_final, # O dado já vem como bytes
+            data=pdf_final,
             file_name=f"Relatorio_V17_{datetime.now().strftime('%H%M')}.pdf",
             mime="application/pdf"
         )
+        st.success("PDF gerado com sucesso!")
     except Exception as e:
-        st.error(f"Erro detectado: {e}")
+        st.error(f"Erro ao compilar o laudo: {e}")
