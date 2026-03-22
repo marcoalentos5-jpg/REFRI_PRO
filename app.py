@@ -489,6 +489,7 @@ def renderizar_aba_diagnosticos():
         placeholder="Ex: Sistema operando com pressões estáveis, superaquecimento normal...",
         key="laudo_area_diag"
     )
+
 # ==============================================================================
 # BLOCO 5: RELATÓRIOS E LAUDOS - MODELO INDUSTRIAL PREMIUM V17
 # ==============================================================================
@@ -500,7 +501,7 @@ from datetime import datetime
 class LaudoIndustrialV17(FPDF):
     def header(self):
         try:
-            # Logo aumentada para 60mm
+            # Logo aumentada para 60mm conforme solicitado
             self.image("logo.png", 10, 10, 60)
         except:
             pass
@@ -526,18 +527,16 @@ class LaudoIndustrialV17(FPDF):
         self.cell(0, 7, f" {texto.upper()}", 1, 1, 'L', True)
 
     def grade(self, labels, valores, larguras):
-        # Cabeçalhos das colunas
         self.set_font('Helvetica', 'B', 7); self.set_text_color(100)
         for i, label in enumerate(labels):
             self.cell(larguras[i], 4, f" {label}", 'LTR', 0, 'L')
         self.ln()
-        # Valores das colunas
         self.set_font('Helvetica', '', 9); self.set_text_color(0)
         for i, valor in enumerate(valores):
-            # Limpeza de emojis e nulos apenas para o PDF
+            # Limpeza de emojis e nulos para o padrão PDF (Latin-1)
             txt = str(valor) if valor not in [None, ''] else "---"
             txt = txt.replace('🟢', '[OK]').replace('🔴', '[ALERTA]').replace('🟡', '[ATENCAO]')
-            # Remove caracteres que o PDF não entende
+            # Correção de caracteres especiais para evitar erros de renderização
             txt = txt.encode('latin-1', 'replace').decode('latin-1')
             self.cell(larguras[i], 7, f" {txt}", 'LBR', 0, 'L')
         self.ln(8)
@@ -547,12 +546,11 @@ def gerar_laudo_v17_final_corrigido():
     pdf = LaudoIndustrialV17()
     pdf.add_page()
     
-    # Função auxiliar para limpar textos longos (Parecer)
     def limpar(t):
         return str(t).encode('latin-1', 'replace').decode('latin-1')
 
     # --- 1. RESPONSÁVEL TÉCNICO ---
-    pdf.titulo_secao_com_data("1. Responsável Técnico", d.get('data', '---'))
+    pdf.titulo_secao_com_data("1. Responsável Técnico", limpar(d.get('data', '---')))
     pdf.grade(["NOME DO PROFISSIONAL", "REGISTRO PROFISSIONAL", "CONTATO / CNPJ"],
              [d.get('tecnico_nome'), d.get('tecnico_registro'), d.get('tecnico_documento')], [80, 55, 55])
 
@@ -599,26 +597,32 @@ def gerar_laudo_v17_final_corrigido():
     pdf.set_x(20); pdf.cell(70, 4, f"CNPJ: {d.get('tecnico_documento', '---')}", 0, 0, 'C')
     pdf.set_x(120); pdf.cell(70, 4, f"CPF: {d.get('cpf_cnpj', '---')}", 0, 1, 'C')
 
-    return pdf.output(dest='S').encode('latin-1')
+    # CORREÇÃO: output(dest='S') no FPDF2 já retorna bytes, não precisa de .encode()
+    return pdf.output(dest='S')
 
-# --- INTERFACE DE FINALIZAÇÃO NO APP ---
-st.markdown("---")
+# --- ABA EXCLUSIVA DE PARECER TÉCNICO ---
+# Certifique-se de que este bloco só exista uma vez no seu código (na aba final)
+st.markdown("### 📝 6. Parecer Técnico / Notas Adicionais")
 st.session_state.dados['parecer_tecnico'] = st.text_area(
-    "Parecer Técnico / Notas Adicionais",
+    "Insira aqui o diagnóstico final e observações adicionais:",
     value=st.session_state.dados.get('parecer_tecnico', ''),
-    height=200
+    height=250
 )
+
+st.write("") 
 
 if st.button("🚀 FINALIZAR E GERAR LAUDO COMPLETO"):
     try:
-        pdf_out = gerar_laudo_v17_final_corrigido()
-        if pdf_out:
+        # Gerar o PDF (agora retorna bytes corretamente)
+        pdf_bytes = gerar_laudo_v17_final_corrigido()
+        
+        if pdf_bytes:
             st.success("✅ Laudo gerado com sucesso!")
             st.download_button(
                 label="📥 Baixar PDF Agora",
-                data=pdf_out,
+                data=pdf_bytes,
                 file_name=f"Laudo_{st.session_state.dados.get('nome', 'Cliente')}.pdf",
                 mime="application/pdf"
             )
     except Exception as e:
-        st.error(f"❌ Erro ao gerar PDF: {e}")
+        st.error(f"❌ Erro ao processar dados: {e}")
