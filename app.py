@@ -28,17 +28,19 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. MOTOR DE SESSÃO (CHAVES VERIFICADAS)
+# BLOCO 2: MOTOR DE SESSÃO ATUALIZADO
 if 'dados' not in st.session_state:
     st.session_state.dados = {
-        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
+        'nome': '', 'cpf_cnpj': '', 'email': '', 'whatsapp': '', 'celular': '',
         'data': datetime.now().strftime("%d/%m/%Y"),
         'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '', 'complemento': '',
-        'fabricante': 'Carrier', 'modelo': '', 'capacidade': '12.000', 'linha': 'Residencial',
-        'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '',
-        'tipo_servico': 'Manutenção Preventiva', 'tag_id': 'TAG-01',
+        'fabricante': 'Carrier', 'modelo': '', 'capacidade': '', 'linha': 'Residencial',
+        'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '', 'tag_id': '',
+        'tipo_servico': 'Manutenção Preventiva', 'status_maquina': '🟢 Operacional',
         'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
-        'status_maquina': '🟢 Operacional'
+        'p_suc': 0.0, 'sh': 0.0, 'dt_ar': 0.0, 't_suc': 0.0, # Termodinâmica
+        'v_lin': 0.0, 'i_med': 0.0, 'capacitancia': '',     # Elétrica
+        'parecer_tecnico': ''                               # O parecer final
     }
 
 def buscar_cep(cep):
@@ -584,36 +586,50 @@ def gerar_laudo_v17_final_corrigido():
         [47, 47, 47, 49]
     )
 
-    # --- 6. PARECER TÉCNICO ---
-    pdf.titulo_secao("6. Parecer Técnico / Notas Adicionais")
-    pdf.set_font('Helvetica', 'B', 8); pdf.set_text_color(100)
-    pdf.cell(0, 5, " OBSERVAÇÕES REGISTRADAS:", 'LTR', 1, 'L')
-    pdf.set_font('Helvetica', '', 9); pdf.set_text_color(0)
+   # ==============================================================================
+# ABA DE FINALIZAÇÃO: PARECER TÉCNICO E EXPORTAÇÃO
+# ==============================================================================
+
+st.markdown("---")
+st.header("📝 6. Parecer Técnico / Notas Adicionais")
+
+# 1. ENTRADA DE DADOS (Deve vir ANTES do botão para garantir a captura)
+# Salvamos o que o técnico digita direto na chave 'parecer_tecnico'
+st.session_state.dados['parecer_tecnico'] = st.text_area(
+    "Descreva detalhadamente o diagnóstico, peças substituídas ou recomendações ao cliente:",
+    value=st.session_state.dados.get('parecer_tecnico', ''),
+    height=250,
+    placeholder="Exemplo: Efetuada a limpeza dos filtros e dreno. Verificada carga de fluido..."
+)
+
+st.info("💡 Certifique-se de que todos os dados (Elétrica/Termodinâmica) foram preenchidos nas abas anteriores antes de gerar o laudo.")
+
+# 2. ESPAÇAMENTO VISUAL
+st.write("")
+
+# 3. PROCESSO DE GERAÇÃO DO PDF
+if st.button("🚀 FINALIZAR ATENDIMENTO E GERAR LAUDO"):
     
-    # Puxa o texto do campo de parecer
-    obs = d.get('parecer_tecnico') or d.get('notas_adicionais') or "Nenhuma observação registrada."
-    pdf.multi_cell(0, 6, str(obs), 'LBR', 'L')
+    # Simulação de segurança para evitar erro no nome do arquivo
+    nome_cli = st.session_state.dados.get('nome', 'Cliente').strip()
+    if not nome_cli:
+        nome_cli = "Relatorio_Tecnico"
 
-    # --- ASSINATURAS ---
-    pdf.set_y(-45)
-    pdf.set_draw_color(180)
-    pdf.line(20, pdf.get_y(), 90, pdf.get_y())   
-    pdf.line(120, pdf.get_y(), 190, pdf.get_y()) 
-    pdf.set_y(pdf.get_y() + 2); pdf.set_font('Helvetica', 'B', 9)
-    pdf.set_x(20); pdf.cell(70, 5, str(d.get('tecnico_nome', 'TECNICO')).upper(), 0, 0, 'C')
-    pdf.set_x(120); pdf.cell(70, 5, str(d.get('nome', 'CLIENTE')).upper(), 0, 1, 'C')
-    pdf.set_font('Helvetica', '', 8); pdf.set_text_color(80)
-    pdf.set_x(20); pdf.cell(70, 4, f"CNPJ: {d.get('tecnico_documento', '---')}", 0, 0, 'C')
-    pdf.set_x(120); pdf.cell(70, 4, f"CPF: {d.get('cpf_cnpj', '---')}", 0, 1, 'C')
-
-    return bytes(pdf.output(dest='S'))
-
-# --- BOTAO DE GERAR ---
-if st.button("🚀 FINALIZAR E GERAR LAUDO COMPLETO"):
-    pdf_out = gerar_laudo_v17_final_corrigido()
-    st.download_button(
-        label="📥 Baixar PDF Agora",
-        data=pdf_out,
-        file_name=f"Laudo_{st.session_state.dados['nome']}.pdf",
-        mime="application/pdf"
-    )
+    try:
+        # Chama a função do PDF (Bloco 5)
+        # Ela agora vai ler o st.session_state.dados['parecer_tecnico'] preenchido acima
+        pdf_final = gerar_laudo_v17_final_corrigido()
+        
+        st.success(f"✅ Laudo para {nome_cli} gerado com sucesso!")
+        
+        # O botão de download só aparece se o PDF for gerado sem erros
+        st.download_button(
+            label="📥 Clique Aqui para Baixar o PDF Oficial",
+            data=pdf_final,
+            file_name=f"Laudo_Tecnico_{nome_cli}.pdf",
+            mime="application/pdf"
+        )
+        
+    except Exception as e:
+        st.error(f"❌ Erro Crítico ao processar os dados: {e}")
+        st.warning("Verifique se há símbolos ou emojis não suportados nos campos de texto.")
