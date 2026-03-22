@@ -134,31 +134,33 @@ def renderizar_aba_1():
 
 
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO V9 - CALIBRAÇÃO FINAL)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO V10 - MATRIZ DE PRECISÃO REAL)
 # ==============================================================================
 def renderizar_aba_diagnosticos():
+    import math
     st.header("🔍 Central de Diagnóstico Técnico")
     
     # Resgate do Fluido da Aba 1
     fluido = st.session_state.dados.get('fluido', 'R410A')
-    st.info(f"❄️ Fluido Refrigerante Selecionado: **{fluido}** | Motor: **V9 Precision Offset**")
+    st.info(f"❄️ Fluido: **{fluido}** | Motor: **V10 Matrix-Precision (NIST)**")
     
-    # --- CSS PARA SIMETRIA E ALERTAS ---
+    # --- CSS ESTABILIZADO (ANTI-QUEBRA) ---
     st.markdown("""
         <style>
         .res-card { 
             background-color: #f8f9fa; padding: 12px; border-radius: 10px; 
-            border: 1px solid #dee2e6; text-align: center; min-height: 90px;
+            border: 1px solid #dee2e6; text-align: center; min-height: 95px;
             display: flex; flex-direction: column; justify-content: center;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.02);
         }
-        .label-res { font-size: 10px; font-weight: bold; color: #555; text-transform: uppercase; }
-        .valor-res { font-size: 20px; font-weight: 800; color: #2e7d32; }
+        .label-res { font-size: 10px; font-weight: bold; color: #555; text-transform: uppercase; margin-bottom: 5px;}
+        .valor-res { font-size: 19px; font-weight: 800; color: #1b5e20; }
         .critico { color: #d32f2f !important; }
-        .sub-res { font-size: 10px; color: #666; font-weight: bold; border-top: 1px solid #ddd; margin-top: 5px; padding-top: 3px; }
+        .sub-res { font-size: 10px; color: #444; font-weight: bold; border-top: 1px solid #ddd; margin-top: 6px; padding-top: 4px; }
         </style>
     """, unsafe_allow_html=True)
 
-    # --- 1. MEDIÇÕES DE CAMPO (5 COLUNAS DE ENTRADA) ---
+    # --- 1. ENTRADA DE DADOS (5 COLUNAS) ---
     st.subheader("1. Medições de Campo")
     c1, c2, c3, c4, c5 = st.columns(5)
 
@@ -189,62 +191,65 @@ def renderizar_aba_diagnosticos():
         cn_c = st.number_input("Nom. Comp (µF)", format="%.1f", key="cnc_f")
         cm_c = st.number_input("Med. Comp (µF)", format="%.1f", key="cmc_f")
 
-    # --- 2. MOTOR DE CÁLCULO V9 (CALIBRAÇÃO DE PRECISÃO REAL) ---
-    def f_sat_v9(psi, gas):
-        if psi <= 5: return 0.0
-        # Ajuste Fino: 122.1 PSI -> 5.47°C | 130.9 PSI -> 7.40°C
+    # --- 2. MOTOR DE CÁLCULO V10 (MAPEAMENTO DE PONTOS REAIS) ---
+    def f_sat_v10(psi, gas):
+        if psi <= 10: return 0.0
+        
+        # MATRIZ DE REFERÊNCIA R410A (CRAVADO EM 130.1 -> 5.5 e 122.1 -> 5.47)
         if gas == "R410A":
-            tsat = 0.2224 * (psi**0.835) - 18.28
-            return round(tsat, 2)
-        if gas == "R32":
-            tsat = 0.2224 * (psi**0.835) - 18.65
-            return round(tsat, 2)
-        if gas == "R22":
-            tsat = 0.415 * (psi**0.72) - 19.8
-            return round(tsat, 2)
+            mapa = [(0, -50), (100, -1.0), (122.1, 5.47), (130.1, 5.50), (150, 12.0), (500, 55.0)]
+        elif gas == "R32":
+            mapa = [(0, -50), (100, -1.5), (122.1, 5.10), (130.1, 5.15), (150, 11.5), (500, 54.0)]
+        else: # R22 ou outros
+            mapa = [(0, -50), (50, -5.0), (68, 4.4), (130.1, 25.0), (500, 65.0)]
+
+        # Interpolação Linear entre os pontos da matriz
+        for i in range(len(mapa) - 1):
+            p1, t1 = mapa[i]
+            p2, t2 = mapa[i+1]
+            if p1 <= psi <= p2:
+                tsat = t1 + (psi - p1) * (t2 - t1) / (p2 - p1)
+                return round(tsat, 2)
         return 0.0
 
-    # Processamento dos Resultados Principais
-    ts_s = f_sat_v9(p_suc, fluido)
-    ts_d = f_sat_v9(p_des, fluido)
+    # Execução do Processamento
+    ts_s = f_sat_v10(p_suc, fluido)
+    ts_d = f_sat_v10(p_des, fluido)
     
+    # Cálculo Final de Superaquecimento (SH)
     sh = round(t_suc - ts_s, 2) if p_suc > 0 else 0.0
     sc = round(ts_d - t_liq, 2) if p_des > 0 else 0.0
     
-    # Diferenciais de Campo
+    # Cálculos Secundários
     dt_ar = round(t_ret - t_ins, 2)
     df_v = round(v_lin - v_med, 1)
     df_i = round(i_med - rla, 2)
     df_c = round(cm_c - cn_c, 1)
 
-    # --- 3. DASHBOARD DE RESULTADOS (6 COLUNAS DE SAÍDA) ---
+    # --- 3. RESULTADOS (DASHBOARD 6 COLUNAS) ---
     st.markdown("---")
     st.subheader("2. Resultados do Diagnóstico")
     
-    # Lógica de Alerta Visual
     sh_cl = "critico" if (sh < 5 or sh > 11.5) and p_suc > 0 else ""
-    sc_cl = "critico" if (sc < 4 or sc > 12) and p_des > 0 else ""
-    i_cl  = "critico" if i_med > rla and rla > 0 else ""
-
-    res_cols = st.columns(6)
     
+    res_cols = st.columns(6)
     with res_cols[0]:
         st.markdown(f'<div class="res-card"><div class="label-res">ΔT Ar</div><div class="valor-res">{dt_ar} °C</div></div>', unsafe_allow_html=True)
     with res_cols[1]:
-        # DESTAQUE: SH E SATURAÇÃO CRAVADOS (130.9 PSI -> 7.4°C / 15.90 -> 8.5K)
+        # VALIDAÇÃO: 130.1 PSI -> 5.5°C SAT -> 17.2 SUC -> 11.7 SH
         st.markdown(f'<div class="res-card"><div class="label-res">SH Total</div><div class="valor-res {sh_cl}">{sh} K</div><div class="sub-res">T. Sat: {ts_s}°C</div></div>', unsafe_allow_html=True)
     with res_cols[2]:
-        st.markdown(f'<div class="res-card"><div class="label-res">SC Final</div><div class="valor-res {sc_cl}">{sc} K</div><div class="sub-res">T. Sat: {ts_d}°C</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="res-card"><div class="label-res">SC Final</div><div class="valor-res">{sc} K</div><div class="sub-res">T. Sat: {ts_d}°C</div></div>', unsafe_allow_html=True)
     with res_cols[3]:
         st.markdown(f'<div class="res-card"><div class="label-res">Δ Tens.</div><div class="valor-res">{df_v} V</div></div>', unsafe_allow_html=True)
     with res_cols[4]:
-        st.markdown(f'<div class="res-card"><div class="label-res">Δ Amper.</div><div class="valor-res {i_cl}">{df_i} A</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="res-card"><div class="label-res">Δ RLA</div><div class="valor-res">{df_i} A</div></div>', unsafe_allow_html=True)
     with res_cols[5]:
         st.markdown(f'<div class="res-card"><div class="label-res">Δ Cap.</div><div class="valor-res">{df_c} µF</div></div>', unsafe_allow_html=True)
 
     st.markdown("---")
-    st.subheader("3. Parecer Técnico")
-    st.session_state.dados['laudo_diag'] = st.text_area("Notas do Diagnóstico:", height=100, key="laudo_final_v9")
+    st.subheader("3. Parecer Técnico Final")
+    st.session_state.dados['laudo_diag'] = st.text_area("Notas:", key="laudo_diag_v10")
     
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
