@@ -499,9 +499,13 @@ from datetime import datetime
 class LaudoOficialV17(FPDF):
     def header(self):
         try:
+            # Tenta carregar logo, se não houver, usa texto
             self.image("logo.png", 10, 8, 33)
         except:
-            pass
+            self.set_font('Arial', 'B', 12)
+            self.set_text_color(0, 51, 102)
+            self.cell(40, 10, 'MPN SOLUÇÕES', 0, 0, 'L')
+            
         self.set_font('Arial', 'B', 15)
         self.set_text_color(0, 51, 102) 
         self.cell(0, 10, 'LAUDO TÉCNICO DE PERFORMANCE TERMODINÂMICA', 0, 1, 'R')
@@ -517,6 +521,10 @@ class LaudoOficialV17(FPDF):
         self.set_draw_color(0, 51, 102)
         self.set_fill_color(240, 245, 255)
         self.set_font('Arial', 'B', 8); self.set_text_color(50)
+        # Formata valores vazios para evitar 'None' no PDF
+        v1 = str(v1) if v1 not in [None, ''] else '---'
+        v2 = str(v2) if v2 not in [None, ''] else '---'
+        
         self.cell(40, 7, f" {l1}", 1, 0, 'L', True)
         self.set_font('Arial', '', 9); self.set_text_color(0)
         self.cell(55, 7, f" {v1}", 1, 0, 'L')
@@ -526,23 +534,21 @@ class LaudoOficialV17(FPDF):
         self.cell(55, 7, f" {v2}", 1, 1, 'L')
 
 def gerar_relatorio_final_v17():
-    # --- MAPEAMENTO DE SEGURANÇA ---
-    # Se o dicionário 'dados' não existir, criamos um vazio para não dar erro
+    # --- RESGATE E CONVERSÃO DE DADOS ---
+    # Garantimos que 'dados' exista
     if 'dados' not in st.session_state:
-        st.error("Erro: Nenhum dado foi encontrado no sistema. Preencha os campos primeiro.")
-        return None
+        st.session_state['dados'] = {}
     
     d = st.session_state['dados']
     
-    # Capturando dados do Sidebar (Geralmente salvos fora do dict 'dados')
-    # Ajuste os nomes das variáveis conforme você usa no seu Sidebar
-    tecnico = st.session_state.get('nome_tecnico_input', 'Técnico Responsável')
-    cnpj_tec = st.session_state.get('cnpj_tecnico_input', '---')
+    # IMPORTANTE: Busca dados do SIDEBAR que podem estar com chaves diferentes
+    # Ajuste 'nome_tecnico' e 'cnpj_tecnico' para as chaves que você usou no Bloco 1/Sidebar
+    tecnico = st.session_state.get('nome_tecnico', 'TÉCNICO NÃO INFORMADO')
+    cnpj_tec = st.session_state.get('cnpj_tecnico', '00.000.000/0000-00')
 
-    # Cálculos Internos (Garantindo que não sejam Zero se houver input)
+    # Cálculos de Performance
     p_suc = float(d.get('p_suc', 0.0))
     fluido = d.get('fluido', 'R22')
-    t_suc_medida = float(d.get('t_suc', 0.0))
     
     def get_tsat(p, g):
         if p <= 5: return 0.0
@@ -551,30 +557,34 @@ def gerar_relatorio_final_v17():
         return round((0.000285 * (p**2)) + (0.15735 * p) - 18.88, 1)
 
     t_sat = get_tsat(p_suc, fluido)
-    sh = round(t_suc_medida - t_sat, 1)
-    dt_ar = round(float(d.get('t_ret', 0)) - float(d.get('t_ins', 0)), 1)
+    t_suc_med = float(d.get('t_suc', 0.0))
+    sh = round(t_suc_med - t_sat, 1)
+    
+    t_ret = float(d.get('t_ret', 0.0))
+    t_ins = float(d.get('t_ins', 0.0))
+    dt_ar = round(t_ret - t_ins, 1)
 
     pdf = LaudoOficialV17()
     pdf.add_page()
 
-    # 1. IDENTIFICAÇÃO (Puxando do Cadastro)
+    # 1. IDENTIFICAÇÃO
     pdf.secao_azul("1. Identificação")
-    pdf.linha_info("CLIENTE:", d.get('nome_cliente', '---'), "CPF/CNPJ:", d.get('cpf_cliente', '---'))
-    pdf.linha_info("ENDEREÇO:", d.get('endereco', '---'), "CONTATO:", d.get('contato', '---'))
+    pdf.linha_info("CLIENTE:", d.get('nome_cliente'), "CPF/CNPJ:", d.get('cpf_cliente'))
+    pdf.linha_info("ENDEREÇO:", d.get('endereco'), "CONTATO:", d.get('contato'))
     pdf.ln(4)
 
     # 2. EQUIPAMENTO
     pdf.secao_azul("2. Equipamento")
-    pdf.linha_info("FABRICANTE:", d.get('fabricante', '---'), "MODELO/BTU:", f"{d.get('modelo', '---')} / {d.get('capacidade', '---')}")
-    pdf.linha_info("TAG/ID ATIVO:", d.get('tag_id', '---'), "FLUIDO:", fluido)
-    pdf.linha_info("SÉRIE EVAP:", d.get('serial_evap', '---'), "SÉRIE COND:", d.get('serial_cond', '---'))
+    pdf.linha_info("FABRICANTE:", d.get('fabricante'), "MODELO/BTU:", f"{d.get('modelo')} / {d.get('capacidade')}")
+    pdf.linha_info("TAG/ID ATIVO:", d.get('tag_id'), "FLUIDO:", fluido)
+    pdf.linha_info("SÉRIE EVAP:", d.get('serial_evap'), "SÉRIE COND:", d.get('serial_cond'))
     pdf.ln(4)
 
     # 3. MATRIZ DE PERFORMANCE
     pdf.secao_azul("3. Matriz de Performance Termodinâmica")
     pdf.linha_info("PRESSÃO SUCÇÃO:", f"{p_suc} PSI", "T. SATURAÇÃO:", f"{t_sat} °C")
-    pdf.linha_info("TEMP. TUBO SUC:", f"{t_suc_medida} °C", "SUPERAQUEC. (SH):", f"{sh} K")
-    pdf.linha_info("T. RETORNO AR:", f"{d.get('t_ret', 0)} °C", "T. INSUFLAÇÃO:", f"{d.get('t_ins', 0)} °C")
+    pdf.linha_info("TEMP. TUBO SUC:", f"{t_suc_med} °C", "SUPERAQUEC. (SH):", f"{sh} K")
+    pdf.linha_info("T. RETORNO AR:", f"{t_ret} °C", "T. INSUFLAÇÃO:", f"{t_ins} °C")
     pdf.linha_info("DELTA T (AR):", f"{dt_ar} °C", "STATUS FLUIDO:", "Estável")
     pdf.ln(4)
 
@@ -590,17 +600,19 @@ def gerar_relatorio_final_v17():
     pdf.set_font('Arial', 'B', 10); pdf.set_text_color(0, 51, 102)
     pdf.cell(0, 10, f" DIAGNÓSTICO FINAL: {veredito}", 1, 1, 'C')
     pdf.set_font('Arial', '', 9); pdf.set_text_color(0)
-    pdf.multi_cell(0, 7, f"\nNOTAS ADICIONAIS:\n{d.get('laudo_v17_final', 'Nenhuma observação informada.')}", 1, 'L')
+    obs = d.get('laudo_v17_final', 'Nenhuma observação informada.')
+    pdf.multi_cell(0, 7, f"\nNOTAS ADICIONAIS:\n{obs}", 1, 'L')
 
     # --- RODAPÉ DE ASSINATURAS ---
     pdf.set_y(-55)
-    pdf.line(15, pdf.get_y() + 10, 90, pdf.get_y() + 10)
-    pdf.line(120, pdf.get_y() + 10, 195, pdf.get_y() + 10)
+    pdf.line(15, pdf.get_y() + 10, 90, pdf.get_y() + 10) # Linha Técnico
+    pdf.line(120, pdf.get_y() + 10, 195, pdf.get_y() + 10) # Linha Cliente
+    
     pdf.set_y(pdf.get_y() + 12)
     pdf.set_font('Arial', 'B', 9)
-    # Aqui usamos as variáveis capturadas do Sidebar/Cadastro
     pdf.set_x(15); pdf.cell(75, 5, tecnico.upper(), 0, 0, 'C')
-    pdf.set_x(120); pdf.cell(75, 5, d.get('nome_cliente', 'CLIENTE').upper(), 0, 1, 'C')
+    pdf.set_x(120); pdf.cell(75, 5, str(d.get('nome_cliente', 'CLIENTE')).upper(), 0, 1, 'C')
+    
     pdf.set_font('Arial', '', 8)
     pdf.set_x(15); pdf.cell(75, 4, f"CNPJ: {cnpj_tec}", 0, 0, 'C')
     pdf.set_x(120); pdf.cell(75, 4, f"CPF/CNPJ: {d.get('cpf_cliente', '---')}", 0, 1, 'C')
@@ -608,7 +620,16 @@ def gerar_relatorio_final_v17():
     return pdf.output(dest='S').encode('latin-1')
 
 # --- BOTÃO ---
+st.markdown("---")
 if st.button("🚀 FINALIZAR E GERAR RELATÓRIO PROFISSIONAL"):
-    pdf_out = gerar_relatorio_final_v17()
-    if pdf_out:
-        st.download_button("📥 Baixar Laudo", data=pdf_out, file_name="Laudo_V17.pdf", mime="application/pdf")
+    try:
+        pdf_out = gerar_relatorio_final_v17()
+        st.download_button(
+            label="📥 Baixar Laudo V17", 
+            data=pdf_out, 
+            file_name=f"Laudo_V17_{datetime.now().strftime('%H%M%S')}.pdf", 
+            mime="application/pdf"
+        )
+        st.success("Relatório pronto! Verifique se todos os campos foram preenchidos nas abas anteriores.")
+    except Exception as e:
+        st.error(f"Erro ao gerar o PDF: {e}. Verifique se você preencheu todos os dados.")
