@@ -128,7 +128,7 @@ def renderizar_aba_1():
 
             with e3:
                 st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], index=1)
-                st.session_state.dados['fluido'] = st.selectbox("Fluido:", ["R32", "R410A", "R22", "R134a", "R290"])
+                st.session_state.dados['fluido'] = st.selectbox("Fluido:", ["R32", "R410A", "R22", "R134a", "R290"]index=)
                 st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
                 st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
 
