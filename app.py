@@ -310,7 +310,6 @@ def renderizar_aba_diagnosticos():
     st.markdown("---")
     st.subheader("4. Parecer Técnico")
     st.text_area("Notas Adicionais:", key="laudo_v17_final", height=100)
-    st.info("ℹ️ Medições concluídas. Prossiga para a aba 'Relatórios'.")
 
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
@@ -487,77 +486,134 @@ def renderizar_aba_diagnosticos():
         "Descreva o diagnóstico ou anomalias encontradas:",
         placeholder="Ex: Sistema operando com pressões estáveis, superaquecimento normal...",
         key="laudo_area_diag"
-# --- FIM DA ABA 2 (DIAGNÓSTICOS) ---
-    st.info("ℹ️ Medições concluídas. Prossiga para a aba 'Relatórios' para emitir o laudo.")
-
+    )
 # ==============================================================================
-# BLOCO 5: RELATÓRIOS E LAUDOS (LINHA 495)
+# BLOCO 5: RELATÓRIOS E LAUDOS - Versão Final Corrigida
 # ==============================================================================
-elif aba == "Relatórios":
-    st.header("Relatório e Parecer Técnico")
-    st.markdown("---")
 
-    # 1. CAMPO DE TEXTO DO PARECER (EXCLUSIVO DESTA ABA)
-    st.session_state.dados['parecer_tecnico'] = st.text_area(
-        "Parecer Técnico Final / Notas Adicionais:",
-        value=st.session_state.dados.get('parecer_tecnico', ''),
-        height=300,
-        placeholder="Descreva aqui o diagnóstico final e recomendações técnicas..."
+import streamlit as st
+from fpdf import FPDF
+from datetime import datetime
+
+class LaudoFinalV17(FPDF):
+    def header(self):
+        try:
+            self.image("logo.png", 10, 10, 60)
+        except:
+            pass
+        self.set_font('Helvetica', 'B', 26)
+        self.set_text_color(0, 51, 102)
+        self.set_xy(75, 20)
+        self.cell(0, 10, 'LAUDO TÉCNICO', 0, 1, 'L')
+        self.ln(15)
+
+    def titulo_secao_com_data(self, texto, data_visita):
+        self.set_fill_color(230, 230, 230); self.set_text_color(0, 51, 102)
+        self.set_font('Helvetica', 'B', 10)
+        self.cell(130, 7, f" {texto.upper()}", 'LTB', 0, 'L', True)
+        self.cell(60, 7, f"DATA DA VISITA: {data_visita} ", 'RTB', 1, 'R', True)
+
+    def titulo_secao(self, texto):
+        self.set_fill_color(240, 240, 240); self.set_text_color(0, 51, 102)
+        self.set_font('Helvetica', 'B', 10)
+        self.cell(0, 7, f" {texto.upper()}", 1, 1, 'L', True)
+
+    def grade(self, labels, valores, larguras):
+        self.set_font('Helvetica', 'B', 7); self.set_text_color(100)
+        for i, label in enumerate(labels):
+            self.cell(larguras[i], 4, f" {label}", 'LTR', 0, 'L')
+        self.ln()
+        self.set_font('Helvetica', '', 9); self.set_text_color(0)
+        for i, valor in enumerate(valores):
+            # Garante que se o valor for None ou vazio, apareça algo
+            txt = str(valor) if valor not in [None, ''] else "---"
+            txt = txt.replace('🟢', '[OK]').replace('🔴', '[ALERTA]')
+            self.cell(larguras[i], 7, f" {txt}", 'LBR', 0, 'L')
+        self.ln(8)
+
+def gerar_laudo_v17_final_corrigido():
+    # Acessa o dicionário central de dados
+    d = st.session_state.dados 
+
+    pdf = LaudoFinalV17()
+    pdf.add_page()
+    
+    # --- 1. RESPONSÁVEL TÉCNICO ---
+    pdf.titulo_secao_com_data("1. Responsável Técnico", d.get('data', '---'))
+    pdf.grade(
+        ["NOME DO PROFISSIONAL", "REGISTRO PROFISSIONAL", "CONTATO / CNPJ"],
+        [d.get('tecnico_nome'), d.get('tecnico_registro'), d.get('tecnico_documento')],
+        [80, 55, 55]
     )
 
-    # 2. FUNÇÃO DE GERAÇÃO (DEFINIDA DENTRO DO ELIF)
-    def gerar_laudo_v17_final_corrigido():
-        d = st.session_state.dados 
-        pdf = LaudoFinalV17()
-        pdf.add_page()
-        
-        # Estrutura do PDF
-        pdf.titulo_secao_com_data("1. Responsável Técnico", d.get('data', '---'))
-        pdf.grade(["NOME DO PROFISSIONAL", "REGISTRO PROFISSIONAL", "CONTATO / CNPJ"],
-                 [d.get('tecnico_nome'), d.get('tecnico_registro'), d.get('tecnico_documento')], [80, 55, 55])
+    # --- 2. DADOS DO CLIENTE ---
+    pdf.titulo_secao("2. Dados do Cliente e Localização")
+    pdf.grade(
+        ["CLIENTE / RAZÃO SOCIAL", "CPF / CNPJ", "E-MAIL"],
+        [d.get('nome'), d.get('cpf_cnpj'), d.get('email')],
+        [85, 45, 60]
+    )
+    pdf.grade(
+        ["ENDEREÇO", "BAIRRO", "CIDADE / UF", "WHATSAPP"],
+        [f"{d.get('endereco', '---')}, {d.get('numero', '')}", d.get('bairro'), f"{d.get('cidade')}/{d.get('uf')}", d.get('whatsapp')],
+        [75, 40, 35, 40]
+    )
 
-        pdf.titulo_secao("2. Dados do Cliente")
-        pdf.grade(["CLIENTE / RAZÃO SOCIAL", "CPF / CNPJ", "E-MAIL"], 
-                 [d.get('nome'), d.get('cpf_cnpj'), d.get('email')], [85, 45, 60])
+    # --- 3. EQUIPAMENTO ---
+    pdf.titulo_secao("3. Informações do Equipamento")
+    pdf.grade(
+        ["FABRICANTE", "MODELO", "TAG / ID", "FLUIDO"],
+        [d.get('fabricante'), d.get('modelo'), d.get('tag_id'), d.get('fluido')],
+        [50, 50, 45, 45]
+    )
 
-        pdf.titulo_secao("3. Equipamento")
-        pdf.grade(["FABRICANTE", "MODELO", "TAG / ID", "FLUIDO"],
-                 [d.get('fabricante'), d.get('modelo'), d.get('tag_id'), d.get('fluido')], [50, 50, 45, 45])
+    # --- 4. TERMODINÂMICA (CORREÇÃO DE VAZIO) ---
+    pdf.titulo_secao("4. Termodinâmica")
+    # Buscamos as chaves que o seu motor de cálculo deve gerar
+    pdf.grade(
+        ["P. SUCÇÃO (PSI)", "S.H. TOTAL (K)", "DELTA T AR (°C)", "T. TUBO (°C)"],
+        [d.get('p_suc', '0.0'), d.get('sh', '0.0'), d.get('dt_ar', '0.0'), d.get('t_suc', '0.0')],
+        [47, 47, 47, 49]
+    )
 
-        pdf.titulo_secao("4. Termodinâmica")
-        pdf.grade(["P. SUCÇÃO (PSI)", "S.H. TOTAL (K)", "DELTA T AR (°C)", "T. TUBO (°C)"],
-                 [d.get('ps_v17', '0.0'), d.get('sh', '0.0'), d.get('dt_ar', '0.0'), d.get('ts_v17', '0.0')], [47, 47, 47, 49])
+    # --- 5. ELÉTRICA (CORREÇÃO DE VAZIO) ---
+    pdf.titulo_secao("5. Elétrica")
+    pdf.grade(
+        ["TENSÃO (V)", "CORRENTE (A)", "CAPACITÂNCIA (uF)", "STATUS"],
+        [d.get('v_lin', '0.0'), d.get('i_med', '0.0'), d.get('capacitancia', '---'), d.get('status_maquina', '---')],
+        [47, 47, 47, 49]
+    )
 
-        pdf.titulo_secao("5. Elétrica")
-        pdf.grade(["TENSÃO (V)", "CORRENTE (A)", "CAPACITÂNCIA (uF)", "STATUS"],
-                 [d.get('vl_v17', '0.0'), d.get('im_v17', '0.0'), d.get('cmc_v17', '---'), "OPERACIONAL"], [47, 47, 47, 49])
+    # --- 6. PARECER TÉCNICO ---
+    pdf.titulo_secao("6. Parecer Técnico / Notas Adicionais")
+    pdf.set_font('Helvetica', 'B', 8); pdf.set_text_color(100)
+    pdf.cell(0, 5, " OBSERVAÇÕES REGISTRADAS:", 'LTR', 1, 'L')
+    pdf.set_font('Helvetica', '', 9); pdf.set_text_color(0)
+    
+    # Puxa o texto do campo de parecer
+    obs = d.get('parecer_tecnico') or d.get('notas_adicionais') or "Nenhuma observação registrada."
+    pdf.multi_cell(0, 6, str(obs), 'LBR', 'L')
 
-        pdf.titulo_secao("6. Parecer Técnico")
-        obs = d.get('parecer_tecnico') or "Nenhuma observação registrada."
-        pdf.set_font('Helvetica', '', 9)
-        pdf.multi_cell(0, 6, str(obs), 1, 'L')
+    # --- ASSINATURAS ---
+    pdf.set_y(-45)
+    pdf.set_draw_color(180)
+    pdf.line(20, pdf.get_y(), 90, pdf.get_y())   
+    pdf.line(120, pdf.get_y(), 190, pdf.get_y()) 
+    pdf.set_y(pdf.get_y() + 2); pdf.set_font('Helvetica', 'B', 9)
+    pdf.set_x(20); pdf.cell(70, 5, str(d.get('tecnico_nome', 'TECNICO')).upper(), 0, 0, 'C')
+    pdf.set_x(120); pdf.cell(70, 5, str(d.get('nome', 'CLIENTE')).upper(), 0, 1, 'C')
+    pdf.set_font('Helvetica', '', 8); pdf.set_text_color(80)
+    pdf.set_x(20); pdf.cell(70, 4, f"CNPJ: {d.get('tecnico_documento', '---')}", 0, 0, 'C')
+    pdf.set_x(120); pdf.cell(70, 4, f"CPF: {d.get('cpf_cnpj', '---')}", 0, 1, 'C')
 
-        # Assinaturas
-        pdf.set_y(-45)
-        pdf.line(20, pdf.get_y(), 90, pdf.get_y()); pdf.line(120, pdf.get_y(), 190, pdf.get_y())
-        pdf.set_y(pdf.get_y() + 2)
-        pdf.set_x(20); pdf.cell(70, 5, str(d.get('tecnico_nome', 'TECNICO')).upper(), 0, 0, 'C')
-        pdf.set_x(120); pdf.cell(70, 5, str(d.get('nome', 'CLIENTE')).upper(), 0, 1, 'C')
+    return bytes(pdf.output(dest='S'))
 
-        return bytes(pdf.output(dest='S'))
-
-    # 3. BOTÃO DE GERAÇÃO (UNICO LUGAR DO CÓDIGO)
-    st.write("")
-    if st.button("🚀 FINALIZAR E GERAR LAUDO COMPLETO", use_container_width=True):
-        try:
-            pdf_out = gerar_laudo_v17_final_corrigido()
-            st.success("✅ Laudo preparado!")
-            st.download_button(
-                label="📥 Baixar PDF Agora",
-                data=pdf_out,
-                file_name=f"Laudo_{st.session_state.dados.get('nome', 'Cliente')}.pdf",
-                mime="application/pdf",
-                use_container_width=True
-            )
-        except Exception as e:
-            st.error(f"Erro ao gerar: {e}")
+# --- BOTAO DE GERAR ---
+if st.button("🚀 FINALIZAR E GERAR LAUDO COMPLETO"):
+    pdf_out = gerar_laudo_v17_final_corrigido()
+    st.download_button(
+        label="📥 Baixar PDF Agora",
+        data=pdf_out,
+        file_name=f"Laudo_{st.session_state.dados['nome']}.pdf",
+        mime="application/pdf"
+    )
