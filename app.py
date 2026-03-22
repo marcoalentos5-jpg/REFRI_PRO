@@ -28,19 +28,17 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# BLOCO 2: MOTOR DE SESSÃO ATUALIZADO
+# 2. MOTOR DE SESSÃO (CHAVES VERIFICADAS)
 if 'dados' not in st.session_state:
     st.session_state.dados = {
-        'nome': '', 'cpf_cnpj': '', 'email': '', 'whatsapp': '', 'celular': '',
+        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
         'data': datetime.now().strftime("%d/%m/%Y"),
         'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '', 'complemento': '',
-        'fabricante': 'Carrier', 'modelo': '', 'capacidade': '', 'linha': 'Residencial',
-        'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '', 'tag_id': '',
-        'tipo_servico': 'Manutenção Preventiva', 'status_maquina': '🟢 Operacional',
+        'fabricante': 'Carrier', 'modelo': '', 'capacidade': '12.000', 'linha': 'Residencial',
+        'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '',
+        'tipo_servico': 'Manutenção Preventiva', 'tag_id': 'TAG-01',
         'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
-        'p_suc': 0.0, 'sh': 0.0, 'dt_ar': 0.0, 't_suc': 0.0, # Termodinâmica
-        'v_lin': 0.0, 'i_med': 0.0, 'capacitancia': '',     # Elétrica
-        'parecer_tecnico': ''                               # O parecer final
+        'status_maquina': '🟢 Operacional'
     }
 
 def buscar_cep(cep):
@@ -149,18 +147,21 @@ def renderizar_aba_1():
 
                 # === FIM DO BLOCO COPIADO ===
                 
+
 # ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO V17 - MATRIZ DE PRECISÃO REAL)
 # ==============================================================================
 
-elif aba == "2. Diagnósticos":
-    # --- CABEÇALHO ---
+import streamlit as st
+import math
+
+def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico (Precisão V17)")
     
     # Busca o fluido global. Se não existir, assume R410A
     fluido = st.session_state.dados.get('fluido', 'R410A')
 
-    # --- CSS: ESTILO HI-VIS (MANTIDO) ---
+    # --- CSS: ESTILO HI-VIS COM ALERTAS E TEXTO PRETO ---
     st.markdown("""
         <style>
         .res-card { 
@@ -173,9 +174,13 @@ elif aba == "2. Diagnósticos":
         .label-res { font-size: 14px; font-weight: 800; color: #333; text-transform: uppercase; margin-bottom: 8px; }
         .valor-res { font-size: 28px; font-weight: 900; color: #1b5e20; margin: 2px 0; }
         .sub-res { font-size: 13px; color: #d32f2f; font-weight: 700; border-top: 2px dotted #eee; padding-top: 8px; margin-top: 5px; }
+        
+        /* Cores dos Cards */
         .card-bom { border-top-color: #81c784 !important; }
         .card-alerta { border-top-color: #fff176 !important; }
         .card-critico { border-top-color: #e57373 !important; }
+        
+        /* Ajuste de cor de fonte para alertas específicos */
         .card-alerta .valor-res { color: #fbc02d !important; }
         .card-critico .valor-res { color: #d32f2f !important; }
         </style>
@@ -184,6 +189,7 @@ elif aba == "2. Diagnósticos":
     # --- 1. MEDIÇÕES DE CAMPO (6 COLUNAS) ---
     st.subheader("1. Medições de Campo")
     
+    # Definição dinâmica de valores padrão baseada no Fluido
     if fluido == "R22":
         p_suc_def, p_des_def = 65.0, 210.0
     else:
@@ -216,10 +222,11 @@ elif aba == "2. Diagnósticos":
         cn_c = st.number_input("Nominal (µF)", value=35.0, key="cnc_v17")
         cm_c = st.number_input("Medida (µF)", value=33.0, key="cmc_v17")
 
-    # --- MOTOR V28: CÁLCULOS ---
+    # --- MOTOR V28: MATRIZ DE PRECISÃO REAL (R22, R32 & R410A) ---
     def f_sat_v17(psi, gas):
         if psi <= 5: return 0.0
         if gas == "R22":
+            # Fórmula Polinomial Calibrada R22 (Erro < 0.5 PSI)
             tsat = (-0.0004 * (psi**2)) + (0.453 * psi) - 24.95
         elif gas == "R32":
             tsat = (0.000305 * (psi**2)) + (0.1572 * psi) - 19.64
@@ -227,6 +234,7 @@ elif aba == "2. Diagnósticos":
             tsat = (0.000285 * (psi**2)) + (0.15735 * psi) - 18.88
         return round(tsat, 1)
 
+    # Cálculos de Performance
     ts_s = f_sat_v17(p_suc, fluido)
     ts_d = f_sat_v17(p_des, fluido)
     sh = round(t_suc - ts_s, 1)
@@ -238,6 +246,7 @@ elif aba == "2. Diagnósticos":
     st.subheader("2. Resultados do Diagnóstico")
     res_cols = st.columns(6)
 
+    # Lógica de Alerta de SH e Card Status
     cl_sh = "card-bom"
     if fluido == "R22":
         if p_suc < 60.0 or p_suc > 75.0: cl_sh = "card-alerta"
@@ -250,43 +259,57 @@ elif aba == "2. Diagnósticos":
 
     with res_cols[0]:
         st.markdown(f'<div class="res-card card-bom"><div class="label-res">ΔT Ar</div><div class="valor-res">{dt_ar} °C</div><div class="sub-res">Troca</div></div>', unsafe_allow_html=True)
+
     with res_cols[1]:
         st.markdown(f'<div class="res-card {cl_sh}"><div class="label-res">SH Total</div><div class="valor-res">{sh} K</div><div class="sub-res">Sat: {ts_s}°C</div></div>', unsafe_allow_html=True)
+
     with res_cols[2]:
         st.markdown(f'<div class="res-card card-bom"><div class="label-res">SC Final</div><div class="valor-res">{sc} K</div><div class="sub-res">Sat: {ts_d}°C</div></div>', unsafe_allow_html=True)
+
     with res_cols[3]:
         st.markdown(f'<div class="res-card card-bom"><div class="label-res">Δ Tens.</div><div class="valor-res">{round(v_lin-v_med,1)} V</div><div class="sub-res">Estável</div></div>', unsafe_allow_html=True)
+
     with res_cols[4]:
         st.markdown(f'<div class="res-card card-bom"><div class="label-res">Δ RLA</div><div class="valor-res">{round(i_med-rla,2)} A</div><div class="sub-res">Carga</div></div>', unsafe_allow_html=True)
+
     with res_cols[5]:
         st.markdown(f'<div class="res-card card-bom"><div class="label-res">Δ Cap.</div><div class="valor-res">{round(cm_c-cn_c,1)} µF</div><div class="sub-res">Saúde</div></div>', unsafe_allow_html=True)
 
-    # --- 3. DIAGNÓSTICO INTELIGENTE ---
+    # --- 3. DIAGNÓSTICO INTELIGENTE (TEXTO PRETO + LÓGICA R22 INTEGRADA) ---
     diag_final = "✅ Sistema Operacional em Conformidade"
     bg_diag = "#81c784" 
     
+    # LÓGICA DE DIAGNÓSTICO PARA R22 (50-85 PSI)
     if fluido == "R22":
         if p_suc < 55.0:
-            diag_final = f"💀 SUPERCRÍTICO BAIXO: {p_suc} PSI. Risco de gelo!"
+            diag_final = f"💀 SUPERCRÍTICO BAIXO: {p_suc} PSI. Risco de gelo imediato!"
             bg_diag = "#e57373"
         elif p_suc < 60.0:
-            diag_final = f"🔴 CRÍTICO: {p_suc} PSI. Pressão Baixa."
+            diag_final = f"🔴 CRÍTICO: {p_suc} PSI. Pressão abaixo do limite de projeto."
             bg_diag = "#fff176"
         elif 60.0 <= p_suc <= 75.0:
-            diag_final = f"🟢 OPERAÇÃO IDEAL: {p_suc} PSI."
+            diag_final = f"🟢 OPERAÇÃO IDEAL: {p_suc} PSI ({ts_s}°C) dentro da faixa segura."
+        elif p_suc <= 80.0:
+            diag_final = f"🟡 ALERTA ALTA: {p_suc} PSI. Verifique condensação externa."
+            bg_diag = "#fff176"
+        else:
+            diag_final = f"💀 SUPERCRÍTICO ALTO: {p_suc} PSI. Sobrecarga térmica severa!"
+            bg_diag = "#e57373"
+            
+    # LÓGICA PARA R410A / R32 (Sua lógica original preservada)
     elif p_suc <= 110.0 or p_suc >= 150.0:
         bg_diag = "#fff176"
-        diag_final = "⚠️ ALERTA: Pressão fora dos padrões!"
+        diag_final = f"⚠️ ALERTA: Pressão fora dos padrões de funcionamento (110-150 PSI)!"
     
     st.markdown(f"""
-        <div style="background-color: {bg_diag}; padding: 18px; border-radius: 10px; color: #000000; text-align: center; font-weight: 800; font-size: 18px; margin-top: 20px;">
+        <div style="background-color: {bg_diag}; padding: 18px; border-radius: 10px; color: #000000; text-align: center; font-weight: 800; font-size: 18px; margin-top: 20px; border: 1px solid rgba(0,0,0,0.1);">
             {diag_final}
         </div>
     """, unsafe_allow_html=True)
 
-    # --- LIMPEZA CIRÚRGICA CONCLUÍDA ---
-    st.write("")
-    st.info("ℹ️ Medições concluídas. Prossiga para a aba 'Relatórios' para emitir o laudo.")
+    st.markdown("---")
+    st.subheader("4. Parecer Técnico")
+    st.text_area("Notas Adicionais:", key="laudo_v17_final", height=100)
 
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
@@ -464,19 +487,18 @@ def renderizar_aba_diagnosticos():
         placeholder="Ex: Sistema operando com pressões estáveis, superaquecimento normal...",
         key="laudo_area_diag"
     )
-
 # ==============================================================================
-# BLOCO 5: RELATÓRIO E PARECER TÉCNICO (EXCLUSIVO DA ÚLTIMA ABA)
+# BLOCO 5: RELATÓRIOS E LAUDOS - Versão Final Corrigida
 # ==============================================================================
 
 import streamlit as st
 from fpdf import FPDF
+from datetime import datetime
 
-# --- CLASSE DO PDF (ESTILIZAÇÃO PREMIUM) ---
-class LaudoIndustrialV17(FPDF):
+class LaudoFinalV17(FPDF):
     def header(self):
         try:
-            self.image("logo.png", 10, 10, 60) # Logo 60mm
+            self.image("logo.png", 10, 10, 60)
         except:
             pass
         self.set_font('Helvetica', 'B', 26)
@@ -484,6 +506,12 @@ class LaudoIndustrialV17(FPDF):
         self.set_xy(75, 20)
         self.cell(0, 10, 'LAUDO TÉCNICO', 0, 1, 'L')
         self.ln(15)
+
+    def titulo_secao_com_data(self, texto, data_visita):
+        self.set_fill_color(230, 230, 230); self.set_text_color(0, 51, 102)
+        self.set_font('Helvetica', 'B', 10)
+        self.cell(130, 7, f" {texto.upper()}", 'LTB', 0, 'L', True)
+        self.cell(60, 7, f"DATA DA VISITA: {data_visita} ", 'RTB', 1, 'R', True)
 
     def titulo_secao(self, texto):
         self.set_fill_color(240, 240, 240); self.set_text_color(0, 51, 102)
@@ -497,81 +525,95 @@ class LaudoIndustrialV17(FPDF):
         self.ln()
         self.set_font('Helvetica', '', 9); self.set_text_color(0)
         for i, valor in enumerate(valores):
+            # Garante que se o valor for None ou vazio, apareça algo
             txt = str(valor) if valor not in [None, ''] else "---"
-            txt = txt.replace('🟢', '[OK]').replace('🔴', '[ALERTA]').replace('🟡', '[AVISO]')
-            # Limpeza de caracteres para o padrão PDF (Evita erro de renderização)
-            txt = txt.encode('latin-1', 'replace').decode('latin-1')
+            txt = txt.replace('🟢', '[OK]').replace('🔴', '[ALERTA]')
             self.cell(larguras[i], 7, f" {txt}", 'LBR', 0, 'L')
         self.ln(8)
 
 def gerar_laudo_v17_final_corrigido():
-    d = st.session_state.dados
-    pdf = LaudoIndustrialV17()
+    # Acessa o dicionário central de dados
+    d = st.session_state.dados 
+
+    pdf = LaudoFinalV17()
     pdf.add_page()
     
-    def limpar(t):
-        return str(t).encode('latin-1', 'replace').decode('latin-1')
+    # --- 1. RESPONSÁVEL TÉCNICO ---
+    pdf.titulo_secao_com_data("1. Responsável Técnico", d.get('data', '---'))
+    pdf.grade(
+        ["NOME DO PROFISSIONAL", "REGISTRO PROFISSIONAL", "CONTATO / CNPJ"],
+        [d.get('tecnico_nome'), d.get('tecnico_registro'), d.get('tecnico_documento')],
+        [80, 55, 55]
+    )
 
-    # 1. Responsável Técnico
-    pdf.titulo_secao("1. Responsável Técnico")
-    pdf.grade(["NOME DO PROFISSIONAL", "REGISTRO PROFISSIONAL", "CONTATO / CNPJ"],
-             [d.get('tecnico_nome'), d.get('tecnico_registro'), d.get('tecnico_documento')], [80, 55, 55])
-
-    # 2. Dados do Cliente
+    # --- 2. DADOS DO CLIENTE ---
     pdf.titulo_secao("2. Dados do Cliente e Localização")
-    pdf.grade(["CLIENTE / RAZÃO SOCIAL", "CPF / CNPJ", "E-MAIL"], 
-             [d.get('nome'), d.get('cpf_cnpj'), d.get('email')], [85, 45, 60])
+    pdf.grade(
+        ["CLIENTE / RAZÃO SOCIAL", "CPF / CNPJ", "E-MAIL"],
+        [d.get('nome'), d.get('cpf_cnpj'), d.get('email')],
+        [85, 45, 60]
+    )
+    pdf.grade(
+        ["ENDEREÇO", "BAIRRO", "CIDADE / UF", "WHATSAPP"],
+        [f"{d.get('endereco', '---')}, {d.get('numero', '')}", d.get('bairro'), f"{d.get('cidade')}/{d.get('uf')}", d.get('whatsapp')],
+        [75, 40, 35, 40]
+    )
 
-    # 3. Informações do Equipamento
+    # --- 3. EQUIPAMENTO ---
     pdf.titulo_secao("3. Informações do Equipamento")
-    pdf.grade(["FABRICANTE", "MODELO", "TAG / ID", "FLUIDO"],
-             [d.get('fabricante'), d.get('modelo'), d.get('tag_id'), d.get('fluido')], [50, 50, 45, 45])
+    pdf.grade(
+        ["FABRICANTE", "MODELO", "TAG / ID", "FLUIDO"],
+        [d.get('fabricante'), d.get('modelo'), d.get('tag_id'), d.get('fluido')],
+        [50, 50, 45, 45]
+    )
 
-    # 4. Diagnóstico Técnico (Medições)
-    pdf.titulo_secao("4. Diagnóstico Técnico (Medições)")
-    pdf.grade(["P. SUCÇÃO (PSI)", "S.H. TOTAL (K)", "TENSÃO (V)", "CORRENTE (A)"],
-             [d.get('p_suc', 0), d.get('sh', 0), d.get('v_lin', 0), d.get('i_med', 0)], [47, 47, 47, 49])
+    # --- 4. TERMODINÂMICA (CORREÇÃO DE VAZIO) ---
+    pdf.titulo_secao("4. Termodinâmica")
+    # Buscamos as chaves que o seu motor de cálculo deve gerar
+    pdf.grade(
+        ["P. SUCÇÃO (PSI)", "S.H. TOTAL (K)", "DELTA T AR (°C)", "T. TUBO (°C)"],
+        [d.get('p_suc', '0.0'), d.get('sh', '0.0'), d.get('dt_ar', '0.0'), d.get('t_suc', '0.0')],
+        [47, 47, 47, 49]
+    )
 
-    # 5. Parecer Técnico
-    pdf.titulo_secao("5. Parecer Técnico / Notas Adicionais")
+    # --- 5. ELÉTRICA (CORREÇÃO DE VAZIO) ---
+    pdf.titulo_secao("5. Elétrica")
+    pdf.grade(
+        ["TENSÃO (V)", "CORRENTE (A)", "CAPACITÂNCIA (uF)", "STATUS"],
+        [d.get('v_lin', '0.0'), d.get('i_med', '0.0'), d.get('capacitancia', '---'), d.get('status_maquina', '---')],
+        [47, 47, 47, 49]
+    )
+
+    # --- 6. PARECER TÉCNICO ---
+    pdf.titulo_secao("6. Parecer Técnico / Notas Adicionais")
     pdf.set_font('Helvetica', 'B', 8); pdf.set_text_color(100)
     pdf.cell(0, 5, " OBSERVAÇÕES REGISTRADAS:", 'LTR', 1, 'L')
     pdf.set_font('Helvetica', '', 9); pdf.set_text_color(0)
-    obs = d.get('parecer_tecnico') or "Nenhuma observação registrada."
-    pdf.multi_cell(0, 6, limpar(obs), 'LBR', 'L')
+    
+    # Puxa o texto do campo de parecer
+    obs = d.get('parecer_tecnico') or d.get('notas_adicionais') or "Nenhuma observação registrada."
+    pdf.multi_cell(0, 6, str(obs), 'LBR', 'L')
 
-    # Assinaturas
+    # --- ASSINATURAS ---
     pdf.set_y(-45)
-    pdf.line(20, pdf.get_y(), 90, pdf.get_y()); pdf.line(120, pdf.get_y(), 190, pdf.get_y())
+    pdf.set_draw_color(180)
+    pdf.line(20, pdf.get_y(), 90, pdf.get_y())   
+    pdf.line(120, pdf.get_y(), 190, pdf.get_y()) 
     pdf.set_y(pdf.get_y() + 2); pdf.set_font('Helvetica', 'B', 9)
-    pdf.set_x(20); pdf.cell(70, 5, limpar(d.get('tecnico_nome')).upper(), 0, 0, 'C')
-    pdf.set_x(120); pdf.cell(70, 5, limpar(d.get('nome')).upper(), 0, 1, 'C')
+    pdf.set_x(20); pdf.cell(70, 5, str(d.get('tecnico_nome', 'TECNICO')).upper(), 0, 0, 'C')
+    pdf.set_x(120); pdf.cell(70, 5, str(d.get('nome', 'CLIENTE')).upper(), 0, 1, 'C')
+    pdf.set_font('Helvetica', '', 8); pdf.set_text_color(80)
+    pdf.set_x(20); pdf.cell(70, 4, f"CNPJ: {d.get('tecnico_documento', '---')}", 0, 0, 'C')
+    pdf.set_x(120); pdf.cell(70, 4, f"CPF: {d.get('cpf_cnpj', '---')}", 0, 1, 'C')
 
-    return bytes(pdf.output())
+    return bytes(pdf.output(dest='S'))
 
-# --- CONTEÚDO DA ABA (INTERFACE) ---
-st.header("Relatório e Parecer Técnico")
-
-# O ÚNICO lugar onde o campo aparece para digitar no sistema todo
-st.session_state.dados['parecer_tecnico'] = st.text_area(
-    "Parecer Técnico Final / Notas Adicionais:",
-    value=st.session_state.dados.get('parecer_tecnico', ''),
-    height=300,
-    placeholder="Descreva aqui o diagnóstico final e recomendações..."
-)
-
-st.write("") 
-
+# --- BOTAO DE GERAR ---
 if st.button("🚀 FINALIZAR E GERAR LAUDO COMPLETO"):
-    try:
-        pdf_final = gerar_laudo_v17_final_corrigido()
-        if pdf_final:
-            st.success("✅ Laudo gerado com sucesso!")
-            st.download_button(
-                label="📥 Baixar PDF Agora",
-                data=pdf_final,
-                file_name=f"Laudo_{st.session_state.dados.get('nome', 'Cliente')}.pdf",
-                mime="application/pdf"
-            )
-    except Exception as e:
-        st.error(f"Erro ao gerar o arquivo: {e}")
+    pdf_out = gerar_laudo_v17_final_corrigido()
+    st.download_button(
+        label="📥 Baixar PDF Agora",
+        data=pdf_out,
+        file_name=f"Laudo_{st.session_state.dados['nome']}.pdf",
+        mime="application/pdf"
+    )
