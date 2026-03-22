@@ -336,20 +336,20 @@ def renderizar_aba_diagnosticos():
     t_sat_suc = 0.0  
     t_sat_des = 0.0  
     
-    # Cálculos de SH e SC
+    # Cálculos de SH e SC (Usando os dados salvos na sessão)
     sh = st.session_state.dados['ts_v17'] - t_sat_suc
     sc = t_sat_des - st.session_state.dados['tl_v17']
     
-    # Salva os cálculos no estado global
-    st.session_state.dados['sh'] = sh
-    st.session_state.dados['sc'] = sc
+    # Salva os cálculos no estado global para o motor do PDF
+    st.session_state.dados['sh'] = round(sh, 2)
+    st.session_state.dados['sc'] = round(sc, 2)
 
     # --- BLOCO 3: EXIBIÇÃO DE RESULTADOS ---
     st.subheader("2. Resultados Calculados")
     res1, res2 = st.columns(2)
     
     with res1:
-        st.metric(label="Superaquecimento (SH)", value=f"{sh:.1f} K")
+        st.metric(label="Superaquecimento (SH)", value=f"{st.session_state.dados['sh']:.1f} K")
         if 5 <= sh <= 7: 
             st.success("✅ SH dentro do padrão (5K a 7K)")
         elif sh < 5: 
@@ -358,7 +358,7 @@ def renderizar_aba_diagnosticos():
             st.warning("⚠️ SH Alto: Possível falta de fluido ou restrição")
 
     with res2:
-        st.metric(label="Sub-resfriamento (SC)", value=f"{sc:.1f} K")
+        st.metric(label="Sub-resfriamento (SC)", value=f"{st.session_state.dados['sc']:.1f} K")
         if 4 <= sc <= 7: 
             st.success("✅ SC dentro do padrão (4K a 7K)")
         else: 
@@ -368,6 +368,7 @@ def renderizar_aba_diagnosticos():
 
     # --- BLOCO 4: CONCLUSÃO E LAUDO ---
     st.subheader("3. Parecer Técnico Final")
+    # Atualiza o parecer diretamente na chave que o Bloco 5 (PDF) vai ler
     st.session_state.dados['parecer_tecnico'] = st.text_area(
         "Descreva o diagnóstico ou anomalias encontradas:",
         value=st.session_state.dados.get('parecer_tecnico', ''),
