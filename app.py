@@ -489,100 +489,108 @@ def renderizar_aba_diagnosticos():
     )
 
 # ==============================================================================
-# BLOCO 5: RELATÓRIOS E LAUDOS - Sistema Anti-Vazio V17
+# BLOCO 5: RELATÓRIOS E LAUDOS - Versão Final Sincronizada
 # ==============================================================================
 
 import streamlit as st
 from fpdf import FPDF
 from datetime import datetime
 
-class PDF_V17_Final(FPDF):
+class LaudoV17Sincronizado(FPDF):
     def header(self):
+        # Cabeçalho Azul Profissional
         self.set_fill_color(0, 51, 102)
-        self.rect(0, 0, 210, 15, 'F')
-        self.set_font('Arial', 'B', 15); self.set_text_color(255)
-        self.set_y(2); self.cell(0, 10, 'LAUDO TÉCNICO DE PERFORMANCE', 0, 1, 'C')
+        self.rect(0, 0, 210, 18, 'F')
+        self.set_font('Arial', 'B', 14)
+        self.set_text_color(255, 255, 255)
+        self.set_y(4)
+        self.cell(0, 10, 'RELATÓRIO TÉCNICO DE CAMPO - V17', 0, 1, 'C')
         self.ln(10)
 
     def secao(self, titulo):
-        self.ln(2)
-        self.set_fill_color(240, 240, 240)
+        self.set_fill_color(230, 235, 245)
         self.set_text_color(0, 51, 102)
         self.set_font('Arial', 'B', 10)
         self.cell(0, 8, f" {titulo.upper()}", 0, 1, 'L', True)
         self.ln(2)
 
-def gerar_relatorio_v17_com_dados():
-    # --- RESGATE FORÇADO DE DADOS ---
-    # Aqui buscamos os dados que o Streamlit salvou via 'key' em todas as abas
-    
-    # 1. Dados do Cadastro (Ajuste os nomes das keys se forem diferentes no seu código)
-    cliente = st.session_state.get('nome_cliente_input', '---')
-    doc_cliente = st.session_state.get('cpf_cliente_input', '---')
-    endereco = st.session_state.get('endereco_input', '---')
-    
-    # 2. Dados do Equipamento
-    fabricante = st.session_state.get('fabricante_input', '---')
-    modelo = st.session_state.get('modelo_input', '---')
-    fluido = st.session_state.get('fluido_input', 'R410A')
-    
-    # 3. Dados de Performance (Vindo do dicionário 'dados' ou keys diretas)
-    d = st.session_state.get('dados', {})
-    p_suc = d.get('p_suc', 0)
-    t_suc = d.get('t_suc', 0)
-    sh = d.get('sh', 0)
-    dt_ar = d.get('dt_ar', 0)
-    
-    # 4. Dados do Técnico (Sidebar)
-    tecnico = st.session_state.get('nome_tecnico', 'Técnico Responsável')
-    cnpj_tec = st.session_state.get('cnpj_tecnico', '---')
+def gerar_laudo_v17_oficial():
+    # 1. ACESSO AO SEU MOTOR DE SESSÃO
+    # Importante: Usamos st.session_state.dados conforme seu Bloco 2
+    d = st.session_state.dados 
 
-    pdf = PDF_V17_Final()
+    pdf = LaudoV17Sincronizado()
     pdf.add_page()
     
-    # SEÇÃO 1
-    pdf.secao("Identificação")
+    # --- SEÇÃO 1: CLIENTE (USANDO SUAS CHAVES) ---
+    pdf.secao("1. Identificação do Cliente")
     pdf.set_font('Arial', 'B', 9); pdf.set_text_color(100)
-    pdf.cell(100, 5, "CLIENTE:", 0, 0); pdf.cell(90, 5, "CPF/CNPJ:", 0, 1)
+    pdf.cell(100, 5, "NOME / RAZÃO SOCIAL:", 0, 0); pdf.cell(90, 5, "CPF / CNPJ:", 0, 1)
     pdf.set_font('Arial', '', 11); pdf.set_text_color(0)
-    pdf.cell(100, 7, str(cliente), 0, 0); pdf.cell(90, 7, str(doc_cliente), 0, 1)
+    pdf.cell(100, 7, str(d.get('nome', '---')), 0, 0)
+    pdf.cell(90, 7, str(d.get('cpf_cnpj', '---')), 0, 1)
     
-    # SEÇÃO 2
-    pdf.secao("Equipamento")
     pdf.set_font('Arial', 'B', 9); pdf.set_text_color(100)
-    pdf.cell(63, 5, "FABRICANTE:", 0, 0); pdf.cell(63, 5, "MODELO:", 0, 0); pdf.cell(63, 5, "FLUIDO:", 0, 1)
-    pdf.set_font('Arial', '', 11); pdf.set_text_color(0)
-    pdf.cell(63, 7, str(fabricante), 0, 0); pdf.cell(63, 7, str(modelo), 0, 0); pdf.cell(63, 7, str(fluido), 0, 1)
+    pdf.cell(100, 5, "ENDEREÇO:", 0, 0); pdf.cell(90, 5, "WHATSAPP:", 0, 1)
+    pdf.set_font('Arial', '', 10); pdf.set_text_color(0)
+    end_completo = f"{d.get('endereco', '---')}, {d.get('numero', '')}"
+    pdf.cell(100, 7, end_completo, 0, 0)
+    pdf.cell(90, 7, str(d.get('whatsapp', '---')), 0, 1)
+    pdf.ln(5)
 
-    # SEÇÃO 3
-    pdf.secao("Performance")
-    pdf.set_font('Arial', 'B', 10)
-    pdf.cell(45, 8, f"Pressão: {p_suc} PSI", 1, 0, 'C')
-    pdf.cell(45, 8, f"T. Tubo: {t_suc} C", 1, 0, 'C')
-    pdf.cell(45, 8, f"S.H.: {sh} K", 1, 0, 'C')
-    pdf.cell(55, 8, f"Delta T: {dt_ar} C", 1, 1, 'C')
+    # --- SEÇÃO 2: EQUIPAMENTO ---
+    pdf.secao("2. Informações do Equipamento")
+    pdf.set_font('Arial', 'B', 9); pdf.set_text_color(100)
+    pdf.cell(63, 5, "FABRICANTE:", 0, 0); pdf.cell(63, 5, "MODELO:", 0, 0); pdf.cell(63, 5, "TAG / ID:", 0, 1)
+    pdf.set_font('Arial', '', 10); pdf.set_text_color(0)
+    pdf.cell(63, 7, str(d.get('fabricante', '---')), 0, 0)
+    pdf.cell(63, 7, str(d.get('modelo', '---')), 0, 0)
+    pdf.cell(63, 7, str(d.get('tag_id', '---')), 0, 1)
+    
+    pdf.set_font('Arial', 'B', 9); pdf.set_text_color(100)
+    pdf.cell(63, 5, "SÉRIE EVAP:", 0, 0); pdf.cell(63, 5, "SÉRIE COND:", 0, 0); pdf.cell(63, 5, "FLUIDO:", 0, 1)
+    pdf.set_font('Arial', '', 10); pdf.set_text_color(0)
+    pdf.cell(63, 7, str(d.get('serie_evap', '---')), 0, 0)
+    pdf.cell(63, 7, str(d.get('serie_cond', '---')), 0, 0)
+    pdf.cell(63, 7, str(d.get('fluido', '---')), 0, 1)
+    pdf.ln(5)
 
-    # ASSINATURAS
+    # --- SEÇÃO 3: VEREDITO ---
+    pdf.secao("3. Status e Diagnóstico")
+    pdf.set_font('Arial', 'B', 12)
+    pdf.set_text_color(0, 100, 0) # Verde para o status
+    pdf.cell(0, 10, f" SITUAÇÃO ATUAL: {d.get('status_maquina', '---')}", 1, 1, 'C')
+    pdf.ln(5)
+
+    # --- ASSINATURAS (TÉCNICO DO MOTOR DE SESSÃO) ---
     pdf.set_y(-50)
+    pdf.set_draw_color(0, 51, 102)
     pdf.line(20, pdf.get_y()+10, 85, pdf.get_y()+10)
     pdf.line(125, pdf.get_y()+10, 190, pdf.get_y()+10)
-    pdf.set_y(pdf.get_y()+12); pdf.set_font('Arial', 'B', 9)
-    pdf.set_x(20); pdf.cell(65, 4, str(tecnico).upper(), 0, 0, 'C')
-    pdf.set_x(125); pdf.cell(65, 4, str(cliente).upper(), 0, 1, 'C')
+    
+    pdf.set_y(pdf.get_y()+12)
+    pdf.set_font('Arial', 'B', 9); pdf.set_text_color(0)
+    pdf.set_x(20); pdf.cell(65, 4, str(d.get('tecnico_nome', 'MARCOS ALEXANDRE')).upper(), 0, 0, 'C')
+    pdf.set_x(125); pdf.cell(65, 4, str(d.get('nome', 'CLIENTE')).upper(), 0, 1, 'C')
+    
+    pdf.set_font('Arial', '', 8)
+    pdf.set_x(20); pdf.cell(65, 4, f"REGISTRO: {d.get('tecnico_registro', '---')}", 0, 0, 'C')
+    pdf.set_x(125); pdf.cell(65, 4, "ASSINATURA DO CLIENTE", 0, 1, 'C')
 
+    # Retorno seguro em Bytes
     return bytes(pdf.output(dest='S'))
 
-# --- BOTÃO ---
-st.markdown("### 🖨️ Finalização")
-if st.button("🚀 GERAR LAUDO COM DADOS ATUALIZADOS"):
+# --- INTERFACE DE DOWNLOAD ---
+st.markdown("---")
+if st.button("📊 GERAR RELATÓRIO FINAL V17"):
     try:
-        pdf_out = gerar_relatorio_v17_com_dados()
+        pdf_final = gerar_laudo_v17_oficial()
         st.download_button(
-            label="📥 Baixar PDF Agora",
-            data=pdf_out,
-            file_name="Laudo_V17.pdf",
+            label="📥 Baixar Laudo PDF",
+            data=pdf_final,
+            file_name=f"Relatorio_{st.session_state.dados['nome']}.pdf",
             mime="application/pdf"
         )
-        st.success("PDF gerado! Se ainda estiver sem dados, verifique os nomes (keys) das suas abas de entrada.")
+        st.success("Laudo gerado com as informações do sistema!")
     except Exception as e:
-        st.error(f"Erro: {e}")
+        st.error(f"Erro ao capturar dados do motor: {e}")
