@@ -491,52 +491,15 @@ def renderizar_aba_diagnosticos():
 # ==============================================================================
 # BLOCO 5: RELATÓRIOS E LAUDOS - Versão Final Corrigida
 # ==============================================================================
-
-import streamlit as st
-from fpdf import FPDF
-from datetime import datetime
-
-class LaudoFinalV17(FPDF):
-    def header(self):
-        try:
-            self.image("logo.png", 10, 10, 60)
-        except:
-            pass
-        self.set_font('Helvetica', 'B', 26)
-        self.set_text_color(0, 51, 102)
-        self.set_xy(75, 20)
-        self.cell(0, 10, 'LAUDO TÉCNICO', 0, 1, 'L')
-        self.ln(15)
-
-    def titulo_secao_com_data(self, texto, data_visita):
-        self.set_fill_color(230, 230, 230); self.set_text_color(0, 51, 102)
-        self.set_font('Helvetica', 'B', 10)
-        self.cell(130, 7, f" {texto.upper()}", 'LTB', 0, 'L', True)
-        self.cell(60, 7, f"DATA DA VISITA: {data_visita} ", 'RTB', 1, 'R', True)
-
-    def titulo_secao(self, texto):
-        self.set_fill_color(240, 240, 240); self.set_text_color(0, 51, 102)
-        self.set_font('Helvetica', 'B', 10)
-        self.cell(0, 7, f" {texto.upper()}", 1, 1, 'L', True)
-
-    def grade(self, labels, valores, larguras):
-        self.set_font('Helvetica', 'B', 7); self.set_text_color(100)
-        for i, label in enumerate(labels):
-            self.cell(larguras[i], 4, f" {label}", 'LTR', 0, 'L')
-        self.ln()
-        self.set_font('Helvetica', '', 9); self.set_text_color(0)
-        for i, valor in enumerate(valores):
-            txt = str(valor) if valor not in [None, ''] else "---"
-            txt = txt.replace('🟢', '[OK]').replace('🔴', '[ALERTA]')
-            self.cell(larguras[i], 7, f" {txt}", 'LBR', 0, 'L')
-        self.ln(8)
-
-# --- ABA DE RELATÓRIOS (ISOLAMENTO DO BOTÃO E INTERFACE) ---
 elif aba == "Relatórios":
     st.header("Relatório e Parecer Técnico")
     st.markdown("---")
 
-    # Campo de Parecer (Unico lugar onde aparece)
+    # Garante que o dicionário de dados exista para não dar erro de KeyError
+    if 'dados' not in st.session_state:
+        st.session_state.dados = {}
+
+    # Campo de Parecer
     st.session_state.dados['parecer_tecnico'] = st.text_area(
         "Parecer Técnico Final / Notas Adicionais:",
         value=st.session_state.dados.get('parecer_tecnico', ''),
@@ -544,9 +507,10 @@ elif aba == "Relatórios":
         placeholder="Descreva aqui o diagnóstico final e recomendações..."
     )
 
+    # A função deve ser definida antes de ser chamada pelo botão
     def gerar_laudo_v17_final_corrigido():
         d = st.session_state.dados 
-        pdf = LaudoFinalV17()
+        pdf = LaudoFinalV17() # Certifique-se que a classe LaudoFinalV17 está definida acima
         pdf.add_page()
         
         pdf.titulo_secao_com_data("1. Responsável Técnico", d.get('data', '---'))
@@ -562,11 +526,6 @@ elif aba == "Relatórios":
             [d.get('nome'), d.get('cpf_cnpj'), d.get('email')],
             [85, 45, 60]
         )
-        pdf.grade(
-            ["ENDEREÇO", "BAIRRO", "CIDADE / UF", "WHATSAPP"],
-            [f"{d.get('endereco', '---')}, {d.get('numero', '')}", d.get('bairro'), f"{d.get('cidade')}/{d.get('uf')}", d.get('whatsapp')],
-            [75, 40, 35, 40]
-        )
 
         pdf.titulo_secao("3. Informações do Equipamento")
         pdf.grade(
@@ -578,14 +537,14 @@ elif aba == "Relatórios":
         pdf.titulo_secao("4. Termodinâmica")
         pdf.grade(
             ["P. SUCÇÃO (PSI)", "S.H. TOTAL (K)", "DELTA T AR (°C)", "T. TUBO (°C)"],
-            [d.get('p_suc', '0.0'), d.get('sh', '0.0'), d.get('dt_ar', '0.0'), d.get('t_suc', '0.0')],
+            [d.get('ps_v17', '0.0'), d.get('sh', '0.0'), d.get('dt_ar', '0.0'), d.get('ts_v17', '0.0')],
             [47, 47, 47, 49]
         )
 
         pdf.titulo_secao("5. Elétrica")
         pdf.grade(
             ["TENSÃO (V)", "CORRENTE (A)", "CAPACITÂNCIA (uF)", "STATUS"],
-            [d.get('v_lin', '0.0'), d.get('i_med', '0.0'), d.get('capacitancia', '---'), d.get('status_maquina', '---')],
+            [d.get('vl_v17', '0.0'), d.get('im_v17', '0.0'), d.get('cmc_v17', '---'), "OPERACIONAL"],
             [47, 47, 47, 49]
         )
 
@@ -597,22 +556,22 @@ elif aba == "Relatórios":
         obs = d.get('parecer_tecnico') or "Nenhuma observação registrada."
         pdf.multi_cell(0, 6, str(obs), 'LBR', 'L')
 
+        # Rodapé / Assinaturas
         pdf.set_y(-45)
-        pdf.set_draw_color(180)
         pdf.line(20, pdf.get_y(), 90, pdf.get_y())   
         pdf.line(120, pdf.get_y(), 190, pdf.get_y()) 
-        pdf.set_y(pdf.get_y() + 2); pdf.set_font('Helvetica', 'B', 9)
+        pdf.set_y(pdf.get_y() + 2)
         pdf.set_x(20); pdf.cell(70, 5, str(d.get('tecnico_nome', 'TECNICO')).upper(), 0, 0, 'C')
         pdf.set_x(120); pdf.cell(70, 5, str(d.get('nome', 'CLIENTE')).upper(), 0, 1, 'C')
 
         return bytes(pdf.output(dest='S'))
 
-    # --- BOTAO DE GERAR (SOMENTE NESTA ABA) ---
+    # --- BOTÃO DE GERAR (SOMENTE NESTA ABA) ---
     st.write("")
     if st.button("🚀 FINALIZAR E GERAR LAUDO COMPLETO", use_container_width=True):
         try:
             pdf_out = gerar_laudo_v17_final_corrigido()
-            st.success("Laudo preparado!")
+            st.success("✅ Laudo preparado com sucesso!")
             st.download_button(
                 label="📥 Baixar PDF Agora",
                 data=pdf_out,
@@ -621,4 +580,4 @@ elif aba == "Relatórios":
                 use_container_width=True
             )
         except Exception as e:
-            st.error(f"Erro ao gerar: {e}")
+            st.error(f"Erro ao gerar o arquivo: {e}")
