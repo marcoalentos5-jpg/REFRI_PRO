@@ -655,16 +655,28 @@ if st.button("🚀 FINALIZAR E GERAR LAUDO COMPLETO"):
     pdf.set_x(20); pdf.cell(70, 4, f"DOC: {d.get('tecnico_documento', '---')}", 0, 0, 'C')
     pdf.set_x(120); pdf.cell(70, 4, f"DOC: {d.get('cpf_cnpj', '---')}", 0, 1, 'C')
 
- # --- BLOCO FINAL CORRIGIDO ---
+ def gerar_laudo_v17(dados):
+    # ... (todo o código anterior de criação do PDF) ...
+    
+    # --- BLOCO FINAL CORRIGIDO (O "CANO" MESTRE) ---
     try:
+        # 1. Tenta gerar o PDF no modo padrão
         pdf_output = pdf.output()
+        
+        # 2. Se o PDF vier como texto (string), converte para binário (latin-1)
         if isinstance(pdf_output, str):
             return pdf_output.encode('latin-1', 'replace')
+        
+        # 3. Se já for binário, entrega direto
         return pdf_output
+        
     except Exception as e:
+        # SIMULAÇÃO DE FALHA: Se o modo acima falhar (versão antiga da biblioteca)
         try:
+            # Tenta o modo 'S' (String/Stream) que era comum antigamente
             return pdf.output(dest='S').encode('latin-1', 'replace')
         except:
+            # Última tentativa: entrega o que sair
             return pdf.output()
 # --- FIM DA FUNÇÃO: O CÓDIGO ABAIXO VOLTA PARA A MARGEM ESQUERDA ---
 
