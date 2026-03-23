@@ -659,7 +659,6 @@ if st.button("🚀 FINALIZAR E GERAR LAUDO COMPLETO"):
     try:
         pdf_output = pdf.output() 
         if isinstance(pdf_output, str):
-            # Este return precisa de um recuo a mais por causa do 'if'
             return pdf_output.encode('latin-1', 'replace')
         
         # Este return volta para a coluna do 'if'
