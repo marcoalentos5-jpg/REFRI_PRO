@@ -655,7 +655,7 @@ if st.button("🚀 FINALIZAR E GERAR LAUDO COMPLETO"):
     pdf.set_x(20); pdf.cell(70, 4, f"DOC: {d.get('tecnico_documento', '---')}", 0, 0, 'C')
     pdf.set_x(120); pdf.cell(70, 4, f"DOC: {d.get('cpf_cnpj', '---')}", 0, 1, 'C')
 
- def gerar_laudo_v17(dados):
+    def gerar_laudo_v17(dados):
     # ... (todo o código anterior de criação do PDF) ...
     
     def gerar_laudo_v17(dados):
