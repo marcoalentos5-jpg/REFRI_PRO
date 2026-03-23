@@ -655,18 +655,24 @@ if st.button("🚀 FINALIZAR E GERAR LAUDO COMPLETO"):
     pdf.set_x(20); pdf.cell(70, 4, f"DOC: {d.get('tecnico_documento', '---')}", 0, 0, 'C')
     pdf.set_x(120); pdf.cell(70, 4, f"DOC: {d.get('cpf_cnpj', '---')}", 0, 1, 'C')
 
-   # --- FINAL DA FUNÇÃO (ESTE BLOCO DEVE ESTAR INDENTADO/PARA DENTRO) ---
+  # --- FINAL DA FUNÇÃO (ESTE BLOCO DEVE ESTAR INDENTADO/PARA DENTRO) ---
     try:
         pdf_output = pdf.output() 
         if isinstance(pdf_output, str):
-        return pdf_output.encode('latin-1', 'replace')
+            # Este return precisa de um recuo a mais por causa do 'if'
+            return pdf_output.encode('latin-1', 'replace')
+        
+        # Este return volta para a coluna do 'if'
         return pdf_output
+
     except Exception as e:
         # Se o modo novo falhar, tenta o modo antigo (S = string/stream)
         try:
-        return pdf.output(dest='S').encode('latin-1', 'replace')
+            # Este return precisa de um recuo por causa do 'try'
+            return pdf.output(dest='S').encode('latin-1', 'replace')
         except:
-         return pdf.output()
+            # Este return precisa de um recuo por causa do 'except'
+            return pdf.output()
 
 # --- FIM DA FUNÇÃO: O CÓDIGO ABAIXO VOLTA PARA A MARGEM ESQUERDA ---
 
