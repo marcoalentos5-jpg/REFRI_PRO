@@ -658,10 +658,7 @@ if st.button("🚀 FINALIZAR E GERAR LAUDO COMPLETO"):
   # --- FINAL DA FUNÇÃO (ESTE BLOCO DEVE ESTAR INDENTADO/PARA DENTRO) ---
     try:
         pdf_output = pdf.output() 
-        if isinstance(pdf_output, str):
-        return pdf_output.encode('latin-1', 'replace')
-        
-        # Este return volta para a coluna do 'if'
+        if isinstance(pdf_output, str): return pdf_output.encode('latin-1', 'replace')
         return pdf_output
 
     except Exception as e:
