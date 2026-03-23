@@ -658,6 +658,9 @@ if st.button("🚀 FINALIZAR E GERAR LAUDO COMPLETO"):
  def gerar_laudo_v17(dados):
     # ... (todo o código anterior de criação do PDF) ...
     
+    def gerar_laudo_v17(dados):
+    # ... (todo o código anterior de criação do PDF) ...
+    
     # --- BLOCO FINAL CORRIGIDO (O "CANO" MESTRE) ---
     try:
         # 1. Tenta gerar o PDF no modo padrão
@@ -678,21 +681,6 @@ if st.button("🚀 FINALIZAR E GERAR LAUDO COMPLETO"):
         except:
             # Última tentativa: entrega o que sair
             return pdf.output()
-# --- FIM DA FUNÇÃO: O CÓDIGO ABAIXO VOLTA PARA A MARGEM ESQUERDA ---
-
-if st.button("🚀 FINALIZAR E GERAR LAUDO COMPLETO", use_container_width=True):
-    try:
-        pdf_out = gerar_laudo_v17_final_corrigido()
-        st.success("✅ Laudo gerado com sucesso!")
-        st.download_button(
-            label="📥 Baixar PDF Agora",
-            data=pdf_out,
-            file_name=f"Laudo_{st.session_state.dados.get('nome', 'Cliente')}.pdf",
-            mime="application/pdf",
-            use_container_width=True
-        )
-    except Exception as e:
-        st.error(f"Erro ao processar o PDF: {e}")
 
 # ==============================================================================
 # BOTAO DE GERAR (DEVE ESTAR DENTRO DA ABA DE RELATÓRIOS)
