@@ -659,14 +659,14 @@ if st.button("🚀 FINALIZAR E GERAR LAUDO COMPLETO"):
     try:
         pdf_output = pdf.output() 
         if isinstance(pdf_output, str):
-            return pdf_output.encode('latin-1', 'replace')
+        return pdf_output.encode('latin-1', 'replace')
         return pdf_output
     except Exception as e:
         # Se o modo novo falhar, tenta o modo antigo (S = string/stream)
         try:
-            return pdf.output(dest='S').encode('latin-1', 'replace')
+        return pdf.output(dest='S').encode('latin-1', 'replace')
         except:
-            return pdf.output()
+         return pdf.output()
 
 # --- FIM DA FUNÇÃO: O CÓDIGO ABAIXO VOLTA PARA A MARGEM ESQUERDA ---
 
