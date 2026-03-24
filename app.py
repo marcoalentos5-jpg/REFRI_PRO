@@ -70,46 +70,49 @@ if 'dados' not in st.session_state:
         'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
         'status_maquina': '🟢 Operacional'
     }
-    # ===== FLUIDO GLOBAL =====
-LISTA_FLUIDOS = ["R-22", "R-410A", "R-32", "R-134a"]
+  # ==============================================================================
+# 1. CONFIGURAÇÕES INICIAIS E MEMÓRIA
+# ==============================================================================
 
+# A lista deve vir primeiro que tudo
+LISTA_FLUIDOS = ["R-22", "R-410A", "R-32", "R-134a", "R-404A", "R-600a"]
+
+# PRIMEIRO: Garante que o dicionário 'dados' existe
+if 'dados' not in st.session_state:
+    st.session_state.dados = {
+        'fluido': 'R-410A',
+        'endereco': '',
+        'bairro': '',
+        'cidade': '',
+        'uf': '',
+        'complemento': '' # Isso mata o erro de 'KeyError'
+    }
+
+# SEGUNDO: Sincroniza o fluido na memória
 if 'fluido' not in st.session_state:
     st.session_state.fluido = st.session_state.dados.get('fluido', 'R-410A')
 
-st.selectbox(
-    "Fluido Refrigerante:",
-    LISTA_FLUIDOS,
-    key="fluido"
-)
-
-# sincroniza
-st.session_state.dados['fluido'] = st.session_state.fluido
-
+# TERCEIRO: Função do CEP (Mantenha como está)
 def buscar_cep(cep):
     cep_limpo = "".join(filter(str.isdigit, cep))
-
     if len(cep_limpo) == 8:
         try:
+            import requests # Garanta que o import está no topo do arquivo
             r = requests.get(f"https://viacep.com.br/ws/{cep_limpo}/json/")
-            
             if r.status_code == 200:
                 d = r.json()
-
                 if "erro" not in d:
                     st.session_state.dados['endereco'] = d.get('logradouro', '')
                     st.session_state.dados['bairro'] = d.get('bairro', '')
                     st.session_state.dados['cidade'] = d.get('localidade', '')
                     st.session_state.dados['uf'] = d.get('uf', '')
-
                     return True
-
         except Exception as e:
-            print(e)  # ajuda debug (não quebra app)
-
+            print(f"Erro no CEP: {e}")
     return False
 
 # ==============================================================================
-# 1. FUNÇÃO DA ABA 1: Identificação e Equipamento (VERSÃO COM LAYOUT E MÁSCARAS)
+# 1A. FUNÇÃO DA ABA 1: Identificação e Equipamento (VERSÃO COM LAYOUT E MÁSCARAS)
 # ==============================================================================
 def renderizar_aba_1():
     tabs = st.tabs(["📋 Identificação e Equipamento"])
@@ -154,90 +157,52 @@ def renderizar_aba_1():
             # UF com limite de 2 caracteres e alinhado na mesma linha
             st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'], max_chars=2, key="cli_uf_v2")
 
-            # --- SEÇÃO EQUIPAMENTO ---
-        col_titulo, col_data = st.columns([3, 1])
-        with col_titulo: 
-            st.subheader("⚙️ Especificações do Equipamento")
-        with col_data: 
-            st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'])
+# ==============================================================================
+# 1B. FUNÇÃO DA ABA 1: Identificação e Equipamento
+# ==============================================================================
 
-        with st.expander("Detalhes Técnicos do Ativo", expanded=True):
-            e1, e2, e3 = st.columns(3)
+def renderizar_aba_1():
+    # --- SEÇÃO EQUIPAMENTO ---
+    col_titulo, col_data = st.columns([3, 1])
+    with col_titulo: 
+        st.subheader("⚙️ Especificações do Equipamento")
+    with col_data: 
+        st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados.get('data', ''))
+
+    with st.expander("Detalhes Técnicos do Ativo", expanded=True):
+        e1, e2, e3 = st.columns(3)
+        
+        with e1:
+            fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
+            fab_val = st.session_state.dados.get('fabricante', 'Carrier')
+            fab_idx = fab_list.index(fab_val) if fab_val in fab_list else 0
             
-            with e1:
-                fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
-                fab_val = st.session_state.dados.get('fabricante', 'Carrier')
-                fab_idx = fab_list.index(fab_val) if fab_val in fab_list else 0
-                st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx)
-                st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados['modelo'])
-                st.session_state.dados['linha'] = st.selectbox("Linha:", ["Residencial", "Comercial", "Industrial"], index=0)
-                st.session_state.dados['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], horizontal=True)
+            st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx, key="fab_v1b")
+            st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados.get('modelo', ''), key="mod_v1b")
+            st.session_state.dados['linha'] = st.selectbox("Linha:", ["Residencial", "Comercial", "Industrial"], key="lin_v1b")
 
-            with e2:
-                st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados['serie_evap'])
-                st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND)", value=st.session_state.dados['serie_cond'])
-                st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'])
-                st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
+        with e2:
+            st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados.get('serie_evap', ''), key="se_v1b")
+            st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND)", value=st.session_state.dados.get('serie_cond', ''), key="sc_v1b")
+            st.session_state.dados['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], horizontal=True, key="stat_v1b")
 
-            with st.expander("Detalhes Técnicos do Ativo", expanded=True):
-                e1, e2, e3 = st.columns(3)
-            
-            with e1:
-                fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
-                fab_val = st.session_state.dados.get('fabricante', 'Carrier')
-                fab_idx = fab_list.index(fab_val) if fab_val in fab_list else 0
-                st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx, key="fab_v17")
-                st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados['modelo'], key="mod_v17")
-                st.session_state.dados['linha'] = st.selectbox("Linha:", ["Residencial", "Comercial", "Industrial"], index=0, key="lin_v17")
-                st.session_state.dados['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], horizontal=True, key="stat_v17")
+        with e3:
+            st.session_state.dados['capacidade'] = st.selectbox(
+                "Capacidade (BTU):",
+                ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"],
+                key="cap_v1b"
+            )
+            st.session_state.dados['tipo_servico'] = st.selectbox(
+                "Tipo de Serviço:",
+                ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"],
+                key="ts_v1b"
+            )
+            st.session_state.dados['tag_id'] = st.text_input("TAG/Ativo:", value=st.session_state.dados.get('tag_id', ''), key="tag_v1b")
 
-            with e2:
-                st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados['serie_evap'], key="se_v17")
-                st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND)", value=st.session_state.dados['serie_cond'], key="sc_v17")
-                st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'], key="le_v17")
-                st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'], key="lc_v17")
-
-            if 'dados' not in st.session_state:
-                st.session_state.dados = {}
-            
-            with e3:
-                st.session_state.dados['capacidade'] = st.selectbox(
-        "Capacidade:",
-        ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"],
-        index=1,
-        key="cap_v17"
-    )
-
-    st.session_state.dados['tipo_servico'] = st.selectbox(
-        "Tipo de Serviço:",
-        ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"],
-        index=0,
-        key="ts_v17"
-    )
-
-    st.session_state.dados['tag_id'] = st.text_input(
-        "TAG:",
-        value=st.session_state.dados.get('tag_id', ''),
-        key="tag_v17"
-    )
-
-    # 👇 apenas leitura (SEM selectbox)
-    fluido = st.session_state.get('fluido', 'R-410A')
-    st.info(f"Fluido selecionado: {fluido}")
-
-    st.session_state.dados['tipo_servico'] = st.selectbox(
-        "Tipo de Serviço:",
-        ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"],
-        index=0,
-        key="ts_v17"
-    )
-
-    st.session_state.dados['tag_id'] = st.text_input(
-        "TAG:",
-        value=st.session_state.dados.get('tag_id', ''),
-        key="tag_v17"
-    )
-    fluido = st.session_state.get('fluido')
+    
+   # Exibe o fluido que foi definido globalmente (apenas leitura)
+    fluido_sel = st.session_state.dados.get('fluido', 'R-410A')
+    st.info(f"❄️ **Fluido do Sistema:** {fluido_sel}")
 
     if not fluido:
            fluido = "R-410A"
@@ -262,6 +227,7 @@ def renderizar_aba_1():
     # Apenas exibe o fluido global (não cria outro selectbox)
     fluido = st.session_state.get('fluido', 'R-410A')
     st.info(f"Fluido selecionado: {fluido}")
+    
     # 3. O Selectbox usando 'idx_padrao'
     st.session_state.dados['fluido'] = st.selectbox(
                     "Fluido:", 
@@ -300,59 +266,76 @@ def renderizar_aba_1():
                     key="sel_cap_aba1_v11"
                 )
                 
-   # EXEMPLO COMPLETO CORRETO
+   # --- EXEMPLO CORRIGIDO PARA A MPN SOLUÇÕES ---
 
 e1, e2, e3 = st.columns(3)
 
 with e1:
+    # 1. TIPO DE SERVIÇO
     st.session_state.dados['tipo_servico'] = st.selectbox(
         "Tipo de Serviço:", 
         ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], 
         index=0,
-        key="sel_serv_aba1_v11"
+        key="sel_serv_aba1_v11" # CHAVE ÚNICA
     )
 
 with e2:
-    # (outros campos aqui se tiver)
-    pass
-
-with e3:
-    # 5. TAG
-    st.session_state.dados['tag_id'] = st.text_input(
-        "TAG:", 
-        value=st.session_state.dados.get('tag_id', ''),
-        key="input_tag_aba1_v11"
+    # 2. CAPACIDADE
+    st.session_state.dados['capacidade'] = st.selectbox(
+        "Capacidade (BTU):",
+        ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"],
+        index=1,
+        key="sel_cap_aba1_v11" # CHAVE ÚNICA
     )
 
-    # 👇 FLUIDO (SÓ EXIBE)
-    fluido = st.session_state.get('fluido', 'R-410A')
-    st.info(f"Fluido selecionado: {fluido}")
+with e3:
+    # 3. TAG
+    st.session_state.dados['tag_id'] = st.text_input(
+        "TAG/Ativo:", 
+        value=st.session_state.dados.get('tag_id', ''),
+        key="input_tag_aba1_v11" # CHAVE ÚNICA
+    )
+
+    # 4. EXIBIÇÃO DO FLUIDO (Apenas informativo, sem criar outro seletor)
+    
+    fluido_atual = st.session_state.get('fluido', 'R-410A')
+    st.info(f"❄️ Fluido: {fluido_atual}")
+
+# --- FIM DO BLOCO (NÃO REPITA OS CAMPOS ABAIXO DAQUI) ---
+
+# O 'def' deve ter ZERO espaços na frente
+def renderizar_aba_1():
+    # Tudo aqui dentro deve ter 4 espaços (1 TAB)
+    # ... código anterior da aba ...
 
     st.session_state.dados['capacidade'] = st.selectbox(
-        "Capacidade:",
+        "Capacidade (BTU):",
         ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"],
-        index=1
+        index=1,
+        key="cap_final_v1" 
     )
 
     st.session_state.dados['tipo_servico'] = st.selectbox(
         "Tipo de Serviço:",
         ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"],
-        index=0
+        index=0,
+        key="servico_final_v1" 
     )
 
     st.session_state.dados['tag_id'] = st.text_input(
-        "TAG:",
-        value=st.session_state.dados.get('tag_id', '')
+        "TAG/Ativo:",
+        value=st.session_state.dados.get('tag_id', ''),
+        key="tag_final_v1" 
     )
-    
+
+# ===== FLUIDO GLOBAL =====
+# Este bloco deve ficar FORA e ACIMA de todas as funções def
    # ===== FLUIDO GLOBAL =====
 if 'dados' not in st.session_state:
     st.session_state.dados = {}
-# Na linha 364, use assim para salvar o dado corretamente:
 st.session_state.dados['fluido'] = st.selectbox(
     "Fluido Refrigerante:",
-    LISTA_FLUIDOS,
-    # Faz o seletor começar no fluido que já estava salvo
+    LISTA_FLUIDOS,    
     index=LISTA_FLUIDOS.index(st.session_state.dados.get('fluido', 'R-410A')),
     key="fluido_inspecao_v24"
 )
@@ -371,13 +354,7 @@ def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
     
     # ESTE BLOCO (370-374) DEVE ESTAR AQUI DENTRO (com 4 espaços de recuo)
-    st.selectbox(
-        "Fluido Refrigerante:",
-        LISTA_FLUIDOS,
-        key="fluido_inspecao_v25", # Mudei para v25 para limpar o erro anterior
-        index=0
-    )
-
+   
 # ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO FINAL CORRIGIDA)
 # ==============================================================================
