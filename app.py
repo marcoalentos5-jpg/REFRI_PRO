@@ -650,7 +650,6 @@ elif aba_selecionada == "Relatórios":
     st.header("📊 Página de Relatórios")
     st.write("Em breve...")
 
-# LINHA 665: Ela deve estar EXATAMENTE debaixo do "elif" acima
 if aba_selecionada == "Home":
     st.markdown("<br>", unsafe_allow_html=True)
     # Tudo aqui dentro tem 4 espaços de recuo
@@ -671,8 +670,7 @@ if aba_selecionada == "Home":
     
     st.markdown("<br><br>", unsafe_allow_html=True) 
 
-    # ESTA É A LINHA 665 CORRIGIDA (Alinhada com o st.markdown de cima)
-    st.markdown("""
+        st.markdown("""
         <div style="text-align: center;">
             <h1 style="color: #0d47a1; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
                 MPN Soluções
@@ -694,11 +692,26 @@ if aba_selecionada == "Home":
 # LÓGICA DE NAVEGAÇÃO (SUBSTITUA O FINAL DO ARQUIVO POR ISSO)
 # =============================================================
 
+def renderizar_aba_home():
+    st.title("❄️ MPN Soluções - Sistema REFRI_PRO")
+    st.subheader("Bem-vindo ao seu Assistente Técnico Digital")
+    
+    st.markdown("""
+    ---
+    ### 🚀 Como usar o sistema:
+    1. **Selecione o Fluido** no topo da página (Configuração Global).
+    2. Vá na aba **1. Cadastro** para identificar o cliente e o equipamento.
+    3. Use a aba **2. Diagnósticos** para inserir pressões e temperaturas.
+    4. Gere o seu **Relatório Técnico em PDF** com um clique!
+    ---
+    """)
+    st.info("Utilize o menu lateral para navegar entre as etapas do serviço.")
+
 # Certifique-se de que 'aba_selecionada' é a variável do seu st.sidebar.radio
 # --- LOGICA DE NAVEGAÇÃO FINAL ---
 
 if aba_selecionada == "Home":
-    renderizar_aba_home()  # AQUI É A LINHA 722 CORRIGIDA
+    renderizar_aba_home() 
 
 elif aba_selecionada == "1. Cadastro":
     renderizar_aba_1()
