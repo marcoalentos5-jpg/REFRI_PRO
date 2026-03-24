@@ -21,16 +21,39 @@ FLUIDOS_INFO = {
     "R-600a": {"tipo": "HC", "inflamavel": True, "pressao": "baixa"}
 }
 
-# 3. INICIALIZAÇÃO DO ESTADO
+# ==============================================================================
+# 3. CONFIGURAÇÕES VISUAIS E ESTILO (CSS)
+# ==============================================================================
 
-div.stLinkButton > a {
+st.markdown(
+    """
+    <style>
+    /* Estilo para o botão do WhatsApp */
+    div.stLinkButton > a {
         background-color: #25D366 !important;
         color: white !important;
         font-weight: bold;
         border-radius: 8px !important;
-   
+    }
+
+    /* Estilo para o arredondamento do App */
+    .stApp {
+        border-radius: 8px !important;
+    }
     </style>
-""", unsafe_allow_html=True)
+    """, 
+    unsafe_allow_html=True
+)
+
+# --- INICIALIZAÇÃO DO ESTADO (SESSION STATE) ---
+if 'dados' not in st.session_state:
+    st.session_state.dados = {
+        'fluido': 'R-410A',
+        'fabricante': 'Carrier',
+        'modelo': '',
+        'tag_id': 'TAG-01',
+        'data': datetime.now().strftime("%d/%m/%Y")
+    }
 
 # 2. MOTOR DE SESSÃO (BLINDADO)
 if 'dados' not in st.session_state:
