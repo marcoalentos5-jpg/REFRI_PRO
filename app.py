@@ -28,7 +28,7 @@ FLUIDOS_INFO = {
         color: white !important;
         font-weight: bold;
         border-radius: 8px !important;
-    }
+   
     </style>
 """, unsafe_allow_html=True)
 
