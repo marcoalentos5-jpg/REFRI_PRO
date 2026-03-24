@@ -158,13 +158,18 @@ def renderizar_aba_1():
 # ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO FINAL BLINDADA - R32/RLA/ΔT)
 # ==============================================================================
+
+   # --- LINHA 164 CORRIGIDA ---
 def renderizar_aba_diagnosticos():
+    c = st.session_state.count  # O código DEVE começar na linha de baixo com 4 espaços
+    
     st.header("🔍 Central de Diagnóstico Técnico")
     
-   
     # Resgate do Fluido da Aba 1 (Sincronizado)
     fluido = st.session_state.dados.get('fluido', 'R410A')
     st.info(f"❄️ Fluido Refrigerante Selecionado: **{fluido}**")
+    
+    # ... restante do código da função mantendo o mesmo recuo ...
     
     # --- CSS PARA ALERTAS TÉCNICOS (CONGELADO) ---
     st.markdown("""
