@@ -22,27 +22,7 @@ FLUIDOS_INFO = {
 }
 
 # 3. INICIALIZAÇÃO DO ESTADO
-if 'dados' not in st.session_state:
-    st.session_state.dados = {
-        'fluido': 'R-410A',
-        'fabricante': 'Carrier',
-        'modelo': '',
-        'tag_id': 'TAG-01',
-        'data': datetime.now().strftime("%d/%m/%Y")
-    }
 
-# 1. CONFIGURAÇÃO INICIAL (TESTADA)
-st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
-
-# CSS: Estilização (CONGELADO)
-st.markdown("""
-    <style>
-    .stTextInput>div>div>input[aria-label="Data da Visita:"] {
-        background-color: #e0f2f1 !important;
-        color: #004d40 !important;
-        font-weight: bold;
-        border: 1px solid #b2dfdb !important;
-    }
     div.stLinkButton > a {
         background-color: #25D366 !important;
         color: white !important;
