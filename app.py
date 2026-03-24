@@ -196,15 +196,30 @@ def renderizar_aba_1():
             if 'dados' not in st.session_state:
                 st.session_state.dados = {}
             
-           with e3:
-    # NÃO CRIA selectbox de fluido aqui
-
+          with e3:
     st.session_state.dados['capacidade'] = st.selectbox(
         "Capacidade:",
         ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"],
         index=1,
         key="cap_v17"
     )
+
+    st.session_state.dados['tipo_servico'] = st.selectbox(
+        "Tipo de Serviço:",
+        ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"],
+        index=0,
+        key="ts_v17"
+    )
+
+    st.session_state.dados['tag_id'] = st.text_input(
+        "TAG:",
+        value=st.session_state.dados.get('tag_id', ''),
+        key="tag_v17"
+    )
+
+    # 👇 apenas leitura (SEM selectbox)
+    fluido = st.session_state.get('fluido', 'R-410A')
+    st.info(f"Fluido selecionado: {fluido}")
 
     st.session_state.dados['tipo_servico'] = st.selectbox(
         "Tipo de Serviço:",
