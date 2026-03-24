@@ -662,7 +662,7 @@ if aba_selecionada == "Home":
 
     st.markdown("<br><br>", unsafe_allow_html=True) 
 
-    st.markdown("""
+   st.markdown("""
         <div style="text-align: center;">
             <h1 style="color: #0d47a1; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
                 MPN Soluções
@@ -671,10 +671,10 @@ if aba_selecionada == "Home":
                 Soluções em Refrigeração e Climatização
             </p>
             <hr style="border: 1px solid #90caf9; width: 60%; margin: 20px auto;">
-            
+            <p style="color: #455a64; font-size: 1.1em; font-weight: bold;">
                 Bem-vindo ao Sistema HVAC Pro de Gestão Inteligente.
             </p>
-            
+            <p style="color: #546e7a; font-size: 1.0em;">
                 Selecione uma opção no Painel de Controle lateral para iniciar sua inspeção ou diagnóstico.
             </p>
         </div>
