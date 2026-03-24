@@ -1,14 +1,15 @@
 
 # ==============================================================================
-# 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES (CORRIGIDO)
+# 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES (VERSÃO FINAL)
 # ==============================================================================
 import streamlit as st
 from datetime import datetime
 import os
 
-# 1. LISTA GLOBAL ÚNICA E DICIONÁRIO TÉCNICO
+# 1. LISTA GLOBAL ÚNICA
 LISTA_FLUIDOS = sorted(["R-22", "R-32", "R-134a", "R-290", "R-404A", "R-407A", "R-410A", "R-600a"])
 
+# 2. DICIONÁRIO TÉCNICO PARA CONSULTA
 FLUIDOS_INFO = {
     "R-22": {"tipo": "HCFC", "pressao": "média"},
     "R-32": {"tipo": "HFC", "pressao": "alta"},
@@ -20,23 +21,15 @@ FLUIDOS_INFO = {
     "R-600a": {"tipo": "HC", "inflamavel": True, "pressao": "baixa"}
 }
 
-# 2. INICIALIZAÇÃO DO ESTADO (SESSION STATE)
+# 3. INICIALIZAÇÃO DO ESTADO
 if 'dados' not in st.session_state:
     st.session_state.dados = {
         'fluido': 'R-410A',
+        'fabricante': 'Carrier',
         'modelo': '',
         'tag_id': 'TAG-01',
-        'fabricante': 'Carrier',
-        'serie_evap': '',
-        'serie_cond': '',
-        'linha': 'Residencial',
-        'status_maquina': '🟢 Operacional',
         'data': datetime.now().strftime("%d/%m/%Y")
     }
-
-# --- REMOVI O st.write(info) DAQUI ---
-# O info só deve ser usado dentro da Aba de Diagnósticos, 
-# onde o fluido já foi selecionado pelo usuário.
 
 # 1. CONFIGURAÇÃO INICIAL (TESTADA)
 st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
