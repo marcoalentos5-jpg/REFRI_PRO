@@ -1,3 +1,23 @@
+
+# ===== FLUIDO GLOBAL =====
+if 'dados' not in st.session_state:
+    st.session_state.dados = {}
+
+if 'fluido' not in st.session_state:
+    st.session_state.fluido = "R-410A"
+
+LISTA_FLUIDOS = ["R-22", "R-410A", "R-32", "R-134a"]
+
+st.selectbox(
+    "Fluido Refrigerante:",
+    LISTA_FLUIDOS,
+    key="fluido"
+)
+
+st.session_state.dados['fluido'] = st.session_state.fluido
+# sincroniza com seu dicionário
+st.session_state.dados['fluido'] = st.session_state.fluido
+
 # ==============================================================================
 # 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES (CONGELADO)
 # ==============================================================================
@@ -39,7 +59,7 @@ if 'dados' not in st.session_state:
         'data': datetime.now().strftime("%d/%m/%Y"),
         'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '', 'complemento': '',
         'fabricante': 'Carrier', 'modelo': '', 'capacidade': '12.000', 'linha': 'Residencial',
-        'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '',
+        'serie_evap': '', 'serie_cond':, 'local_evap': '',
         'tipo_servico': 'Manutenção Preventiva', 'tag_id': 'TAG-01',
         'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
         'status_maquina': '🟢 Operacional'
@@ -152,21 +172,37 @@ def renderizar_aba_1():
                 st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'], key="lc_v17")
 
             with e3:
-                # O 'w' de 'with e3' PRECISA estar exatamente abaixo do 'w' de 'with e2'
-                f_salvo = st.session_state.dados.get('fluido', 'R410A')
-                idx_f = LISTA_FLUIDOS.index(f_salvo) if f_salvo in LISTA_FLUIDOS else 0
-                
-                st.session_state.dados['fluido'] = st.selectbox("Fluido:", LISTA_FLUIDOS, index=idx_f, key="fl_v17")
-                st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], index=1, key="cap_v17")
-                st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0, key="ts_v17")
-                st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'], key="tag_v17")
-                
+    # NÃO CRIA selectbox de fluido aqui
+
+    st.session_state.dados['capacidade'] = st.selectbox(
+        "Capacidade:",
+        ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"],
+        index=1,
+        key="cap_v17"
+    )
+
+    st.session_state.dados['tipo_servico'] = st.selectbox(
+        "Tipo de Serviço:",
+        ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"],
+        index=0,
+        key="ts_v17"
+    )
+
+    st.session_state.dados['tag_id'] = st.text_input(
+        "TAG:",
+        value=st.session_state.dados.get('tag_id', ''),
+        key="tag_v17"
+    )
+
+    # Apenas exibe o fluido global (não cria outro selectbox)
+    fluido = st.session_state.get('fluido', 'R-410A')
+    st.info(f"Fluido selecionado: {fluido}")
                 # 3. O Selectbox usando 'idx_padrao'
                 st.session_state.dados['fluido'] = st.selectbox(
                     "Fluido:", 
                     LISTA_FLUIDOS, 
         index=0,
-                    key="sel_fluido_final_v12"
+                    
                 )
                 
                 # Campos seguintes (com keys únicas para não dar erro de Duplicate ID)
@@ -224,7 +260,7 @@ def renderizar_aba_1():
                 "Fluido:", 
                 LISTA_FLUIDOS, 
                 index=idx_f,
-                key="sel_fluido_final_v8"
+                
             )
             
             # --- Continue com os outros campos abaixo ---
