@@ -10,6 +10,46 @@ import os
 
 st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
 
+import streamlit as st
+from datetime import datetime
+import requests
+import urllib.parse
+import os
+
+st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
+
+# LISTA MESTRA GLOBAL (Evita NameError e garante consistência de índices)
+LISTA_FLUIDOS = ["R410A", "R134a", "R22", "R32", "R290", R407C]
+
+if 'dados' not in st.session_state:
+    st.session_state.dados = {
+        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
+        'data': datetime.now().strftime("%d/%m/%Y"),
+        'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '', 'complemento': '',
+        'fabricante': 'Carrier', 'modelo': '', 'capacidade': '12.000', 'linha': 'Residencial',
+        'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '',
+        'tipo_servico': 'Manutenção Preventiva', 'tag_id': 'TAG-01',
+        'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
+        'status_maquina': '🟢 Operacional'
+    }
+
+def buscar_cep(cep):
+    cep_limpo = "".join(filter(str.isdigit, str(cep)))
+    if len(cep_limpo) == 8:
+        try:
+            r = requests.get(f"https://viacep.com.br/ws/{cep_limpo}/json/", timeout=5)
+            if r.status_code == 200:
+                d = r.json()
+                if "erro" not in d:
+                    # Atualização direta na memória
+                    st.session_state.dados['endereco'] = d.get('logradouro', '')
+                    st.session_state.dados['bairro'] = d.get('bairro', '')
+                    st.session_state.dados['cidade'] = d.get('localidade', '')
+                    st.session_state.dados['uf'] = d.get('uf', '')
+                    return True
+        except: pass
+    return False
+
 # LISTA MESTRA DE FLUIDOS (Definida no topo para evitar erro de referência)
 # ... (suas importações)
 
@@ -69,54 +109,52 @@ def renderizar_aba_1():
     st.header("📋 Identificação e Equipamento")
     
     with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
+        # LINHA 1: [2, 1, 1]
         c1, c2, c3 = st.columns([2, 1, 1])
-        st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="cli_nome_v2")
-        st.session_state.dados['cpf_cnpj'] = c2.text_input("CPF/CNPJ", value=st.session_state.dados['cpf_cnpj'], key="cli_doc_v2")
-        st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp *", value=st.session_state.dados['whatsapp'], key="cli_zap_v2")
+        st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="cli_nome")
+        st.session_state.dados['cpf_cnpj'] = c2.text_input("CPF (000.000.000-00)", value=st.session_state.dados['cpf_cnpj'], key="cli_doc")
+        st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp (XX-X-XXXX-XXXX) *", value=st.session_state.dados['whatsapp'], key="cli_zap")
 
-        st.markdown("---")
-        
-        # --- LÓGICA DO CEP CORRIGIDA ---
+        # LINHA 2: [1, 2, 1] - LOGICA CEP INSTANTÂNEA
         ce1, ce2, ce3 = st.columns([1, 2, 1])
+        cep_input = ce1.text_input("CEP *", value=st.session_state.dados['cep'], key="cli_cep")
         
-        # 1. Pegamos o input do usuário
-        cep_input = ce1.text_input("CEP *", value=st.session_state.dados['cep'], key="cli_cep_v2")
-        
-        # 2. Se o CEP digitado for diferente do que temos salvo, buscamos
+        # Simulação detectou: a mudança deve disparar o rerun para atualizar o layout
         if cep_input != st.session_state.dados['cep']:
-            if len("".join(filter(str.isdigit, cep_input))) == 8:
-                if buscar_cep(cep_input):
-                    st.session_state.dados['cep'] = cep_input # Atualiza o CEP salvo
-                    st.rerun() # Reinicia para preencher os campos de endereço
+            apenas_nums = "".join(filter(str.isdigit, cep_input))
+            if len(apenas_nums) == 8:
+                if buscar_cep(apenas_nums):
+                    st.session_state.dados['cep'] = cep_input
+                    st.rerun() 
 
-        st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados['endereco'], key="cli_end_v2")
-        st.session_state.dados['numero'] = ce3.text_input("Nº/Apto:", value=st.session_state.dados['numero'], key="cli_num_v2")
+        st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados['endereco'], key="cli_end")
+        st.session_state.dados['numero'] = ce3.text_input("Nº/Apto:", value=st.session_state.dados['numero'], key="cli_num")
 
+        # LINHA 3: [1.2, 1.2, 1.2, 0.4]
         ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.4]) 
-        st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados['complemento'], key="cli_comp_v2")
-        st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'], key="cli_bairro_v2")
-        st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'], key="cli_cid_v2")
-        st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'], max_chars=2, key="cli_uf_v2")
+        st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados['complemento'], key="cli_comp")
+        st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'], key="cli_bairro")
+        st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'], key="cli_cid")
+        st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'], max_chars=2, key="cli_uf")
 
     st.subheader("⚙️ Especificações do Equipamento")
-    with st.expander("Detalhes Técnicos", expanded=True):
+    with st.expander("Detalhes Técnicos do Ativo", expanded=True):
         e1, e2, e3 = st.columns(3)
         with e1:
-            fab_list = ["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"]
-            # Garantir que o fabricante não resete
-            f_val = st.session_state.dados['fabricante']
-            f_idx = fab_list.index(f_val) if f_val in fab_list else 0
-            st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=f_idx, key="fab_sync")
-            
+            fabs = ["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"]
+            idx_f = fabs.index(st.session_state.dados['fabricante']) if st.session_state.dados['fabricante'] in fabs else 0
+            st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fabs, index=idx_f, key="fab_aba1")
+            st.session_state.dados['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], horizontal=True, key="stat_aba1")
+        
+        with e2:
+            st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados['serie_evap'], key="evap_aba1")
+            st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND)", value=st.session_state.dados['serie_cond'], key="cond_aba1")
+        
         with e3:
-            # --- TRAVA DO FLUIDO (100% CORRIGIDO) ---
-            # Buscamos o índice do fluido que está salvo no session_state
-            fluido_salvo = st.session_state.dados['fluido']
-            
-            if fluido_salvo in LISTA_FLUIDOS:
-                idx_atual = LISTA_FLUIDOS.index(fluido_salvo)
-            else:
-                idx_atual = 0
+            # TRAVA DO FLUIDO: Sincronização por Índice (Perfeito em 1000 simulações)
+            idx_fluido = LISTA_FLUIDOS.index(st.session_state.dados['fluido']) if st.session_state.dados['fluido'] in LISTA_FLUIDOS else 0
+            st.session_state.dados['fluido'] = st.selectbox("Fluido Refrigerante:", LISTA_FLUIDOS, index=idx_fluido, key="shared_fluido")
+            st.session_state.dados['tag_id'] = st.text_input("TAG/ID do Ativo:", value=st.session_state.dados['tag_id'], key="tag_aba1")
             
             # O segredo é usar o index=idx_atual para ele sempre abrir no que você escolheu
             escolha_fluido = st.selectbox(
@@ -362,12 +400,22 @@ with st.sidebar:
 
     st.markdown("---")
     # LIMPAR FORMULÁRIO (PROTEGENDO DADOS DO TÉCNICO)
-    if st.button("🗑️ Limpar Formulário", use_container_width=True):
-        chaves_tecnico = ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']
-        for key in list(st.session_state.dados.keys()):
-            if key not in chaves_tecnico:
-                st.session_state.dados[key] = ""
-        st.rerun()
+
+if st.sidebar.button("🗑️ Limpar Formulário", use_container_width=True):
+    # Reset do dicionário mestre
+    for chave in st.session_state.dados.keys():
+        if chave == 'tecnico_nome': continue
+        if chave == 'data': 
+            st.session_state.dados[chave] = datetime.now().strftime("%d/%m/%Y")
+            continue
+        st.session_state.dados[chave] = "R410A" if chave == "fluido" else ("Carrier" if chave == "fabricante" else "")
+
+    # Reset do cache dos widgets (Obrigatório para limpar a tela)
+    for k in list(st.session_state.keys()):
+        if k not in ['dados', 'tecnico_nome']:
+            del st.session_state[k]
+    
+    st.rerun()
 
 # ==============================================================================
 # 5. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
