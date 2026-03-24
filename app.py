@@ -512,13 +512,14 @@ def renderizar_aba_ia_diagnostico():
     st.header("🕵️ Assistente de Campo: Diagnóstico Dinâmico")
     
     # --- RESGATE DOS DADOS DA ABA 2 (VIA SESSION STATE) ---
+    # Usamos .get(..., 0.0) para evitar erro caso o dado ainda não exista
     sh = st.session_state.get('sh_val', 0.0)
     sc = st.session_state.get('sc_val', 0.0)
     i_med = st.session_state.get('im_val', 0.0)
     rla = st.session_state.get('rla_val', 0.0)
 
     # Painel de Monitoramento Rápido
-    st.info(f"📊 **Dados Recebidos:** SH: {sh:.1f}K | SC: {sc:.1f}K | Corrente: {i_med}A")
+    st.info(f"📊 **Dados Recebidos da Inspeção:** SH: {sh:.1f}K | SC: {sc:.1f}K | Corrente: {i_med}A")
 
     # ==========================================================================
     # 1. CHECKLIST DE CAMPO (PERGUNTAS DO ASSISTENTE)
@@ -527,14 +528,14 @@ def renderizar_aba_ia_diagnostico():
     c1, c2 = st.columns(2)
     
     with c1:
-        vibracao = st.selectbox("Vibração no compressor?", ["Normal", "Leve", "Forte"], key="ia_vib")
-        ruido = st.selectbox("Ruído mecânico?", ["Normal", "Metálico", "Sopro/Agudo"], key="ia_ruido")
-        sujeira = st.selectbox("Limpeza da Serpentina?", ["Limpa", "Sujeira Leve", "Obstrução Grave"], key="ia_suj")
+        vibracao = st.selectbox("Vibração no compressor?", ["Normal", "Leve", "Forte"], key="ia_vib_v25")
+        ruido = st.selectbox("Ruído mecânico?", ["Normal", "Metálico", "Sopro/Agudo"], key="ia_ruido_v25")
+        sujeira = st.selectbox("Limpeza da Serpentina?", ["Limpa", "Sujeira Leve", "Obstrução Grave"], key="ia_suj_v25")
 
     with c2:
-        ventilador = st.selectbox("Motor Ventilador?", ["Normal", "Lento", "Parado/Travado"], key="ia_fan")
-        gelo = st.selectbox("Presença de Gelo?", ["Não", "Linha de Expansão", "Sucção/Compressor"], key="ia_gelo")
-        oleo = st.selectbox("Vazamento de Óleo?", ["Não", "Conexões", "Base do Compressor"], key="ia_oleo")
+        ventilador = st.selectbox("Motor Ventilador?", ["Normal", "Lento", "Parado/Travado"], key="ia_fan_v25")
+        gelo = st.selectbox("Presença de Gelo?", ["Não", "Linha de Expansão", "Sucção/Compressor"], key="ia_gelo_v25")
+        oleo = st.selectbox("Vazamento de Óleo?", ["Não", "Conexões", "Base do Compressor"], key="ia_oleo_v25")
 
     st.markdown("---")
 
