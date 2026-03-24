@@ -131,15 +131,21 @@ def renderizar_aba_1():
                 st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
 
             with e3:
-    # Busca o fluido que já está salvo, ou usa R410A como padrão
-    fluido_atual = st.session_state.dados.get('fluido', 'R410A')
-    
-    # Descobre a posição (índice) do fluido na lista para o seletor não pular
-    try:
-        idx_padrao = LISTA_FLUIDOS.index(fluido_atual)
-    except ValueError:
-        idx_padrao = 0
+            # Pressione TAB ou 4 espaços antes das linhas abaixo:
+            fluido_atual = st.session_state.dados.get('fluido', 'R410A')
+            
+            if fluido_atual in LISTA_FLUIDOS:
+                idx_f = LISTA_FLUIDOS.index(fluido_selecionado)
+            else:
+                idx_f = 0
 
+            st.session_state.dados['fluido'] = st.selectbox(
+                "Fluido:", 
+                LISTA_FLUIDOS, 
+                index=idx_f,
+                key="sel_fluido_v6"
+            )
+    
     # O SEU NOVO SELECTBOX:
     st.session_state.dados['fluido'] = st.selectbox(
         "Fluido Refrigerante:", 
