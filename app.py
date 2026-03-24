@@ -7,6 +7,10 @@ import requests
 import urllib.parse
 import os # Biblioteca para verificar arquivos no sistema
 
+
+# DEFINA A LISTA AQUI (Global)
+LISTA_FLUIDOS = sorted(["R22", "R32", "R134a", "R290", "R407A", "R410A"])
+
 # 1. CONFIGURAÇÃO INICIAL (TESTADA)
 st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
 
@@ -127,12 +131,22 @@ def renderizar_aba_1():
                 st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
 
             with e3:
-                st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], index=1)
-                st.session_state.dados['fluido'] = st.selectbox("Fluido:", ["R410A", "R134a", "R22", "R32", "R290"], index=0)
-                st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
-                st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
+    # Busca o fluido que já está salvo, ou usa R410A como padrão
+    fluido_atual = st.session_state.dados.get('fluido', 'R410A')
+    
+    # Descobre a posição (índice) do fluido na lista para o seletor não pular
+    try:
+        idx_padrao = LISTA_FLUIDOS.index(fluido_atual)
+    except ValueError:
+        idx_padrao = 0
 
-
+    # O SEU NOVO SELECTBOX:
+    st.session_state.dados['fluido'] = st.selectbox(
+        "Fluido Refrigerante:", 
+        LISTA_FLUIDOS, 
+        index=idx_padrao,
+        key="novo_seletor_fluido"
+    )
 # ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO FINAL BLINDADA - R32/RLA/ΔT)
 # ==============================================================================
@@ -186,13 +200,16 @@ def renderizar_aba_diagnosticos():
         cm_f = st.number_input("C. Med. Fan", format="%.2f", key="cmf_final")
 
     # --- 2. MOTOR DE CÁLCULO (INCLUINDO R32) ---
+
     def f_sat(p, g):
-        if p <= 5: return 0.0
-        if g == "R410A": return 0.253 * (p**0.8) - 18.5
-        if g == "R22": return 0.415 * (p**0.72) - 19.8
-        if g == "R32": return 0.245 * (p**0.81) - 19.0
-        if g == "R134a": return 0.65 * (p**0.62) - 25.0
-        return 0.0
+    if p <= 5: return 0.0
+    if g == "R410A": return 0.253 * (p**0.8) - 18.5
+    if g == "R22": return 0.415 * (p**0.72) - 19.8
+    if g == "R32": return 0.245 * (p**0.81) - 19.0
+    if g == "R134a": return 0.65 * (p**0.62) - 25.0
+    if g == "R290": return 0.52 * (p**0.68) - 22.5
+    if g == "R407A": return 0.31 * (p**0.76) - 21.5  # ADICIONE ESTA LINHA
+    return 0.0
 
     t_sat_s = f_sat(p_suc, fluido)
     t_sat_d = f_sat(p_des, fluido)
