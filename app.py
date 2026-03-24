@@ -10,14 +10,6 @@ import os
 
 st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
 
-import streamlit as st
-from datetime import datetime
-import requests
-import urllib.parse
-import os
-
-st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
-
 # LISTA MESTRA GLOBAL (Evita NameError e garante consistência de índices)
 LISTA_FLUIDOS = ["R410A", "R134a", "R22", "R32", "R290", "R407C"]
 
