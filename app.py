@@ -474,3 +474,35 @@ elif aba_selecionada == "3. Assistente de Campo":
 elif aba_selecionada == "Relatórios":
     st.header("📊 Página de Relatórios")
     st.write("Em breve: Visualização e exportação de relatórios.")
+
+with e3:
+                fluido_salvo = st.session_state.dados.get('fluido', 'R410A')
+                idx_f = LISTA_FLUIDOS.index(fluido_salvo) if fluido_salvo in LISTA_FLUIDOS else 0
+                
+                # Adicionei 'key' únicas para cada campo abaixo:
+                st.session_state.dados['fluido'] = st.selectbox(
+                    "Fluido:", 
+                    LISTA_FLUIDOS, 
+                    index=idx_f, 
+                    key="seletor_fluido_unico" # <-- CHAVE ÚNICA
+                )
+                
+                st.session_state.dados['capacidade'] = st.selectbox(
+                    "Capacidade:", 
+                    ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], 
+                    index=1,
+                    key="seletor_capacidade_unico" # <-- CHAVE ÚNICA
+                )
+                
+                st.session_state.dados['tipo_servico'] = st.selectbox(
+                    "Tipo de Serviço:", 
+                    ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], 
+                    index=0,
+                    key="seletor_servico_unico" # <-- CHAVE ÚNICA
+                )
+                
+                st.session_state.dados['tag_id'] = st.text_input(
+                    "TAG:", 
+                    value=st.session_state.dados['tag_id'],
+                    key="input_tag_unico" # <-- CHAVE ÚNICA
+                )
