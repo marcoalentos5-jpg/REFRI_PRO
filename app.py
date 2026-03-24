@@ -233,12 +233,20 @@ def renderizar_aba_1():
             st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
     
     # O SEU NOVO SELECTBOX:
-    st.session_state.dados['fluido'] = st.selectbox(
-        "Fluido Refrigerante:", 
-        LISTA_FLUIDOS, 
-        index=0,
-        key="novo_seletor_fluido"
-    )
+    # Inicialização segura
+if 'dados' not in st.session_state:
+    st.session_state.dados = {}
+
+LISTA_FLUIDOS = ["R-22", "R-410A", "R-32", "R-134a"]
+
+st.selectbox(
+    "Fluido Refrigerante:", 
+    LISTA_FLUIDOS, 
+    index=0,
+    key="fluido"
+)
+
+st.session_state.dados['fluido'] = st.session_state.fluido
 # ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO FINAL BLINDADA - R32/RLA/ΔT)
 # ==============================================================================
