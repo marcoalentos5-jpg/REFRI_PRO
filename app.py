@@ -36,8 +36,6 @@ if 'dados' not in st.session_state:
         'tag_id': 'TAG-01'
     }
 
-st.write(info)
-
 # 1. CONFIGURAÇÃO INICIAL (TESTADA)
 st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
 
