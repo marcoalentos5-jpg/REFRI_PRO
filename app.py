@@ -340,7 +340,21 @@ def renderizar_aba_ia_diagnostico():
 # ==============================================================================
 # Mudamos esta seção para antes da Lógica de Exibição das Abas para definir aba_selecionada
 with st.sidebar:
-    st.title("🚀 Painel de Controle")
+    st.title("🚀 Painel REFRI_PRO")
+    # ... (Seu rádio de navegação aqui)
+
+    if st.button("🗑️ Limpar Formulário", use_container_width=True):
+        # Reset do dicionário
+        for chave in st.session_state.dados.keys():
+            if chave == 'tecnico_nome': continue
+            if chave == 'data': 
+                st.session_state.dados[chave] = datetime.now().strftime("%d/%m/%Y")
+                continue
+            st.session_state.dados[chave] = "R410A" if chave == "fluido" else ("Carrier" if chave == "fabricante" else "")
+        
+        # O Pulo do Gato: Incrementa o contador para forçar o reset dos widgets
+        st.session_state.count += 1
+        st.rerun()
 
     # A. NAVEGAÇÃO E EXIBIÇÃO DAS ABAS (ATIVADA AQUI)
     opcoes_abas = ["Home", "1. Cadastro", "2. Diagnósticos", "3. Assistente de Campo", "Relatórios"]
