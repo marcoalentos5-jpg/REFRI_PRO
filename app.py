@@ -59,18 +59,33 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. MOTOR DE SESSÃO (CHAVES VERIFICADAS)
+# 2. MOTOR DE SESSÃO (BLINDADO)
 if 'dados' not in st.session_state:
     st.session_state.dados = {
         'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
         'data': datetime.now().strftime("%d/%m/%Y"),
         'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '', 'complemento': '',
         'fabricante': 'Carrier', 'modelo': '', 'capacidade': '12.000', 'linha': 'Residencial',
-        'serie_evap': '', 'serie_cond': '', 'local_evap': '', 'fluido': 'R-410A',  # ✅ CORRIGIDO
+        'serie_evap': '', 'serie_cond': '', 'local_evap': '',
+        'fluido': 'R-410A',  # ✅ ADICIONADO
         'tipo_servico': 'Manutenção Preventiva', 'tag_id': 'TAG-01',
         'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
         'status_maquina': '🟢 Operacional'
     }
+    # ===== FLUIDO GLOBAL =====
+LISTA_FLUIDOS = ["R-22", "R-410A", "R-32", "R-134a"]
+
+if 'fluido' not in st.session_state:
+    st.session_state.fluido = st.session_state.dados.get('fluido', 'R-410A')
+
+st.selectbox(
+    "Fluido Refrigerante:",
+    LISTA_FLUIDOS,
+    key="fluido"
+)
+
+# sincroniza
+st.session_state.dados['fluido'] = st.session_state.fluido
 
 def buscar_cep(cep):
     cep_limpo = "".join(filter(str.isdigit, cep))
