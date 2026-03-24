@@ -501,11 +501,10 @@ def renderizar_aba_2():
     st.metric("Superaquecimento", f"{sh:.2f} K")
     st.metric("ΔT Ar", f"{dt:.2f} °C")
     if sh < 5 and ps > 5: st.error("⚠️ RISCO DE GOLPE DE LÍQUIDO")
-   # Altere a linha 495 para esta:
-st.session_state.dados['laudo_diag'] = st.text_area(
-    "Parecer:", 
-    value=st.session_state.dados.get('laudo_diag', ''), # O .get evita o erro se a chave sumir
-    key=f"lt_{c}"
+    st.session_state.dados['laudo_diag'] = st.text_area(
+        "Parecer Técnico / Notas de Campo:", 
+        value=st.session_state.dados.get('laudo_diag', ''), 
+        key=f"lt_{c}"
 def renderizar_aba_3():
     c = st.session_state.count
     st.header("🕵️ Assistente de Campo IA")
