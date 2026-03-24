@@ -361,6 +361,13 @@ LISTA_FLUIDOS = [
     "R-600a"
 ]          
   
+# Na linha 364, altere para:
+st.selectbox(
+    "Fluido Refrigerante:",
+    LISTA_FLUIDOS,
+    key="fluido_inspecao_v24" # Mudei de "fluido" para algo único
+)
+
 # ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO FINAL CORRIGIDA)
 # ==============================================================================
