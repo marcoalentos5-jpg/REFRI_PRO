@@ -245,7 +245,7 @@ with st.sidebar:
     st.title("🚀 Painel de Controle")
 
     # A. NAVEGAÇÃO E EXIBIÇÃO DAS ABAS (ATIVADA AQUI)
-    opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
+    opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "3. IA: Diagnósticos e Contramedidas", "Relatórios"]
     # Use st.sidebar.radio para criar os botões de seleção de aba e DEFINIR a variável
     aba_selecionada = st.sidebar.radio("Selecione a Aba:", opcoes_abas)
     
@@ -413,3 +413,12 @@ def renderizar_aba_diagnosticos():
         placeholder="Ex: Sistema operando com pressões estáveis, superaquecimento normal...",
         key="laudo_area_diag"
     )
+
+elif aba_selecionada == "2. Diagnósticos":
+    renderizar_aba_diagnosticos()
+
+elif aba_selecionada == "3. IA: Diagnósticos e Contramedidas":
+    renderizar_aba_ia_diagnostico() # <--- NOVA CONEXÃO ATIVADA
+
+elif aba_selecionada == "Relatórios":
+    # ... resto do seu código
