@@ -23,7 +23,7 @@ FLUIDOS_INFO = {
 
 # 3. INICIALIZAÇÃO DO ESTADO
 
-    div.stLinkButton > a {
+div.stLinkButton > a {
         background-color: #25D366 !important;
         color: white !important;
         font-weight: bold;
