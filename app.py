@@ -359,20 +359,8 @@ LISTA_FLUIDOS = [
     "R-407A",
     "R-410A",
     "R-600a"
-]
-
-st.selectbox(
-    "Fluido Refrigerante:",
-    LISTA_FLUIDOS,
-    key="fluido"
-)
-
-st.session_state.dados['fluido'] = st.session_state.fluido
-           
-            
-           
-    
-
+]          
+  
 # ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO FINAL CORRIGIDA)
 # ==============================================================================
