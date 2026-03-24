@@ -134,8 +134,7 @@ def renderizar_aba_1():
                 st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
 
             with st.expander("Detalhes Técnicos do Ativo", expanded=True):
-            # 1. As três colunas devem estar na mesma linha
-            e1, e2, e3 = st.columns(3)
+                e1, e2, e3 = st.columns(3)
             
             with e1:
                 fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
