@@ -265,8 +265,8 @@ if not fluido:
     # Apenas exibe o fluido global (não cria outro selectbox)
     fluido = st.session_state.get('fluido', 'R-410A')
     st.info(f"Fluido selecionado: {fluido}")
-                # 3. O Selectbox usando 'idx_padrao'
-                st.session_state.dados['fluido'] = st.selectbox(
+    # 3. O Selectbox usando 'idx_padrao'
+    st.session_state.dados['fluido'] = st.selectbox(
                     "Fluido:", 
                     LISTA_FLUIDOS, 
         index=0,
