@@ -238,14 +238,88 @@ def renderizar_aba_diagnosticos():
     st.session_state.dados['laudo_diag'] = st.text_area("Notas:", key="laudo_final_v4")
 
 # ==============================================================================
-# 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
+# 3. FUNÇÃO DA ABA 3: ASSISTENTE DE CAMPO (IA E DIAGNÓSTICO)
+# ==============================================================================
+
+def renderizar_aba_ia_diagnostico():
+    st.header("🕵️ Assistente de Campo: Diagnóstico Dinâmico")
+    
+    # --- RESGATE DOS DADOS DA ABA 2 (VIA SESSION STATE) ---
+    sh = st.session_state.get('sh_val', 0.0)
+    sc = st.session_state.get('sc_val', 0.0)
+    i_med = st.session_state.get('im_val', 0.0)
+    rla = st.session_state.get('rla_val', 0.0)
+
+    # Painel de Monitoramento Rápido
+    st.info(f"📊 **Dados Recebidos:** SH: {sh:.1f}K | SC: {sc:.1f}K | Corrente: {i_med}A")
+
+    # ==========================================================================
+    # 1. CHECKLIST DE CAMPO (PERGUNTAS DO ASSISTENTE)
+    # ==========================================================================
+    st.subheader("1. Verificações Físicas (Checklist)")
+    c1, c2 = st.columns(2)
+    
+    with c1:
+        vibracao = st.selectbox("Vibração no compressor?", ["Normal", "Leve", "Forte"], key="ia_vib")
+        ruido = st.selectbox("Ruído mecânico?", ["Normal", "Metálico", "Sopro/Agudo"], key="ia_ruido")
+        sujeira = st.selectbox("Limpeza da Serpentina?", ["Limpa", "Sujeira Leve", "Obstrução Grave"], key="ia_suj")
+
+    with c2:
+        ventilador = st.selectbox("Motor Ventilador?", ["Normal", "Lento", "Parado/Travado"], key="ia_fan")
+        gelo = st.selectbox("Presença de Gelo?", ["Não", "Linha de Expansão", "Sucção/Compressor"], key="ia_gelo")
+        oleo = st.selectbox("Vazamento de Óleo?", ["Não", "Conexões", "Base do Compressor"], key="ia_oleo")
+
+    st.markdown("---")
+
+    # ==========================================================================
+    # 2. TABELA DE CAUSAS E CONTRAMEDIDAS (LÓGICA IA)
+    # ==========================================================================
+    st.subheader("2. Análise de Causas e Contramedidas")
+    
+    causas_ia = []
+
+    # --- MOTOR DE DECISÃO (LOGICA CRUZADA) ---
+    
+    # Caso 1: Falta de Fluido
+    if sh > 12 and (gelo == "Linha de Expansão" or oleo == "Conexões"):
+        causas_ia.append({
+            "Causa": "Vazamento / Carga Insuficiente",
+            "Evidência": f"SH Alto ({sh}K) + Gelo/Óleo detectado",
+            "Ação": "Localizar vazamento com nitrogênio e recompor carga por balança."
+        })
+
+    # Caso 2: Falha de Troca Térmica
+    if sujeira == "Obstrução Grave" or ventilador == "Parado/Travado":
+        causas_ia.append({
+            "Causa": "Bloqueio de Condensação",
+            "Evidência": "Checklist indica falha no fluxo de ar",
+            "Ação": "Realizar limpeza química e testar capacitor do ventilador."
+        })
+
+    # Caso 3: Risco de Quebra Mecânica
+    if i_med > rla and rla > 0:
+        causas_ia.append({
+            "Causa": "Sobrecarga Elétrica",
+            "Evidência": f"Corrente ({i_med}A) acima do RLA ({rla}A)",
+            "Ação": "Verificar tensão de rede e possível desgaste mecânico interno."
+        })
+
+    # EXIBIÇÃO FINAL
+    if causas_ia:
+        st.table(causas_ia)
+    else:
+        st.success("✅ Parâmetros normais. Continue o monitoramento.")
+
+# ==============================================================================
+# 4. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO
 # ==============================================================================
 # Mudamos esta seção para antes da Lógica de Exibição das Abas para definir aba_selecionada
 with st.sidebar:
     st.title("🚀 Painel de Controle")
 
     # A. NAVEGAÇÃO E EXIBIÇÃO DAS ABAS (ATIVADA AQUI)
-    opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "3. IA: Diagnósticos e Contramedidas", "Relatórios"]
+    opcoes_abas = ["Home", "1. Cadastro", "2. Diagnósticos", "3. Assistente de Campo", "Relatórios"]
+    
     # Use st.sidebar.radio para criar os botões de seleção de aba e DEFINIR a variável
     aba_selecionada = st.sidebar.radio("Selecione a Aba:", opcoes_abas)
     
@@ -286,6 +360,7 @@ with st.sidebar:
         f"📅 Data: {st.session_state.dados['data']}"
     )
     
+    # Importante: urllib.parse deve estar no topo do arquivo (import urllib.parse)
     link_final = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_zap)}"
     st.link_button("📲 Enviar Laudo via WhatsApp", link_final, use_container_width=True)
 
@@ -293,41 +368,33 @@ with st.sidebar:
     # LIMPAR FORMULÁRIO (PROTEGENDO DADOS DO TÉCNICO)
     if st.button("🗑️ Limpar Formulário", use_container_width=True):
         chaves_tecnico = ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']
-        for key in st.session_state.dados.keys():
+        for key in list(st.session_state.dados.keys()):
             if key not in chaves_tecnico:
                 st.session_state.dados[key] = ""
         st.rerun()
 
+# ==============================================================================
+# 5. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
+# ==============================================================================
 
-# ==============================================================================
-# 4. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
-# ==============================================================================
 # Use a seleção do sidebar para chamar a função correta
 if aba_selecionada == "Home":
-    # --- NOVA APRESENTAÇÃO DA ABA HOME (COM LOGO MPN SOLUÇÕES ) ---
-    st.markdown("<br>", unsafe_allow_html=True) # Espaçamento superior
+    # --- APRESENTAÇÃO DA ABA HOME ---
+    st.markdown("<br>", unsafe_allow_html=True) 
 
-    # 1. CENTRALIZAÇÃO E EXIBIÇÃO DA LOGOMARCA
     col1, col2, col3 = st.columns([1, 2, 1]) 
     with col2: 
-        # NOME DO ARQUIVO DE IMAGEM QUE ESTÁ SENDO USADO
         NOME_ARQUIVO_LOGO = "logo.png"
-        
-        # VERIFICAÇÃO ADICIONAL DO ARQUIVO NO DISCO (PARA AJUDAR NO DIAGNÓSTICO)
         if os.path.exists(NOME_ARQUIVO_LOGO):
             try:
-                # SE O ARQUIVO EXISTE, TENTA EXIBIR
                 st.image(NOME_ARQUIVO_LOGO, use_container_width=True) 
             except Exception as e:
-                st.error(f"⚠️ Erro ao tentar abrir a imagem '{NOME_ARQUIVO_LOGO}'. Verifique se o arquivo está corrompido.")
-                st.write(f"Detalhes do erro do sistema: {e}")
+                st.error(f"⚠️ Erro ao abrir a imagem: {e}")
         else:
-            st.error(f"⚠️ Erro: Arquivo '{NOME_ARQUIVO_LOGO}' não encontrado na pasta raiz.")
-            st.info("Verifique se o nome do arquivo salvo no computador é EXATAMENTE 'logo.png' (maiúsculas/minúsculas importam).")
+            st.error(f"⚠️ Arquivo '{NOME_ARQUIVO_LOGO}' não encontrado.")
 
     st.markdown("<br><br>", unsafe_allow_html=True) 
 
-    # 2. TÍTULO E BOAS-VINDAS CENTRALIZADOS E ESTILIZADOS
     st.markdown("""
         <div style="text-align: center;">
             <h1 style="color: #0d47a1; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
@@ -345,105 +412,16 @@ if aba_selecionada == "Home":
             </p>
         </div>
     """, unsafe_allow_html=True)
-    
-elif aba_selecionada == "1. Cadastro de Equipamentos":
-    renderizar_aba_1() # Chama a função que contém todo o código da Aba 1
+
+elif aba_selecionada == "1. Cadastro":
+    renderizar_aba_1() 
 
 elif aba_selecionada == "2. Diagnósticos":
-    renderizar_aba_diagnosticos() # Chama a função que contém o esqueleto da Aba 2
-
-elif aba_selecionada == "Relatórios":
-    st.header("Página de Relatórios (Em desenvolvimento)")
-    st.write("Em breve: Visualização e exportação de relatórios.")
-
-def renderizar_aba_diagnosticos():
-    st.header("🔍 Central de Diagnóstico Técnico")
-    # Busca o fluido que você selecionou na Aba 1
-    fluido_selecionado = st.session_state.dados.get('fluido', 'R410A')
-    st.info(f"❄️ Fluido Refrigerante em Análise: **{fluido_selecionado}**")
-    st.markdown("---")
-
-    # --- BLOCO 1: ENTRADA DE MEDIÇÕES ---
-    st.subheader("1. Medições de Campo")
-    col_suc, col_des = st.columns(2)
-    
-    with col_suc:
-        st.markdown("### 🔵 Baixa Pressão")
-        pres_suc = st.number_input("Pressão de Sucção (PSI):", min_value=0.0, step=1.0, key="p_suc_diag")
-        temp_suc = st.number_input("Temp. Tubulação Sucção (°C):", step=0.1, key="t_suc_diag")
-
-    with col_des:
-        st.markdown("### 🔴 Alta Pressão")
-        pres_des = st.number_input("Pressão de Descarga (PSI):", min_value=0.0, step=1.0, key="p_des_diag")
-        temp_liq = st.number_input("Temp. Tubulação Líquido (°C):", step=0.1, key="t_liq_diag")
-
-    st.markdown("---")
-
-# 1. FUNÇÃO DA ABA 2: DIAGNÓSTICOS
-def renderizar_aba_diagnosticos():
-    # --- BLOCO 1: ENTRADA DE MEDIÇÕES ---
-    st.subheader("1. Medições de Campo")
-    col_suc, col_des = st.columns(2)
-    
-    with col_suc:
-        st.markdown("### 🔵 Baixa Pressão")
-        pres_suc = st.number_input("Pressão de Sucção (PSI):", min_value=0.0, step=1.0, key="p_suc_diag")
-        temp_suc = st.number_input("Temp. Tubulação Sucção (°C):", step=0.1, key="t_suc_diag")
-
-    with col_des:
-        st.markdown("### 🔴 Alta Pressão")
-        pres_des = st.number_input("Pressão de Descarga (PSI):", min_value=0.0, step=1.0, key="p_des_diag")
-        temp_liq = st.number_input("Temp. Tubulação Líquido (°C):", step=0.1, key="t_liq_diag")
-
-    st.markdown("---")
-
-    # --- BLOCO 2: PROCESSAMENTO (CÁLCULOS) ---
-    t_sat_suc = 0.0  
-    t_sat_des = 0.0  
-    
-    sh = temp_suc - t_sat_suc
-    sc = t_sat_des - temp_liq
-
-    # --- BLOCO 3: EXIBIÇÃO DE RESULTADOS ---
-    st.subheader("2. Resultados Calculados")
-    res1, res2 = st.columns(2)
-    
-    with res1:
-        st.metric(label="Superaquecimento (SH)", value=f"{sh:.1f} K")
-        if 5 <= sh <= 7: st.success("✅ SH dentro do padrão")
-        elif sh < 5: st.error("⚠️ SH Baixo")
-        else: st.warning("⚠️ SH Alto")
-
-    with res2:
-        st.metric(label="Sub-resfriamento (SC)", value=f"{sc:.1f} K")
-        if 4 <= sc <= 7: st.success("✅ SC dentro do padrão")
-        else: st.info("ℹ️ SC fora do padrão")
-
-    st.markdown("---")
-
-    # --- SALVAMENTO PARA A IA (DENTRO DA FUNÇÃO - SEM DUPLICIDADE) ---
-    st.session_state['sh_val'] = sh
-    st.session_state['sc_val'] = sc
-    st.session_state['im_val'] = 0.0
-    st.session_state['rla_val'] = 0.0
-
-    # --- BLOCO 4: CONCLUSÃO E LAUDO ---
-    st.subheader("3. Parecer Técnico Final")
-    
-    # Verificação de segurança para o dicionário 'dados'
-    if 'dados' not in st.session_state:
-        st.session_state.dados = {}
-
-    st.session_state.dados['laudo_diag'] = st.text_area(
-        "Descreva o diagnóstico ou anomalias encontradas:",
-        placeholder="Ex: Sistema operando com pressões estáveis...",
-        key="laudo_area_diag"
-    )
-
-# 2. LOGICA DE NAVEGAÇÃO (FINAL DO ARQUIVO)
-if aba_selecionada == "2. Diagnósticos":
-    renderizar_aba_diagnosticos()
+    renderizar_aba_diagnosticos() 
 
 elif aba_selecionada == "3. Assistente de Campo":
     renderizar_aba_ia_diagnostico()
-    
+
+elif aba_selecionada == "Relatórios":
+    st.header("📊 Página de Relatórios")
+    st.write("Em breve: Visualização e exportação de relatórios.")
