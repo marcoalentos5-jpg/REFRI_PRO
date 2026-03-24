@@ -133,7 +133,7 @@ def renderizar_aba_1():
                 st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'])
                 st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
 
-           with e3:
+            with e3:
                 # 1. Busca o fluido salvo (ou R410A por padrão)
                 fluido_salvo = st.session_state.dados.get('fluido', 'R410A')
 
