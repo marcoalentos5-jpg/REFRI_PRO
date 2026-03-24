@@ -531,11 +531,15 @@ with st.sidebar:
         st.session_state.count += 1
         st.rerun()
 
-# ==============================================================================
-# 5. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
-# ==============================================================================
+import streamlit as st
+import requests
+import urllib.parse
+import os
+from datetime import datetime
 
-# 1. CONFIGURAÇÃO E ESTILO
+# ==============================================================================
+# 1. CONFIGURAÇÃO E ESTILO (TOPO DO ARQUIVO)
+# ==============================================================================
 st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
 
 st.markdown("""
@@ -547,7 +551,9 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# ==============================================================================
 # 2. MOTOR DE SESSÃO
+# ==============================================================================
 if 'dados' not in st.session_state:
     st.session_state.dados = {
         'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
@@ -565,7 +571,9 @@ if 'count' not in st.session_state:
 
 LISTA_FLUIDOS = ["R410A", "R134a", "R22", "R32", "R290"]
 
+# ==============================================================================
 # 3. FUNÇÕES TÉCNICAS
+# ==============================================================================
 def buscar_cep(cep):
     cep_limpo = "".join(filter(str.isdigit, str(cep)))
     if len(cep_limpo) == 8:
@@ -590,7 +598,9 @@ def f_sat(p, g):
     if g == "R134a": return 0.65 * (p**0.62) - 25.0
     return 0.0
 
+# ==============================================================================
 # 4. INTERFACE DAS ABAS
+# ==============================================================================
 def renderizar_aba_1():
     c = st.session_state.count
     st.header("📋 Cadastro de Cliente e Equipamento")
@@ -626,14 +636,14 @@ def renderizar_aba_2():
     fluido = st.session_state.dados['fluido']
     c1, c2, c3 = st.columns(3)
     with c1:
-        ps = st.number_input("P. Sucção (PSI)", key=f"ps_{c}")
-        ts = st.number_input("T. Sucção (°C)", key=f"ts_{c}")
+        ps = st.number_input("P. Sucção (PSI)", format="%.2f", key=f"ps_{c}")
+        ts = st.number_input("T. Sucção (°C)", format="%.2f", key=f"ts_{c}")
     with c2:
-        rla = st.number_input("RLA (A)", key=f"rla_{c}")
-        im = st.number_input("Corr. Medida (A)", key=f"im_{c}")
+        rla = st.number_input("RLA (A)", format="%.2f", key=f"rla_{c}")
+        im = st.number_input("Corr. Medida (A)", format="%.2f", key=f"im_{c}")
     with c3:
-        tr = st.number_input("T. Retorno (°C)", key=f"tr_{c}")
-        ti = st.number_input("T. Insuflamento (°C)", key=f"ti_{c}")
+        tr = st.number_input("T. Retorno (°C)", format="%.2f", key=f"tr_{c}")
+        ti = st.number_input("T. Insuflamento (°C)", format="%.2f", key=f"ti_{c}")
 
     sh = ts - f_sat(ps, fluido) if ps > 5 else 0.0
     dt = tr - ti
@@ -650,7 +660,9 @@ def renderizar_aba_3():
     if sujeira == "Obstruída": st.warning("Ação: Realizar limpeza química imediata.")
     else: st.success("Fluxo de ar normal.")
 
-# 5. SIDEBAR E LOGICA PRINCIPAL
+# ==============================================================================
+# 5. SIDEBAR E NAVEGAÇÃO
+# ==============================================================================
 with st.sidebar:
     st.title("REFRI_PRO")
     menu = st.radio("Navegação", ["Home", "1. Cadastro", "2. Diagnóstico", "3. Assistente", "5. Relatórios"])
@@ -658,16 +670,30 @@ with st.sidebar:
     st.session_state.dados['tecnico_nome'] = st.text_input("Técnico:", value=st.session_state.dados['tecnico_nome'])
     if st.button("🗑️ LIMPAR FORMULÁRIO", use_container_width=True):
         for k in st.session_state.dados:
-            if k != 'tecnico_nome': st.session_state.dados[k] = ""
+            if k not in ['tecnico_nome', 'tecnico_documento', 'tecnico_registro']:
+                st.session_state.dados[k] = ""
         st.session_state.count += 1
         st.rerun()
 
+# ==============================================================================
+# 6. EXIBIÇÃO DAS ABAS (CORREÇÃO DO DELTAGENERATOR)
+# ==============================================================================
 if menu == "Home":
     st.title("MPN Soluções")
-    st.image("logo.png") if os.path.exists("logo.png") else st.info("Bem-vindo")
-elif menu == "1. Cadastro": renderizar_aba_1()
-elif menu == "2. Diagnóstico": renderizar_aba_2()
-elif menu == "3. Assistente": renderizar_aba_3()
+    if os.path.exists("logo.png"):
+        st.image("logo.png", use_container_width=True)
+    else:
+        st.info("📌 Bem-vindo ao Sistema HVAC Pro")
+        
+elif menu == "1. Cadastro": 
+    renderizar_aba_1()
+    
+elif menu == "2. Diagnóstico": 
+    renderizar_aba_2()
+    
+elif menu == "3. Assistente": 
+    renderizar_aba_3()
+    
 elif menu == "5. Relatórios":
     st.header("📊 Relatórios")
     st.write("Pronto para gerar PDF.")
