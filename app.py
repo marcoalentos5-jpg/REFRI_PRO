@@ -535,12 +535,6 @@ with st.sidebar:
 # 5. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
 # ==============================================================================
 
-import streamlit as st
-import requests
-import urllib.parse
-import os
-from datetime import datetime
-
 # 1. CONFIGURAÇÃO E ESTILO
 st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
 
