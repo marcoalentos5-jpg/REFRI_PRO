@@ -133,15 +133,38 @@ def renderizar_aba_1():
                 st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'])
                 st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
 
-            with e3:
-                # 1. Busca o fluido salvo (ou R410A por padrão)
-                fluido_salvo = st.session_state.dados.get('fluido', 'R410A')
+           with e3:
+                # 1. Busca o fluido salvo para manter a seleção
+                fluido_v15 = st.session_state.dados.get('fluido', 'R410A')
+                idx_f = LISTA_FLUIDOS.index(fluido_v15) if fluido_v15 in LISTA_FLUIDOS else 0
 
-                # 2. Define o índice (AQUI ESTAVA O ERRO: o nome deve ser igual ao do index lá embaixo)
-                if fluido_salvo in LISTA_FLUIDOS:
-                    idx_padrao = LISTA_FLUIDOS.index(fluido_salvo)
-                else:
-                    idx_padrao = 0
+                # 2. BLOCO ÚNICO DE CAMPOS (MANTENHA APENAS ESTES)
+                st.session_state.dados['fluido'] = st.selectbox(
+                    "Fluido:", 
+                    LISTA_FLUIDOS, 
+                    index=idx_f, 
+                    key="f_unico_v15"
+                )
+                
+                st.session_state.dados['capacidade'] = st.selectbox(
+                    "Capacidade:", 
+                    ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], 
+                    index=1,
+                    key="c_unico_v15"
+                )
+                
+                st.session_state.dados['tipo_servico'] = st.selectbox(
+                    "Tipo de Serviço:", 
+                    ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], 
+                    index=0,
+                    key="s_unico_v15"
+                )
+                
+                st.session_state.dados['tag_id'] = st.text_input(
+                    "TAG:", 
+                    value=st.session_state.dados['tag_id'],
+                    key="t_unico_v15"
+                )
 
                 # 3. O Selectbox usando 'idx_padrao'
                 st.session_state.dados['fluido'] = st.selectbox(
