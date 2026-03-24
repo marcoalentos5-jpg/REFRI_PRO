@@ -240,8 +240,7 @@ def renderizar_aba_1():
         value=st.session_state.dados.get('tag_id', ''),
         key="tag_v17"
     )
-
-   fluido = st.session_state.get('fluido')
+    fluido = st.session_state.get('fluido')
 
 if not fluido:
     fluido = "R-410A"
