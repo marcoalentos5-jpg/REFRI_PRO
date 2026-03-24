@@ -160,11 +160,12 @@ def renderizar_aba_1():
                 st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], index=1, key="cap_v17")
                 st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0, key="ts_v17")
                 st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'], key="tag_v17")
+                
                 # 3. O Selectbox usando 'idx_padrao'
                 st.session_state.dados['fluido'] = st.selectbox(
                     "Fluido:", 
                     LISTA_FLUIDOS, 
-        index=idx_padrao, # <-- Agora o nome bate com a variável acima
+        index=0,
                     key="sel_fluido_final_v12"
                 )
                 
