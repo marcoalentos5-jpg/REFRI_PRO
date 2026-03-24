@@ -108,8 +108,7 @@ def renderizar_aba_1():
             # UF com limite de 2 caracteres e alinhado na mesma linha
             st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'], max_chars=2, key="cli_uf_v2")
 
-        # --- SEÇÃO EQUIPAMENTO ---
-        # --- SEÇÃO EQUIPAMENTO ---
+            # --- SEÇÃO EQUIPAMENTO ---
         col_titulo, col_data = st.columns([3, 1])
         with col_titulo: 
             st.subheader("⚙️ Especificações do Equipamento")
@@ -135,19 +134,40 @@ def renderizar_aba_1():
                 st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
 
             with e3:
+                # 1. Recupera o fluido e define o índice para não resetar
                 fluido_salvo = st.session_state.dados.get('fluido', 'R410A')
                 idx_f = LISTA_FLUIDOS.index(fluido_salvo) if fluido_salvo in LISTA_FLUIDOS else 0
-                st.session_state.dados['fluido'] = st.selectbox("Fluido:", LISTA_FLUIDOS, index=idx_f, key="sel_fluido_v10")
-                st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], index=1)
-                st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
-                st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
+                
+                # 2. Selectbox de Fluido (Já com R407A na lista global)
                 st.session_state.dados['fluido'] = st.selectbox(
                     "Fluido:", 
                     LISTA_FLUIDOS, 
-                    index=idx_f,
-                    key="sel_fluido_final_v9"
+                    index=idx_f, 
+                    key="sel_fluido_aba1_v11"
                 )
-                # ... resto do código do e3 ...
+                
+                # 3. Selectbox de Capacidade (Onde dava o erro)
+                st.session_state.dados['capacidade'] = st.selectbox(
+                    "Capacidade:", 
+                    ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], 
+                    index=1,
+                    key="sel_cap_aba1_v11"
+                )
+                
+                # 4. Tipo de Serviço
+                st.session_state.dados['tipo_servico'] = st.selectbox(
+                    "Tipo de Serviço:", 
+                    ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], 
+                    index=0,
+                    key="sel_serv_aba1_v11"
+                )
+                
+                # 5. TAG
+                st.session_state.dados['tag_id'] = st.text_input(
+                    "TAG:", 
+                    value=st.session_state.dados['tag_id'],
+                    key="input_tag_aba1_v11"
+                )
 
             # 2. Tenta encontrar a posição na lista. Se não achar, usa a posição 0.
             if fluido_salvo in LISTA_FLUIDOS:
