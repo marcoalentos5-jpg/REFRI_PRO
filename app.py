@@ -164,7 +164,7 @@ def renderizar_aba_1():
                 st.session_state.dados['fluido'] = st.selectbox(
                     "Fluido:", 
                     LISTA_FLUIDOS, 
-            index=idx_padrao, # <-- Agora o nome bate com a variável acima
+        index=idx_padrao, # <-- Agora o nome bate com a variável acima
                     key="sel_fluido_final_v12"
                 )
                 
