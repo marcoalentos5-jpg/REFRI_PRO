@@ -659,37 +659,39 @@ if aba_selecionada == "Home":
         </div>
     """, unsafe_allow_html=True)
        
-       # --- APRESENTAÇÃO DA ABA HOME ---
-       
+      # --- FUNÇÃO DA ABA HOME ---
+
+def renderizar_aba_home():
+    # Tudo o que deve aparecer na Home precisa ter 4 espaços de recuo daqui para baixo
     st.markdown("<br>", unsafe_allow_html=True) 
 
     col1, col2, col3 = st.columns([1, 2, 1]) 
     with col2: 
-        # Aqui você coloca o seu código da logo se tiver
+        # Aqui você pode colocar sua logo futuramente, ex: st.image("logo.png")
         pass 
     
     st.markdown("<br><br>", unsafe_allow_html=True) 
 
-        st.markdown("""
-        <div style="text-align: center;">
-            <h1 style="color: #0d47a1; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-                MPN Soluções
-            </h1>
-            <p style="color: #1976d2; font-size: 1.3em;">
-                Soluções em Refrigeração e Climatização
-            </p>
-            <hr style="border: 1px solid #90caf9; width: 60%; margin: 20px auto;">
-            <p style="color: #455a64; font-size: 1.1em; font-weight: bold;">
-                Bem-vindo ao Sistema HVAC Pro de Gestão Inteligente.
-            </p>
-            <p style="color: #546e7a; font-size: 1.0em;">
-                Selecione uma opção no Painel de Controle lateral para iniciar sua inspeção ou diagnóstico.
-            </p>
-        </div>
-    """, unsafe_allow_html=True)
+    st.markdown("""
+<div style="text-align: center;">
+    <h1 style="color: #0d47a1; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+        MPN Soluções
+    </h1>
+    <p style="color: #1976d2; font-size: 1.3em;">
+        Soluções em Refrigeração e Climatização
+    </p>
+    <hr style="border: 1px solid #90caf9; width: 60%; margin: 20px auto;">
+    <p style="color: #455a64; font-size: 1.1em; font-weight: bold;">
+        Bem-vindo ao Sistema HVAC Pro de Gestão Inteligente.
+    </p>
+    <p style="color: #546e7a; font-size: 1.0em;">
+        Selecione uma opção no Painel de Controle lateral para iniciar sua inspeção ou diagnóstico.
+    </p>
+</div>
+""", unsafe_allow_html=True)
 
 # =============================================================
-# LÓGICA DE NAVEGAÇÃO (SUBSTITUA O FINAL DO ARQUIVO POR ISSO)
+# LÓGICA DE NAVEGAÇÃO (ESTE BLOCO FICA NO FIM DO ARQUIVO)
 # =============================================================
 
 def renderizar_aba_home():
