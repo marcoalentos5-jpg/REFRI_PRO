@@ -1,38 +1,47 @@
 
 # ==============================================================================
-# 0. CONFIGURAÇÕES INICIAIS, MEMÓRIAE IMPORTAÇÕES (VERSÃO FINAL CORRIGIDA)
+# 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES (CONGELADO)
 # ==============================================================================
-
 import streamlit as st
 from datetime import datetime
-import urllib.parse
-import os
 import requests
+import urllib.parse
+import os # Biblioteca para verificar arquivos no sistema
 
-# ==============================================================================
-# 1. CONFIGURAÇÕES INICIAIS E MEMÓRIA (SESSION STATE)
-# ==============================================================================
+# 1. CONFIGURAÇÃO INICIAL (TESTADA)
+st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
 
-# 1.1 LISTA DE FLUIDOS (Definida uma única vez no topo)
-LISTA_FLUIDOS = [
-    {"nome": "R-410A", "tipo": "HFC", "pressao": "alta"},
-    {"nome": "R-22", "tipo": "HCFC", "pressao": "média"},
-    {"nome": "R-32", "tipo": "HFC", "pressao": "alta"},
-    {"nome": "R-134a", "tipo": "HFC", "pressao": "média/baixa"},
-    {"nome": "R-404A", "tipo": "HFC", "pressao": "alta"},
-    {"nome": "R-600a", "tipo": "HC", "pressao": "baixa"}
-]
+# CSS: Estilização (CONGELADO)
+st.markdown("""
+    <style>
+    .stTextInput>div>div>input[aria-label="Data da Visita:"] {
+        background-color: #e0f2f1 !important;
+        color: #004d40 !important;
+        font-weight: bold;
+        border: 1px solid #b2dfdb !important;
+    }
+    div.stLinkButton > a {
+        background-color: #25D366 !important;
+        color: white !important;
+        font-weight: bold;
+        border-radius: 8px !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-# 1.2 INICIALIZAÇÃO DA MEMÓRIA (Garante que nenhum campo dê KeyError)
+# 2. MOTOR DE SESSÃO (CHAVES VERIFICADAS)
 if 'dados' not in st.session_state:
     st.session_state.dados = {
-        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 
-        'tel_fixo': '', 'email': '', 'cep': '', 'endereco': '', 
-        'numero': '', 'bairro': '', 'cidade': '', 'uf': '', 
-        'complemento': '', 'fluido': 'R-410A', 'tecnico_nome': ''
+        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
+        'data': datetime.now().strftime("%d/%m/%Y"),
+        'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '', 'complemento': '',
+        'fabricante': 'Carrier', 'modelo': '', 'capacidade': '12.000', 'linha': 'Residencial',
+        'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '',
+        'tipo_servico': 'Manutenção Preventiva', 'tag_id': 'TAG-01',
+        'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
+        'status_maquina': '🟢 Operacional'
     }
 
-# 1.3 FUNÇÃO DO CEP (Lógica de busca automática)
 def buscar_cep(cep):
     cep_limpo = "".join(filter(str.isdigit, cep))
     if len(cep_limpo) == 8:
@@ -46,120 +55,8 @@ def buscar_cep(cep):
                     st.session_state.dados['cidade'] = d.get('localidade', '')
                     st.session_state.dados['uf'] = d.get('uf', '')
                     return True
-        except Exception as e:
-            st.error(f"Erro ao buscar CEP: {e}")
+        except: pass
     return False
-
-# ==============================================================================
-# 2. SIDEBAR (PAINEL DE CONTROLE)
-# ==============================================================================
-with st.sidebar:
-    st.title("🚀 Painel de Controle")
-    aba_selecionada = st.radio(
-        "Selecione a Aba:", 
-        ["Home", "1. Cadastro", "2. Diagnósticos", "3. Assistente de Campo", "Relatórios"],
-        key="navegacao_principal"
-    )
-    
-    st.markdown("---")
-    
-    # Seletor global de fluido que salva na memória
-    st.session_state.dados['fluido'] = st.selectbox(
-        "Fluido Refrigerante:", 
-        [f['nome'] for f in LISTA_FLUIDOS], 
-        key="fluido_global_sidebar"
-    )
-
-# ==============================================================================
-# 3. FUNÇÕES DE INTERFACE (DEFINIÇÃO DAS ABAS)
-# ==============================================================================
-
-def renderizar_aba_home():
-    st.title("🏠 REFRI_PRO - Home")
-    nome_user = st.session_state.dados['tecnico_nome'] if st.session_state.dados['tecnico_nome'] else 'Técnico'
-    st.write(f"Bem-vindo, {nome_user}!")
-    st.info("Selecione '1. Cadastro' no menu lateral para iniciar.")
-
-def renderizar_aba_1():
-    st.header("📋 Cadastro de Cliente e Equipamento")
-    
-    with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
-        # Linha 1: Identificação
-        c1, c2, c3 = st.columns([2, 1, 1])
-        st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'])
-        st.session_state.dados['cpf_cnpj'] = c2.text_input("CPF/CNPJ", value=st.session_state.dados['cpf_cnpj'])
-        st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp *", value=st.session_state.dados['whatsapp'])
-
-        # Linha 2: Endereço Automático
-        ce1, ce2, ce3 = st.columns([1, 2, 1])
-        cep_atual = ce1.text_input("CEP *", value=st.session_state.dados['cep'])
-        
-        # Dispara a busca se o CEP mudar
-        if cep_atual != st.session_state.dados['cep']:
-            st.session_state.dados['cep'] = cep_atual
-            if buscar_cep(cep_atual):
-                st.rerun()
-
-        st.session_state.dados['endereco'] = ce2.text_input("Logradouro", value=st.session_state.dados['endereco'])
-        st.session_state.dados['numero'] = ce3.text_input("Nº/Apto", value=st.session_state.dados['numero'])
-
-        # Linha 3: Complemento e Localidade
-        ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.4])
-        st.session_state.dados['complemento'] = ce4.text_input("Comp.", value=st.session_state.dados['complemento'])
-        st.session_state.dados['bairro'] = ce5.text_input("Bairro", value=st.session_state.dados['bairro'])
-        st.session_state.dados['cidade'] = ce6.text_input("Cidade", value=st.session_state.dados['cidade'])
-        st.session_state.dados['uf'] = ce7.text_input("UF", value=st.session_state.dados['uf'], max_chars=2)
-
-# ==============================================================================
-# 4. INTERRUPTOR (LÓGICA DE NAVEGAÇÃO - FINAL DO ARQUIVO)
-# ==============================================================================
-
-if aba_selecionada == "Home":
-    renderizar_aba_home()
-elif aba_selecionada == "1. Cadastro":
-    renderizar_aba_1()
-elif aba_selecionada == "2. Diagnósticos":
-    st.header("🔍 Diagnósticos Técnicos")
-    st.write(f"Trabalhando com o fluido: **{st.session_state.dados['fluido']}**")
-elif aba_selecionada == "3. Assistente de Campo":
-    st.info("🚧 Em desenvolvimento...")
-elif aba_selecionada == "Relatórios":
-    st.success("📝 Pronto para gerar o PDF!")
-# ==============================================================================
-# 5. LISTA GLOBAL DE FLUIDOS
-# ==============================================================================
-
-LISTA_FLUIDOS = [
-    {
-        "nome": "R-410A", 
-        "tipo": "HFC (Mistura)", 
-        "pressao": "alta", 
-        "inflamavel": False,
-        "densidade_critica": "459.5 kg/m³"
-    },
-    {
-        "nome": "R-22", 
-        "tipo": "HCFC", 
-        "pressao": "média", 
-        "inflamavel": False,
-        "densidade_critica": "523.8 kg/m³"
-    },
-    {
-        "nome": "R-134a", 
-        "tipo": "HFC", 
-        "pressao": "média/baixa", 
-        "inflamavel": False,
-        "densidade_critica": "511.9 kg/m³"
-    },
-    {
-        "nome": "R-290", 
-        "tipo": "HC (Propano)", 
-        "pressao": "média", 
-        "inflamavel": True,
-        "densidade_critica": "221.0 kg/m³"
-    }
-]
-
 # ==============================================================================
 # 6. CONFIGURAÇÕES INICIAIS E MEMÓRIA
 # ==============================================================================
