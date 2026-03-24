@@ -207,10 +207,11 @@ def renderizar_aba_diagnosticos():
 
     # --- 2. MOTOR DE CÁLCULO (INCLUINDO R32) ---
 
+    # --- 2. MOTOR DE CÁLCULO (LINHA 210 EM DIANTE) ---
     def f_sat(p, g):
-    # --- 2. MOTOR DE CÁLCULO (INCLUINDO R407A E R32) ---
-    def f_sat(p, g):
-        if p <= 5: return 0.0
+        # Todo este bloco precisa de um recuo (Tab) em relação ao def
+        if p <= 5: 
+            return 0.0
         if g == "R410A": return 0.253 * (p**0.8) - 18.5
         if g == "R22": return 0.415 * (p**0.72) - 19.8
         if g == "R32": return 0.245 * (p**0.81) - 19.0
@@ -219,11 +220,12 @@ def renderizar_aba_diagnosticos():
         if g == "R407A": return 0.31 * (p**0.76) - 21.5
         return 0.0
 
+    # Estas linhas devem estar alinhadas com o 'def', NÃO com o 'if'
     t_sat_s = f_sat(p_suc, fluido)
     t_sat_d = f_sat(p_des, fluido)
     
-    sh = (t_suc - t_sat_s) if p_suc > 0 else 0.0
-    sc = (t_sat_d - t_liq) if p_des > 0 else 0.0
+    sh = (t_suc - t_sat_s) if p_suc > 5 else 0.0
+    sc = (t_sat_d - t_liq) if p_des > 5 else 0.0
     dt_ar = (t_ret - t_ins) if (t_ret > 0 and t_ins > 0) else 0.0
     dif_v = v_lin - v_med
     dif_i = rla - i_med if rla > 0 else 0.0
