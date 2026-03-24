@@ -11,21 +11,39 @@ import os
 LISTA_FLUIDOS = sorted(["R-22", "R-32", "R-134a", "R-290", "R-404A", "R-407A", "R-410A", "R-600a"])
 
 # 2. INICIALIZAÇÃO ROBUSTA DO SESSION STATE
+# No topo do arquivo (Seção 0)
 if 'dados' not in st.session_state:
-    st.session_state.dados = {}
-
-# Dicionário de campos padrão para evitar KeyError
-campos_padrao = {
-    'nome': '', 'cpf_cnpj': '', 'endereco': '', 'numero': '', 'bairro': '',
-    'cidade': '', 'uf': 'SP', 'cep': '', 'whatsapp': '', 'email': '',
-    'tag_id': 'TAG-01', 'linha': 'Residencial', 'fabricante': 'Carrier',
-    'modelo': '', 'capacidade': '12.000', 'fluido': 'R-410A',
-    'serie_evap': '', 'serie_cond': '', 'local_evap': '', 'local_cond': '',
-    'tipo_servico': 'Manutenção Preventiva', 'status_maquina': '🟢 Operacional',
-    'tecnico_nome': '', 'tecnico_documento': '', 'tecnico_registro': '',
-    'data': datetime.now().strftime("%d/%m/%Y")
-}
-
+    st.session_state.dados = {
+        'nome': '',
+        'whatsapp': '',
+        'celular': '',    # <-- ADICIONE ESTA LINHA (Resolve o erro da linha 126)
+        'tel_fixo': '',   # <-- ADICIONE ESTA LINHA (Resolve erro de Fixo)
+        'email': '',      # <-- ADICIONE ESTA LINHA (Resolve erro de E-mail)
+        'cpf_cnpj': '',
+        'endereco': '',
+        'numero': '',
+        'bairro': '',
+        'cidade': '',
+        'uf': 'SP',
+        'cep': '',
+        'tag_id': 'TAG-01',
+        'linha': 'Residencial',
+        'fabricante': 'Carrier',
+        'modelo': '',
+        'capacidade': '12.000',
+        'fluido': 'R-410A',
+        'serie_evap': '',
+        'serie_cond': '',
+        'local_evap': '',
+        'local_cond': '',
+        'tipo_servico': 'Manutenção Preventiva',
+        'status_maquina': '🟢 Operacional',
+        'tecnico_nome': '',
+        'tecnico_documento': '',
+        'tecnico_registro': '',
+        'tecnico_contato': '',
+        'data': datetime.now().strftime("%d/%m/%Y")
+    }
 # Preenche apenas os campos que ainda não existem (Garante o tecnico_nome)
 for chave, valor in campos_padrao.items():
     if chave not in st.session_state.dados:
@@ -121,7 +139,6 @@ def renderizar_aba_1():
             
             # Formatação WhatsApp
             st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp (XX-X-XXXX-XXXX) *", value=st.session_state.dados['whatsapp'], key="cli_zap_v2")
-
             cx1, cx2, cx3 = st.columns([1, 1, 2])
             st.session_state.dados['celular'] = cx1.text_input("Cel. (XX-X-XXXX-XXXX):", value=st.session_state.dados['celular'], key="cli_cel_v2")
             st.session_state.dados['tel_fixo'] = cx2.text_input("Fixo (XX-XXXX-XXXX):", value=st.session_state.dados['tel_fixo'], key="cli_tel_v2")
@@ -344,9 +361,14 @@ with e3:
    # ===== FLUIDO GLOBAL =====
 if 'dados' not in st.session_state:
     st.session_state.dados = {}
-
-if 'fluido' not in st.session_state:
-    st.session_state.fluido = "R-410A"
+# Na linha 364, use assim para salvar o dado corretamente:
+st.session_state.dados['fluido'] = st.selectbox(
+    "Fluido Refrigerante:",
+    LISTA_FLUIDOS,
+    # Faz o seletor começar no fluido que já estava salvo
+    index=LISTA_FLUIDOS.index(st.session_state.dados.get('fluido', 'R-410A')),
+    key="fluido_inspecao_v24"
+)
 
 LISTA_FLUIDOS = [
     "R-22",
@@ -375,7 +397,8 @@ def renderizar_aba_diagnosticos():
     fluido_sel = st.session_state.dados.get('fluido', 'R-410A')
     
     # Busca informações no dicionário global
-    info = FLUIDOS_INFO.get(fluido_sel, {})
+    # Na linha 378, mude para:
+    st.selectbox("Selecione o Fluido:", LISTA_FLUIDOS, key="fluido_final_v1")
 
     st.info(f"❄️ **Fluido Refrigerante Selecionado:** {fluido_sel}")
 
