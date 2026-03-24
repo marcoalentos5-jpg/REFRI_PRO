@@ -208,14 +208,16 @@ def renderizar_aba_diagnosticos():
     # --- 2. MOTOR DE CÁLCULO (INCLUINDO R32) ---
 
     def f_sat(p, g):
-    if p <= 5: return 0.0
-    if g == "R410A": return 0.253 * (p**0.8) - 18.5
-    if g == "R22": return 0.415 * (p**0.72) - 19.8
-    if g == "R32": return 0.245 * (p**0.81) - 19.0
-    if g == "R134a": return 0.65 * (p**0.62) - 25.0
-    if g == "R290": return 0.52 * (p**0.68) - 22.5
-    if g == "R407A": return 0.31 * (p**0.76) - 21.5  # ADICIONE ESTA LINHA
-    return 0.0
+    # --- 2. MOTOR DE CÁLCULO (INCLUINDO R407A E R32) ---
+    def f_sat(p, g):
+        if p <= 5: return 0.0
+        if g == "R410A": return 0.253 * (p**0.8) - 18.5
+        if g == "R22": return 0.415 * (p**0.72) - 19.8
+        if g == "R32": return 0.245 * (p**0.81) - 19.0
+        if g == "R134a": return 0.65 * (p**0.62) - 25.0
+        if g == "R290": return 0.52 * (p**0.68) - 22.5
+        if g == "R407A": return 0.31 * (p**0.76) - 21.5
+        return 0.0
 
     t_sat_s = f_sat(p_suc, fluido)
     t_sat_d = f_sat(p_des, fluido)
