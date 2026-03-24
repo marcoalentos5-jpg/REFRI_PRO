@@ -718,8 +718,10 @@ if aba_selecionada == "Home":
 # =============================================================
 
 # Certifique-se de que 'aba_selecionada' é a variável do seu st.sidebar.radio
+# --- LOGICA DE NAVEGAÇÃO FINAL ---
+
 if aba_selecionada == "Home":
-    renderizar_aba_home()
+    renderizar_aba_home()  # AQUI É A LINHA 722 CORRIGIDA
 
 elif aba_selecionada == "1. Cadastro":
     renderizar_aba_1()
@@ -731,5 +733,9 @@ elif aba_selecionada == "3. Assistente de Campo":
     renderizar_aba_ia_diagnostico()
 
 elif aba_selecionada == "Relatórios":
-    st.title("📊 Página de Relatórios")
-    st.write("Visualização e exportação de relatórios em breve.")
+    st.header("📊 Página de Relatórios")
+    st.write("Em breve: Visualização e exportação de relatórios.")
+
+# >>> MUITO IMPORTANTE <<<
+# APAGUE QUALQUER COISA QUE ESTIVER ABAIXO DISSO.
+# Se houver outro 'renderizar_aba_home()' solto no fim, o erro NameError ou DuplicateKey volta.
