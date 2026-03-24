@@ -525,3 +525,16 @@ if aba_selecionada == "Home":
         </div>
     """, unsafe_allow_html=True)
 
+elif aba_selecionada == "1. Cadastro":
+    renderizar_aba_1() 
+
+elif aba_selecionada == "2. Diagnósticos":
+    renderizar_aba_diagnosticos() 
+
+elif aba_selecionada == "3. Assistente de Campo":
+    renderizar_aba_ia_diagnostico()
+
+elif aba_selecionada == "Relatórios":
+    st.header("📊 Página de Relatórios")
+    st.write("Em breve: Visualização e exportação de relatórios.")
+
