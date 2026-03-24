@@ -318,11 +318,11 @@ if not fluido:
                     key="input_tag_aba1_v11"
                 )
 
-            fluido_salvo = st.session_state.dados.get('fluido', '')
-            if fluido_salvo in LISTA_FLUIDOS:
-                idx_f = LISTA_FLUIDOS.index(fluido_salvo)
-            else:
-                idx_f = 0
+                    fluido_salvo = st.session_state.dados.get('fluido', '')
+                    if fluido_salvo in LISTA_FLUIDOS:
+                    idx_f = LISTA_FLUIDOS.index(fluido_salvo)
+                    else:
+                    idx_f = 0
 
             # 3. Cria o Selectbox usando a LISTA_FLUIDOS que definimos no topo
             st.session_state.dados['fluido'] = st.selectbox(
