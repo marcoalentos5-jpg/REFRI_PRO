@@ -25,23 +25,16 @@ LISTA_FLUIDOS = [
     "R-600a"
 ]
 
-# 1️⃣ SELECTBOX
-st.selectbox(
-    "Fluido Refrigerante:",
-    LISTA_FLUIDOS,
-    key="fluido"
-)
+# 1. DEFINIÇÃO DA LISTA (Apenas a lista, sem o selectbox aqui)
+LISTA_FLUIDOS = sorted(["R-22", "R-32", "R-134a", "R-290", "R-404A", "R-407A", "R-410A", "R-600a"])
 
-# 2️⃣ NORMALIZA (AQUI 👇)
-fluido = st.session_state.get('fluido', 'R-410A')
-
-fluido = fluido.replace("R410A", "R-410A")
-
-st.session_state.fluido = fluido
-st.session_state.dados['fluido'] = fluido
-
-fluido = st.session_state.get('fluido', 'R-410A')
-info = FLUIDOS_INFO.get(fluido, {})
+# 2. INICIALIZAÇÃO DO ESTADO (Se não existir)
+if 'dados' not in st.session_state:
+    st.session_state.dados = {
+        'fluido': 'R-410A',
+        'modelo': '',
+        'tag_id': 'TAG-01'
+    }
 
 st.write(info)
 
