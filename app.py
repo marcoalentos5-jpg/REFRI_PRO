@@ -11,7 +11,25 @@ import os
 st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
 
 # LISTA MESTRA DE FLUIDOS (Definida no topo para evitar erro de referência)
-LISTA_FLUIDOS = ["R410A", "R134a", "R22", "R32", "R290"]
+# ... (suas importações)
+
+LISTA_FLUIDOS = ["R410A", "R32", "R134a", "R22", "R290", "R407", ]
+
+def buscar_cep(cep):
+    cep_limpo = "".join(filter(str.isdigit, str(cep)))
+    if len(cep_limpo) == 8:
+        try:
+            r = requests.get(f"https://viacep.com.br/ws/{cep_limpo}/json/", timeout=5)
+            if r.status_code == 200:
+                d = r.json()
+                if "erro" not in d:
+                    st.session_state.dados['endereco'] = d.get('logradouro', '')
+                    st.session_state.dados['bairro'] = d.get('bairro', '')
+                    st.session_state.dados['cidade'] = d.get('localidade', '')
+                    st.session_state.dados['uf'] = d.get('uf', '')
+                    return True
+        except: pass
+    return False
 
 # MOTOR DE SESSÃO
 if 'dados' not in st.session_state:
