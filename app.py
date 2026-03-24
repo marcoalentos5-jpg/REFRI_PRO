@@ -365,14 +365,18 @@ LISTA_FLUIDOS = [
     "R-407A",
     "R-410A",
     "R-600a"
-]          
+]         
   
-# Na linha 364, altere para:
-st.selectbox(
-    "Fluido Refrigerante:",
-    LISTA_FLUIDOS,
-    key="fluido_inspecao_v24" # Mudei de "fluido" para algo único
-)
+def renderizar_aba_diagnosticos():
+    st.header("🔍 Central de Diagnóstico Técnico")
+    
+    # ESTE BLOCO (370-374) DEVE ESTAR AQUI DENTRO (com 4 espaços de recuo)
+    st.selectbox(
+        "Fluido Refrigerante:",
+        LISTA_FLUIDOS,
+        key="fluido_inspecao_v25", # Mudei para v25 para limpar o erro anterior
+        index=0
+    )
 
 # ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO FINAL CORRIGIDA)
