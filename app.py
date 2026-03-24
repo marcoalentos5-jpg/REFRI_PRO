@@ -116,11 +116,25 @@ def renderizar_aba_1():
             st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'])
             st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
         with e3:
-            st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], index=1)
-            st.session_state.dados['fluido'] = st.selectbox("Fluido:", ["R410A", "R134a", "R22", "R32", "R290"], index=0)
-            st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
-            st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
+            # --- CAPACIDADE ---
+            cap_opts = ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"]
+            # Busca o índice do que já estava salvo ou usa 1 (12k) como padrão
+            idx_cap = cap_opts.index(st.session_state.dados['capacidade']) if st.session_state.dados['capacidade'] in cap_opts else 1
+            st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", cap_opts, index=idx_cap, key="sb_cap")
 
+            # --- FLUIDO ---
+            flu_opts = ["R410A", "R134a", "R22", "R32", "R290"]
+            # Busca o índice do que já estava salvo ou usa 0 (R410A) como padrão
+            idx_flu = flu_opts.index(st.session_state.dados['fluido']) if st.session_state.dados['fluido'] in flu_opts else 0
+            st.session_state.dados['fluido'] = st.selectbox("Fluido:", flu_opts, index=idx_flu, key="sb_fluido")
+
+            # --- TIPO DE SERVIÇO ---
+            srv_opts = ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"]
+            idx_srv = srv_opts.index(st.session_state.dados['tipo_servico']) if st.session_state.dados['tipo_servico'] in srv_opts else 0
+            st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", srv_opts, index=idx_srv, key="sb_servico")
+
+            # --- TAG ---
+            st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
 # ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS
 # ==============================================================================
