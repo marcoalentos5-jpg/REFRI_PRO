@@ -662,8 +662,24 @@ if aba_selecionada == "Home":
 
     st.markdown("<br><br>", unsafe_allow_html=True) 
 
-   if aba_selecionada == "Home":
-    # --- APRESENTAÇÃO DA ABA HOME ---
+   # ... código anterior da Aba 3 ou Relatórios ...
+
+elif aba_selecionada == "Relatórios":
+    st.header("📊 Página de Relatórios")
+    st.write("Em breve...")
+
+# LINHA 665: Ela deve estar EXATAMENTE debaixo do "elif" acima
+if aba_selecionada == "Home":
+    st.markdown("<br>", unsafe_allow_html=True)
+    # Tudo aqui dentro tem 4 espaços de recuo
+    st.markdown("""
+        <div style="text-align: center;">
+            <h1>MPN Soluções</h1>
+        </div>
+    """, unsafe_allow_html=True)
+       
+       # --- APRESENTAÇÃO DA ABA HOME ---
+       
     st.markdown("<br>", unsafe_allow_html=True) 
 
     col1, col2, col3 = st.columns([1, 2, 1]) 
