@@ -361,26 +361,31 @@ def renderizar_aba_diagnosticos():
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
 
-    # Pega o fluido selecionado na Aba 1 (ou o padrão)
-    fluido_sel = st.session_state.dados.get('fluido', 'R-410A')
+    # 1. PEGA O FLUIDO (Busca o que foi selecionado ou usa o padrão)
+    fluido_sel = st.session_state.get('fluido_final_v1', 'R-410A')
     
-    # Busca informações no dicionário global
-    # Na linha 378, mude para:
-    st.selectbox("Selecione o Fluido:", LISTA_FLUIDOS, key="fluido_final_v1")
+    # 2. CRIA A VARIÁVEL 'info' (Isso resolve o erro da linha 373)
+    # Ele procura na sua LISTA_FLUIDOS o dicionário que tem o nome do fluido selecionado
+    info = next((f for f in LISTA_FLUIDOS if f['nome'] == fluido_sel), None)
+
+    # 3. SELETOR DE FLUIDO (Mantendo a chave para não dar erro)
+    st.selectbox("Selecione o Fluido:", [f['nome'] for f in LISTA_FLUIDOS], key="fluido_final_v1")
 
     st.info(f"❄️ **Fluido Refrigerante Selecionado:** {fluido_sel}")
 
+    # 4. AGORA O 'info' EXISTE E O CÓDIGO ABAIXO FUNCIONA:
     if info:
         col_a, col_b = st.columns(2)
         with col_a:
             st.metric("Tipo de Gás", info.get("tipo", "N/A"))
         with col_b:
-            st.metric("Pressão de Trabalho", info.get("pressao", "N/A").title())
+            # .title() deixa a primeira letra maiúscula
+            st.metric("Pressão de Trabalho", str(info.get("pressao", "N/A")).title())
             
         if info.get("inflamavel"):
             st.warning("⚠️ **Atenção:** Este fluido é inflamável (Classe HC). Cuidado com brasagem!")
     else:
-        st.warning("⚠️ Dados técnicos não encontrados para este fluido.")
+        st.warning("⚠️ Dados técnicos não encontrados para este fluido na LISTA_FLUIDOS.")
 
     # Espaço para os cálculos de Superaquecimento/Sub-resfriamento abaixo
     
