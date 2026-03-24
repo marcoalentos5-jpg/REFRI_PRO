@@ -1,6 +1,6 @@
 
 # ==============================================================================
-# 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES (VERSÃO COMPATÍVEL)
+# 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES (VERSÃO FINAL CORRIGIDA)
 # ==============================================================================
 import streamlit as st
 from datetime import datetime
@@ -10,41 +10,26 @@ import os
 # 1. LISTA GLOBAL DE FLUIDOS
 LISTA_FLUIDOS = sorted(["R-22", "R-32", "R-134a", "R-290", "R-404A", "R-407A", "R-410A", "R-600a"])
 
-# 2. INICIALIZAÇÃO DO BANCO DE DADOS TEMPORÁRIO (SESSION STATE)
+# 2. INICIALIZAÇÃO ROBUSTA DO SESSION STATE
 if 'dados' not in st.session_state:
-    st.session_state.dados = {
-        # Dados do Cliente
-        'nome': '',
-        'cpf_cnpj': '',
-        'endereco': '',
-        'numero': '',
-        'bairro': '',
-        'cidade': '',
-        'uf': 'SP',
-        'cep': '',
-        'whatsapp': '',
-        'email': '',
-        
-        # Dados do Equipamento
-        'tag_id': 'TAG-01',
-        'linha': 'Residencial',
-        'fabricante': 'Carrier',
-        'modelo': '',
-        'capacidade': '12.000',
-        'fluido': 'R-410A',
-        'serie_evap': '',
-        'serie_cond': '',
-        'local_evap': '',
-        'local_cond': '',
-        'tipo_servico': 'Manutenção Preventiva',
-        'status_maquina': '🟢 Operacional',
-        
-        # Dados do Técnico (O que estava dando erro!)
-        'tecnico_nome': '',
-        'tecnico_documento': '',
-        'tecnico_registro': '',
-        'data': datetime.now().strftime("%d/%m/%Y")
-    }
+    st.session_state.dados = {}
+
+# Dicionário de campos padrão para evitar KeyError
+campos_padrao = {
+    'nome': '', 'cpf_cnpj': '', 'endereco': '', 'numero': '', 'bairro': '',
+    'cidade': '', 'uf': 'SP', 'cep': '', 'whatsapp': '', 'email': '',
+    'tag_id': 'TAG-01', 'linha': 'Residencial', 'fabricante': 'Carrier',
+    'modelo': '', 'capacidade': '12.000', 'fluido': 'R-410A',
+    'serie_evap': '', 'serie_cond': '', 'local_evap': '', 'local_cond': '',
+    'tipo_servico': 'Manutenção Preventiva', 'status_maquina': '🟢 Operacional',
+    'tecnico_nome': '', 'tecnico_documento': '', 'tecnico_registro': '',
+    'data': datetime.now().strftime("%d/%m/%Y")
+}
+
+# Preenche apenas os campos que ainda não existem (Garante o tecnico_nome)
+for chave, valor in campos_padrao.items():
+    if chave not in st.session_state.dados:
+        st.session_state.dados[chave] = valor
 
 # 3. ESTILO VISUAL (CSS)
 st.markdown("""
@@ -53,10 +38,10 @@ st.markdown("""
         background-color: #25D366 !important;
         color: white !important;
         border-radius: 8px !important;
+        font-weight: bold;
     }
     </style>
     """, unsafe_allow_html=True)
-
 # --- INICIALIZAÇÃO DO ESTADO (SESSION STATE) ---
 if 'dados' not in st.session_state:
     st.session_state.dados = {
