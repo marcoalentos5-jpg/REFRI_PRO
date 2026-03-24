@@ -131,20 +131,28 @@ def renderizar_aba_1():
                 st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
 
             with e3:
-            # Pressione TAB ou 4 espaços antes das linhas abaixo:
-                fluido_atual = st.session_state.dados.get('fluido', 'R410A')
-            
-            if fluido_atual in LISTA_FLUIDOS:
-                idx_f = LISTA_FLUIDOS.index(fluido_selecionado)
+            with e3:
+            # 1. Resgata o fluido salvo ou define o padrão R410A
+            fluido_salvo = st.session_state.dados.get('fluido', 'R410A')
+
+            # 2. Tenta encontrar a posição na lista. Se não achar, usa a posição 0.
+            if fluido_salvo in LISTA_FLUIDOS:
+                idx_f = LISTA_FLUIDOS.index(fluido_salvo)
             else:
                 idx_f = 0
 
+            # 3. Cria o Selectbox usando a LISTA_FLUIDOS que definimos no topo
             st.session_state.dados['fluido'] = st.selectbox(
                 "Fluido:", 
                 LISTA_FLUIDOS, 
                 index=idx_f,
-                key="sel_fluido_v6"
+                key="sel_fluido_final_v8"
             )
+            
+            # --- Continue com os outros campos abaixo ---
+            st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], index=1)
+            st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
+            st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
     
     # O SEU NOVO SELECTBOX:
     st.session_state.dados['fluido'] = st.selectbox(
