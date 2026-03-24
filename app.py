@@ -662,7 +662,19 @@ if aba_selecionada == "Home":
 
     st.markdown("<br><br>", unsafe_allow_html=True) 
 
-   st.markdown("""
+   if aba_selecionada == "Home":
+    # --- APRESENTAÇÃO DA ABA HOME ---
+    st.markdown("<br>", unsafe_allow_html=True) 
+
+    col1, col2, col3 = st.columns([1, 2, 1]) 
+    with col2: 
+        # Aqui você coloca o seu código da logo se tiver
+        pass 
+    
+    st.markdown("<br><br>", unsafe_allow_html=True) 
+
+    # ESTA É A LINHA 665 CORRIGIDA (Alinhada com o st.markdown de cima)
+    st.markdown("""
         <div style="text-align: center;">
             <h1 style="color: #0d47a1; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
                 MPN Soluções
