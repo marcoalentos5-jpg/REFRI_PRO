@@ -132,7 +132,7 @@ def renderizar_aba_1():
 
             with e3:
             # Pressione TAB ou 4 espaços antes das linhas abaixo:
-            fluido_atual = st.session_state.dados.get('fluido', 'R410A')
+                fluido_atual = st.session_state.dados.get('fluido', 'R410A')
             
             if fluido_atual in LISTA_FLUIDOS:
                 idx_f = LISTA_FLUIDOS.index(fluido_selecionado)
