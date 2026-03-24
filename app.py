@@ -7,49 +7,35 @@ from datetime import datetime
 import urllib.parse
 import os
 
+
 # 1. LISTA GLOBAL DE FLUIDOS
 LISTA_FLUIDOS = sorted(["R-22", "R-32", "R-134a", "R-290", "R-404A", "R-407A", "R-410A", "R-600a"])
 
-# 2. INICIALIZAÇÃO ROBUSTA DO SESSION STATE
-# No topo do arquivo (Seção 0)
+# 2. DEFINIÇÃO DA ESTRUTURA (Campos Padrão)
+# Definimos a variável ANTES de usar no loop
+campos_padrao = {
+    'nome': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
+    'cpf_cnpj': '', 'endereco': '', 'numero': '', 'bairro': '', 'cidade': '',
+    'uf': 'SP', 'cep': '', 'tag_id': 'TAG-01', 'linha': 'Residencial',
+    'fabricante': 'Carrier', 'modelo': '', 'capacidade': '12.000',
+    'fluido': 'R-410A', 'serie_evap': '', 'serie_cond': '',
+    'local_evap': '', 'local_cond': '', 'tipo_servico': 'Manutenção Preventiva',
+    'status_maquina': '🟢 Operacional', 'tecnico_nome': '',
+    'tecnico_documento': '', 'tecnico_registro': '', 'tecnico_contato': '',
+    'data': datetime.now().strftime("%d/%m/%Y")
+}
+
+# 3. INICIALIZAÇÃO DO SESSION STATE
 if 'dados' not in st.session_state:
-    st.session_state.dados = {
-        'nome': '',
-        'whatsapp': '',
-        'celular': '',    # <-- ADICIONE ESTA LINHA (Resolve o erro da linha 126)
-        'tel_fixo': '',   # <-- ADICIONE ESTA LINHA (Resolve erro de Fixo)
-        'email': '',      # <-- ADICIONE ESTA LINHA (Resolve erro de E-mail)
-        'cpf_cnpj': '',
-        'endereco': '',
-        'numero': '',
-        'bairro': '',
-        'cidade': '',
-        'uf': 'SP',
-        'cep': '',
-        'tag_id': 'TAG-01',
-        'linha': 'Residencial',
-        'fabricante': 'Carrier',
-        'modelo': '',
-        'capacidade': '12.000',
-        'fluido': 'R-410A',
-        'serie_evap': '',
-        'serie_cond': '',
-        'local_evap': '',
-        'local_cond': '',
-        'tipo_servico': 'Manutenção Preventiva',
-        'status_maquina': '🟢 Operacional',
-        'tecnico_nome': '',
-        'tecnico_documento': '',
-        'tecnico_registro': '',
-        'tecnico_contato': '',
-        'data': datetime.now().strftime("%d/%m/%Y")
-    }
-# Preenche apenas os campos que ainda não existem (Garante o tecnico_nome)
+    st.session_state.dados = campos_padrao.copy()
+
+# 4. GARANTIA DE ATUALIZAÇÃO (Preenche campos que faltarem)
+# Agora o 'campos_padrao' existe e não dará NameError
 for chave, valor in campos_padrao.items():
     if chave not in st.session_state.dados:
         st.session_state.dados[chave] = valor
 
-# 3. ESTILO VISUAL (CSS)
+# 5. ESTILO VISUAL (CSS)
 st.markdown("""
     <style>
     div.stLinkButton > a {
@@ -60,6 +46,7 @@ st.markdown("""
     }
     </style>
     """, unsafe_allow_html=True)
+
 # --- INICIALIZAÇÃO DO ESTADO (SESSION STATE) ---
 if 'dados' not in st.session_state:
     st.session_state.dados = {
@@ -684,10 +671,10 @@ if aba_selecionada == "Home":
                 Soluções em Refrigeração e Climatização
             </p>
             <hr style="border: 1px solid #90caf9; width: 60%; margin: 20px auto;">
-            <p style="color: #455a64; font-size: 1.1em; font-weight: bold;">
+            
                 Bem-vindo ao Sistema HVAC Pro de Gestão Inteligente.
             </p>
-            <p style="color: #546e7a; font-size: 1.0em;">
+            
                 Selecione uma opção no Painel de Controle lateral para iniciar sua inspeção ou diagnóstico.
             </p>
         </div>
