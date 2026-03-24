@@ -242,7 +242,7 @@ def renderizar_aba_1():
     )
     fluido = st.session_state.get('fluido')
 
-if not fluido:
+      if not fluido:
     fluido = "R-410A"
 
     st.info(f"Fluido selecionado: {fluido}")
