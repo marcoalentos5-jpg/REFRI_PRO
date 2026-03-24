@@ -6,6 +6,16 @@ import streamlit as st
 from datetime import datetime
 import os
 
+if 'dados' not in st.session_state:
+    st.session_state.dados = {
+        'fluido': 'R-410A',
+        'fabricante': 'Carrier',
+        'modelo': '',
+        'tag_id': 'TAG-01',
+        'tecnico_nome': '',  # <-- ADICIONE ESTA LINHA AQUI
+        'data': datetime.now().strftime("%d/%m/%Y")
+    }
+
 # 1. LISTA GLOBAL ÚNICA
 LISTA_FLUIDOS = sorted(["R-22", "R-32", "R-134a", "R-290", "R-404A", "R-407A", "R-410A", "R-600a"])
 
