@@ -89,18 +89,25 @@ st.session_state.dados['fluido'] = st.session_state.fluido
 
 def buscar_cep(cep):
     cep_limpo = "".join(filter(str.isdigit, cep))
+
     if len(cep_limpo) == 8:
         try:
             r = requests.get(f"https://viacep.com.br/ws/{cep_limpo}/json/")
+            
             if r.status_code == 200:
                 d = r.json()
+
                 if "erro" not in d:
                     st.session_state.dados['endereco'] = d.get('logradouro', '')
                     st.session_state.dados['bairro'] = d.get('bairro', '')
                     st.session_state.dados['cidade'] = d.get('localidade', '')
                     st.session_state.dados['uf'] = d.get('uf', '')
+
                     return True
-        except: pass
+
+        except Exception as e:
+            print(e)  # ajuda debug (não quebra app)
+
     return False
 
 # ==============================================================================
@@ -342,15 +349,18 @@ st.selectbox(
 )
 
 st.session_state.dados['fluido'] = st.session_state.fluido
+
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO FINAL BLINDADA - R32/RLA/ΔT)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO FINAL CORRIGIDA)
 # ==============================================================================
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
-    
-    # Resgate do Fluido da Aba 1
-    fluido = st.session_state.dados.get('fluido', 'R410A')
-    st.info(f"❄️ Fluido Refrigerante Selecionado: **{fluido}**")
+
+    st.success("ABA DIAGNÓSTICO OK")  # (pode remover depois)
+
+    fluido = st.session_state.get('fluido', 'R-410A')
+
+    st.info(f"❄️ Fluido Refrigerante Selecionado: {fluido}")
     
     # --- CSS PARA ALERTAS TÉCNICOS ---
     st.markdown("""
