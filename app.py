@@ -161,10 +161,7 @@ def renderizar_aba_1():
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
     
-   def renderizar_aba_diagnosticos(): c = st.session_state.count
-    
-    st.header("🔍 Central de Diagnóstico Técnico")
-    
+   
     # Resgate do Fluido da Aba 1 (Sincronizado)
     fluido = st.session_state.dados.get('fluido', 'R410A')
     st.info(f"❄️ Fluido Refrigerante Selecionado: **{fluido}**")
