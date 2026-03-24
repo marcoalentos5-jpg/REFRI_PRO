@@ -681,4 +681,4 @@ elif aba_selecionada == "3. Assistente de Campo":
 
 elif aba_selecionada == "Relatórios":
     st.header("📊 Página de Relatórios")
-    st.write("Em breve: Visualização e exportação de relatórios.")    
+    st.write("Em breve: Visualização e exportação de relatórios.")
