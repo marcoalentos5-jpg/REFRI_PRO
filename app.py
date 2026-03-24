@@ -133,17 +133,43 @@ def renderizar_aba_1():
                 st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'])
                 st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
 
-            with e3:
-                # 1. Recupera o fluido e define o índice para não resetar
+           with e3:
+                # 1. Busca o fluido salvo (ou R410A por padrão)
                 fluido_salvo = st.session_state.dados.get('fluido', 'R410A')
-                idx_f = LISTA_FLUIDOS.index(fluido_salvo) if fluido_salvo in LISTA_FLUIDOS else 0
-                
-                # 2. Selectbox de Fluido (Já com R407A na lista global)
+
+                # 2. Define o índice (AQUI ESTAVA O ERRO: o nome deve ser igual ao do index lá embaixo)
+                if fluido_salvo in LISTA_FLUIDOS:
+                    idx_padrao = LISTA_FLUIDOS.index(fluido_salvo)
+                else:
+                    idx_padrao = 0
+
+                # 3. O Selectbox usando 'idx_padrao'
                 st.session_state.dados['fluido'] = st.selectbox(
                     "Fluido:", 
                     LISTA_FLUIDOS, 
-                    index=idx_f, 
-                    key="sel_fluido_aba1_v11"
+                    index=idx_padrao, # <-- Agora o nome bate com a variável acima
+                    key="sel_fluido_final_v12"
+                )
+                
+                # Campos seguintes (com keys únicas para não dar erro de Duplicate ID)
+                st.session_state.dados['capacidade'] = st.selectbox(
+                    "Capacidade:", 
+                    ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], 
+                    index=1,
+                    key="sel_cap_v12"
+                )
+                
+                st.session_state.dados['tipo_servico'] = st.selectbox(
+                    "Tipo de Serviço:", 
+                    ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], 
+                    index=0,
+                    key="sel_serv_v12"
+                )
+                
+                st.session_state.dados['tag_id'] = st.text_input(
+                    "TAG:", 
+                    value=st.session_state.dados['tag_id'],
+                    key="input_tag_v12"
                 )
                 
                 # 3. Selectbox de Capacidade (Onde dava o erro)
@@ -494,6 +520,3 @@ elif aba_selecionada == "3. Assistente de Campo":
 elif aba_selecionada == "Relatórios":
     st.header("📊 Página de Relatórios")
     st.write("Em breve: Visualização e exportação de relatórios.")
-
-# --- O BLOCO QUE ESTAVA DANDO ERRO FOI REMOVIDO DAQUI PORQUE ELE DEVE ESTAR 
-# APENAS DENTRO DA FUNÇÃO renderizar_aba_1() ---
