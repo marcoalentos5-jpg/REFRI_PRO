@@ -66,7 +66,7 @@ if 'dados' not in st.session_state:
         'data': datetime.now().strftime("%d/%m/%Y"),
         'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '', 'complemento': '',
         'fabricante': 'Carrier', 'modelo': '', 'capacidade': '12.000', 'linha': 'Residencial',
-        'serie_evap': '', 'serie_cond':, 'local_evap': '',
+        'serie_evap': '', 'serie_cond': '', 'local_evap': '', 'fluido': 'R-410A',  # ✅ CORRIGIDO
         'tipo_servico': 'Manutenção Preventiva', 'tag_id': 'TAG-01',
         'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
         'status_maquina': '🟢 Operacional'
