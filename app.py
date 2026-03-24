@@ -133,7 +133,7 @@ def renderizar_aba_1():
                 st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'])
                 st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
 
-           with st.expander("Detalhes Técnicos do Ativo", expanded=True):
+            with st.expander("Detalhes Técnicos do Ativo", expanded=True):
             # 1. As três colunas devem estar na mesma linha
             e1, e2, e3 = st.columns(3)
             
