@@ -171,9 +171,11 @@ def renderizar_aba_1():
                 st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'], key="le_v17")
                 st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'], key="lc_v17")
 
+            if 'dados' not in st.session_state:
+    st.session_state.dados = {}
+            
             with e3:
-    # NÃO CRIA selectbox de fluido aqui
-
+    
     st.session_state.dados['capacidade'] = st.selectbox(
         "Capacidade:",
         ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"],
