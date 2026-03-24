@@ -396,8 +396,14 @@ st.markdown("""
 # ==============================================================================
 # 2. MOTOR DE SESSÃO
 # ==============================================================================
+
+# No topo do arquivo (Seção 2. MOTOR DE SESSÃO)
 if 'dados' not in st.session_state:
     st.session_state.dados = {
+        # ... outras chaves ...
+        'status_maquina': '🟢 Operacional', 
+        'laudo_diag': '' 
+    }
         'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
         'data': datetime.now().strftime("%d/%m/%Y"), 'cep': '', 'endereco': '', 'bairro': '', 
         'cidade': '', 'uf': '', 'numero': '', 'complemento': '', 'fabricante': 'Carrier', 
@@ -492,8 +498,12 @@ def renderizar_aba_2():
     st.metric("Superaquecimento", f"{sh:.2f} K")
     st.metric("ΔT Ar", f"{dt:.2f} °C")
     if sh < 5 and ps > 5: st.error("⚠️ RISCO DE GOLPE DE LÍQUIDO")
-    st.session_state.dados['laudo_diag'] = st.text_area("Parecer:", value=st.session_state.dados['laudo_diag'], key=f"lt_{c}")
-
+   # Altere a linha 495 para esta:
+st.session_state.dados['laudo_diag'] = st.text_area(
+    "Parecer:", 
+    value=st.session_state.dados.get('laudo_diag', ''), # O .get evita o erro se a chave sumir
+    key=f"lt_{c}"
+)
 def renderizar_aba_3():
     c = st.session_state.count
     st.header("🕵️ Assistente de Campo IA")
