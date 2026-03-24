@@ -161,9 +161,7 @@ def renderizar_aba_1():
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
     
-   def renderizar_aba_diagnosticos():
-    # Usando o contador global para garantir o reset total
-    c = st.session_state.count
+   def renderizar_aba_diagnosticos(): c = st.session_state.count
     
     st.header("🔍 Central de Diagnóstico Técnico")
     
