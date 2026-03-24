@@ -423,7 +423,7 @@ with st.sidebar:
         st.rerun()
 
 # ==============================================================================
-# 5. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
+# 5. LÓGICA DE EXIBIÇÃO DAS ABAS (CORRIGIDA)
 # ==============================================================================
 
 # Use a seleção do sidebar para chamar a função correta
@@ -475,31 +475,5 @@ elif aba_selecionada == "Relatórios":
     st.header("📊 Página de Relatórios")
     st.write("Em breve: Visualização e exportação de relatórios.")
 
-                    
-                # Adicionei 'key' únicas para cada campo abaixo:
-                st.session_state.dados['fluido'] = st.selectbox(
-                    "Fluido:", 
-                    LISTA_FLUIDOS, 
-                    index=idx_f, 
-                    key="seletor_fluido_unico" # <-- CHAVE ÚNICA
-                )
-                
-                st.session_state.dados['capacidade'] = st.selectbox(
-                    "Capacidade:", 
-                    ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], 
-                    index=1,
-                    key="seletor_capacidade_unico" # <-- CHAVE ÚNICA
-                )
-                
-                st.session_state.dados['tipo_servico'] = st.selectbox(
-                    "Tipo de Serviço:", 
-                    ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], 
-                    index=0,
-                    key="seletor_servico_unico" # <-- CHAVE ÚNICA
-                )
-                
-                st.session_state.dados['tag_id'] = st.text_input(
-                    "TAG:", 
-                    value=st.session_state.dados['tag_id'],
-                    key="input_tag_unico" # <-- CHAVE ÚNICA
-                )
+# --- O BLOCO QUE ESTAVA DANDO ERRO FOI REMOVIDO DAQUI PORQUE ELE DEVE ESTAR 
+# APENAS DENTRO DA FUNÇÃO renderizar_aba_1() ---
