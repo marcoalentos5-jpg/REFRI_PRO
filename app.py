@@ -361,30 +361,52 @@ with e3:
     # 👇 FLUIDO (SÓ EXIBE)
     fluido = st.session_state.get('fluido', 'R-410A')
     st.info(f"Fluido selecionado: {fluido}")
-           
-                
-           
-            
-            # --- Continue com os outros campos abaixo ---
-            st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], index=1)
-            st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
-            st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
+
+    st.session_state.dados['capacidade'] = st.selectbox(
+        "Capacidade:",
+        ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"],
+        index=1
+    )
+
+    st.session_state.dados['tipo_servico'] = st.selectbox(
+        "Tipo de Serviço:",
+        ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"],
+        index=0
+    )
+
+    st.session_state.dados['tag_id'] = st.text_input(
+        "TAG:",
+        value=st.session_state.dados.get('tag_id', '')
+    )
     
-    # O SEU NOVO SELECTBOX:
-    # Inicialização segura
+   # ===== FLUIDO GLOBAL =====
 if 'dados' not in st.session_state:
     st.session_state.dados = {}
 
-LISTA_FLUIDOS = ["R-22", "R-410A", "R-32", "R-134a"]
+if 'fluido' not in st.session_state:
+    st.session_state.fluido = "R-410A"
+
+LISTA_FLUIDOS = [
+    "R-22",
+    "R-32",
+    "R-134a",
+    "R-404A",
+    "R-407A",
+    "R-410A",
+    "R-600a"
+]
 
 st.selectbox(
-    "Fluido Refrigerante:", 
-    LISTA_FLUIDOS, 
-    index=0,
+    "Fluido Refrigerante:",
+    LISTA_FLUIDOS,
     key="fluido"
 )
 
 st.session_state.dados['fluido'] = st.session_state.fluido
+           
+            
+           
+    
 
 # ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO FINAL CORRIGIDA)
