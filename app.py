@@ -404,6 +404,9 @@ if 'dados' not in st.session_state:
         'status_maquina': '🟢 Operacional', 
         'laudo_diag': '' 
     }
+       # --- CORREÇÃO DA LINHA 407 (MOTOR DE SESSÃO) ---
+if 'dados' not in st.session_state:
+    st.session_state.dados = {
         'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
         'data': datetime.now().strftime("%d/%m/%Y"), 'cep': '', 'endereco': '', 'bairro': '', 
         'cidade': '', 'uf': '', 'numero': '', 'complemento': '', 'fabricante': 'Carrier', 
@@ -412,6 +415,7 @@ if 'dados' not in st.session_state:
         'tipo_servico': 'Manutenção Preventiva', 'tag_id': 'TAG-01',
         'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
         'status_maquina': '🟢 Operacional', 'laudo_diag': ''
+    }
     }
 
 if 'count' not in st.session_state:
