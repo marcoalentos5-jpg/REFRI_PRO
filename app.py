@@ -6,24 +6,30 @@ if 'dados' not in st.session_state:
 if 'fluido' not in st.session_state:
     st.session_state.fluido = "R-410A"
 
-LISTA_FLUIDOS = ["R-22", "R-410A", "R-32", "R-134a"]
+LISTA_FLUIDOS = [
+    "R-22",
+    "R-32",
+    "R-134a",
+    "R-404A",
+    "R-407A",
+    "R-410A",
+    "R-600a"
+]
 
+# 1️⃣ SELECTBOX
 st.selectbox(
     "Fluido Refrigerante:",
     LISTA_FLUIDOS,
     key="fluido"
 )
 
-st.session_state.dados['fluido'] = st.session_state.fluido
-# sincroniza com seu dicionário
-st.session_state.dados['fluido'] = st.session_state.fluido
+# 2️⃣ NORMALIZA (AQUI 👇)
+fluido = st.session_state.get('fluido', 'R-410A')
 
+fluido = fluido.replace("R410A", "R-410A")
 
-st.selectbox(
-    "Fluido Refrigerante:",
-    LISTA_FLUIDOS,
-    key="fluido"
-)
+st.session_state.fluido = fluido
+st.session_state.dados['fluido'] = fluido
 
 # ==============================================================================
 # 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES (CONGELADO)
@@ -37,6 +43,31 @@ import os # Biblioteca para verificar arquivos no sistema
 
 # DEFINA A LISTA AQUI (Global)
 LISTA_FLUIDOS = sorted(["R22", "R32", "R134a", "R290", "R407A", "R410A"])
+
+# ==============================================================================
+# 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES
+# ==============================================================================
+
+import streamlit as st
+from datetime import datetime
+import requests
+
+# 👇 AQUI (LOGO APÓS IMPORTS OU LISTAS)
+
+FLUIDOS_INFO = {
+    "R-22": {"tipo": "HCFC", "pressao": "média"},
+    "R-32": {"tipo": "HFC", "pressao": "alta"},
+    "R-134a": {"tipo": "HFC", "pressao": "baixa"},
+    "R-404A": {"tipo": "HFC", "pressao": "alta"},
+    "R-407A": {"tipo": "HFC", "pressao": "alta"},
+    "R-410A": {"tipo": "HFC", "pressao": "alta"},
+    "R-600a": {"tipo": "HC", "inflamavel": True, "pressao": "baixa"}
+}
+
+fluido = st.session_state.get('fluido', 'R-410A')
+info = FLUIDOS_INFO.get(fluido, {})
+
+st.write(info)
 
 # 1. CONFIGURAÇÃO INICIAL (TESTADA)
 st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
@@ -303,33 +334,36 @@ if not fluido:
                     key="sel_cap_aba1_v11"
                 )
                 
-    # 4. Tipo de Serviço
+   # EXEMPLO COMPLETO CORRETO
+
+e1, e2, e3 = st.columns(3)
+
+with e1:
     st.session_state.dados['tipo_servico'] = st.selectbox(
-                    "Tipo de Serviço:", 
-                    ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], 
-                    index=0,
-                    key="sel_serv_aba1_v11"
-                )
-                
+        "Tipo de Serviço:", 
+        ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], 
+        index=0,
+        key="sel_serv_aba1_v11"
+    )
+
+with e2:
+    # (outros campos aqui se tiver)
+    pass
+
+with e3:
     # 5. TAG
     st.session_state.dados['tag_id'] = st.text_input(
-                    "TAG:", 
-                    value=st.session_state.dados['tag_id'],
-                    key="input_tag_aba1_v11"
-                )
-    fluido_salvo = st.session_state.dados.get('fluido', '')
-    if fluido_salvo in LISTA_FLUIDOS:
-        idx_f = LISTA_FLUIDOS.index(fluido_salvo)
-    else:
-        idx_f = 0
+        "TAG:", 
+        value=st.session_state.dados.get('tag_id', ''),
+        key="input_tag_aba1_v11"
+    )
 
-            # 3. Cria o Selectbox usando a LISTA_FLUIDOS que definimos no topo
-            st.session_state.dados['fluido'] = st.selectbox(
-                "Fluido:", 
-                LISTA_FLUIDOS, 
-                index=idx_f,
+    # 👇 FLUIDO (SÓ EXIBE)
+    fluido = st.session_state.get('fluido', 'R-410A')
+    st.info(f"Fluido selecionado: {fluido}")
+           
                 
-            )
+           
             
             # --- Continue com os outros campos abaixo ---
             st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], index=1)
