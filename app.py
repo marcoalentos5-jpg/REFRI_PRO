@@ -475,10 +475,7 @@ elif aba_selecionada == "Relatórios":
     st.header("📊 Página de Relatórios")
     st.write("Em breve: Visualização e exportação de relatórios.")
 
-    with e3:
-                fluido_salvo = st.session_state.dados.get('fluido', 'R410A')
-                idx_f = LISTA_FLUIDOS.index(fluido_salvo) if fluido_salvo in LISTA_FLUIDOS else 0
-                
+                    
                 # Adicionei 'key' únicas para cada campo abaixo:
                 st.session_state.dados['fluido'] = st.selectbox(
                     "Fluido:", 
