@@ -505,7 +505,7 @@ def renderizar_aba_2():
 st.session_state.dados['laudo_diag'] = st.text_area(
     "Parecer:", 
     value=st.session_state.dados.get('laudo_diag', ''), # O .get evita o erro se a chave sumir
-    key=f"lt_{c}")
+    key=f"lt_{c}"
 def renderizar_aba_3():
     c = st.session_state.count
     st.header("🕵️ Assistente de Campo IA")
