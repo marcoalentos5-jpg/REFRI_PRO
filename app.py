@@ -383,11 +383,27 @@ st.session_state.dados['fluido'] = st.session_state.fluido
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
 
-    st.success("ABA DIAGNÓSTICO OK")  # (pode remover depois)
+    # Pega o fluido selecionado na Aba 1 (ou o padrão)
+    fluido_sel = st.session_state.dados.get('fluido', 'R-410A')
+    
+    # Busca informações no dicionário global
+    info = FLUIDOS_INFO.get(fluido_sel, {})
 
-    fluido = st.session_state.get('fluido', 'R-410A')
+    st.info(f"❄️ **Fluido Refrigerante Selecionado:** {fluido_sel}")
 
-    st.info(f"❄️ Fluido Refrigerante Selecionado: {fluido}")
+    if info:
+        col_a, col_b = st.columns(2)
+        with col_a:
+            st.metric("Tipo de Gás", info.get("tipo", "N/A"))
+        with col_b:
+            st.metric("Pressão de Trabalho", info.get("pressao", "N/A").title())
+            
+        if info.get("inflamavel"):
+            st.warning("⚠️ **Atenção:** Este fluido é inflamável (Classe HC). Cuidado com brasagem!")
+    else:
+        st.warning("⚠️ Dados técnicos não encontrados para este fluido.")
+
+    # Espaço para os cálculos de Superaquecimento/Sub-resfriamento abaixo
     
     # --- CSS PARA ALERTAS TÉCNICOS ---
     st.markdown("""
