@@ -194,7 +194,7 @@ def renderizar_aba_1():
                 st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'], key="lc_v17")
 
             if 'dados' not in st.session_state:
-    st.session_state.dados = {}
+                st.session_state.dados = {}
             
            with e3:
     # NÃO CRIA selectbox de fluido aqui
