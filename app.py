@@ -109,28 +109,38 @@ def renderizar_aba_1():
             st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'], max_chars=2, key="cli_uf_v2")
 
         # --- SEÇÃO EQUIPAMENTO ---
+        # --- SEÇÃO EQUIPAMENTO ---
         col_titulo, col_data = st.columns([3, 1])
-        with col_titulo: st.subheader("⚙️ Especificações do Equipamento")
-        with col_data: st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'])
+        with col_titulo: 
+            st.subheader("⚙️ Especificações do Equipamento")
+        with col_data: 
+            st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'])
 
-       with st.expander("Detalhes Técnicos do Ativo", expanded=True):
+        with st.expander("Detalhes Técnicos do Ativo", expanded=True):
             e1, e2, e3 = st.columns(3)
             
             with e1:
-                # Tudo do e1 aqui com 1 TAB de recuo
                 fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
-                # ... resto do código do e1 ...
+                fab_val = st.session_state.dados.get('fabricante', 'Carrier')
+                fab_idx = fab_list.index(fab_val) if fab_val in fab_list else 0
+                st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx)
+                st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados['modelo'])
+                st.session_state.dados['linha'] = st.selectbox("Linha:", ["Residencial", "Comercial", "Industrial"], index=0)
+                st.session_state.dados['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], horizontal=True)
 
             with e2:
-                # Tudo do e2 aqui com 1 TAB de recuo
                 st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados['serie_evap'])
-                # ... resto do código do e2 ...
+                st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND)", value=st.session_state.dados['serie_cond'])
+                st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'])
+                st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
 
             with e3:
-                # O ERRO ESTAVA AQUI: Garanta que 'with e3' esteja alinhado com 'with e2'
                 fluido_salvo = st.session_state.dados.get('fluido', 'R410A')
                 idx_f = LISTA_FLUIDOS.index(fluido_salvo) if fluido_salvo in LISTA_FLUIDOS else 0
-                
+                st.session_state.dados['fluido'] = st.selectbox("Fluido:", LISTA_FLUIDOS, index=idx_f, key="sel_fluido_v10")
+                st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], index=1)
+                st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
+                st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
                 st.session_state.dados['fluido'] = st.selectbox(
                     "Fluido:", 
                     LISTA_FLUIDOS, 
