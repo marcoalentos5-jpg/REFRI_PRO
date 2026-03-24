@@ -1,32 +1,16 @@
 # ==============================================================================
-# 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES (CONGELADO)
+# 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES (AJUSTADO PARA MATAR O BUG)
 # ==============================================================================
 import streamlit as st
 from datetime import datetime
 import requests
 import urllib.parse
-import os # Biblioteca para verificar arquivos no sistema
+import os
 
-# 1. CONFIGURAÇÃO INICIAL (TESTADA)
 st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
 
-# CSS: Estilização (CONGELADO)
-st.markdown("""
-    <style>
-    .stTextInput>div>div>input[aria-label="Data da Visita:"] {
-        background-color: #e0f2f1 !important;
-        color: #004d40 !important;
-        font-weight: bold;
-        border: 1px solid #b2dfdb !important;
-    }
-    div.stLinkButton > a {
-        background-color: #25D366 !important;
-        color: white !important;
-        font-weight: bold;
-        border-radius: 8px !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
+# Lista Mestra de Fluidos (Para garantir que o index nunca mude entre abas)
+LISTA_FLUIDOS = ["R410A", "R134a", "R22", "R32", "R290"]
 
 # 2. MOTOR DE SESSÃO (CHAVES VERIFICADAS)
 if 'dados' not in st.session_state:
@@ -40,22 +24,9 @@ if 'dados' not in st.session_state:
         'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
         'status_maquina': '🟢 Operacional'
     }
-
-def buscar_cep(cep):
-    cep_limpo = "".join(filter(str.isdigit, cep))
-    if len(cep_limpo) == 8:
-        try:
-            r = requests.get(f"https://viacep.com.br/ws/{cep_limpo}/json/")
-            if r.status_code == 200:
-                d = r.json()
-                if "erro" not in d:
-                    st.session_state.dados['endereco'] = d.get('logradouro', '')
-                    st.session_state.dados['bairro'] = d.get('bairro', '')
-                    st.session_state.dados['cidade'] = d.get('localidade', '')
-                    st.session_state.dados['uf'] = d.get('uf', '')
-                    return True
-        except: pass
-    return False
+    # Criamos a chave de controle fora do dicionário para o Streamlit não "esquecer"
+    if 'shared_fluido' not in st.session_state:
+        st.session_state['shared_fluido'] = 'R410A'
 
 # ==============================================================================
 # 1. FUNÇÃO DA ABA 1: Identificação e Equipamento (VERSÃO COM LAYOUT E MÁSCARAS)
