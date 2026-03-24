@@ -713,15 +713,23 @@ if aba_selecionada == "Home":
         </div>
     """, unsafe_allow_html=True)
 
+# =============================================================
+# LÓGICA DE NAVEGAÇÃO (SUBSTITUA O FINAL DO ARQUIVO POR ISSO)
+# =============================================================
+
+# Certifique-se de que 'aba_selecionada' é a variável do seu st.sidebar.radio
+if aba_selecionada == "Home":
+    renderizar_aba_home()
+
 elif aba_selecionada == "1. Cadastro":
-    renderizar_aba_1() 
+    renderizar_aba_1()
 
 elif aba_selecionada == "2. Diagnósticos":
-    renderizar_aba_diagnosticos() 
+    renderizar_aba_diagnosticos()
 
 elif aba_selecionada == "3. Assistente de Campo":
     renderizar_aba_ia_diagnostico()
 
 elif aba_selecionada == "Relatórios":
-    st.header("📊 Página de Relatórios")
-    st.write("Em breve: Visualização e exportação de relatórios.")
+    st.title("📊 Página de Relatórios")
+    st.write("Visualização e exportação de relatórios em breve.")
