@@ -1,59 +1,61 @@
 
 # ==============================================================================
-# 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES (VERSÃO FINAL)
+# 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES (VERSÃO COMPATÍVEL)
 # ==============================================================================
 import streamlit as st
 from datetime import datetime
+import urllib.parse
 import os
 
-# No início do seu app.py (Seção 0)
-if 'dados' not in st.session_state:
-    st.session_state.dados = {
-        'fluido': 'R-410A',
-        'fabricante': 'Carrier',
-        'modelo': '',
-        'tag_id': 'TAG-01',
-        'tecnico_nome': '',  # <-- ADICIONE ESTA LINHA EXATAMENTE ASSIM
-        'data': datetime.now().strftime("%d/%m/%Y")
-   
-# 1. LISTA GLOBAL ÚNICA
+# 1. LISTA GLOBAL DE FLUIDOS
 LISTA_FLUIDOS = sorted(["R-22", "R-32", "R-134a", "R-290", "R-404A", "R-407A", "R-410A", "R-600a"])
 
-# 2. DICIONÁRIO TÉCNICO PARA CONSULTA
-FLUIDOS_INFO = {
-    "R-22": {"tipo": "HCFC", "pressao": "média"},
-    "R-32": {"tipo": "HFC", "pressao": "alta"},
-    "R-134a": {"tipo": "HFC", "pressao": "baixa"},
-    "R-290": {"tipo": "HC", "pressao": "baixa"},
-    "R-404A": {"tipo": "HFC", "pressao": "alta"},
-    "R-407A": {"tipo": "HFC", "pressao": "alta"},
-    "R-410A": {"tipo": "HFC", "pressao": "alta"},
-    "R-600a": {"tipo": "HC", "inflamavel": True, "pressao": "baixa"}
-}
+# 2. INICIALIZAÇÃO DO BANCO DE DADOS TEMPORÁRIO (SESSION STATE)
+if 'dados' not in st.session_state:
+    st.session_state.dados = {
+        # Dados do Cliente
+        'nome': '',
+        'cpf_cnpj': '',
+        'endereco': '',
+        'numero': '',
+        'bairro': '',
+        'cidade': '',
+        'uf': 'SP',
+        'cep': '',
+        'whatsapp': '',
+        'email': '',
+        
+        # Dados do Equipamento
+        'tag_id': 'TAG-01',
+        'linha': 'Residencial',
+        'fabricante': 'Carrier',
+        'modelo': '',
+        'capacidade': '12.000',
+        'fluido': 'R-410A',
+        'serie_evap': '',
+        'serie_cond': '',
+        'local_evap': '',
+        'local_cond': '',
+        'tipo_servico': 'Manutenção Preventiva',
+        'status_maquina': '🟢 Operacional',
+        
+        # Dados do Técnico (O que estava dando erro!)
+        'tecnico_nome': '',
+        'tecnico_documento': '',
+        'tecnico_registro': '',
+        'data': datetime.now().strftime("%d/%m/%Y")
+    }
 
-# ==============================================================================
-# 3. CONFIGURAÇÕES VISUAIS E ESTILO (CSS)
-# ==============================================================================
-
-st.markdown(
-    """
+# 3. ESTILO VISUAL (CSS)
+st.markdown("""
     <style>
-    /* Estilo para o botão do WhatsApp */
     div.stLinkButton > a {
         background-color: #25D366 !important;
         color: white !important;
-        font-weight: bold;
-        border-radius: 8px !important;
-    }
-
-    /* Estilo para o arredondamento do App */
-    .stApp {
         border-radius: 8px !important;
     }
     </style>
-    """, 
-    unsafe_allow_html=True
-)
+    """, unsafe_allow_html=True)
 
 # --- INICIALIZAÇÃO DO ESTADO (SESSION STATE) ---
 if 'dados' not in st.session_state:
