@@ -213,7 +213,7 @@ def renderizar_aba_1():
                     key="input_tag_aba1_v11"
                 )
 
-            # 2. Tenta encontrar a posição na lista. Se não achar, usa a posição 0.
+            fluido_salvo = st.session_state.dados.get('fluido', '')
             if fluido_salvo in LISTA_FLUIDOS:
                 idx_f = LISTA_FLUIDOS.index(fluido_salvo)
             else:
