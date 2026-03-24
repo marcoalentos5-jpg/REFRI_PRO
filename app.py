@@ -236,7 +236,7 @@ def renderizar_aba_1():
     st.session_state.dados['fluido'] = st.selectbox(
         "Fluido Refrigerante:", 
         LISTA_FLUIDOS, 
-        index=idx_padrao,
+        index=0
         key="novo_seletor_fluido"
     )
 # ==============================================================================
