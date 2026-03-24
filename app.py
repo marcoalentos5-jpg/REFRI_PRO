@@ -148,54 +148,76 @@ def renderizar_aba_diagnosticos():
 
     with c1:
         st.markdown("🔵 **EVAP**")
-        p_suc = st.number_input("P. Sucção (PSI)", step=0.1, key="ps_final")
-        t_suc = st.number_input("T. Tubo Suc. (°C)", step=0.1, key="ts_final")
-        t_ret = st.number_input("T. Retorno (°C)", step=0.1, key="tr_final")
-        t_ins = st.number_input("T. Insufla. (°C)", step=0.1, key="ti_final")
+        # 1. Buscamos o valor que já existe no dicionário (ou 0.0 se estiver vazio)
+        # 2. Salvamos o input direto no dicionário para 'congelar' o dado
+        st.session_state.dados['p_suc'] = st.number_input("P. Sucção (PSI)", step=0.1, value=float(st.session_state.dados.get('p_suc', 0.0)), key="ps_input")
+        st.session_state.dados['t_suc'] = st.number_input("T. Tubo Suc. (°C)", step=0.1, value=float(st.session_state.dados.get('t_suc', 0.0)), key="ts_input")
+        st.session_state.dados['t_ret'] = st.number_input("T. Retorno (°C)", step=0.1, value=float(st.session_state.dados.get('t_ret', 0.0)), key="tr_input")
+        st.session_state.dados['t_ins'] = st.number_input("T. Insufla. (°C)", step=0.1, value=float(st.session_state.dados.get('t_ins', 0.0)), key="ti_input")
 
     with c2:
         st.markdown("🔴 **COND**")
-        p_des = st.number_input("P. Desc. (PSI)", step=0.1, key="pd_final")
-        t_liq = st.number_input("T. Tubo Líq. (°C)", step=0.1, key="tl_final")
+        st.session_state.dados['p_des'] = st.number_input("P. Desc. (PSI)", step=0.1, value=float(st.session_state.dados.get('p_des', 0.0)), key="pd_input")
+        st.session_state.dados['t_liq'] = st.number_input("T. Tubo Líq. (°C)", step=0.1, value=float(st.session_state.dados.get('t_liq', 0.0)), key="tl_input")
 
     with c3:
         st.markdown("⚡ **TENSÃO**")
-        v_lin = st.number_input("Tens. Linha (V)", step=1.0, key="vl_final")
-        v_med = st.number_input("Tens. Medida (V)", step=1.0, key="vm_final")
+        st.session_state.dados['v_lin'] = st.number_input("Tens. Linha (V)", step=1.0, value=float(st.session_state.dados.get('v_lin', 220.0)), key="vl_input")
+        st.session_state.dados['v_med'] = st.number_input("Tens. Medida (V)", step=1.0, value=float(st.session_state.dados.get('v_med', 220.0)), key="vm_input")
 
     with c4:
         st.markdown("🔌 **CORRENTE**")
-        rla = st.number_input("RLA (A)", step=0.1, key="rla_final")
-        lra = st.number_input("LRA (A)", step=0.1, key="lra_final")
-        i_med = st.number_input("Corr. Medida (A)", step=0.1, key="im_final")
+        st.session_state.dados['rla'] = st.number_input("RLA (A)", step=0.1, value=float(st.session_state.dados.get('rla', 0.0)), key="rla_input")
+        st.session_state.dados['lra'] = st.number_input("LRA (A)", step=0.1, value=float(st.session_state.dados.get('lra', 0.0)), key="lra_input")
+        st.session_state.dados['i_med'] = st.number_input("Corr. Medida (A)", step=0.1, value=float(st.session_state.dados.get('i_med', 0.0)), key="im_input")
 
     with c5:
         st.markdown("🔋 **CAPACIT.**")
-        cn_c = st.number_input("C. Nom. Comp", key="cnc_final")
-        cn_f = st.number_input("C. Nom. Fan", key="cnf_final")
-        cm_c = st.number_input("C. Med. Comp", key="cmc_final")
-        cm_f = st.number_input("C. Med. Fan", key="cmf_final")
+        st.session_state.dados['cn_c'] = st.number_input("C. Nom. Comp", value=float(st.session_state.dados.get('cn_c', 0.0)), key="cnc_input")
+        st.session_state.dados['cm_c'] = st.number_input("C. Med. Comp", value=float(st.session_state.dados.get('cm_c', 0.0)), key="cmc_input")
 
-    # Cálculos
+    # --- ÁREA DE CÁLCULOS (Usando os dados salvos) ---
+    p_suc = st.session_state.dados['p_suc']
+    p_des = st.session_state.dados['p_des']
+    t_suc = st.session_state.dados['t_suc']
+    t_liq = st.session_state.dados['t_liq']
+
     t_sat_s = f_sat(p_suc, fluido)
     t_sat_d = f_sat(p_des, fluido)
-    sh = (t_suc - t_sat_s) if p_suc > 0 else 0.0
-    sc = (t_sat_d - t_liq) if p_des > 0 else 0.0
     
-    # SALVAR NO SESSION STATE PARA A ABA IA
+    sh = (t_suc - t_sat_s) if p_suc > 5 else 0.0
+    sc = (t_sat_d - t_liq) if p_des > 5 else 0.0
+    
+   # ... (Cálculos de sh, sc, etc., que fizemos no passo anterior)
+
+    # SALVAR NO SESSION STATE PARA A ABA IA (CONEXÃO MANDATÓRIA)
     st.session_state['sh_val'] = sh
-    st.session_state['im_val'] = i_med
-    st.session_state['rla_val'] = rla
+    st.session_state['im_val'] = st.session_state.dados.get('i_med', 0.0) # Busca do dicionário
+    st.session_state['rla_val'] = st.session_state.dados.get('rla', 0.0)  # Busca do dicionário
 
     st.markdown("---")
     st.subheader("2. Resultados Calculados")
     res1, res2, res3, res4 = st.columns(4)
+    
+    # Exibição Visual
     res1.metric("Superaquecimento", f"{sh:.2f} K")
     res2.metric("Sub-resfriamento", f"{sc:.2f} K")
+    
+    # Cálculo de queda de tensão dinâmico
+    v_lin = st.session_state.dados.get('v_lin', 220.0)
+    v_med = st.session_state.dados.get('v_med', 220.0)
     res3.metric("Queda Tensão", f"{v_lin - v_med:.1f} V")
-    res4.metric("Diferença RLA", f"{rla - i_med:.2f} A")
+    
+    # Diferença de Corrente (Cuidado com RLA zero)
+    rla = st.session_state['rla_val']
+    i_med = st.session_state['im_val']
+    diff_rla = rla - i_med
+    
+    # Se a corrente medida for maior que o RLA, mostra em vermelho (delta negativo)
+    res4.metric("Diferença RLA", f"{diff_rla:.2f} A", delta=None if diff_rla >= 0 else "SOBRECARGA")
 
-    st.session_state.dados['laudo_diag'] = st.text_area("Notas Técnicas:", value=st.session_state.dados['laudo_diag'])
+    # Notas que também ficam salvas no laudo final
+    st.session_state.dados['laudo_diag'] = st.text_area("Notas Técnicas / Observações:", value=st.session_state.dados['laudo_diag'])
 
 # ==============================================================================
 # 3. FUNÇÃO DA ABA 3: ASSISTENTE DE CAMPO
