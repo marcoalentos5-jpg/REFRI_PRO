@@ -18,6 +18,13 @@ st.session_state.dados['fluido'] = st.session_state.fluido
 # sincroniza com seu dicionário
 st.session_state.dados['fluido'] = st.session_state.fluido
 
+
+st.selectbox(
+    "Fluido Refrigerante:",
+    LISTA_FLUIDOS,
+    key="fluido"
+)
+
 # ==============================================================================
 # 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES (CONGELADO)
 # ==============================================================================
@@ -174,14 +181,34 @@ def renderizar_aba_1():
             if 'dados' not in st.session_state:
     st.session_state.dados = {}
             
-            with e3:
-    
+           with e3:
+    # NÃO CRIA selectbox de fluido aqui
+
     st.session_state.dados['capacidade'] = st.selectbox(
         "Capacidade:",
         ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"],
         index=1,
         key="cap_v17"
     )
+
+    st.session_state.dados['tipo_servico'] = st.selectbox(
+        "Tipo de Serviço:",
+        ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"],
+        index=0,
+        key="ts_v17"
+    )
+
+    st.session_state.dados['tag_id'] = st.text_input(
+        "TAG:",
+        value=st.session_state.dados.get('tag_id', ''),
+        key="tag_v17"
+    )
+
+    fluido = st.session_state.get('fluido')
+    if not fluido:
+    fluido = "R-410A"
+
+    st.info(f"Fluido selecionado: {fluido}")
 
     st.session_state.dados['tipo_servico'] = st.selectbox(
         "Tipo de Serviço:",
