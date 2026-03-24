@@ -531,11 +531,10 @@ with st.sidebar:
         st.session_state.count += 1
         st.rerun()
 
-import streamlit as st
-import requests
-import urllib.parse
-import os
-from datetime import datetime
+# ==============================================================================
+# 5. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
+# ==============================================================================
+
 
 # ==============================================================================
 # 1. CONFIGURAÇÃO E ESTILO (TOPO DO ARQUIVO)
