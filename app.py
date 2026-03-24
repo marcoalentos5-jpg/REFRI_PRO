@@ -416,7 +416,6 @@ if 'dados' not in st.session_state:
         'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
         'status_maquina': '🟢 Operacional', 'laudo_diag': ''
     }
-    }
 
 if 'count' not in st.session_state:
     st.session_state.count = 0
