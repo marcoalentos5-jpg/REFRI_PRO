@@ -373,182 +373,55 @@ with st.sidebar:
                 st.session_state.dados[key] = ""
         st.rerun()
 
-
 # ==============================================================================
 # 5. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
 # ==============================================================================
 
+# Use a seleção do sidebar para chamar a função correta
+if aba_selecionada == "Home":
+    # --- APRESENTAÇÃO DA ABA HOME ---
+    st.markdown("<br>", unsafe_allow_html=True) 
 
-# ==============================================================================
-# 1. CONFIGURAÇÃO E ESTILO (TOPO DO ARQUIVO)
-# ==============================================================================
-st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
+    col1, col2, col3 = st.columns([1, 2, 1]) 
+    with col2: 
+        NOME_ARQUIVO_LOGO = "logo.png"
+        if os.path.exists(NOME_ARQUIVO_LOGO):
+            try:
+                st.image(NOME_ARQUIVO_LOGO, use_container_width=True) 
+            except Exception as e:
+                st.error(f"⚠️ Erro ao abrir a imagem: {e}")
+        else:
+            st.error(f"⚠️ Arquivo '{NOME_ARQUIVO_LOGO}' não encontrado.")
 
-st.markdown("""
-    <style>
-    .stTextInput>div>div>input[aria-label="Data da Visita:"] { background-color: #e0f2f1 !important; color: #004d40 !important; font-weight: bold; }
-    div.stLinkButton > a { background-color: #25D366 !important; color: white !important; font-weight: bold; border-radius: 8px !important; }
-    .sh-critico { background-color: #ff1744; color: white; padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; }
-    .sobrecarga { color: #d32f2f; font-weight: bold; }
-    </style>
-""", unsafe_allow_html=True)
+    st.markdown("<br><br>", unsafe_allow_html=True) 
 
-# ==============================================================================
-# 2. MOTOR DE SESSÃO
-# ==============================================================================
+    st.markdown("""
+        <div style="text-align: center;">
+            <h1 style="color: #0d47a1; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                MPN Soluções
+            </h1>
+            <p style="color: #1976d2; font-size: 1.3em;">
+                Soluções em Refrigeração e Climatização
+            </p>
+            <hr style="border: 1px solid #90caf9; width: 60%; margin: 20px auto;">
+            <p style="color: #455a64; font-size: 1.1em; font-weight: bold;">
+                Bem-vindo ao Sistema HVAC Pro de Gestão Inteligente.
+            </p>
+            <p style="color: #546e7a; font-size: 1.0em;">
+                Selecione uma opção no Painel de Controle lateral para iniciar sua inspeção ou diagnóstico.
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
 
-# No topo do arquivo (Seção 2. MOTOR DE SESSÃO)
-if 'dados' not in st.session_state:
-    st.session_state.dados = {
-        # ... outras chaves ...
-        'status_maquina': '🟢 Operacional', 
-        'laudo_diag': '' 
-    }
-       # --- CORREÇÃO DA LINHA 407 (MOTOR DE SESSÃO) ---
-if 'dados' not in st.session_state:
-    st.session_state.dados = {
-        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
-        'data': datetime.now().strftime("%d/%m/%Y"), 'cep': '', 'endereco': '', 'bairro': '', 
-        'cidade': '', 'uf': '', 'numero': '', 'complemento': '', 'fabricante': 'Carrier', 
-        'modelo': '', 'capacidade': '12.000', 'linha': 'Residencial', 'serie_evap': '', 
-        'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '',
-        'tipo_servico': 'Manutenção Preventiva', 'tag_id': 'TAG-01',
-        'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
-        'status_maquina': '🟢 Operacional', 'laudo_diag': ''
-    }
+elif aba_selecionada == "1. Cadastro":
+    renderizar_aba_1() 
 
-if 'count' not in st.session_state:
-    st.session_state.count = 0
+elif aba_selecionada == "2. Diagnósticos":
+    renderizar_aba_diagnosticos() 
 
-LISTA_FLUIDOS = ["R410A", "R134a", "R22", "R32", "R290"]
+elif aba_selecionada == "3. Assistente de Campo":
+    renderizar_aba_ia_diagnostico()
 
-# ==============================================================================
-# 3. FUNÇÕES TÉCNICAS
-# ==============================================================================
-def buscar_cep(cep):
-    cep_limpo = "".join(filter(str.isdigit, str(cep)))
-    if len(cep_limpo) == 8:
-        try:
-            r = requests.get(f"https://viacep.com.br/ws/{cep_limpo}/json/", timeout=5)
-            if r.status_code == 200:
-                d = r.json()
-                if "erro" not in d:
-                    st.session_state.dados['endereco'] = d.get('logradouro', '')
-                    st.session_state.dados['bairro'] = d.get('bairro', '')
-                    st.session_state.dados['cidade'] = d.get('localidade', '')
-                    st.session_state.dados['uf'] = d.get('uf', '')
-                    return True
-        except: pass
-    return False
-
-def f_sat(p, g):
-    if p <= 5: return 0.0
-    if g == "R410A": return 0.253 * (p**0.8) - 18.5
-    if g == "R22": return 0.415 * (p**0.72) - 19.8
-    if g == "R32": return 0.245 * (p**0.81) - 19.0
-    if g == "R134a": return 0.65 * (p**0.62) - 25.0
-    return 0.0
-
-# ==============================================================================
-# 4. INTERFACE DAS ABAS
-# ==============================================================================
-def renderizar_aba_1():
-    c = st.session_state.count
-    st.header("📋 Cadastro de Cliente e Equipamento")
-    with st.expander("👤 Identificação", expanded=True):
-        c1, c2, c3 = st.columns([2, 1, 1])
-        st.session_state.dados['nome'] = c1.text_input("Nome/Razão Social *", value=st.session_state.dados['nome'], key=f"n_{c}")
-        st.session_state.dados['cpf_cnpj'] = c2.text_input("CPF/CNPJ", value=st.session_state.dados['cpf_cnpj'], key=f"d_{c}")
-        st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp *", value=st.session_state.dados['whatsapp'], key=f"w_{c}")
-        
-        ce1, ce2, ce3 = st.columns([1, 2, 1])
-        cep_in = ce1.text_input("CEP *", value=st.session_state.dados['cep'], key=f"cep_{c}")
-        if cep_in != st.session_state.dados['cep']:
-            st.session_state.dados['cep'] = cep_in
-            if buscar_cep(cep_in): st.rerun()
-        st.session_state.dados['endereco'] = ce2.text_input("Logradouro", value=st.session_state.dados['endereco'], key=f"ed_{c}")
-        st.session_state.dados['numero'] = ce3.text_input("Nº", value=st.session_state.dados['numero'], key=f"num_{c}")
-
-    with st.expander("⚙️ Equipamento", expanded=True):
-        e1, e2, e3 = st.columns(3)
-        with e1:
-            st.session_state.dados['fabricante'] = st.selectbox("Fabricante", ["Carrier", "Daikin", "LG", "Samsung", "Trane", "York", "Elgin", "Gree"], key=f"f_{c}")
-            st.session_state.dados['fluido'] = st.selectbox("Fluido", LISTA_FLUIDOS, key=f"fl_{c}")
-        with e2:
-            st.session_state.dados['serie_evap'] = st.text_input("Série EVAP", value=st.session_state.dados['serie_evap'], key=f"se_{c}")
-            st.session_state.dados['capacidade'] = st.selectbox("Capacidade", ["9.000", "12.000", "18.000", "24.000", "36.000", "60.000"], key=f"cap_{c}")
-        with e3:
-            st.session_state.dados['tag_id'] = st.text_input("TAG/ID", value=st.session_state.dados['tag_id'], key=f"tg_{c}")
-            st.session_state.dados['status_maquina'] = st.radio("Status", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], horizontal=True, key=f"st_{c}")
-
-def renderizar_aba_2():
-    c = st.session_state.count
-    st.header("🔍 Diagnóstico Técnico")
-    fluido = st.session_state.dados['fluido']
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        ps = st.number_input("P. Sucção (PSI)", format="%.2f", key=f"ps_{c}")
-        ts = st.number_input("T. Sucção (°C)", format="%.2f", key=f"ts_{c}")
-    with c2:
-        rla = st.number_input("RLA (A)", format="%.2f", key=f"rla_{c}")
-        im = st.number_input("Corr. Medida (A)", format="%.2f", key=f"im_{c}")
-    with c3:
-        tr = st.number_input("T. Retorno (°C)", format="%.2f", key=f"tr_{c}")
-        ti = st.number_input("T. Insuflamento (°C)", format="%.2f", key=f"ti_{c}")
-
-    sh = ts - f_sat(ps, fluido) if ps > 5 else 0.0
-    dt = tr - ti
-    st.metric("Superaquecimento", f"{sh:.2f} K")
-    st.metric("ΔT Ar", f"{dt:.2f} °C")
-    if sh < 5 and ps > 5: st.error("⚠️ RISCO DE GOLPE DE LÍQUIDO")
-    # --- LINHA 504 EM DIANTE (CORREÇÃO DE FECHAMENTO) ---
-    st.session_state.dados['laudo_diag'] = st.text_area(
-        "Parecer Técnico / Notas de Campo:", 
-        value=st.session_state.dados.get('laudo_diag', ''), 
-        key=f"lt_{c}"
-    ) # <--- ESSE PARÊNTESE PRECISA ESTAR AQUI PARA FECHAR A LINHA 504
-def renderizar_aba_3():
-    c = st.session_state.count
-    st.header("🕵️ Assistente de Campo IA")
-    vibracao = st.selectbox("Vibração?", ["Normal", "Leve", "Forte"], key=f"ia_v_{c}")
-    sujeira = st.selectbox("Serpentina?", ["Limpa", "Obstruída"], key=f"ia_s_{c}")
-    if sujeira == "Obstruída": st.warning("Ação: Realizar limpeza química imediata.")
-    else: st.success("Fluxo de ar normal.")
-
-# ==============================================================================
-# 5. SIDEBAR E NAVEGAÇÃO
-# ==============================================================================
-with st.sidebar:
-    st.title("REFRI_PRO")
-    menu = st.radio("Navegação", ["Home", "1. Cadastro", "2. Diagnóstico", "3. Assistente", "5. Relatórios"])
-    st.markdown("---")
-    st.session_state.dados['tecnico_nome'] = st.text_input("Técnico:", value=st.session_state.dados['tecnico_nome'])
-    if st.button("🗑️ LIMPAR FORMULÁRIO", use_container_width=True):
-        for k in st.session_state.dados:
-            if k not in ['tecnico_nome', 'tecnico_documento', 'tecnico_registro']:
-                st.session_state.dados[k] = ""
-        st.session_state.count += 1
-        st.rerun()
-
-# ==============================================================================
-# 6. EXIBIÇÃO DAS ABAS (CORREÇÃO DO DELTAGENERATOR)
-# ==============================================================================
-if menu == "Home":
-    st.title("MPN Soluções")
-    if os.path.exists("logo.png"):
-        st.image("logo.png", use_container_width=True)
-    else:
-        st.info("📌 Bem-vindo ao Sistema HVAC Pro")
-        
-elif menu == "1. Cadastro": 
-    renderizar_aba_1()
-    
-elif menu == "2. Diagnóstico": 
-    renderizar_aba_2()
-    
-elif menu == "3. Assistente": 
-    renderizar_aba_3()
-    
-elif menu == "5. Relatórios":
-    st.header("📊 Relatórios")
-    st.write("Pronto para gerar PDF.")
+elif aba_selecionada == "Relatórios":
+    st.header("📊 Página de Relatórios")
+    st.write("Em breve: Visualização e exportação de relatórios.")
