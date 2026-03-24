@@ -1,40 +1,42 @@
 
 # ==============================================================================
-# 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES (CONGELADO)
+# 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES (CORRIGIDO)
 # ==============================================================================
 import streamlit as st
 from datetime import datetime
-import requests
-import urllib.parse
-import os # Biblioteca para verificar arquivos no sistema
+import os
 
-# ===== FLUIDO GLOBAL =====
-if 'dados' not in st.session_state:
-    st.session_state.dados = {}
-
-if 'fluido' not in st.session_state:
-    st.session_state.fluido = "R-410A"
-
-LISTA_FLUIDOS = [
-    "R-22",
-    "R-32",
-    "R-134a",
-    "R-404A",
-    "R-407A",
-    "R-410A",
-    "R-600a"
-]
-
-# 1. DEFINIÇÃO DA LISTA (Apenas a lista, sem o selectbox aqui)
+# 1. LISTA GLOBAL ÚNICA E DICIONÁRIO TÉCNICO
 LISTA_FLUIDOS = sorted(["R-22", "R-32", "R-134a", "R-290", "R-404A", "R-407A", "R-410A", "R-600a"])
 
-# 2. INICIALIZAÇÃO DO ESTADO (Se não existir)
+FLUIDOS_INFO = {
+    "R-22": {"tipo": "HCFC", "pressao": "média"},
+    "R-32": {"tipo": "HFC", "pressao": "alta"},
+    "R-134a": {"tipo": "HFC", "pressao": "baixa"},
+    "R-290": {"tipo": "HC", "pressao": "baixa"},
+    "R-404A": {"tipo": "HFC", "pressao": "alta"},
+    "R-407A": {"tipo": "HFC", "pressao": "alta"},
+    "R-410A": {"tipo": "HFC", "pressao": "alta"},
+    "R-600a": {"tipo": "HC", "inflamavel": True, "pressao": "baixa"}
+}
+
+# 2. INICIALIZAÇÃO DO ESTADO (SESSION STATE)
 if 'dados' not in st.session_state:
     st.session_state.dados = {
         'fluido': 'R-410A',
         'modelo': '',
-        'tag_id': 'TAG-01'
+        'tag_id': 'TAG-01',
+        'fabricante': 'Carrier',
+        'serie_evap': '',
+        'serie_cond': '',
+        'linha': 'Residencial',
+        'status_maquina': '🟢 Operacional',
+        'data': datetime.now().strftime("%d/%m/%Y")
     }
+
+# --- REMOVI O st.write(info) DAQUI ---
+# O info só deve ser usado dentro da Aba de Diagnósticos, 
+# onde o fluido já foi selecionado pelo usuário.
 
 # 1. CONFIGURAÇÃO INICIAL (TESTADA)
 st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
