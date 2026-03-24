@@ -133,39 +133,34 @@ def renderizar_aba_1():
                 st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'])
                 st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
 
-           with e3:
-                # 1. Busca o fluido salvo para manter a seleção
-                fluido_v15 = st.session_state.dados.get('fluido', 'R410A')
-                idx_f = LISTA_FLUIDOS.index(fluido_v15) if fluido_v15 in LISTA_FLUIDOS else 0
+           with st.expander("Detalhes Técnicos do Ativo", expanded=True):
+            # 1. As três colunas devem estar na mesma linha
+            e1, e2, e3 = st.columns(3)
+            
+            with e1:
+                fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
+                fab_val = st.session_state.dados.get('fabricante', 'Carrier')
+                fab_idx = fab_list.index(fab_val) if fab_val in fab_list else 0
+                st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx, key="fab_v17")
+                st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados['modelo'], key="mod_v17")
+                st.session_state.dados['linha'] = st.selectbox("Linha:", ["Residencial", "Comercial", "Industrial"], index=0, key="lin_v17")
+                st.session_state.dados['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], horizontal=True, key="stat_v17")
 
-                # 2. BLOCO ÚNICO DE CAMPOS (MANTENHA APENAS ESTES)
-                st.session_state.dados['fluido'] = st.selectbox(
-                    "Fluido:", 
-                    LISTA_FLUIDOS, 
-                    index=idx_f, 
-                    key="f_unico_v15"
-                )
-                
-                st.session_state.dados['capacidade'] = st.selectbox(
-                    "Capacidade:", 
-                    ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], 
-                    index=1,
-                    key="c_unico_v15"
-                )
-                
-                st.session_state.dados['tipo_servico'] = st.selectbox(
-                    "Tipo de Serviço:", 
-                    ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], 
-                    index=0,
-                    key="s_unico_v15"
-                )
-                
-                st.session_state.dados['tag_id'] = st.text_input(
-                    "TAG:", 
-                    value=st.session_state.dados['tag_id'],
-                    key="t_unico_v15"
-                )
+            with e2:
+                st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados['serie_evap'], key="se_v17")
+                st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND)", value=st.session_state.dados['serie_cond'], key="sc_v17")
+                st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'], key="le_v17")
+                st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'], key="lc_v17")
 
+            with e3:
+                # O 'w' de 'with e3' PRECISA estar exatamente abaixo do 'w' de 'with e2'
+                f_salvo = st.session_state.dados.get('fluido', 'R410A')
+                idx_f = LISTA_FLUIDOS.index(f_salvo) if f_salvo in LISTA_FLUIDOS else 0
+                
+                st.session_state.dados['fluido'] = st.selectbox("Fluido:", LISTA_FLUIDOS, index=idx_f, key="fl_v17")
+                st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], index=1, key="cap_v17")
+                st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0, key="ts_v17")
+                st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'], key="tag_v17")
                 # 3. O Selectbox usando 'idx_padrao'
                 st.session_state.dados['fluido'] = st.selectbox(
                     "Fluido:", 
