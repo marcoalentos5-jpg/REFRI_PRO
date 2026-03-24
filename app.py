@@ -1,4 +1,13 @@
 
+# ==============================================================================
+# 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES (CONGELADO)
+# ==============================================================================
+import streamlit as st
+from datetime import datetime
+import requests
+import urllib.parse
+import os # Biblioteca para verificar arquivos no sistema
+
 # ===== FLUIDO GLOBAL =====
 if 'dados' not in st.session_state:
     st.session_state.dados = {}
@@ -30,39 +39,6 @@ fluido = fluido.replace("R410A", "R-410A")
 
 st.session_state.fluido = fluido
 st.session_state.dados['fluido'] = fluido
-
-# ==============================================================================
-# 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES (CONGELADO)
-# ==============================================================================
-import streamlit as st
-from datetime import datetime
-import requests
-import urllib.parse
-import os # Biblioteca para verificar arquivos no sistema
-
-
-# DEFINA A LISTA AQUI (Global)
-LISTA_FLUIDOS = sorted(["R22", "R32", "R134a", "R290", "R407A", "R410A"])
-
-# ==============================================================================
-# 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES
-# ==============================================================================
-
-import streamlit as st
-from datetime import datetime
-import requests
-
-# 👇 AQUI (LOGO APÓS IMPORTS OU LISTAS)
-
-FLUIDOS_INFO = {
-    "R-22": {"tipo": "HCFC", "pressao": "média"},
-    "R-32": {"tipo": "HFC", "pressao": "alta"},
-    "R-134a": {"tipo": "HFC", "pressao": "baixa"},
-    "R-404A": {"tipo": "HFC", "pressao": "alta"},
-    "R-407A": {"tipo": "HFC", "pressao": "alta"},
-    "R-410A": {"tipo": "HFC", "pressao": "alta"},
-    "R-600a": {"tipo": "HC", "inflamavel": True, "pressao": "baixa"}
-}
 
 fluido = st.session_state.get('fluido', 'R-410A')
 info = FLUIDOS_INFO.get(fluido, {})
