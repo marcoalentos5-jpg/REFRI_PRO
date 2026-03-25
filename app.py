@@ -4,64 +4,70 @@ import requests
 import urllib.parse
 import os
 
-# 1. Configuração ÚNICA e Inicial
-st.set_page_config(
-    page_title="REFRI PRO MPN", 
-    page_icon="❄️", 
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+import streamlit as st
+from datetime import datetime
+import os
 
-# 2. Inicialização da Memória (CORRIGIDO: Nomes batendo com a Sidebar)
+# 1. Configuração ÚNICA
+st.set_page_config(page_title="REFRI PRO MPN", page_icon="❄️", layout="wide")
+
+# 2. Inicialização da Memória (FORMATO CORRETO)
 if 'dados' not in st.session_state:
     st.session_state['dados'] = {
         'tecnico_nome': 'Marcos Alexandre Almeida do Nascimento',
-        'cpf_cnpj': '',           # Removi o 'j' extra
-        'registro_tecnico': ''    # Adicionei aqui para não dar erro embaixo
+        'tecnico_registro': '', 
+        'cpf_cnpj': '',
+        'nome': '',
+        'whatsapp': '',
+        'tag_id': ''
     }
 
-# 3. Estilo Visual (Centraliza a Logo e limpa o layout)
+# 3. Estilo Visual
 st.markdown("""
     <style>
-    .stImage > img { display: block; margin-left: auto; margin-right: auto; width: 500px; }
+    .stImage > img { display: block; margin-left: auto; margin-right: auto; width: 450px; }
     .center-text { text-align: center; }
     </style>
     """, unsafe_allow_html=True)
 
-# 4. SIDEBAR ÚNICA
+# 4. SIDEBAR (CORRIGIDA)
 with st.sidebar:
     st.markdown("# 🚀 REFRI PRO MPN")
     st.divider()
     
-    # Agora os nomes dentro dos colchetes [] são IGUAIS aos lá de cima
-    st.session_state['dados']['tecnico_nome'] = st.text_input("Técnico Responsável:", st.session_state['dados']['tecnico_nome'])
-    st.session_state['dados']['cpf_cnpj'] = st.text_input("CPF/CNPJ:", st.session_state['dados']['cpf_cnpj'])
-    st.session_state['dados']['registro_tecnico'] = st.text_input("Registro Federal Técnico:", st.session_state['dados']['registro_tecnico'])
+    # Usando apenas colchetes para evitar o erro de 'AttributeError'
+    st.session_state['dados']['tecnico_nome'] = st.text_input("Técnico:", value=st.session_state['dados']['tecnico_nome'])
+    st.session_state['dados']['cpf_cnpj'] = st.text_input("CPF/CNPJ:", value=st.session_state['dados']['cpf_cnpj'])
+    st.session_state['dados']['tecnico_registro'] = st.text_input("CFT/CREA:", value=st.session_state['dados']['tecnico_registro'])
     
     st.divider()
     aba = st.radio("Selecione a Etapa:", ["Home", "1. Cadastro", "2. Diagnóstico", "Relatórios"])
     st.divider()
-    st.caption(f"© {datetime.now().year} MPN Soluções")
+    
+    if st.button("🗑️ Limpar Formulário", use_container_width=True):
+        for k in st.session_state['dados'].keys():
+            if k not in ['tecnico_nome', 'tecnico_registro']: st.session_state['dados'][k] = ""
+        st.rerun()
 
-# 5. CONTEÚDO PRINCIPAL (Apresentação Profissional)
+# 5. LÓGICA DE EXIBIÇÃO (HOME)
 if aba == "Home":
-    st.image("logo.png") 
+    if os.path.exists("logo.png"):
+        st.image("logo.png")
+    
     st.markdown("<h1 class='center-text'>❄️ Bem-vindo ao REFRI PRÓ</h1>", unsafe_allow_html=True)
     st.markdown("<h3 class='center-text'>Gestão Inteligente em Refrigeração e Climatização</h3>", unsafe_allow_html=True)
-    
     st.divider()
     st.info("**Sistema de gestão técnica e diagnósticos em tempo real da MPN Soluções.**")
     
-    # Exibição dos dados do técnico na Home para conferência
-    st.markdown(f"""
-    **Técnico:** {st.session_state['dados']['tecnico_nome']}  
-    **Registro:** {st.session_state['dados']['registro_tecnico']}  
-    **Documento:** {st.session_state['dados']['cpf_cnpj']}
-    """)
+    st.write(f"**Técnico Ativo:** {st.session_state['dados']['tecnico_nome']}")
+    st.write(f"**Registro Federal:** {st.session_state['dados']['tecnico_registro']}")
 
 elif aba == "1. Cadastro":
     st.header("📝 Cadastro de Atendimento")
-    # Aqui continuaremos o desenvolvimento do formulário...
+    st.session_state['dados']['nome'] = st.text_input("Nome do Cliente:", value=st.session_state['dados']['nome'])
+    # Adicione aqui os demais campos do seu cadastro...
+
+# O ARQUIVO DEVE TERMINAR AQUI. NÃO DEIXE NADA ABAIXO DISSO.
 
 # ==============================================================================
 # 1. DEFINIÇÃO DAS TELAS (FUNÇÕES DE RENDERIZAÇÃO)
