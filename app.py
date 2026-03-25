@@ -135,13 +135,55 @@ def renderizar_aba_1():
                 st.session_state.dados['fluido'] = st.selectbox("Fluido:", ["R410A", "R134a", "R22", "R32", "R290"], index=0)
                 st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
                 st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
-
+def f_sat_precisao(p, g):
+    if p <= 5: return -50.0
+    if g == "R410A":
+        xp = [90.0, 100.0, 105.0, 110.0, 115.0, 120.0, 122.7, 130.9, 141.7, 150.0]
+        fp = [-3.50, -0.29, 1.06, 2.36, 3.62, 4.84, 5.50, 7.40, 9.80, 11.50]
+    elif g == "R32":
+        xp = [90.0, 100.0, 115.0, 140.0, 170.0]
+        fp = [-3.66, -0.87, 3.00, 8.50, 14.80]
+    else:
+        return 0.0
+    for i in range(len(xp) - 1):
+        if xp[i] <= p <= xp[i+1]:
+            return fp[i] + (p - xp[i]) * (fp[i+1] - fp[i]) / (xp[i+1] - xp[i])
+    return fp[0] if p < xp[0] else fp[-1]
 
 # ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO FINAL CONSOLIDADA)
 # ==============================================================================
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
+    
+    # Garantir que os dados existam no session_state
+    fluido = st.session_state.dados.get('fluido', 'R410A') 
+    
+    # 1. ENTRADA DE DADOS (Verifique se estas variáveis existem antes de calcular)
+    col1, col2 = st.columns(2)
+    with col1:
+        p_suc = st.number_input("P. Sucção (PSI)", min_value=0.0, key="ps_final")
+        t_suc = st.number_input("T. Tubo Suc. (°C)", key="ts_final")
+    with col2:
+        p_des = st.number_input("P. Descarga (PSI)", min_value=0.0, key="pd_final")
+        t_liq = st.number_input("T. Tubo Líq. (°C)", key="tl_final")
+
+    # 2. CÁLCULO (Agora a função f_sat_precisao será encontrada)
+    t_sat_s = f_sat_precisao(p_suc, fluido)
+    t_sat_d = f_sat_precisao(p_des, fluido)
+    
+    sh = (t_suc - t_sat_s) if p_suc > 0 else 0.0
+    sc = (t_sat_d - t_liq) if p_des > 0 else 0.0
+
+    # 3. RESULTADOS (5 colunas x 1 linha apenas para evitar triplicação)
+    st.markdown("---")
+    st.subheader("2. Resultados Calculados")
+    res = st.columns(5)
+    res[0].metric("SH TOTAL", f"{sh:.1f} K")
+    res[1].metric("SC Final", f"{sc:.1f} K")
+    res[2].metric("Sat. Baixa", f"{t_sat_s:.1f} °C")
+    res[3].metric("Sat. Alta", f"{t_sat_d:.1f} °C")
+    res[4].metric("Δ T Ar", "0.0 °C")
     
     # --- RESGATE DE DADOS (Puxando da Aba 1 e Session State) ---
     # Isso evita que os resultados fiquem em 0.00 se já foram preenchidos antes
