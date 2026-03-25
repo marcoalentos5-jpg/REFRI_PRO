@@ -77,10 +77,7 @@ def renderizar_aba_1():
                     st.session_state.dados['cep_processado'] = clean_cep
                     st.rerun()
 
-        # 3. Campos que recebem o resultado da busca
-        #st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados.get('endereco', ''), key="cli_end_f")
-        #st.session_state.dados['numero'] = ce3.text_input("Nº/Apto:", value=st.session_state.dados.get('numero', ''), key="cli_num_f")
-
+        
 # ==============================================================================
 # 4. EXECUÇÃO (APENAS UMA LINHA NO FINAL DO ARQUIVO)
 # ==============================================================================
