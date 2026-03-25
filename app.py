@@ -8,37 +8,39 @@ import streamlit as st
 from datetime import datetime
 import os
 
+import streamlit as st
+from datetime import datetime
+import os
+
 # 1. Configuração ÚNICA
 st.set_page_config(page_title="REFRI PRO MPN", page_icon="❄️", layout="wide")
 
-# 2. Inicialização da Memória (FORMATO CORRETO)
+# 2. INICIALIZAÇÃO BLINDADA (Garante que os campos existam antes da Sidebar)
 if 'dados' not in st.session_state:
-    st.session_state['dados'] = {
-        'tecnico_nome': 'Marcos Alexandre Almeida do Nascimento',
-        'tecnico_registro': '', 
-        'cpf_cnpj': '',
-        'nome': '',
-        'whatsapp': '',
-        'tag_id': ''
-    }
+    st.session_state['dados'] = {}
 
-# 3. Estilo Visual
+# Garante cada campo individualmente para evitar o erro de 'KeyError'
+st.session_state['dados'].setdefault('tecnico_nome', 'Marcos Alexandre Almeida do Nascimento')
+st.session_state['dados'].setdefault('tecnico_registro', '')
+st.session_state['dados'].setdefault('cpf_cnpj', '')
+
+# 3. Estilo Visual (Logo Centralizada e Grande)
 st.markdown("""
     <style>
-    .stImage > img { display: block; margin-left: auto; margin-right: auto; width: 450px; }
+    .stImage > img { display: block; margin-left: auto; margin-right: auto; width: 500px; }
     .center-text { text-align: center; }
     </style>
     """, unsafe_allow_html=True)
 
-# 4. SIDEBAR (CORRIGIDA)
+# 4. SIDEBAR ÚNICA
 with st.sidebar:
     st.markdown("# 🚀 REFRI PRO MPN")
     st.divider()
     
-    # Usando apenas colchetes para evitar o erro de 'AttributeError'
-    st.session_state['dados']['tecnico_nome'] = st.text_input("Técnico:", value=st.session_state['dados']['tecnico_nome'])
+    # Agora a leitura é segura porque os campos foram criados acima
+    st.session_state['dados']['tecnico_nome'] = st.text_input("Técnico Responsável:", value=st.session_state['dados']['tecnico_nome'])
     st.session_state['dados']['cpf_cnpj'] = st.text_input("CPF/CNPJ:", value=st.session_state['dados']['cpf_cnpj'])
-    st.session_state['dados']['tecnico_registro'] = st.text_input("CFT/CREA:", value=st.session_state['dados']['tecnico_registro'])
+    st.session_state['dados']['tecnico_registro'] = st.text_input("Registro Federal (CFT/CREA):", value=st.session_state['dados']['tecnico_registro'])
     
     st.divider()
     aba = st.radio("Selecione a Etapa:", ["Home", "1. Cadastro", "2. Diagnóstico", "Relatórios"])
