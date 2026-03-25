@@ -5,9 +5,17 @@ import streamlit as st
 from datetime import datetime
 import requests
 import urllib.parse
+import os
 
-# Configuração de Página - Deve ser a primeira instrução de UI
-st.set_page_config(page_title="REFRI PRO MPN", page_icon="❄️", layout="wide")
+# USE APENAS ESTE BLOCO (Remova o outro set_page_config que está embaixo)
+st.set_page_config(
+    page_title="REFRI PRO MPN", 
+    page_icon="❄️", 
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# O restante do seu código continua daqui para baixo...
 
 # Inicialização ÚNICA da Memória (Session State) - Protege contra resets
 if 'dados' not in st.session_state:
