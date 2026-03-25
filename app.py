@@ -361,8 +361,7 @@ with st.sidebar:
         for key in st.session_state.dados.keys():
             if key not in chaves_tecnico: st.session_state.dados[key] = ""
         st.rerun()
-    # ------------------------------------------------
-
+    
 elif aba_selecionada == "1. Cadastro de Equipamentos":
     renderizar_aba_1() # Chama a função que contém todo o código da Aba 1
 
@@ -372,6 +371,7 @@ elif aba_selecionada == "2. Diagnósticos":
 elif aba_selecionada == "Relatórios":
     st.header("Página de Relatórios (Em desenvolvimento)")
     st.write("Em breve: Visualização e exportação de relatórios.")
+
 # [COLE AQUI - Logo após o fim da renderizar_aba_1]
 
 def renderizar_aba_diagnosticos():
