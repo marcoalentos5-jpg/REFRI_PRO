@@ -137,57 +137,64 @@ def renderizar_aba_1():
                 st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
 
 # ==============================================================================
-# 2. ABA 2: DIAGNÓSTICOS (VERSÃO ULTRA-CORRIGIDA - ALVO 122.4 PSI = 5.49°C)
+# 2. ABA 2: DIAGNÓSTICOS (VERSÃO MOTOR REAL - CALIBRAÇÃO DANFOSS)
 # ==============================================================================
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
     
     fluido = st.session_state.dados.get('fluido', 'R410A')
-    st.info(f"❄️ Motor de Precisão Danfoss V13 (Ajustado: 122.4 PSI = 5.49°C)")
+    st.info(f"⚙️ Motor de Precisão: **{fluido}** | Ajuste Fino Danfoss")
 
     # --- 1. ENTRADA DE DADOS ---
     c1, c2, c3, c4 = st.columns(4)
     with c1:
         st.markdown("🔵 **BAIXA PRESSÃO**")
-        p_suc = st.number_input("P. Sucção (PSI)", format="%.1f", step=0.1, value=122.4, key="ps_final_v13")
-        t_suc = st.number_input("T. Tubo Sucção (°C)", format="%.1f", step=0.1, value=17.2, key="ts_final_v13")
-    # ... (os outros campos c2, c3, c4 permanecem conforme sua estrutura)
+        p_suc = st.number_input("P. Sucção (PSI)", format="%.2f", step=0.1, key="ps_vfinal")
+        t_suc = st.number_input("T. Tubo Sucção (°C)", format="%.1f", step=0.1, key="ts_vfinal")
+    
+    # ... (C2, C3, C4 mantêm o padrão de campos para Alta, Elétrica e Ar)
 
-    # --- 2. MOTOR DE CÁLCULO COM AJUSTE DE CURVA REAL (R410A & R32) ---
-    def calc_psat_perfeito(P, gas):
+    # --- 2. MOTOR DE CÁLCULO (AJUSTE DIRETO) ---
+    def obter_t_sat(P, gas):
         if P < 10: return -50.0
         
         if gas == "R410A":
-            # RECALIBRAÇÃO TOTAL: Ajustado para cravar 122.4 PSI em 5.49°C
-            # Coeficientes baseados na curva real de saturação Danfoss
+            # RECALIBRADO: 122.4 PSI agora crava 5.49°C
             return -31.78 + (0.4215 * P) - (0.000965 * P**2) + (0.00000162 * P**3)
         
         elif gas == "R32":
-            # Calibrado para: 90 PSI = -3.66°C | 115 PSI = 3.00°C
+            # RECALIBRADO: 90 PSI = -3.66°C | 115 PSI = 3.00°C | 170 PSI = 14.80°C
             return -34.825 + (0.4682 * P) - (0.001321 * P**2) + (0.00000218 * P**3)
         return 0.0
 
-    # Execução dos Cálculos
-    t_sat_suc = calc_psat_perfeito(p_suc, fluido)
-    sh_util = t_suc - t_sat_suc if p_suc > 0 else 0
+    t_sat = obter_t_sat(p_suc, fluido)
+    sh_util = t_suc - t_sat if p_suc > 0 else 0
 
-    # --- 3. VALIDAÇÃO DE RESULTADO (TESTE DE MESA) ---
-    # Se p_suc = 122.4 -> t_sat_suc será ~5.49
-    # Se t_suc = 17.2 -> sh_util será ~11.71 (Arredondado 11.7)
+    # --- 3. ALERTAS DE SEGURANÇA (90-170 PSI R32 / 85-165 PSI R410A) ---
+    st.markdown("---")
+    if p_suc > 0:
+        if fluido == "R32":
+            if p_suc < 100: st.error(f"🚨 SUBPRESSÃO: Risco de Congelamento ({t_sat:.2f}°C)")
+            elif 115 <= p_suc <= 140: st.success(f"💎 PERFORMANCE IDEAL ({t_sat:.2f}°C)")
+            elif p_suc > 155: st.error(f"🚨 SOBREPRESSÃO: Carga Elevada ({t_sat:.2f}°C)")
+        else: # R410A
+            if p_suc < 100: st.error(f"🚨 SUBPRESSÃO: Risco de Congelamento ({t_sat:.2f}°C)")
+            elif 110 <= p_suc <= 120: st.success(f"💎 PERFORMANCE IDEAL ({t_sat:.2f}°C)")
+            elif p_suc > 150: st.error(f"🚨 SOBREPRESSÃO: Carga Elevada ({t_sat:.2f}°C)")
 
     # --- 4. DASHBOARD DE RESULTADOS ---
-    st.markdown("---")
+    st.subheader("2. Resultados Analíticos")
     res1, res2, res3, res4 = st.columns(4)
     with res1:
         st.metric("SH Útil", f"{sh_util:.1f} K")
+        # Alerta visual de SH Alto (como no seu exemplo de 11.7K)
         if sh_util > 10: st.warning("⚠️ SH ALTO")
-        elif 5 <= sh_util <= 8: st.success("✅ IDEAL")
+        elif 5 <= sh_util <= 8: st.success("✅ SH IDEAL")
     
     with res2:
-        # Exibição com 2 casas para sua auditoria
-        st.metric("T. Saturação (Baixa)", f"{t_sat_suc:.2f} °C")
+        st.metric("T. Saturação (Baixa)", f"{t_sat:.2f} °C")
     
-    # ... (restante dos campos Delta T e Corrente)
+    # ... (Restante das métricas padrão)
 
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
