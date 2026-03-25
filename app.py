@@ -4,7 +4,7 @@ import requests
 import urllib.parse
 import os
 
-# 1. Configuração de Identidade (NOME E ÍCONE)
+# 1. Configuração ÚNICA e Inicial
 st.set_page_config(
     page_title="REFRI PRO MPN", 
     page_icon="❄️", 
@@ -12,44 +12,56 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. Estilo Visual (CSS para centralizar e aumentar a Logo)
+# 2. Inicialização da Memória (Evita o erro vermelho que apareceu no print)
+if 'dados' not in st.session_state:
+    st.session_state['dados'] = {
+        'tecnico_nome': 'Marcos Alexandre',
+        'registro_tecnico': '',
+        'cpf_cnpj': ''
+    }
+
+# 3. Estilo Visual (Centraliza a Logo e limpa o layout)
 st.markdown("""
     <style>
-    .block-container { padding-top: 1rem; }
-    .stImage > img { 
-        display: block; 
-        margin-left: auto; 
-        margin-right: auto; 
-        width: 500px; 
-    }
+    .stImage > img { display: block; margin-left: auto; margin-right: auto; width: 500px; }
     .center-text { text-align: center; }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. Sidebar (MENU LATERAL ÚNICO)
+# 4. SIDEBAR ÚNICA (Foco nas Prioridades)
 with st.sidebar:
     st.markdown("# 🚀 REFRI PRO MPN")
     st.divider()
-    nome_tecnico = st.text_input("Técnico Responsável:", value="Marcos Alexandre")
+    
+    # Seus dados de registro
+    st.session_state['dados']['tecnico_nome'] = st.text_input("Técnico Responsável:", st.session_state['dados']['tecnico_nome'])
+    st.session_state['dados']['cpf_cnpj'] = st.text_input("CPF/CNPJ:", st.session_state['dados']['cpf_cnpj'])
+    st.session_state['dados']['registro_tecnico'] = st.text_input("Registro Federal Técnico:", st.session_state['dados']['registro_tecnico'])
+    
     st.divider()
-    aba = st.radio(
-        "Selecione a Etapa:",
-        ["Home", "1. Cadastro", "2. Diagnóstico", "3. Assistente", "Relatórios"]
-    )
+    aba = st.radio("Selecione a Etapa:", ["Home", "1. Cadastro", "2. Diagnóstico", "Relatórios"])
     st.divider()
     st.caption(f"© {datetime.now().year} MPN Soluções")
 
-# 4. Conteúdo da Página Principal
+# 5. CONTEÚDO PRINCIPAL (Apresentação Profissional)
 if aba == "Home":
-    st.image("logo.png") # Sua logo centralizada
+    st.image("logo.png") 
     st.markdown("<h1 class='center-text'>❄️ Bem-vindo ao REFRI PRÓ</h1>", unsafe_allow_html=True)
     st.markdown("<h3 class='center-text'>Gestão Inteligente em Refrigeração e Climatização</h3>", unsafe_allow_html=True)
+    
     st.divider()
-    st.info("""
-    **Sistema de gestão técnica e diagnósticos em tempo real da MPN Soluções.** Selecione **'1. Cadastro'** no menu lateral para iniciar o atendimento.
+    st.info("**Sistema de gestão técnica e diagnósticos em tempo real da MPN Soluções.**")
+    
+    # Exibição dos dados do técnico na Home para conferência
+    st.markdown(f"""
+    **Técnico:** {st.session_state['dados']['tecnico_nome']}  
+    **Registro:** {st.session_state['dados']['registro_tecnico']}  
+    **Documento:** {st.session_state['dados']['cpf_cnpj']}
     """)
 
-# O restante do seu código de cadastro e cálculos viria abaixo deste ponto...
+elif aba == "1. Cadastro":
+    st.header("📝 Cadastro de Atendimento")
+    # Aqui continuaremos o desenvolvimento do formulário...
 
 # ==============================================================================
 # 1. DEFINIÇÃO DAS TELAS (FUNÇÕES DE RENDERIZAÇÃO)
