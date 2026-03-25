@@ -252,9 +252,16 @@ def renderizar_aba_diagnosticos():
         st.metric("Δ Comp.", f"{cm_c - cn_c:.2f} µF")
         st.caption(f"Δ Fan: {cm_f - cn_f:.2f} µF")
 
+    # --- 4. PARECER TÉCNICO FINAL (LINHA 257 CORRIGIDA) ---
     st.markdown("---")
     st.subheader("3. Parecer Técnico")
-    st.session_state.dados['laudo_diag'] = st.text_area("Notas e Diagnósti
+    
+    # O segredo aqui é fechar as aspas e o parêntese na mesma instrução
+    st.session_state.dados['laudo_diag'] = st.text_area(
+        label="Notas e Diagnóstico Final:", 
+        value=st.session_state.dados.get('laudo_diag', ''),
+        key="laudo_final_v4"
+    )
 
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
