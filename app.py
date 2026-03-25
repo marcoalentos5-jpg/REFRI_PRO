@@ -1,13 +1,10 @@
-# ==============================================================================
-# 0. CONFIGURAÇÕES, IMPORTS E MEMÓRIA (UNIFICADO)
-# ==============================================================================
 import streamlit as st
 from datetime import datetime
 import requests
 import urllib.parse
 import os
 
-# USE APENAS ESTE BLOCO (Remova o outro set_page_config que está embaixo)
+# 1. Nome na aba do navegador e ícone
 st.set_page_config(
     page_title="REFRI PRO MPN", 
     page_icon="❄️", 
@@ -15,63 +12,63 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# O restante do seu código continua daqui para baixo...
-
-# Inicialização ÚNICA da Memória (Session State) - Protege contra resets
-if 'dados' not in st.session_state:
-    st.session_state.dados = {
-        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'email': '',
-        'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '',
-        'fabricante': 'Carrier', 'tag_id': 'TAG-01', 'status_maquina': '🟢 Operacional',
-        'fluido': 'R410A', 'serie_evap': '', 'laudo_diag': '',
-        'p_suc': 120.0, 't_suc': 10.0, 'p_des': 350.0, 't_liq': 35.0,
-        'rla': 10.0, 'i_med': 8.5,
-        'tecnico_nome': 'Marcos Alexandre', 'tecnico_registro': '',
-        'data': datetime.now().strftime("%d/%m/%Y")
-    }
-
-# --- FUNÇÕES DE SUPORTE (MOTOR TÉCNICO) ---
-
-def f_sat(psi, fluido):
-    """Cálculo de Temperatura de Saturação (Base Danfoss)"""
-    tabelas = {
-        "R32": {90: -3.46, 100: -0.87, 110: 1.75, 120: 4.22, 130: 6.55, 140: 8.78, 150: 10.86, 160: 12.85, 170: 14.76},
-        "R410A": {90: -3.82, 100: -0.58, 110: 2.32, 120: 4.92, 125: 6.13, 130: 7.30, 140: 9.50, 150: 11.55, 160: 13.48, 170: 15.30}
-    }
-    ref = tabelas.get(fluido, tabelas["R410A"])
-    p_keys = sorted(ref.keys())
-    if psi in ref: return ref[psi]
-    for i in range(len(p_keys)-1):
-        if p_keys[i] < psi < p_keys[i+1]:
-            p0, p1 = p_keys[i], p_keys[i+1]
-            return ref[p0] + (ref[p1] - ref[p0]) * (psi - p0) / (p1 - p0)
-    return 0.0
-
-def buscar_cep(cep):
-    """Busca automática de endereço via API ViaCEP"""
-    cep_limpo = "".join(filter(str.isdigit, cep))
-    if len(cep_limpo) == 8:
-        try:
-            r = requests.get(f"https://viacep.com.br/ws/{cep_limpo}/json/", timeout=5)
-            if r.status_code == 200:
-                d = r.json()
-                if "erro" not in d:
-                    st.session_state.dados['endereco'] = d.get('logradouro', '')
-                    st.session_state.dados['bairro'] = d.get('bairro', '')
-                    st.session_state.dados['cidade'] = d.get('localidade', '')
-                    st.session_state.dados['uf'] = d.get('uf', '')
-                    return True
-        except: pass
-    return False
-
-# Estilização Visual (CSS)
+# --- ESTILIZAÇÃO PARA AUMENTAR A LOGO E CENTRALIZAR ---
 st.markdown("""
     <style>
-    .stTextInput>div>div>input { background-color: #e0f2f1 !important; color: #004d40 !important; font-weight: bold; }
-    div.stLinkButton > a { background-color: #25D366 !important; color: white !important; font-weight: bold; border-radius: 8px !important; }
+    .main-logo {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+    .main-logo img {
+        width: 450px; /* Aumentamos a logo aqui */
+        border-radius: 10px;
+    }
+    .center-text {
+        text-align: center;
+    }
     </style>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
+# 3. SIDEBAR ÚNICA (Limpando a duplicidade)
+with st.sidebar:
+    st.markdown("## 🚀 Painel MPN")
+    
+    # Campo para o seu nome
+    nome_tecnico = st.text_input("Técnico Responsável:", value="Marcos Alexandre")
+    
+    st.divider()
+    
+    # Seleção de etapa (Apenas UMA vez)
+    aba = st.radio(
+        "Selecione a Etapa:",
+        ["Home", "1. Cadastro", "2. Diagnósticos", "3. Assistente de Campo", "Relatórios"]
+    )
+    
+    st.divider()
+    st.caption(f"Versão 1.0 | {datetime.now().year}")
+
+# --- PÁGINA PRINCIPAL (Apresentação do APP) ---
+if aba == "Home":
+    # 4. Logo Enquadrada e Grande
+    st.markdown('<div class="main-logo">', unsafe_allow_html=True)
+    st.image("logo.png") # Certifique-se que o arquivo chama logo.png no GitHub
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # 1. Título corrigido
+    st.markdown("<h1 class='center-text'>❄️ Bem-vindo ao REFRI PRÓ</h1>", unsafe_allow_html=True)
+    
+    # 2. Subtítulo corrigido
+    st.markdown("<h3 class='center-text'>Gestão Inteligente em Refrigeração e Climatização</h3>", unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    # 5. Texto de apoio abaixo do subtítulo
+    st.info("""
+    **Sistema de gestão técnica e diagnósticos em tempo real da MPN Soluções.** Selecione **'1. Cadastro'** no menu lateral para iniciar o atendimento.
+    """)
+
+# O restante do código (if aba == "1. Cadastro": etc) continua abaixo...
 # ==============================================================================
 # 1. DEFINIÇÃO DAS TELAS (FUNÇÕES DE RENDERIZAÇÃO)
 # ==============================================================================
