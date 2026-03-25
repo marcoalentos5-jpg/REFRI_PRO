@@ -6,7 +6,7 @@ from datetime import datetime
 import requests
 import urllib.parse
 import os # Biblioteca para verificar arquivos no sistema
-
+import numpy as np
 
 
 # 1. CONFIGURAÇÃO INICIAL (TESTADA)
@@ -196,24 +196,28 @@ def renderizar_aba_diagnosticos():
             # TABELA RECALCULADA 90-150 (Conforme seus dados de campo)
             pressões = [90.0, 100.0, 105.0, 110.0, 115.0, 120.0, 122.7, 130.9, 141.7, 150.0]
             saturações = [-3.50, -0.29, 1.06, 2.36, 3.62, 4.84, 5.50, 7.40, 9.80, 11.50]
-            return float(np.interp(p, pressões, saturações))
+            # --- 2. MOTOR DE PRECISÃO (SISTEMA DE BUSCA DIRETA - SEM ERRO) ---
+    def f_sat_precisao(p, g):
+        if p <= 5: return -50.0
         
+        # TABELA R410A (Seus pontos auditados)
+        if g == "R410A":
+            xp = [90.0, 100.0, 105.0, 110.0, 115.0, 120.0, 122.7, 130.9, 141.7, 150.0]
+            fp = [-3.50, -0.29, 1.06, 2.36, 3.62, 4.84, 5.50, 7.40, 9.80, 11.50]
         elif g == "R32":
-            xp_r32 = [90.0, 100.0, 115.0, 140.0, 170.0]
-            fp_r32 = [-3.66, -0.87, 3.00, 8.50, 14.80]
-            return float(np.interp(p, xp_r32, fp_r32))
-        return 0.0
+            xp = [90.0, 100.0, 115.0, 140.0, 170.0]
+            fp = [-3.66, -0.87, 3.00, 8.50, 14.80]
+        else:
+            return 0.0
 
-    t_sat_s = f_sat_precisao(p_suc, fluido)
-    t_sat_d = f_sat_precisao(p_des, fluido)
-    
-    sh = (t_suc - t_sat_s) if p_suc > 0 else 0.0
-    sc = (t_sat_d - t_liq) if p_des > 0 else 0.0
-    dt_ar = (t_ret - t_ins) if (t_ret > 0 and t_ins > 0) else 0.0
-    dif_v = v_lin - v_med
-    dif_i = rla - i_med if rla > 0 else 0.0
-
-    st.markdown("---")
+        # Lógica de Interpolação Manual (Substitui o np.interp para evitar erros)
+        for i in range(len(xp) - 1):
+            if xp[i] <= p <= xp[i+1]:
+                # Cálculo da inclinação entre os dois pontos mais próximos
+                return fp[i] + (p - xp[i]) * (fp[i+1] - fp[i]) / (xp[i+1] - xp[i])
+        
+        # Caso esteja fora dos limites da tabela, retorna o extremo
+        return fp[0] if p < xp[0] else fp[-1]
 
     # --- 3. ALERTAS DE EXTREMOS (110-130 PSI) ---
     if p_suc > 0:
