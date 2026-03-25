@@ -472,3 +472,4 @@ elif aba == "3. Assistente de Campo":
 
 elif aba == "Relatórios":
     renderizar_aba_laudo()
+    
