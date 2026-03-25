@@ -138,108 +138,105 @@ def renderizar_aba_1():
 
 
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO FINAL BLINDADA - R32/RLA/ΔT)
+# 2. ABA 2: DIAGNÓSTICOS (INCREMENTADA COM R32/R410A - PRECISÃO DANFOSS)
 # ==============================================================================
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
     
-    # Resgate do Fluido da Aba 1
+    # Resgate do Fluido da Aba 1 (Mestra)
     fluido = st.session_state.dados.get('fluido', 'R410A')
-    st.info(f"❄️ Fluido Refrigerante Selecionado: **{fluido}**")
-    
-    # --- CSS PARA ALERTAS TÉCNICOS ---
-    st.markdown("""
-        <style>
-        .sh-critico { background-color: #ff1744; color: white; padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; }
-        .sobrecarga { color: #d32f2f; font-weight: bold; }
-        </style>
-    """, unsafe_allow_html=True)
+    st.info(f"❄️ Diagnóstico baseado no Fluido: **{fluido}**")
 
-    # --- 1. MEDIÇÕES DE CAMPO (5 COLUNAS) ---
+    # --- 1. ENTRADA DE DADOS ---
     st.subheader("1. Medições de Campo")
-    c1, c2, c3, c4, c5 = st.columns(5)
-
+    c1, c2, c3, c4 = st.columns(4)
+    
     with c1:
-        st.markdown("🔵 **EVAPORADORA**")
-        p_suc = st.number_input("P. Sucção (PSI)", format="%.2f", step=0.1, key="ps_final")
-        t_suc = st.number_input("T. Tubo Suc. (°C)", format="%.2f", step=0.1, key="ts_final")
-        t_ret = st.number_input("T. Retorno (°C)", format="%.2f", step=0.1, key="tr_final")
-        t_ins = st.number_input("T. Insufla. (°C)", format="%.2f", step=0.1, key="ti_final")
-
+        st.markdown("🔵 **BAIXA (Evaporação)**")
+        p_suc = st.number_input("P. Sucção (PSI)", format="%.1f", step=1.0, key="ps_diag_v5")
+        t_suc = st.number_input("T. Tubo Sucção (°C)", format="%.1f", step=0.1, key="ts_diag_v5")
+        
     with c2:
-        st.markdown("🔴 **CONDENSADORA**")
-        p_des = st.number_input("P. Desc. (PSI)", format="%.2f", step=0.1, key="pd_final")
-        t_liq = st.number_input("T. Tubo Líq. (°C)", format="%.2f", step=0.1, key="tl_final")
+        st.markdown("🔴 **ALTA (Condensação)**")
+        p_des = st.number_input("P. Descarga (PSI)", format="%.1f", step=1.0, key="pd_diag_v5")
+        t_liq = st.number_input("T. Tubo Líquido (°C)", format="%.1f", step=0.1, key="tl_diag_v5")
 
     with c3:
-        st.markdown("⚡ **TENSÃO**")
-        v_lin = st.number_input("Tens. Linha (V)", format="%.2f", step=1.0, key="vl_final")
-        v_med = st.number_input("Tens. Medida (V)", format="%.2f", step=1.0, key="vm_final")
+        st.markdown("🔌 **ELÉTRICA**")
+        rla = st.number_input("RLA Nominal (A)", format="%.2f", key="rla_diag_v5")
+        i_med = st.number_input("Corrente Medida (A)", format="%.2f", key="im_diag_v5")
 
     with c4:
-        st.markdown("🔌 **CORRENTE**")
-        rla = st.number_input("RLA (A)", format="%.2f", step=0.1, key="rla_final")
-        lra = st.number_input("LRA (A)", format="%.2f", step=0.1, key="lra_final")
-        i_med = st.number_input("Corr. Medida (A)", format="%.2f", step=0.1, key="im_final")
+        st.markdown("🌡️ **DIFERENCIAL**")
+        t_ret = st.number_input("T. Retorno Ar (°C)", format="%.1f", key="tr_diag_v5")
+        t_ins = st.number_input("T. Insuflamento (°C)", format="%.1f", key="ti_diag_v5")
 
-    with c5:
-        st.markdown("🔋 **CAPACIT.**")
-        cn_c = st.number_input("C. Nom. Comp", format="%.2f", key="cnc_final")
-        cn_f = st.number_input("C. Nom. Fan", format="%.2f", key="cnf_final")
-        cm_c = st.number_input("C. Med. Comp", format="%.2f", key="cmc_final")
-        cm_f = st.number_input("C. Med. Fan", format="%.2f", key="cmf_final")
+    # --- 2. MOTOR DE CÁLCULO INCREMENTADO (FÓRMULA REFINADA ÀS 13H) ---
+    def obter_temp_saturacao(pressao, gas):
+        if pressao <= 5: return 0.0
+        # Coeficientes ajustados para máxima precisão entre 0°C e 50°C
+        config = {
+            "R410A": {"a": 0.2532, "b": 0.801, "c": 18.52},
+            "R32":   {"a": 0.2458, "b": 0.812, "c": 19.10},
+            "R22":   {"a": 0.4150, "b": 0.720, "c": 19.80},
+            "R134a": {"a": 0.6500, "b": 0.620, "c": 25.00}
+        }
+        cf = config.get(gas, config["R410A"])
+        return cf["a"] * (pressao ** cf["b"]) - cf["c"]
 
-    # --- 2. MOTOR DE CÁLCULO (INCLUINDO R32) ---
-    def f_sat(p, g):
-        if p <= 5: return 0.0
-        if g == "R410A": return 0.253 * (p**0.8) - 18.5
-        if g == "R22": return 0.415 * (p**0.72) - 19.8
-        if g == "R32": return 0.245 * (p**0.81) - 19.0
-        if g == "R134a": return 0.65 * (p**0.62) - 25.0
-        return 0.0
-
-    t_sat_s = f_sat(p_suc, fluido)
-    t_sat_d = f_sat(p_des, fluido)
+    # Cálculos Automáticos
+    t_sat_baixa = obter_temp_saturacao(p_suc, fluido)
+    t_sat_alta = obter_temp_saturacao(p_des, fluido)
     
-    sh = (t_suc - t_sat_s) if p_suc > 0 else 0.0
-    sc = (t_sat_d - t_liq) if p_des > 0 else 0.0
-    dt_ar = (t_ret - t_ins) if (t_ret > 0 and t_ins > 0) else 0.0
-    dif_v = v_lin - v_med
-    dif_i = rla - i_med if rla > 0 else 0.0
+    sh_util = t_suc - t_sat_baixa if p_suc > 0 else 0.0
+    sub_resf = t_sat_alta - t_liq if p_des > 0 else 0.0
+    delta_t = t_ret - t_ins if (t_ret > 0 and t_ins > 0) else 0.0
 
     st.markdown("---")
 
-    # --- 3. RESULTADOS CALCULADOS ---
-    st.subheader("2. Resultados Calculados")
-    res1, res2, res3, res4, res5 = st.columns(5)
+    # --- 3. EXIBIÇÃO DE RESULTADOS (DASHBOARD) ---
+    st.subheader("2. Análise de Performance")
+    res1, res2, res3, res4 = st.columns(4)
 
     with res1:
-        st.write(f"ΔT Ar: **{dt_ar:.2f} °C**")
-        if sh < 5 and p_suc > 0:
-            st.markdown(f'<div class="sh-critico">SH: {sh:.2f} K<br>⚠️ RISCO LÍQUIDO</div>', unsafe_allow_html=True)
-        else:
-            st.metric("SH Final", f"{sh:.2f} K")
+        st.metric("SH Útil (K)", f"{sh_util:.1f} K")
+        if p_suc > 0:
+            if sh_util < 5: 
+                st.error("⚠️ SH BAIXO: Risco de Golpe")
+            elif 5 <= sh_util <= 8: 
+                st.success("✅ SH IDEAL")
+            else: 
+                st.warning("⚠️ SH ALTO: Falta de Gás")
 
     with res2:
-        st.metric("SC Final", f"{sc:.2f} K")
-        st.caption(f"T. Sat Alta: {t_sat_d:.2f}°C")
+        st.metric("Sub-resfriamento (K)", f"{sub_resf:.1f} K")
+        if p_des > 0:
+            if 4 <= sub_resf <= 7: 
+                st.success("✅ SC IDEAL")
+            else: 
+                st.info("ℹ️ Verificar Carga/Condensação")
 
     with res3:
-        st.metric("Queda Tens.", f"{dif_v:.2f} V")
+        st.metric("ΔT do Ar", f"{delta_t:.1f} °C")
+        if delta_t >= 10: st.success("✅ Troca Térmica OK")
+        elif delta_t > 0: st.warning("⚠️ Troca Insuficiente")
 
     with res4:
-        st.metric("Dif. RLA", f"{dif_i:.2f} A")
-        if i_med > rla and rla > 0:
-            st.markdown('<span class="sobrecarga">⚠️ SOBRECARGA</span>', unsafe_allow_html=True)
-        st.caption(f"LRA Ref: {lra:.2f} A")
-
-    with res5:
-        st.write(f"Δ Comp: {cm_c - cn_c:.2f} µF")
-        st.write(f"Δ Fan: {cm_f - cn_f:.2f} µF")
+        if rla > 0:
+            perc_rla = (i_med / rla) * 100
+            st.metric("Carga Motor", f"{perc_rla:.1f}%")
+            if i_med > rla: st.error("⚠️ SOBRECARGA")
+        else:
+            st.metric("Corrente Medida", f"{i_med:.2f} A")
 
     st.markdown("---")
-    st.subheader("3. Parecer Técnico")
-    st.session_state.dados['laudo_diag'] = st.text_area("Notas:", key="laudo_final_v4")
+    st.subheader("3. Parecer e Laudo")
+    st.session_state.dados['laudo_diag'] = st.text_area(
+        "Notas Técnicas:", 
+        value=st.session_state.dados['laudo_diag'], 
+        placeholder="Descreva aqui o estado geral do ciclo frigorífico...",
+        key="laudo_area_v5"
+    )
 
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
