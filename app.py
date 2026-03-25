@@ -228,8 +228,7 @@ def renderizar_aba_diagnosticos():
    
       # --- 3. ALERTAS DE EXTREMOS (CALIBRADOS: 110-130 PSI) ---
     if p_suc > 0:
-        # Texto base com a sua calibração mestre
-        texto_base = f"TEMP. SATURAÇÃO = {t_sat_s:.2f}ºC"
+                texto_base = f"TEMP. SATURAÇÃO = {t_sat_s:.2f}ºC"
         
         if p_suc < 110:
             st.markdown(f'<div class="alerta-pressao" style="background-color: #ffc107; color: black; padding: 10px; border-radius: 5px; text-align: center; font-weight: bold;">{texto_base}  -  ⚠️ SUBPRESSÃO: ABAIXO DE 110 PSI</div>', unsafe_allow_html=True)
@@ -238,8 +237,68 @@ def renderizar_aba_diagnosticos():
         else:
             st.markdown(f'<div class="alerta-pressao" style="background-color: #f44336; color: white; padding: 10px; border-radius: 5px; text-align: center; font-weight: bold;">{texto_base}  -  🚨 SOBREPRESSÃO: ACIMA DE 130 PSI</div>', unsafe_allow_html=True)
 
+
+    # ==============================================================================
+    # 2.1. COLE O NOVO BLOCO (5 COLUNAS X 2 LINHAS) EXATAMENTE AQUI:
+    # ==============================================================================
+    st.markdown("---")
+    st.subheader("2. Resultados Calculados")
+    
+    # --- LINHA 1 ---
+    l1_c1, l1_c2, l1_c3, l1_c4, l1_c5 = st.columns(5)
+    
+    with l1_c1:
+        st.metric("Δ T", f"{dt_ar:.2f} °C")
+    
+    with l1_c2:
+        # SH TOTAL com alerta visual de risco líquido
+        if sh < 5 and p_suc > 0:
+            st.markdown(f'<div class="sh-critico">SH TOTAL: {sh:.2f} K<br>⚠️ RISCO LÍQUIDO</div>', unsafe_allow_html=True)
+        else:
+            st.metric("SH TOTAL", f"{sh:.2f} K")
+
+    with l1_c3:
+        st.metric("SC Final", f"{sc:.2f} K")
+
+    with l1_c4:
+        # COP (Capacidade / Potência)
+        cop_val = 0.0 # Espaço para cálculo futuro
+        st.metric("COP", f"{cop_val:.2f}")
+
+    with l1_c5:
+        st.metric("Queda Tens.", f"{dif_v:.2f} V")
+
+    # --- LINHA 2 ---
+    l2_c1, l2_c2, l2_c3, l2_c4, l2_c5 = st.columns(5)
+
+    with l2_c1:
+        # Temperatura de Saturação de Baixa (abaixo do SH)
+        st.metric("Sat. Baixa", f"{t_sat_s:.2f} °C")
+
+    with l2_c2:
+        st.metric("Sat. Alta", f"{t_sat_d:.2f} °C")
+
+    with l2_c3:
+        st.metric("Dif. RLA", f"{dif_i:.2f} A")
+        if i_med > rla and rla > 0:
+            st.markdown('<span class="sobrecarga">⚠️ SOBRECARGA</span>', unsafe_allow_html=True)
+
+    with l2_c4:
+        # Delta Fan (Capacitor Ventilador)
+        d_fan = cm_f - cn_f if (cm_f > 0 and cn_f > 0) else 0.0
+        st.metric("Δ Fan", f"{d_fan:.2f} µF")
+
+    with l2_c5:
+        # Delta Compressor (Capacitor Compressor)
+        d_comp = cm_c - cn_c if (cm_c > 0 and cn_c > 0) else 0.0
+        st.metric("Δ Comp.", f"{d_comp:.2f} µF")
+
+    # 3. Depois vem o Parecer Técnico (Notas)
+    st.markdown("---")
+    st.subheader("3. Parecer Técnico")
+    
     # --- 4. RESULTADOS CALCULADOS ---
-    # --- 4. RESULTADOS CALCULADOS ---
+    
     st.subheader("2. Resultados Calculados")
     res1, res2, res3, res4, res5 = st.columns(5)
 
