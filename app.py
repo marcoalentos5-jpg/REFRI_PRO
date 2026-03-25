@@ -230,6 +230,10 @@ def renderizar_aba_diagnosticos():
     if p_suc > 0:
                 texto_base = f"TEMP. SATURAÇÃO = {t_sat_s:.2f}ºC"
         
+       # --- 3. ALERTAS DE EXTREMOS (LINHA 233 CORRIGIDA) ---
+    if p_suc > 0:
+        texto_base = f"TEMP. SATURAÇÃO = {t_sat_s:.2f}ºC"
+        
         if p_suc < 110:
             st.markdown(f'<div class="alerta-pressao" style="background-color: #ffc107; color: black; padding: 10px; border-radius: 5px; text-align: center; font-weight: bold;">{texto_base}  -  ⚠️ SUBPRESSÃO: ABAIXO DE 110 PSI</div>', unsafe_allow_html=True)
         elif 110 <= p_suc <= 130:
@@ -237,7 +241,40 @@ def renderizar_aba_diagnosticos():
         else:
             st.markdown(f'<div class="alerta-pressao" style="background-color: #f44336; color: white; padding: 10px; border-radius: 5px; text-align: center; font-weight: bold;">{texto_base}  -  🚨 SOBREPRESSÃO: ACIMA DE 130 PSI</div>', unsafe_allow_html=True)
 
+    # --- 4. RESULTADOS CALCULADOS (DISTRIBUIÇÃO 5x2) ---
+    st.markdown("---")
+    st.subheader("2. Resultados Calculados")
+    
+    # Linha 1
+    l1_c1, l1_c2, l1_c3, l1_c4, l1_c5 = st.columns(5)
+    with l1_c1:
+        st.metric("Δ T", f"{dt_ar:.2f} °C")
+    with l1_c2:
+        if sh < 5 and p_suc > 0:
+            st.markdown(f'<div class="sh-critico">SH TOTAL: {sh:.2f} K<br>⚠️ RISCO LÍQUIDO</div>', unsafe_allow_html=True)
+        else:
+            st.metric("SH TOTAL", f"{sh:.2f} K")
+    with l1_c3:
+        st.metric("SC Final", f"{sc:.2f} K")
+    with l1_c4:
+        st.metric("COP", "0.00")
+    with l1_c5:
+        st.metric("Queda Tens.", f"{dif_v:.2f} V")
 
+    # Linha 2
+    l2_c1, l2_c2, l2_c3, l2_c4, l2_c5 = st.columns(5)
+    with l2_c1:
+        st.metric("Sat. Baixa", f"{t_sat_s:.2f} °C")
+    with l2_c2:
+        st.metric("Sat. Alta", f"{t_sat_d:.2f} °C")
+    with l2_c3:
+        st.metric("Dif. RLA", f"{dif_i:.2f} A")
+    with l2_c4:
+        d_fan = cm_f - cn_f if (cm_f > 0 and cn_f > 0) else 0.0
+        st.metric("Δ Fan", f"{d_fan:.2f} µF")
+    with l2_c5:
+        d_comp = cm_c - cn_c if (cm_c > 0 and cn_c > 0) else 0.0
+        st.metric("Δ Comp.", f"{d_comp:.2f} µF")
     # ==============================================================================
     # 2.1. COLE O NOVO BLOCO (5 COLUNAS X 2 LINHAS) EXATAMENTE AQUI:
     # ==============================================================================
