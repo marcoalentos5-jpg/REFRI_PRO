@@ -266,8 +266,7 @@ st.session_state.setdefault('dados', {})['tecnico_documento'] = st.text_input("C
 # 3. Registro Profissional
 reg_tec = st.session_state.get('dados', {}).get('tecnico_registro', '')
 st.session_state.setdefault('dados', {})['tecnico_registro'] = st.text_input("Registro Federal (CFT/CREA):", value=reg_tec)
-    
-    st.markdown("---")
+st.markdown("---")
     
     # VALIDAÇÃO DE CAMPOS OBRIGATÓRIOS
     if not st.session_state.dados['nome'] or not st.session_state.dados['whatsapp']:
