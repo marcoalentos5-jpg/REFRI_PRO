@@ -275,94 +275,66 @@ def renderizar_aba_diagnosticos():
     with l2_c5:
         d_comp = cm_c - cn_c if (cm_c > 0 and cn_c > 0) else 0.0
         st.metric("Δ Comp.", f"{d_comp:.2f} µF")
+
+    
     # ==============================================================================
     # 2.1. COLE O NOVO BLOCO (5 COLUNAS X 2 LINHAS) EXATAMENTE AQUI:
     # ==============================================================================
     st.markdown("---")
     st.subheader("2. Resultados Calculados")
     
-    # --- LINHA 1 ---
+    # Estilo para números Verdes e Grandes (Melhora a visualização no celular)
+    st.markdown('<style>div[data-testid="stMetricValue"] > div { font-size: 1.8rem !important; color: #00e676; }</style>', unsafe_allow_html=True)
+
+    # --- LINHA 1 (Conforme Papel: SH TOTAL | Sat. Baixa | Δ Tensão | Δ T | Δ Comp.) ---
     l1_c1, l1_c2, l1_c3, l1_c4, l1_c5 = st.columns(5)
     
     with l1_c1:
-        st.metric("Δ T", f"{dt_ar:.2f} °C")
-    
-    with l1_c2:
-        # SH TOTAL com alerta visual de risco líquido
         if sh < 5 and p_suc > 0:
-            st.markdown(f'<div class="sh-critico">SH TOTAL: {sh:.2f} K<br>⚠️ RISCO LÍQUIDO</div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="color:#ff4b4b; font-weight:bold; font-size:14px;">SH TOTAL: {sh:.2f} K<br>⚠️ RISCO LÍQUIDO</div>', unsafe_allow_html=True)
         else:
             st.metric("SH TOTAL", f"{sh:.2f} K")
 
+    with l1_c2:
+        st.metric("Sat. Baixa", f"{t_sat_s:.2f} °C")
+
     with l1_c3:
-        st.metric("SC Final", f"{sc:.2f} K")
+        st.metric("Δ Tensão", f"{dif_v:.2f} V")
 
     with l1_c4:
-        # COP (Capacidade / Potência)
-        cop_val = 0.0 # Espaço para cálculo futuro
-        st.metric("COP", f"{cop_val:.2f}")
+        st.metric("Δ T", f"{dt_ar:.2f} °C")
 
     with l1_c5:
-        st.metric("Queda Tens.", f"{dif_v:.2f} V")
+        delta_comp = (cm_c - cn_c) if (cm_c > 0 and cn_c > 0) else 0.0
+        st.metric("Δ Comp.", f"{delta_comp:.2f} µF")
 
-    # --- LINHA 2 ---
+    # --- LINHA 2 (Conforme Papel: SC FINAL | Sat. Alta | Δ Corrente | COP | Δ Fan) ---
     l2_c1, l2_c2, l2_c3, l2_c4, l2_c5 = st.columns(5)
 
     with l2_c1:
-        # Temperatura de Saturação de Baixa (abaixo do SH)
-        st.metric("Sat. Baixa", f"{t_sat_s:.2f} °C")
+        st.metric("SC FINAL", f"{sc:.2f} K")
 
     with l2_c2:
         st.metric("Sat. Alta", f"{t_sat_d:.2f} °C")
 
     with l2_c3:
-        st.metric("Dif. RLA", f"{dif_i:.2f} A")
+        st.metric("Δ Corrente", f"{dif_i:.2f} A")
         if i_med > rla and rla > 0:
-            st.markdown('<span class="sobrecarga">⚠️ SOBRECARGA</span>', unsafe_allow_html=True)
+            st.markdown('<div style="color:#ff4b4b; font-weight:bold; font-size:12px;">⚠️ SOBRECARGA</div>', unsafe_allow_html=True)
 
     with l2_c4:
-        # Delta Fan (Capacitor Ventilador)
-        d_fan = cm_f - cn_f if (cm_f > 0 and cn_f > 0) else 0.0
-        st.metric("Δ Fan", f"{d_fan:.2f} µF")
+        cop_val = 0.0 # Espaço para cálculo futuro
+        st.metric("COP", f"{cop_val:.2f}")
 
     with l2_c5:
-        # Delta Compressor (Capacitor Compressor)
-        d_comp = cm_c - cn_c if (cm_c > 0 and cn_c > 0) else 0.0
-        st.metric("Δ Comp.", f"{d_comp:.2f} µF")
+        delta_fan = (cm_f - cn_f) if (cm_f > 0 and cn_f > 0) else 0.0
+        st.metric("Δ Fan", f"{delta_fan:.2f} µF")
 
     # 3. Depois vem o Parecer Técnico (Notas)
     st.markdown("---")
     st.subheader("3. Parecer Técnico")
     
-    # --- 4. RESULTADOS CALCULADOS ---
-    
-    st.subheader("2. Resultados Calculados")
-    res1, res2, res3, res4, res5 = st.columns(5)
-
-    with res1:
-        st.metric("ΔT Ar", f"{dt_ar:.2f} °C")
-        if sh < 5 and p_suc > 0:
-            st.markdown(f'<div class="sh-critico">SH: {sh:.2f} K<br>⚠️ RISCO LÍQUIDO</div>', unsafe_allow_html=True)
-        else:
-            st.metric("SH Final", f"{sh:.2f} K")
-
-    with res2:
-        st.metric("SC Final", f"{sc:.2f} K")
-        st.caption(f"T. Sat Alta: {t_sat_d:.2f}°C")
-
-    with res3:
-        st.metric("Queda Tens.", f"{dif_v:.2f} V")
-
-    with res4:
-        st.metric("Dif. RLA", f"{dif_i:.2f} A")
-        if i_med > rla and rla > 0:
-            st.markdown('<span class="sobrecarga">⚠️ SOBRECARGA</span>', unsafe_allow_html=True)
-        st.caption(f"LRA Ref: {lra:.2f} A")
-
-    with res5:
-        st.metric("Δ Comp.", f"{cm_c - cn_c:.2f} µF")
-        st.caption(f"Δ Fan: {cm_f - cn_f:.2f} µF")
-
+   
     # --- 5. PARECER TÉCNICO FINAL ---
     st.markdown("---")
     st.subheader("3. Parecer Técnico")
