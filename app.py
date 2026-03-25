@@ -268,11 +268,15 @@ reg_tec = st.session_state.get('dados', {}).get('tecnico_registro', '')
 st.session_state.setdefault('dados', {})['tecnico_registro'] = st.text_input("Registro Federal (CFT/CREA):", value=reg_tec)
 st.markdown("---")
     
-    # VALIDAÇÃO DE CAMPOS OBRIGATÓRIOS
-    if not st.session_state.dados['nome'] or not st.session_state.dados['whatsapp']:
-        st.error("📋 STATUS: PENDENTE (Preencha Cliente e WhatsApp)")
-    else:
-        st.success("📋 STATUS: PRONTO PARA ENVIO")
+   # 1. O 'if' começa na margem
+if not st.session_state.dados.get('nome') or not st.session_state.dados.get('whatsapp'):
+    # 2. O conteúdo do 'if' tem 4 espaços de recuo
+    st.error("📋 STATUS: PENDENTE (Preencha Cliente e WhatsApp)")
+    st.markdown("---") # <--- Alinhado exatamente abaixo do st.error
+else:
+    # 3. O 'else' volta para a margem do 'if'
+    st.success("📋 STATUS: PRONTO PARA ENVIO")
+    st.markdown("---") # <--- Alinhado exatamente abaixo do st.success
         
     # MENSAGEM WHATSAPP - ENVIO DE TODOS OS DADOS SEM EXCEÇÃO
     msg_zap = (
