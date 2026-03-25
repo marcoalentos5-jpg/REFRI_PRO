@@ -7,7 +7,7 @@ import requests
 import urllib.parse
 
 # Configuração de Página - Deve ser a primeira instrução de UI
-st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
+st.set_page_config(page_title="REFRI PRO MPN", page_icon="❄️", layout="wide")
 
 # Inicialização ÚNICA da Memória (Session State) - Protege contra resets
 if 'dados' not in st.session_state:
