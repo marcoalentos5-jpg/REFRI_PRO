@@ -301,14 +301,17 @@ def renderizar_aba_diagnosticos():
     st.subheader("3. Parecer Técnico")
     
    
-    # --4. . PARECER TÉCNICO FINAL ---
-    st.markdown("---")
-    st.subheader("3. Parecer Técnico")
-    st.session_state.dados['laudo_diag'] = st.text_area(
-        label="Notas e Diagnóstico Final:", 
-        value=st.session_state.dados.get('laudo_diag', ''),
-        key="laudo_final_v4"
-    )
+   
+# --4. . PARECER TÉCNICO FINAL ---
+
+st.markdown("---")
+st.subheader("3. Parecer Técnico")
+st.session_state.dados['laudo_diag'] = st.text_area(
+    label="Notas e Diagnóstico Final:", 
+    value=st.session_state.dados.get('laudo_diag', ''),
+    key="laudo_final_v4"
+)
+
 
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
