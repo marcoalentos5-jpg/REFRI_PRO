@@ -1,58 +1,78 @@
-# ==============================================================================
-# 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES (CONGELADO)
-# ==============================================================================
 import streamlit as st
 from datetime import datetime
 import requests
 import urllib.parse
-import os # Biblioteca para verificar arquivos no sistema
+import os 
 import numpy as np
+import urllib.parse
 
 
-# 1. CONFIGURAÇÃO INICIAL (TESTADA)
-
+# ==============================================================================
+# 1. CONFIGURAÇÃO E ESTILIZAÇÃO
+# ==============================================================================
 st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
 
-# CSS: Estilização (CONGELADO)
 st.markdown("""
     <style>
-    .stTextInput>div>div>input[aria-label="Data da Visita:"] {
-        background-color: #e0f2f1 !important;
-        color: #004d40 !important;
-        font-weight: bold;
-        border: 1px solid #b2dfdb !important;
-    }
+    .main { background-color: #f5f7f9; }
+    .stTextInput>div>div>input { background-color: #ffffff !important; }
     div.stLinkButton > a {
         background-color: #25D366 !important;
         color: white !important;
         font-weight: bold;
         border-radius: 8px !important;
+        width: 100%;
+        text-align: center;
+    }
+    .metric-container {
+        background-color: #ffffff;
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 5px solid #007bff;
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.05);
     }
     </style>
 """, unsafe_allow_html=True)
 
-# 1.1. MOTOR DE SESSÃO (CHAVES VERIFICADAS)
-
+# ==============================================================================
+# 2. MOTOR DE SESSÃO (BLINDAGEM DE DADOS)
+# ==============================================================================
 if 'dados' not in st.session_state:
     st.session_state.dados = {
-        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
-        'data': datetime.now().strftime("%d/%m/%Y"),
-        'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '', 'complemento': '',
-        'fabricante': 'Carrier', 'modelo': '', 'capacidade': '12.000', 'linha': 'Residencial',
-        'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '',
-        'tipo_servico': 'Manutenção Preventiva', 'tag_id': 'TAG-01',
-        'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
-        'status_maquina': '🟢 Operacional'
+        'nome': '', 'whatsapp': '', 'cep': '', 'endereco': '', 
+        'bairro': '', 'cidade': '', 'uf': '', 'numero': '',
+        'fabricante': 'Carrier', 'fluido': 'R410A', 'status_maquina': '🟢 Operacional',
+        'laudo_diag': '', 'obs_checklist': '',
+        'p_suc': 120.0, 't_suc': 10.0,
+        'data': datetime.now().strftime("%d/%m/%Y")
     }
+
+# ==============================================================================
+# 3. FUNÇÕES TÉCNICAS E AUXILIARES
+# ==============================================================================
+def f_sat_precisao(p, g):
+    """Cálculo robusto de Saturação com proteção contra valores nulos ou extremos"""
+    try:
+        if p <= 5: return -50.0
+        if g == "R410A":
+            xp = [90.0, 100.0, 110.0, 122.7, 150.0, 200.0]
+            fp = [-3.50, -0.29, 2.36, 5.50, 11.50, 21.00]
+        elif g == "R32":
+            xp = [90.0, 100.0, 115.0, 140.0, 170.0, 210.0]
+            fp = [-3.66, -0.87, 3.00, 8.50, 14.80, 22.00]
+        else: return 0.0
+        return float(np.interp(p, xp, fp))
+    except: return 0.0
 
 def buscar_cep(cep):
     cep_limpo = "".join(filter(str.isdigit, cep))
     if len(cep_limpo) == 8:
         try:
-            r = requests.get(f"https://viacep.com.br/ws/{cep_limpo}/json/")
+            r = requests.get(f"https://viacep.com.br/ws/{cep_limpo}/json/", timeout=5)
             if r.status_code == 200:
                 d = r.json()
                 if "erro" not in d:
+                    # Atualiza direto no estado e força atualização
                     st.session_state.dados['endereco'] = d.get('logradouro', '')
                     st.session_state.dados['bairro'] = d.get('bairro', '')
                     st.session_state.dados['cidade'] = d.get('localidade', '')
@@ -62,8 +82,103 @@ def buscar_cep(cep):
     return False
 
 # ==============================================================================
-# 1.2 FUNÇÃO DA ABA 1: Identificação e Equipamento (VERSÃO COM LAYOUT E MÁSCARAS)
+# 4. INTERFACES (PERSISTÊNCIA VIA KEYS)
 # ==============================================================================
+
+def renderizar_aba_1():
+    st.subheader("📋 Identificação e Equipamento")
+    with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
+        c_nome, c_zap = st.columns(2)
+        st.session_state.dados['nome'] = c_nome.text_input("Cliente:", value=st.session_state.dados['nome'])
+        st.session_state.dados['whatsapp'] = c_zap.text_input("WhatsApp (DDD + Número):", value=st.session_state.dados['whatsapp'])
+        
+        ce1, ce2, ce3 = st.columns([1, 2, 1])
+        # CEP usa on_change oculto para evitar loops de rerun
+        cep_input = ce1.text_input("CEP *", value=st.session_state.dados['cep'], key="cep_widget")
+        if cep_input != st.session_state.dados['cep']:
+            st.session_state.dados['cep'] = cep_input
+            if buscar_cep(cep_input): st.rerun()
+            
+        st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados['endereco'], key="end_widget")
+        st.session_state.dados['numero'] = ce3.text_input("Nº:", value=st.session_state.dados['numero'], key="num_widget")
+
+    with st.expander("⚙️ Equipamento e Fluido", expanded=True):
+        c1, c2, c3 = st.columns(3)
+        lista_f = ["R410A", "R134a", "R22", "R32", "R290"]
+        
+        # Sincronização de índices para evitar erros de selectbox
+        idx_fluido = lista_f.index(st.session_state.dados['fluido']) if st.session_state.dados['fluido'] in lista_f else 0
+        
+        st.session_state.dados['fabricante'] = c1.selectbox("Fabricante:", ["Carrier", "Daikin", "LG", "Samsung", "Trane"], key="fab_widget")
+        st.session_state.dados['fluido'] = c2.selectbox("Fluido Refrigerante:", lista_f, index=idx_fluido, key="fluido_widget")
+        st.session_state.dados['status_maquina'] = c3.selectbox("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], key="stat_widget")
+
+def renderizar_checklist():
+    st.markdown("---")
+    st.subheader("✅ Checklist PMOC")
+    with st.expander("🛠️ Verificações Técnicas", expanded=True):
+        c1, c2 = st.columns(2)
+        st.session_state.dados['ck_mot'] = c1.checkbox("Motor e Rotor (Ruídos/Vibração)", value=st.session_state.dados.get('ck_mot', False))
+        st.session_state.dados['ck_fil'] = c2.checkbox("Limpeza de Filtros/Serpentina", value=st.session_state.dados.get('ck_fil', False))
+        st.session_state.dados['ck_ele'] = c1.checkbox("Aperto de Bornes Elétricos", value=st.session_state.dados.get('ck_ele', False))
+        st.session_state.dados['ck_dre'] = c2.checkbox("Dreno e Bandeja (Escoamento)", value=st.session_state.dados.get('ck_dre', False))
+    st.session_state.dados['obs_checklist'] = st.text_area("Observações Adicionais:", value=st.session_state.dados.get('obs_checklist', ""), key="obs_widget")
+
+def renderizar_diagnostico():
+    st.subheader("⚙️ Diagnóstico de Ciclo")
+    st.info(f"Cálculo baseado no fluido: **{st.session_state.dados['fluido']}**")
+    
+    col1, col2 = st.columns(2)
+    # Salvando inputs de diagnóstico no estado para não perder ao alternar abas
+    st.session_state.dados['p_suc'] = col1.number_input("Pressão de Sucção (PSI):", value=st.session_state.dados['p_suc'], step=1.0)
+    st.session_state.dados['t_suc'] = col2.number_input("Temp. Tubo de Sucção (°C):", value=st.session_state.dados['t_suc'], step=0.1)
+    
+    t_sat = f_sat_precisao(st.session_state.dados['p_suc'], st.session_state.dados['fluido'])
+    sa = st.session_state.dados['t_suc'] - t_sat
+    
+    st.markdown(f"<div class='metric-container'><h4>Superaquecimento Total: <b>{sa:.1f} K</b></h4><small>Temp. Saturação: {t_sat:.1f} °C</small></div>", unsafe_allow_html=True)
+    
+    if 5 <= sa <= 7: st.success("✅ Superaquecimento Ideal")
+    elif sa < 5: st.error("⚠️ Risco de Retorno de Líquido")
+    else: st.warning("⚠️ Superaquecimento Elevado (Carga Baixa ou Restrição)")
+
+# ==============================================================================
+# 5. MENU E EXECUÇÃO FINAL
+# ==============================================================================
+escolha = st.sidebar.radio("Navegação", ["1. Cadastro e Checklist", "2. Diagnóstico Técnico"])
+
+if escolha == "1. Cadastro e Checklist":
+    renderizar_aba_1()
+    renderizar_checklist()
+    st.markdown("---")
+    st.subheader("📝 Parecer Técnico")
+    st.session_state.dados['laudo_diag'] = st.text_area("Diagnóstico Final/Laudo:", value=st.session_state.dados.get('laudo_diag', ""), placeholder="Descreva as anomalias e ações realizadas...")
+    
+    if st.button("Gerar Relatório WhatsApp"):
+        if not st.session_state.dados['whatsapp']:
+            st.error("Por favor, preencha o número do WhatsApp.")
+        else:
+            # Formatação de Mensagem Profissional
+            corpo = (
+                f"*RELATÓRIO DE VISITA TÉCNICA - MPN SOLUÇÕES*\n"
+                f"*Data:* {st.session_state.dados['data']}\n\n"
+                f"*CLIENTE:* {st.session_state.dados['nome']}\n"
+                f"*EQUIPAMENTO:* {st.session_state.dados['fabricante']} ({st.session_state.dados['fluido']})\n"
+                f"*STATUS:* {st.session_state.dados['status_maquina']}\n\n"
+                f"*PARECER TÉCNICO:*\n{st.session_state.dados['laudo_diag']}\n\n"
+                f"Obra: {st.session_state.dados['endereco']}, {st.session_state.dados['numero']}"
+            )
+            
+            zap_url = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(corpo)}"
+            st.link_button("🚀 Abrir WhatsApp para Enviar", zap_url)
+
+elif escolha == "2. Diagnóstico Técnico":
+    renderizar_diagnostico()
+
+# ==============================================================================
+# 6. FUNÇÃO DA ABA 1: Identificação e Equipamento (VERSÃO COM LAYOUT E MÁSCARAS)
+# ==============================================================================
+
 def renderizar_aba_1():
     tabs = st.tabs(["📋 Identificação e Equipamento"])
     tab1 = tabs[0]
@@ -150,6 +265,13 @@ def f_sat_precisao(p, g):
             return fp[i] + (p - xp[i]) * (fp[i+1] - fp[i]) / (xp[i+1] - xp[i])
     return fp[0] if p < xp[0] else fp[-1]
 
+
+# 1.3. RENDERIZAR CHECKLIST ==================
+
+def renderizar_checklist()
+
+
+    
 # ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO FINAL CONSOLIDADA E ESTILIZADA)
 # ==============================================================================
@@ -415,3 +537,7 @@ def renderizar_aba_diagnosticos():
         placeholder="Ex: Sistema operando com pressões estáveis, superaquecimento normal...",
         key="laudo_area_diag"
     )
+# No seu Menu Lateral ou Rádio de Seleção:
+if escolha == "1. Cadastro de Equipamentos":
+    renderizar_aba_1()
+    renderizar_checklist() # Se quiser o checklist logo abaixo dos dados
