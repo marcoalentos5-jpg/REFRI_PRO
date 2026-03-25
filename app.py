@@ -427,7 +427,7 @@ with st.sidebar:
     st.markdown("---")
     st.subheader("👤 Técnico Responsável")
     st.session_state.dados['tecnico_nome'] = st.text_input("Nome:", value=st.session_state.dados['tecnico_nome'])
-    st.session_state.dados['tecnico_registro'] = st.text_input("CFT/CREA:", value=st.session_state.dados['tecnico_registro'])
+    st.session_state.dados['tecnico_registro'] = st.text_input('CFT/CREA'), value=st.session_state.dados['tecnico_registro'])
 
     # Botão de Resumo Rápido (WhatsApp)
     if st.session_state.dados['nome'] and st.session_state.dados['whatsapp']:
