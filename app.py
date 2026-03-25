@@ -312,12 +312,12 @@ def renderizar_aba_diagnosticos():
     )
 
 # ==============================================================================
-# 3. SIDEBAR - DADOS DO TÉCNICO E ENVIO WHATSAPP
+# 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO
 # ==============================================================================
 with st.sidebar:
     st.title("🚀 Painel de Controle")
     opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
-    aba_selecionada = st.sidebar.radio("Selecione a Aba:", opcoes_abas)
+    aba_selecionada = st.radio("Selecione a Aba:", opcoes_abas)
     
     st.markdown("---")
     st.subheader("👤 Técnico Responsável")
@@ -332,28 +332,21 @@ with st.sidebar:
     else:
         st.success("📋 STATUS: PRONTO PARA ENVIO")
         
-        # MENSAGEM WHATSAPP ATUALIZADA COM DADOS DO DIAGNÓSTICO
         msg_zap = (
             f"*LAUDO TÉCNICO HVAC - MPN SOLUÇÕES*\n\n"
             f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
             f"📞 Contato: {st.session_state.dados['whatsapp']}\n\n"
-            f"⚙️ *EQUIPAMENTO:*\n"
-            f"📌 TAG: {st.session_state.dados['tag_id']} | Mod: {st.session_state.dados['modelo']}\n"
-            f"❄️ Cap: {st.session_state.dados['capacidade']} BTU | Fluido: {st.session_state.dados['fluido']}\n\n"
             f"🩺 *DIAGNÓSTICO TÉCNICO:*\n"
             f"✅ SH TOTAL: {sh:.2f} K\n"
             f"✅ SC FINAL: {sc:.2f} K\n"
-            f"✅ Δ TENSÃO: {dif_v:.2f} V\n"
-            f"✅ Δ TEMP: {dt_ar:.2f} °C\n\n"
+            f"✅ Δ TENSÃO: {dif_v:.2f} V\n\n"
             f"📝 *PARECER FINAL:*\n"
-            f"{st.session_state.dados.get('laudo_diag', 'Nenhum parecer informado.')}\n\n"
-            f"👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}\n"
-            f"📅 Data: {st.session_state.dados['data']}"
+            f"{st.session_state.dados.get('laudo_diag', 'Nenhum parecer informado.')}"
         )
         
-        # Correção do link com urllib
         import urllib.parse
-        link_final = f"https://wa.me/55{st.session_state.dados['whatsapp'].replace(' ', '').replace('-', '')}?text={urllib.parse.quote(msg_zap)}"
+        num_limpo = st.session_state.dados['whatsapp'].replace(' ', '').replace('-', '').replace('(', '').replace(')', '')
+        link_final = f"https://wa.me/55{num_limpo}?text={urllib.parse.quote(msg_zap)}"
         st.link_button("📲 Enviar Laudo via WhatsApp", link_final, use_container_width=True)
 
     if st.button("🗑️ Limpar Formulário", use_container_width=True):
@@ -361,76 +354,59 @@ with st.sidebar:
         for key in st.session_state.dados.keys():
             if key not in chaves_tecnico: st.session_state.dados[key] = ""
         st.rerun()
-        
-    elif aba_selecionada == "1. Cadastro de Equipamentos":
-    renderizar_aba_1() # Chama a função que contém todo o código da Aba 1
-    
-    elif aba_selecionada == "2. Diagnósticos":
-    renderizar_aba_diagnosticos() # Chama a função que contém o esqueleto da Aba 2
 
-    elif aba_selecionada == "Relatórios":
-    st.header("Página de Relatórios (Em desenvolvimento)")
-    st.write("Em breve: Visualização e exportação de relatórios.")
+# ==============================================================================
+# 4. LÓGICA DE EXIBIÇÃO DAS ABAS (FORA DO SIDEBAR)
+# ==============================================================================
 
-# [COLE AQUI - Logo após o fim da renderizar_aba_1]
+if aba_selecionada == "Home":
+    st.markdown("<div style='text-align: center;'><h1>MPN Soluções</h1></div>", unsafe_allow_html=True)
+    # Coloque aqui o seu código da logo que já funciona
 
-def renderizar_aba_diagnosticos():
+elif aba_selecionada == "1. Cadastro de Equipamentos":
+    # Mantenha seu layout original de cadastro aqui
+    st.header("📋 Cadastro de Equipamentos")
+    # renderizar_aba_1() <-- Se você usa função, chame-a aqui
+
+elif aba_selecionada == "2. Diagnósticos":
     st.header("🔍 Central de Diagnóstico Técnico")
-    # Busca o fluido que você selecionou na Aba 1
-    fluido_selecionado = st.session_state.dados.get('fluido', 'R410A')
-    st.info(f"❄️ Fluido Refrigerante em Análise: **{fluido_selecionado}**")
-    st.markdown("---")
-
-    # --- BLOCO 1: ENTRADA DE MEDIÇÕES ---
-    st.subheader("1. Medições de Campo")
-    col_suc, col_des = st.columns(2)
     
-    with col_suc:
-        st.markdown("### 🔵 Baixa Pressão")
-        pres_suc = st.number_input("Pressão de Sucção (PSI):", min_value=0.0, step=1.0, key="p_suc_diag")
-        temp_suc = st.number_input("Temp. Tubulação Sucção (°C):", step=0.1, key="t_suc_diag")
-
-    with col_des:
-        st.markdown("### 🔴 Alta Pressão")
-        pres_des = st.number_input("Pressão de Descarga (PSI):", min_value=0.0, step=1.0, key="p_des_diag")
-        temp_liq = st.number_input("Temp. Tubulação Líquido (°C):", step=0.1, key="t_liq_diag")
-
+    # --- 2.1 RESULTADOS CALCULADOS (O BLOCO 5x2 QUE VOCÊ QUER) ---
     st.markdown("---")
-
-    # --- BLOCO 2: PROCESSAMENTO (CÁLCULOS) ---
-    # Nota: No próximo passo, inseriremos a tabela PT aqui
-    t_sat_suc = 0.0  
-    t_sat_des = 0.0  
-    
-    sh = temp_suc - t_sat_suc
-    sc = t_sat_des - temp_liq
-
-    # --- BLOCO 3: EXIBIÇÃO DE RESULTADOS ---
     st.subheader("2. Resultados Calculados")
-    res1, res2 = st.columns(2)
     
-    with res1:
-        st.metric(label="Superaquecimento (SH)", value=f"{sh:.1f} K")
-        if 5 <= sh <= 7: st.success("✅ SH dentro do padrão (5K a 7K)")
-        elif sh < 5: st.error("⚠️ SH Baixo: Risco de retorno de líquido")
-        else: st.warning("⚠️ SH Alto: Possível falta de fluido ou restrição")
+    st.markdown('<style>div[data-testid="stMetricValue"] > div { font-size: 1.8rem !important; color: #00e676; }</style>', unsafe_allow_html=True)
 
-    with res2:
-        st.metric(label="Sub-resfriamento (SC)", value=f"{sc:.1f} K")
-        if 4 <= sc <= 7: st.success("✅ SC dentro do padrão (4K a 7K)")
-        else: st.info("ℹ️ SC fora do padrão: Verifique condensação")
+    l1_c1, l1_c2, l1_c3, l1_c4, l1_c5 = st.columns(5)
+    with l1_c1:
+        if sh < 5 and p_suc > 0:
+            st.markdown(f'<div style="color:#ff4b4b; font-weight:bold; font-size:14px;">SH TOTAL: {sh:.2f} K<br>⚠️ RISCO LÍQUIDO</div>', unsafe_allow_html=True)
+        else:
+            st.metric("SH TOTAL", f"{sh:.2f} K")
+    with l1_c2: st.metric("Sat. Baixa", f"{t_sat_s:.2f} °C")
+    with l1_c3: st.metric("Δ Tensão", f"{dif_v:.2f} V")
+    with l1_c4: st.metric("Δ T", f"{dt_ar:.2f} °C")
+    with l1_c5: st.metric("Δ Comp.", f"{(cm_c - cn_c):.2f} µF")
 
-    st.markdown("---")
+    l2_c1, l2_c2, l2_c3, l2_c4, l2_c5 = st.columns(5)
+    with l2_c1: st.metric("SC FINAL", f"{sc:.2f} K")
+    with l2_c2: st.metric("Sat. Alta", f"{t_sat_d:.2f} °C")
+    with l2_c3:
+        st.metric("Δ Corrente", f"{dif_i:.2f} A")
+        if i_med > rla and rla > 0: st.error("⚠️ SOBRECARGA")
+    with l2_c4: st.metric("COP", "0.00")
+    with l2_c5: st.metric("Δ Fan", f"{(cm_f - cn_f):.2f} µF")
 
-  # ... (Bloco de Resultados 5x2 que arrumamos antes) ...
-
-    
-    # --- BLOCO 4: CONCLUSÃO E LAUDO (MANTENHA APENAS ESTE) ---
+    # --- 2.2 PARECER TÉCNICO (ÚNICO) ---
     st.markdown("---")
     st.subheader("3. Parecer Técnico Final")
     st.session_state.dados['laudo_diag'] = st.text_area(
-        "Descreva o diagnóstico ou anomalias encontradas:",
-        value=st.session_state.dados.get('laudo_diag', ''), # Importante para não apagar o texto ao trocar de aba
+        label="Descreva o diagnóstico ou anomalias encontradas:",
+        value=st.session_state.dados.get('laudo_diag', ''),
         placeholder="Ex: Sistema operando com pressões estáveis...",
         key="laudo_area_diag"
     )
+
+elif aba_selecionada == "Relatórios":
+    st.header("📊 Relatórios")
+    st.write("Em desenvolvimento.")
