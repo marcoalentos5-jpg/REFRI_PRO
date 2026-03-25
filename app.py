@@ -18,7 +18,7 @@ if 'dados' not in st.session_state:
     st.session_state['dados'] = {
         'tecnico_registro': '', 
         'tecnico_nome': 'Marcos Alexandre Almeida do Nascimento',
-        'CPF_CNPJj': ''
+        'CPF_CNPJ': ''
     }
 
 # 3. Estilo Visual (Centraliza a Logo e limpa o layout)
