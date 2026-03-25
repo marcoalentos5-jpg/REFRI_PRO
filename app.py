@@ -7,7 +7,8 @@ import requests
 import urllib.parse
 import os # Biblioteca para verificar arquivos no sistema
 
-===================================
+
+
 # 1. CONFIGURAÇÃO INICIAL (TESTADA)
 ==================================
 
