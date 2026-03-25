@@ -137,64 +137,124 @@ def renderizar_aba_1():
                 st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
 
 # ==============================================================================
-# 2. ABA 2: DIAGNÓSTICOS (VERSÃO MOTOR REAL - CALIBRAÇÃO DANFOSS)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO CALIBRADA - MOTOR V.20)
 # ==============================================================================
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
     
+    # Resgate do Fluido da Aba 1
     fluido = st.session_state.dados.get('fluido', 'R410A')
-    st.info(f"⚙️ Motor de Precisão: **{fluido}** | Ajuste Fino Danfoss")
-
-    # --- 1. ENTRADA DE DADOS ---
-    c1, c2, c3, c4 = st.columns(4)
-    with c1:
-        st.markdown("🔵 **BAIXA PRESSÃO**")
-        p_suc = st.number_input("P. Sucção (PSI)", format="%.2f", step=0.1, key="ps_vfinal")
-        t_suc = st.number_input("T. Tubo Sucção (°C)", format="%.1f", step=0.1, key="ts_vfinal")
+    st.info(f"❄️ Fluido Refrigerante: **{fluido}** | Motor de Precisão Auditado")
     
-    # ... (C2, C3, C4 mantêm o padrão de campos para Alta, Elétrica e Ar)
+    # --- CSS PARA ALERTAS TÉCNICOS ---
+    st.markdown("""
+        <style>
+        .sh-critico { background-color: #ff1744; color: white; padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; }
+        .sobrecarga { color: #d32f2f; font-weight: bold; font-size: 14px; }
+        .alerta-pressao { padding: 10px; border-radius: 5px; margin-bottom: 10px; text-align: center; font-weight: bold; }
+        </style>
+    """, unsafe_allow_html=True)
 
-    # --- 2. MOTOR DE CÁLCULO (AJUSTE DIRETO) ---
-    def obter_t_sat(P, gas):
-        if P < 10: return -50.0
+    # --- 1. MEDIÇÕES DE CAMPO (5 COLUNAS) ---
+    st.subheader("1. Medições de Campo")
+    c1, c2, c3, c4, c5 = st.columns(5)
+
+    with c1:
+        st.markdown("🔵 **EVAPORADORA**")
+        p_suc = st.number_input("P. Sucção (PSI)", format="%.2f", step=0.1, key="ps_final")
+        t_suc = st.number_input("T. Tubo Suc. (°C)", format="%.2f", step=0.1, key="ts_final")
+        t_ret = st.number_input("T. Retorno (°C)", format="%.2f", step=0.1, key="tr_final")
+        t_ins = st.number_input("T. Insufla. (°C)", format="%.2f", step=0.1, key="ti_final")
+
+    with c2:
+        st.markdown("🔴 **CONDENSADORA**")
+        p_des = st.number_input("P. Desc. (PSI)", format="%.2f", step=0.1, key="pd_final")
+        t_liq = st.number_input("T. Tubo Líq. (°C)", format="%.2f", step=0.1, key="tl_final")
+
+    with c3:
+        st.markdown("⚡ **TENSÃO**")
+        v_lin = st.number_input("Tens. Linha (V)", format="%.2f", step=1.0, key="vl_final")
+        v_med = st.number_input("Tens. Medida (V)", format="%.2f", step=1.0, key="vm_final")
+
+    with c4:
+        st.markdown("🔌 **CORRENTE**")
+        rla = st.number_input("RLA (A)", format="%.2f", step=0.1, key="rla_final")
+        lra = st.number_input("LRA (A)", format="%.2f", step=0.1, key="lra_final")
+        i_med = st.number_input("Corr. Medida (A)", format="%.2f", step=0.1, key="im_final")
+
+    with c5:
+        st.markdown("🔋 **CAPACIT.**")
+        cn_c = st.number_input("C. Nom. Comp", format="%.2f", key="cnc_final")
+        cn_f = st.number_input("C. Nom. Fan", format="%.2f", key="cnf_final")
+        cm_c = st.number_input("C. Med. Comp", format="%.2f", key="cmc_final")
+        cm_f = st.number_input("C. Med. Fan", format="%.2f", key="cmf_final")
+
+    # --- 2. MOTOR DE CÁLCULO (INTERPOLAÇÃO REAL) ---
+    def f_sat_precisao(p, g):
+        if p <= 5: return -50.0
+        if g == "R410A":
+            # TABELA RECALCULADA 90-150 (Conforme seus dados de campo)
+            pressões = [90.0, 100.0, 105.0, 110.0, 115.0, 120.0, 122.7, 130.9, 141.7, 150.0]
+            saturações = [-3.50, -0.29, 1.06, 2.36, 3.62, 4.84, 5.50, 7.40, 9.80, 11.50]
+            return float(np.interp(p, pressões, saturações))
         
-        if gas == "R410A":
-            # RECALIBRADO: 122.4 PSI agora crava 5.49°C
-            return -31.78 + (0.4215 * P) - (0.000965 * P**2) + (0.00000162 * P**3)
-        
-        elif gas == "R32":
-            # RECALIBRADO: 90 PSI = -3.66°C | 115 PSI = 3.00°C | 170 PSI = 14.80°C
-            return -34.825 + (0.4682 * P) - (0.001321 * P**2) + (0.00000218 * P**3)
+        elif g == "R32":
+            xp_r32 = [90.0, 100.0, 115.0, 140.0, 170.0]
+            fp_r32 = [-3.66, -0.87, 3.00, 8.50, 14.80]
+            return float(np.interp(p, xp_r32, fp_r32))
         return 0.0
 
-    t_sat = obter_t_sat(p_suc, fluido)
-    sh_util = t_suc - t_sat if p_suc > 0 else 0
+    t_sat_s = f_sat_precisao(p_suc, fluido)
+    t_sat_d = f_sat_precisao(p_des, fluido)
+    
+    sh = (t_suc - t_sat_s) if p_suc > 0 else 0.0
+    sc = (t_sat_d - t_liq) if p_des > 0 else 0.0
+    dt_ar = (t_ret - t_ins) if (t_ret > 0 and t_ins > 0) else 0.0
+    dif_v = v_lin - v_med
+    dif_i = rla - i_med if rla > 0 else 0.0
 
-    # --- 3. ALERTAS DE SEGURANÇA (90-170 PSI R32 / 85-165 PSI R410A) ---
     st.markdown("---")
-    if p_suc > 0:
-        if fluido == "R32":
-            if p_suc < 100: st.error(f"🚨 SUBPRESSÃO: Risco de Congelamento ({t_sat:.2f}°C)")
-            elif 115 <= p_suc <= 140: st.success(f"💎 PERFORMANCE IDEAL ({t_sat:.2f}°C)")
-            elif p_suc > 155: st.error(f"🚨 SOBREPRESSÃO: Carga Elevada ({t_sat:.2f}°C)")
-        else: # R410A
-            if p_suc < 100: st.error(f"🚨 SUBPRESSÃO: Risco de Congelamento ({t_sat:.2f}°C)")
-            elif 110 <= p_suc <= 120: st.success(f"💎 PERFORMANCE IDEAL ({t_sat:.2f}°C)")
-            elif p_suc > 150: st.error(f"🚨 SOBREPRESSÃO: Carga Elevada ({t_sat:.2f}°C)")
 
-    # --- 4. DASHBOARD DE RESULTADOS ---
-    st.subheader("2. Resultados Analíticos")
-    res1, res2, res3, res4 = st.columns(4)
+    # --- 3. ALERTAS DE EXTREMOS (110-130 PSI) ---
+    if p_suc > 0:
+        if p_suc < 110:
+            st.markdown(f'<div class="alerta-pressao" style="background-color: #ffc107; color: black;">⚠️ SUBPRESSÃO ({t_sat_s:.2f}°C) - Abaixo de 110 PSI</div>', unsafe_allow_html=True)
+        elif 110 <= p_suc <= 130:
+            st.markdown(f'<div class="alerta-pressao" style="background-color: #4caf50; color: white;">✅ PRESSÃO IDEAL ({t_sat_s:.2f}°C) - Faixa 110-130 PSI</div>', unsafe_allow_html=True)
+        else:
+            st.markdown(f'<div class="alerta-pressao" style="background-color: #f44336; color: white;">🚨 SOBREPRESSÃO ({t_sat_s:.2f}°C) - Acima de 130 PSI</div>', unsafe_allow_html=True)
+
+    # --- 4. RESULTADOS CALCULADOS ---
+    st.subheader("2. Resultados Calculados")
+    res1, res2, res3, res4, res5 = st.columns(5)
+
     with res1:
-        st.metric("SH Útil", f"{sh_util:.1f} K")
-        # Alerta visual de SH Alto (como no seu exemplo de 11.7K)
-        if sh_util > 10: st.warning("⚠️ SH ALTO")
-        elif 5 <= sh_util <= 8: st.success("✅ SH IDEAL")
-    
+        st.metric("ΔT Ar", f"{dt_ar:.2f} °C")
+        if sh < 5 and p_suc > 0:
+            st.markdown(f'<div class="sh-critico">SH: {sh:.2f} K<br>⚠️ RISCO LÍQUIDO</div>', unsafe_allow_html=True)
+        else:
+            st.metric("SH Final", f"{sh:.2f} K")
+
     with res2:
-        st.metric("T. Saturação (Baixa)", f"{t_sat:.2f} °C")
-    
-    # ... (Restante das métricas padrão)
+        st.metric("SC Final", f"{sc:.2f} K")
+        st.caption(f"T. Sat Alta: {t_sat_d:.2f}°C")
+
+    with res3:
+        st.metric("Queda Tens.", f"{dif_v:.2f} V")
+
+    with res4:
+        st.metric("Dif. RLA", f"{dif_i:.2f} A")
+        if i_med > rla and rla > 0:
+            st.markdown('<span class="sobrecarga">⚠️ SOBRECARGA</span>', unsafe_allow_html=True)
+        st.caption(f"LRA Ref: {lra:.2f} A")
+
+    with res5:
+        st.metric("Δ Comp.", f"{cm_c - cn_c:.2f} µF")
+        st.caption(f"Δ Fan: {cm_f - cn_f:.2f} µF")
+
+    st.markdown("---")
+    st.subheader("3. Parecer Técnico")
+    st.session_state.dados['laudo_diag'] = st.text_area("Notas e Diagnósti
 
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
