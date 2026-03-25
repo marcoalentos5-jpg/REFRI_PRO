@@ -7,9 +7,9 @@ import requests
 import urllib.parse
 import os # Biblioteca para verificar arquivos no sistema
 
-================================================================
+===================================
 # 1. CONFIGURAÇÃO INICIAL (TESTADA)
-================================================================
+==================================
 
 st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
 
