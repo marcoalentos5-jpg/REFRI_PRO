@@ -4,7 +4,7 @@ import requests
 import urllib.parse
 import os
 
-# 1. Nome na aba do navegador e ícone
+# 1. Configuração de Identidade (NOME E ÍCONE)
 st.set_page_config(
     page_title="REFRI PRO MPN", 
     page_icon="❄️", 
@@ -12,63 +12,45 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- ESTILIZAÇÃO PARA AUMENTAR A LOGO E CENTRALIZAR ---
+# 2. Estilo Visual (CSS para centralizar e aumentar a Logo)
 st.markdown("""
     <style>
-    .main-logo {
-        display: flex;
-        justify-content: center;
-        margin-bottom: 20px;
+    .block-container { padding-top: 1rem; }
+    .stImage > img { 
+        display: block; 
+        margin-left: auto; 
+        margin-right: auto; 
+        width: 500px; 
     }
-    .main-logo img {
-        width: 450px; /* Aumentamos a logo aqui */
-        border-radius: 10px;
-    }
-    .center-text {
-        text-align: center;
-    }
+    .center-text { text-align: center; }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. SIDEBAR ÚNICA (Limpando a duplicidade)
+# 3. Sidebar (MENU LATERAL ÚNICO)
 with st.sidebar:
-    st.markdown("## 🚀 Painel MPN")
-    
-    # Campo para o seu nome
-    nome_tecnico = st.text_input("Técnico Responsável:", value="Marcos Alexandre")
-    
+    st.markdown("# 🚀 REFRI PRO MPN")
     st.divider()
-    
-    # Seleção de etapa (Apenas UMA vez)
+    nome_tecnico = st.text_input("Técnico Responsável:", value="Marcos Alexandre")
+    st.divider()
     aba = st.radio(
         "Selecione a Etapa:",
-        ["Home", "1. Cadastro", "2. Diagnósticos", "3. Assistente de Campo", "Relatórios"]
+        ["Home", "1. Cadastro", "2. Diagnóstico", "3. Assistente", "Relatórios"]
     )
-    
     st.divider()
-    st.caption(f"Versão 1.0 | {datetime.now().year}")
+    st.caption(f"© {datetime.now().year} MPN Soluções")
 
-# --- PÁGINA PRINCIPAL (Apresentação do APP) ---
+# 4. Conteúdo da Página Principal
 if aba == "Home":
-    # 4. Logo Enquadrada e Grande
-    st.markdown('<div class="main-logo">', unsafe_allow_html=True)
-    st.image("logo.png") # Certifique-se que o arquivo chama logo.png no GitHub
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # 1. Título corrigido
+    st.image("logo.png") # Sua logo centralizada
     st.markdown("<h1 class='center-text'>❄️ Bem-vindo ao REFRI PRÓ</h1>", unsafe_allow_html=True)
-    
-    # 2. Subtítulo corrigido
     st.markdown("<h3 class='center-text'>Gestão Inteligente em Refrigeração e Climatização</h3>", unsafe_allow_html=True)
-    
-    st.markdown("---")
-    
-    # 5. Texto de apoio abaixo do subtítulo
+    st.divider()
     st.info("""
     **Sistema de gestão técnica e diagnósticos em tempo real da MPN Soluções.** Selecione **'1. Cadastro'** no menu lateral para iniciar o atendimento.
     """)
 
-# O restante do código (if aba == "1. Cadastro": etc) continua abaixo...
+# O restante do seu código de cadastro e cálculos viria abaixo deste ponto...
+
 # ==============================================================================
 # 1. DEFINIÇÃO DAS TELAS (FUNÇÕES DE RENDERIZAÇÃO)
 # ==============================================================================
