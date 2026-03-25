@@ -102,54 +102,60 @@ def renderizar_aba_1():
 
     # --- SEÇÃO CLIENTE ---
     with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
+        # Linha 1: Identificação Básica
         c1, c2, c3 = st.columns([2, 1, 1])
         st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados.get('nome', ''), key="cli_nome_f")
         st.session_state.dados['cpf_cnpj'] = c2.text_input("CPF/CNPJ", value=st.session_state.dados.get('cpf_cnpj', ''), key="cli_doc_f")
         st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp *", value=st.session_state.dados.get('whatsapp', ''), key="cli_zap_f")
 
+        # Linha 2: Contato
         cx1, cx2, cx3 = st.columns([1, 1, 2])
         st.session_state.dados['celular'] = cx1.text_input("Celular:", value=st.session_state.dados.get('celular', ''), key="cli_cel_f")
         st.session_state.dados['tel_fixo'] = cx2.text_input("Fixo:", value=st.session_state.dados.get('tel_fixo', ''), key="cli_fixo_f")
         st.session_state.dados['email'] = cx3.text_input("E-mail:", value=st.session_state.dados.get('email', ''), key="cli_email_f")
 
-
-# --- PARTE FINAL DO EXPANDER (Cadastro de Endereço) ---
         st.markdown("---")
-        ce1, ce2, ce3 = st.columns([1, 2, 1])
         
-        # 1. Campo de entrada do CEP
+        # Linha 3: Início do Endereço e Automação de CEP
+        ce1, ce2, ce3 = st.columns([1, 2, 1])
         cep_input = ce1.text_input("CEP *", value=st.session_state.dados.get('cep', ''), key="cli_cep_f")
 
-        # 2. Gatilho de Automação (DENTRO do expander para manter a lógica próxima ao campo)
-        if cep_input != st.session_state.dados.get('cep', ''):
-            clean_cep = cep_input.replace("-", "").replace(".", "").strip()
+        # GATILHO DE CEP: Executa a busca de forma inteligente
+        # Primeiro, higienizamos o que foi digitado
+        clean_cep = cep_input.replace("-", "").replace(".", "").strip()
+        
+        # Só dispara se o valor digitado for diferente do que já processamos antes
+        if clean_cep != st.session_state.dados.get('cep_processado', ''):
             if len(clean_cep) == 8:
                 with st.spinner('Buscando endereço...'):
                     if buscar_cep(clean_cep):
+                        # Salvamos o CEP original e marcamos como processado
                         st.session_state.dados['cep'] = cep_input
+                        st.session_state.dados['cep_processado'] = clean_cep
                         st.rerun()
+            # Se o usuário apagar o campo, limpamos a marca de processamento
+            elif len(clean_cep) == 0:
+                st.session_state.dados['cep_processado'] = ''
 
-        # 3. Logradouro e Número
         st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados.get('endereco', ''), key="cli_end_f")
         st.session_state.dados['numero'] = ce3.text_input("Nº/Apto:", value=st.session_state.dados.get('numero', ''), key="cli_num_f")
 
-        # 4. Complemento, Bairro, Cidade e UF
+        # Linha 4: Detalhes do Endereço
         ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.4])
         st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados.get('complemento', ''), key="cli_comp_f")
         st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados.get('bairro', ''), key="cli_bair_f")
         st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados.get('cidade', ''), key="cli_cid_f")
         st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados.get('uf', ''), max_chars=2, key="cli_uf_f")
 
-    # --- FINAL DA FUNÇÃO renderizar_aba_1 ---
-    # Coloque o tratamento de MAIÚSCULO aqui (apenas uma vez)
+    # --- HIGIENE DE DADOS (DENTRO DA FUNÇÃO, FORA DO EXPANDER) ---
     if st.session_state.dados.get('uf'):
         st.session_state.dados['uf'] = st.session_state.dados['uf'].upper()
 
-    
     # --- SEÇÃO EQUIPAMENTO ---
     st.markdown("### ⚙️ Especificações do Equipamento")
     with st.expander("Detalhes Técnicos do Ativo", expanded=True):
         e1, e2, e3 = st.columns(3)
+        # ... (restante do código de fabricante/modelo que já validamos)
         
         with e1:
             fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
