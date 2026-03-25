@@ -70,14 +70,10 @@ def renderizar_aba_1():
 
     with tab1:
         with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
-            # --- CAMPOS COM FORMATAÇÃO (Máscaras sugeridas via placeholder) ---
+            # --- IDENTIFICAÇÃO ---
             c1, c2, c3 = st.columns([2, 1, 1])
             st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="cli_nome_v2")
-            
-            # Formatação CPF/CNPJ
             st.session_state.dados['cpf_cnpj'] = c2.text_input("CPF (000.000.000-00)", value=st.session_state.dados['cpf_cnpj'], key="cli_doc_v2")
-            
-            # Formatação WhatsApp
             st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp (XX-X-XXXX-XXXX) *", value=st.session_state.dados['whatsapp'], key="cli_zap_v2")
 
             cx1, cx2, cx3 = st.columns([1, 1, 2])
@@ -87,31 +83,30 @@ def renderizar_aba_1():
 
             st.markdown("---")
             
-            # --- SEÇÃO ENDEREÇO (LINHA 1) ---
+            # --- SEÇÃO ENDEREÇO (INDEXAÇÃO DO CEP CORRIGIDA) ---
             ce1, ce2, ce3 = st.columns([1, 2, 1])
-            cep_input = ce1.text_input("CEP *", value=st.session_state.dados['cep'], key="cli_cep_v2")
-            if cep_input != st.session_state.dados['cep']:
-                st.session_state.dados['cep'] = cep_input
-                if buscar_cep(cep_input): st.rerun()
+            
+            # Captura o CEP e dispara a busca apenas se houver mudança
+            cep_digitado = ce1.text_input("CEP *", value=st.session_state.dados['cep'], key="cli_cep_v2")
+            if cep_digitado != st.session_state.dados['cep']:
+                st.session_state.dados['cep'] = cep_digitado
+                if buscar_cep(cep_digitado):
+                    st.rerun() # Atualiza a tela com os dados retornados pelo ViaCEP
 
+            # Os campos abaixo recebem os valores indexados pela função buscar_cep
             st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados['endereco'], key="cli_end_v2")
             st.session_state.dados['numero'] = ce3.text_input("Nº/Apto:", value=st.session_state.dados['numero'], key="cli_num_v2")
 
-            # --- SEÇÃO ENDEREÇO (LINHA 2 - TUDO JUNTO) ---
-            # Dividindo em 4 colunas para caber Complemento, Bairro, Cidade e UF
             ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.4]) 
-            
             st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados['complemento'], key="cli_comp_v2")
             st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'], key="cli_bairro_v2")
             st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'], key="cli_cid_v2")
-            
-            # UF com limite de 2 caracteres e alinhado na mesma linha
             st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'], max_chars=2, key="cli_uf_v2")
 
-        # --- SEÇÃO EQUIPAMENTO ---
+        # --- SEÇÃO EQUIPAMENTO (CORREÇÃO DO FLUIDO) ---
         col_titulo, col_data = st.columns([3, 1])
         with col_titulo: st.subheader("⚙️ Especificações do Equipamento")
-        with col_data: st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'])
+        with col_data: st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'], key="data_v2")
 
         with st.expander("Detalhes Técnicos do Ativo", expanded=True):
             e1, e2, e3 = st.columns(3)
@@ -119,36 +114,45 @@ def renderizar_aba_1():
                 fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
                 fab_val = st.session_state.dados.get('fabricante', 'Carrier')
                 fab_idx = fab_list.index(fab_val) if fab_val in fab_list else 0
-                st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx)
-                st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados['modelo'])
-                st.session_state.dados['linha'] = st.selectbox("Linha:", ["Residencial", "Comercial", "Industrial"], index=0)
-                st.session_state.dados['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], horizontal=True)
+                st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx, key="fab_sel_v2")
+                st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados['modelo'], key="mod_sel_v2")
+                st.session_state.dados['linha'] = st.selectbox("Linha:", ["Residencial", "Comercial", "Industrial"], index=0, key="lin_sel_v2")
+                st.session_state.dados['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], horizontal=True, key="stat_sel_v2")
 
             with e2:
-                st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados['serie_evap'])
-                st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND)", value=st.session_state.dados['serie_cond'])
-                st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'])
-                st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
+                st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados['serie_evap'], key="sevap_v2")
+                st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND)", value=st.session_state.dados['serie_cond'], key="scond_v2")
+                st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'], key="levap_v2")
+                st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'], key="lcond_v2")
 
             with e3:
-                st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], index=1)
-                st.session_state.dados['fluido'] = st.selectbox("Fluido:", ["R410A", "R134a", "R22", "R32", "R290"], index=0)
-                st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
-                st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
-def f_sat_precisao(p, g):
-    if p <= 5: return -50.0
-    if g == "R410A":
-        xp = [90.0, 100.0, 105.0, 110.0, 115.0, 120.0, 122.7, 130.9, 141.7, 150.0]
-        fp = [-3.50, -0.29, 1.06, 2.36, 3.62, 4.84, 5.50, 7.40, 9.80, 11.50]
-    elif g == "R32":
-        xp = [90.0, 100.0, 115.0, 140.0, 170.0]
-        fp = [-3.66, -0.87, 3.00, 8.50, 14.80]
-    else:
-        return 0.0
-    for i in range(len(xp) - 1):
-        if xp[i] <= p <= xp[i+1]:
-            return fp[i] + (p - xp[i]) * (fp[i+1] - fp[i]) / (xp[i+1] - xp[i])
-    return fp[0] if p < xp[0] else fp[-1]
+                # --- TRAVA DO FLUIDO (O SEGREDO DA PERSISTÊNCIA) ---
+                lista_fluidos = ["R410A", "R134a", "R22", "R32", "R290"]
+                f_salvo = st.session_state.dados.get('fluido', 'R410A')
+                # Busca a posição do fluido salvo na lista para manter o selectbox travado nele
+                f_idx = lista_fluidos.index(f_salvo) if f_salvo in lista_fluidos else 0
+
+                st.session_state.dados['fluido'] = st.selectbox(
+                    "Fluido:", 
+                    options=lista_fluidos, 
+                    index=f_idx, 
+                    key="fluido_fixo_v2"
+                )
+
+                st.session_state.dados['capacidade'] = st.selectbox(
+                    "Capacidade:", 
+                    ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], 
+                    index=1,
+                    key="cap_fixa_v2"
+                )
+                
+                st.session_state.dados['tipo_servico'] = st.selectbox(
+                    "Tipo de Serviço:", 
+                    ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], 
+                    index=0,
+                    key="serv_fixo_v2"
+                )
+                st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'], key="tag_v2")
 
 # ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO FINAL CONSOLIDADA E ESTILIZADA)
