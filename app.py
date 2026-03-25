@@ -225,16 +225,20 @@ def renderizar_aba_diagnosticos():
     dt_ar = (t_ret - t_ins) if (t_ret > 0 and t_ins > 0) else 0.0
     dif_v = v_lin - v_med
     dif_i = (rla - i_med) if rla > 0 else 0.0
-
-    # --- 3. ALERTAS DE EXTREMOS (110-130 PSI) ---
+   
+      # --- 3. ALERTAS DE EXTREMOS (CALIBRADOS: 110-130 PSI) ---
     if p_suc > 0:
+        # Texto base com a sua calibração mestre
+        texto_base = f"TEMP. SATURAÇÃO = {t_sat_s:.2f}ºC"
+        
         if p_suc < 110:
-            st.markdown(f'<div class="alerta-pressao" style="background-color: #ffc107; color: black;">⚠️ SUBPRESSÃO ({t_sat_s:.2f}°C) - Abaixo de 110 PSI</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="alerta-pressao" style="background-color: #ffc107; color: black; padding: 10px; border-radius: 5px; text-align: center; font-weight: bold;">{texto_base}  -  ⚠️ SUBPRESSÃO: ABAIXO DE 110 PSI</div>', unsafe_allow_html=True)
         elif 110 <= p_suc <= 130:
-            st.markdown(f'<div class="alerta-pressao" style="background-color: #4caf50; color: white;">✅ PRESSÃO IDEAL ({t_sat_s:.2f}°C) - Faixa 110-130 PSI</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="alerta-pressao" style="background-color: #4caf50; color: white; padding: 10px; border-radius: 5px; text-align: center; font-weight: bold;">{texto_base}  -  ✅ PRESSÃO IDEAL: 110 A 130 PSI</div>', unsafe_allow_html=True)
         else:
-            st.markdown(f'<div class="alerta-pressao" style="background-color: #f44336; color: white;">🚨 SOBREPRESSÃO ({t_sat_s:.2f}°C) - Acima de 130 PSI</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="alerta-pressao" style="background-color: #f44336; color: white; padding: 10px; border-radius: 5px; text-align: center; font-weight: bold;">{texto_base}  -  🚨 SOBREPRESSÃO: ACIMA DE 130 PSI</div>', unsafe_allow_html=True)
 
+    # --- 4. RESULTADOS CALCULADOS ---
     # --- 4. RESULTADOS CALCULADOS ---
     st.subheader("2. Resultados Calculados")
     res1, res2, res3, res4, res5 = st.columns(5)
