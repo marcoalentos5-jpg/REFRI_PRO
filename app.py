@@ -314,6 +314,20 @@ def renderizar_aba_diagnosticos():
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO
 # ==============================================================================
+
+p_suc = st.session_state.get('p_suc_diag', 0.0)
+t_suc = st.session_state.get('t_suc_diag', 0.0)
+
+
+# Cálculos de Saturação (Exemplo simplificado, use sua lógica PT aqui)
+t_sat_s = 5.43 if p_suc > 0 else -50.0  # Exemplo para R410A
+t_sat_d = 45.0 if p_des > 0 else -50.0
+
+# Variáveis que estavam dando erro:
+sh = t_suc - t_sat_s
+sc = t_sat_d - t_liq
+dif_v = abs(st.session_state.get('v_l1', 0) - st.session_state.get('v_l2', 0))
+
 with st.sidebar:
     st.title("🚀 Painel de Controle")
     opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
