@@ -12,13 +12,12 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. Inicialização da Memória (Evita o erro vermelho que apareceu no print)
-
+# 2. Inicialização da Memória (CORRIGIDO: Nomes batendo com a Sidebar)
 if 'dados' not in st.session_state:
     st.session_state['dados'] = {
-        'tecnico_registro': '', 
         'tecnico_nome': 'Marcos Alexandre Almeida do Nascimento',
-        'CPF_CNPJ': ''
+        'cpf_cnpj': '',           # Removi o 'j' extra
+        'registro_tecnico': ''    # Adicionei aqui para não dar erro embaixo
     }
 
 # 3. Estilo Visual (Centraliza a Logo e limpa o layout)
@@ -29,12 +28,12 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 4. SIDEBAR ÚNICA (Foco nas Prioridades)
+# 4. SIDEBAR ÚNICA
 with st.sidebar:
     st.markdown("# 🚀 REFRI PRO MPN")
     st.divider()
     
-    # Seus dados de registro
+    # Agora os nomes dentro dos colchetes [] são IGUAIS aos lá de cima
     st.session_state['dados']['tecnico_nome'] = st.text_input("Técnico Responsável:", st.session_state['dados']['tecnico_nome'])
     st.session_state['dados']['cpf_cnpj'] = st.text_input("CPF/CNPJ:", st.session_state['dados']['cpf_cnpj'])
     st.session_state['dados']['registro_tecnico'] = st.text_input("Registro Federal Técnico:", st.session_state['dados']['registro_tecnico'])
