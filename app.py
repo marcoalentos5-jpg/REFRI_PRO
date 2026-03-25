@@ -176,194 +176,180 @@ elif escolha == "2. Diagnóstico Técnico":
     renderizar_diagnostico()
 
 # ==============================================================================
-# 6. FUNÇÃO DA ABA 1: Identificação e Equipamento (VERSÃO COM LAYOUT E MÁSCARAS)
+# 1. CONFIGURAÇÃO, ESTILO E INICIALIZAÇÃO
+# ==============================================================================
+st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
+
+# Estilização profissional e responsiva
+st.markdown("""
+    <style>
+    .main { background-color: #f5f7f9; }
+    div[data-testid="stMetricValue"] > div { font-size: 1.8rem !important; color: #00e676 !important; font-weight: bold; }
+    .sh-alerta { background-color: #ff1744; color: white; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; }
+    .stTabs [data-baseweb="tab-list"] { gap: 24px; }
+    .stTabs [data-baseweb="tab"] { height: 50px; white-space: pre-wrap; background-color: #f0f2f6; border-radius: 5px 5px 0 0; }
+    div.stLinkButton > a { background-color: #25D366 !important; color: white !important; font-weight: bold; border-radius: 8px !important; }
+    </style>
+""", unsafe_allow_html=True)
+
+# Motor de Sessão Blindado (Todos os campos mapeados)
+if 'dados' not in st.session_state:
+    st.session_state.dados = {
+        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
+        'cep': '', 'endereco': '', 'numero': '', 'complemento': '', 'bairro': '', 'cidade': '', 'uf': '',
+        'fabricante': 'Carrier', 'modelo': '', 'linha': 'Residencial', 'status_maquina': '🟢 Operacional',
+        'serie_evap': '', 'serie_cond': '', 'local_evap': '', 'local_cond': '',
+        'capacidade': '12.000', 'fluido': 'R410A', 'tipo_servico': 'Manutenção Preventiva', 'tag_id': '',
+        'laudo_diag': '', 'data': datetime.now().strftime("%d/%m/%Y"),
+        'p_suc': 0.0, 't_suc': 0.0, 'p_des': 0.0, 't_liq': 0.0
+    }
+
+# ==============================================================================
+# 2. FUNÇÕES TÉCNICAS (PRECISÃO E BUSCA)
+# ==============================================================================
+def f_sat_precisao(p, g):
+    """Cálculo de Saturação via Interpolação Linear (Base Danfoss)"""
+    if p <= 5: return -50.0
+    if g == "R410A":
+        xp = [90.0, 100.0, 110.0, 122.7, 150.0, 200.0]
+        fp = [-3.50, -0.29, 2.36, 5.50, 11.50, 21.00]
+    elif g == "R32":
+        xp = [90.0, 100.0, 115.0, 140.0, 170.0, 210.0]
+        fp = [-3.66, -0.87, 3.00, 8.50, 14.80, 22.00]
+    else: return 0.0
+    return float(np.interp(p, xp, fp))
+
+def buscar_cep(cep):
+    cep_limpo = "".join(filter(str.isdigit, cep))
+    if len(cep_limpo) == 8:
+        try:
+            r = requests.get(f"https://viacep.com.br/ws/{cep_limpo}/json/", timeout=5)
+            if r.status_code == 200:
+                d = r.json()
+                if "erro" not in d:
+                    st.session_state.dados.update({
+                        'endereco': d.get('logradouro', ''), 'bairro': d.get('bairro', ''),
+                        'cidade': d.get('localidade', ''), 'uf': d.get('uf', '')
+                    })
+                    return True
+        except: pass
+    return False
+
+# ==============================================================================
+# 3. INTERFACES (RENDERIZAÇÃO)
 # ==============================================================================
 
 def renderizar_aba_1():
-    tabs = st.tabs(["📋 Identificação e Equipamento"])
-    tab1 = tabs[0]
+    with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
+        c1, c2, c3 = st.columns([2, 1, 1])
+        st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'])
+        st.session_state.dados['cpf_cnpj'] = c2.text_input("CPF/CNPJ", value=st.session_state.dados['cpf_cnpj'])
+        st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp (DDD+Número) *", value=st.session_state.dados['whatsapp'])
 
-    with tab1:
-        with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
-            # --- CAMPOS COM FORMATAÇÃO (Máscaras sugeridas via placeholder) ---
-            c1, c2, c3 = st.columns([2, 1, 1])
-            st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados['nome'], key="cli_nome_v2")
-            
-            # Formatação CPF/CNPJ
-            st.session_state.dados['cpf_cnpj'] = c2.text_input("CPF (000.000.000-00)", value=st.session_state.dados['cpf_cnpj'], key="cli_doc_v2")
-            
-            # Formatação WhatsApp
-            st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp (XX-X-XXXX-XXXX) *", value=st.session_state.dados['whatsapp'], key="cli_zap_v2")
+        cx1, cx2, cx3 = st.columns([1, 1, 2])
+        st.session_state.dados['celular'] = cx1.text_input("Celular:", value=st.session_state.dados['celular'])
+        st.session_state.dados['tel_fixo'] = cx2.text_input("Fixo:", value=st.session_state.dados['tel_fixo'])
+        st.session_state.dados['email'] = cx3.text_input("E-mail:", value=st.session_state.dados['email'])
 
-            cx1, cx2, cx3 = st.columns([1, 1, 2])
-            st.session_state.dados['celular'] = cx1.text_input("Cel. (XX-X-XXXX-XXXX):", value=st.session_state.dados['celular'], key="cli_cel_v2")
-            st.session_state.dados['tel_fixo'] = cx2.text_input("Fixo (XX-XXXX-XXXX):", value=st.session_state.dados['tel_fixo'], key="cli_tel_v2")
-            st.session_state.dados['email'] = cx3.text_input("E-mail:", value=st.session_state.dados['email'], key="cli_email_v2")
+        st.markdown("---")
+        ce1, ce2, ce3 = st.columns([1, 2, 1])
+        cep_input = ce1.text_input("CEP *", value=st.session_state.dados['cep'])
+        if cep_input != st.session_state.dados['cep']:
+            st.session_state.dados['cep'] = cep_input
+            if buscar_cep(cep_input): st.rerun()
 
-            st.markdown("---")
-            
-            # --- SEÇÃO ENDEREÇO (LINHA 1) ---
-            ce1, ce2, ce3 = st.columns([1, 2, 1])
-            cep_input = ce1.text_input("CEP *", value=st.session_state.dados['cep'], key="cli_cep_v2")
-            if cep_input != st.session_state.dados['cep']:
-                st.session_state.dados['cep'] = cep_input
-                if buscar_cep(cep_input): st.rerun()
+        st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados['endereco'])
+        st.session_state.dados['numero'] = ce3.text_input("Nº/Apto:", value=st.session_state.dados['numero'])
 
-            st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados['endereco'], key="cli_end_v2")
-            st.session_state.dados['numero'] = ce3.text_input("Nº/Apto:", value=st.session_state.dados['numero'], key="cli_num_v2")
+        ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.4]) 
+        st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados['complemento'])
+        st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'])
+        st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'])
+        st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'], max_chars=2)
 
-            # --- SEÇÃO ENDEREÇO (LINHA 2 - TUDO JUNTO) ---
-            # Dividindo em 4 colunas para caber Complemento, Bairro, Cidade e UF
-            ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.4]) 
-            
-            st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados['complemento'], key="cli_comp_v2")
-            st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados['bairro'], key="cli_bairro_v2")
-            st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados['cidade'], key="cli_cid_v2")
-            
-            # UF com limite de 2 caracteres e alinhado na mesma linha
-            st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados['uf'], max_chars=2, key="cli_uf_v2")
+    st.subheader("⚙️ Especificações do Equipamento")
+    with st.expander("Detalhes Técnicos do Ativo", expanded=True):
+        e1, e2, e3 = st.columns(3)
+        with e1:
+            fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
+            st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_list.index(st.session_state.dados['fabricante']) if st.session_state.dados['fabricante'] in fab_list else 0)
+            st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados['modelo'])
+            st.session_state.dados['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], horizontal=True)
 
-        # --- SEÇÃO EQUIPAMENTO ---
-        col_titulo, col_data = st.columns([3, 1])
-        with col_titulo: st.subheader("⚙️ Especificações do Equipamento")
-        with col_data: st.session_state.dados['data'] = st.text_input("Data da Visita:", value=st.session_state.dados['data'])
+        with e2:
+            st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados['serie_evap'])
+            st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND)", value=st.session_state.dados['serie_cond'])
+            st.session_state.dados['local_evap'] = st.text_input("Localização:", value=st.session_state.dados['local_evap'], placeholder="Ex: Sala de Reunião")
 
-        with st.expander("Detalhes Técnicos do Ativo", expanded=True):
-            e1, e2, e3 = st.columns(3)
-            with e1:
-                fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
-                fab_val = st.session_state.dados.get('fabricante', 'Carrier')
-                fab_idx = fab_list.index(fab_val) if fab_val in fab_list else 0
-                st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx)
-                st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados['modelo'])
-                st.session_state.dados['linha'] = st.selectbox("Linha:", ["Residencial", "Comercial", "Industrial"], index=0)
-                st.session_state.dados['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], horizontal=True)
-
-            with e2:
-                st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados['serie_evap'])
-                st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND)", value=st.session_state.dados['serie_cond'])
-                st.session_state.dados['local_evap'] = st.text_input("Local da Evaporadora:", value=st.session_state.dados['local_evap'])
-                st.session_state.dados['local_cond'] = st.text_input("Local da Condensadora:", value=st.session_state.dados['local_cond'])
-
-            with e3:
-                st.session_state.dados['capacidade'] = st.selectbox("Capacidade:", ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"], index=1)
-                st.session_state.dados['fluido'] = st.selectbox("Fluido:", ["R410A", "R134a", "R22", "R32", "R290"], index=0)
-                st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
-                st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
-def f_sat_precisao(p, g):
-    if p <= 5: return -50.0
-    if g == "R410A":
-        xp = [90.0, 100.0, 105.0, 110.0, 115.0, 120.0, 122.7, 130.9, 141.7, 150.0]
-        fp = [-3.50, -0.29, 1.06, 2.36, 3.62, 4.84, 5.50, 7.40, 9.80, 11.50]
-    elif g == "R32":
-        xp = [90.0, 100.0, 115.0, 140.0, 170.0]
-        fp = [-3.66, -0.87, 3.00, 8.50, 14.80]
-    else:
-        return 0.0
-    for i in range(len(xp) - 1):
-        if xp[i] <= p <= xp[i+1]:
-            return fp[i] + (p - xp[i]) * (fp[i+1] - fp[i]) / (xp[i+1] - xp[i])
-    return fp[0] if p < xp[0] else fp[-1]
-
-
-# 1.3. RENDERIZAR CHECKLIST ==================
-
-def renderizar_checklist():
-    st.markdown("---")
-    st.subheader("✅ Checklist PMOC")
-    # ... resto do código
-
-
-    
-# ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO FINAL CONSOLIDADA E ESTILIZADA)
-# ==============================================================================
+        with e3:
+            cap_list = ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"]
+            st.session_state.dados['capacidade'] = st.selectbox("Capacidade (BTU):", cap_list, index=cap_list.index(st.session_state.dados['capacidade']))
+            st.session_state.dados['fluido'] = st.selectbox("Fluido:", ["R410A", "R134a", "R22", "R32"], index=0)
+            st.session_state.dados['tag_id'] = st.text_input("TAG/ID:", value=st.session_state.dados['tag_id'])
 
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
-    
-    # --- CONFIGURAÇÃO DE ESTILO (DESTAQUE VERDE) ---
     fluido = st.session_state.dados.get('fluido', 'R410A')
-    st.markdown("""
-        <style>
-        /* Estilo para números grandes e destacados */
-        div[data-testid="stMetricValue"] > div {
-            font-size: 2rem !important;
-            color: #00e676 !important;
-            font-weight: bold;
-        }
-        /* Alerta para Superaquecimento crítico */
-        .sh-alerta {
-            background-color: #ff1744; color: white; padding: 10px;
-            border-radius: 8px; text-align: center; font-weight: bold;
-        }
-        </style>
-    """, unsafe_allow_html=True)
 
-    # --- 1. ENTRADA DE DADOS (MEDIÇÕES) ---
     st.subheader("1. Medições de Campo")
-    c1, c2, c3, c4, c5 = st.columns(5)
+    c1, c2, c3, c4 = st.columns(4)
     with c1:
-        p_suc = st.number_input("P. Sucção (PSI)", format="%.2f", key="ps_v3")
-        t_suc = st.number_input("T. Tubo Suc. (°C)", format="%.2f", key="ts_v3")
+        st.session_state.dados['p_suc'] = st.number_input("P. Sucção (PSI)", value=st.session_state.dados['p_suc'], format="%.1f")
+        st.session_state.dados['t_suc'] = st.number_input("T. Tubo Suc. (°C)", value=st.session_state.dados['t_suc'], format="%.1f")
     with c2:
-        p_des = st.number_input("P. Desc. (PSI)", format="%.2f", key="pd_v3")
-        t_liq = st.number_input("T. Tubo Líq. (°C)", format="%.2f", key="tl_v3")
+        st.session_state.dados['p_des'] = st.number_input("P. Desc. (PSI)", value=st.session_state.dados['p_des'], format="%.1f")
+        st.session_state.dados['t_liq'] = st.number_input("T. Tubo Líq. (°C)", value=st.session_state.dados['t_liq'], format="%.1f")
     with c3:
-        v_lin = st.number_input("Tens. Linha (V)", value=220.0, key="vl_v3")
-        v_med = st.number_input("Tens. Medida (V)", value=220.0, key="vm_v3")
+        i_nom = st.number_input("Corr. Nominal (A)", value=0.0)
+        i_med = st.number_input("Corr. Medida (A)", value=0.0)
     with c4:
-        t_ret = st.number_input("T. Retorno (°C)", format="%.2f", key="tr_v3")
-        t_ins = st.number_input("T. Insufla. (°C)", format="%.2f", key="ti_v3")
-        rla = st.number_input("RLA (A)", value=0.0, key="rla_v3")
-        i_med = st.number_input("Corr. Medida (A)", value=0.0, key="im_v3")
-    with c5:
-        cn_c = st.number_input("C. Nom. Comp", value=0.0, key="cnc_v3")
-        cm_c = st.number_input("C. Lido Comp", value=0.0, key="cmc_v3")
-        cn_f = st.number_input("C. Nom. Fan", value=0.0, key="cnf_v3")
-        cm_f = st.number_input("C. Lido Fan", value=0.0, key="cmf_v3")
+        t_ret = st.number_input("T. Retorno Ar (°C)", value=0.0)
+        t_ins = st.number_input("T. Insuflamento (°C)", value=0.0)
 
-    # --- 2. PROCESSAMENTO DOS CÁLCULOS ---
-    t_sat_s = f_sat_precisao(p_suc, fluido)
-    t_sat_d = f_sat_precisao(p_des, fluido)
-    
-    sh = (t_suc - t_sat_s) if p_suc > 0 else 0.0
-    sc = (t_sat_d - t_liq) if p_des > 0 else 0.0
-    dif_v = v_lin - v_med
-    dt_ar = (t_ret - t_ins) if (t_ret > 0 and t_ins > 0) else 0.0
-    dif_i = i_med - rla
-    d_comp = cm_c - cn_c
-    d_fan = cm_f - cn_f
+    # Lógica de Cálculo
+    tsat_s = f_sat_precisao(st.session_state.dados['p_suc'], fluido)
+    tsat_d = f_sat_precisao(st.session_state.dados['p_des'], fluido)
+    sh = st.session_state.dados['t_suc'] - tsat_s
+    sc = tsat_d - st.session_state.dados['t_liq']
+    dt_ar = t_ret - t_ins
 
-    # --- 3. RESULTADOS CALCULADOS (ORDEM DO RASCUNHO) ---
     st.markdown("---")
-    st.subheader("2. Resultados Calculados")
+    st.subheader("2. Resultados")
+    res1, res2, res3, res4 = st.columns(4)
     
-    # --- PRIMEIRA LINHA ---
-    l1 = st.columns(5)
-    with l1[0]: # SH TOTAL
-        if sh < 5 and p_suc > 0:
-            st.markdown(f'<div class="sh-alerta">SH: {sh:.1f} K<br>⚠️ RISCO</div>', unsafe_allow_html=True)
+    with res1:
+        if sh < 5 and st.session_state.dados['p_suc'] > 0:
+            st.markdown(f'<div class="sh-alerta">SH: {sh:.1f} K<br>⚠️ RISCO LÍQUIDO</div>', unsafe_allow_html=True)
         else:
             st.metric("SH TOTAL", f"{sh:.1f} K")
-    l1[1].metric("SAT. BAIXA", f"{t_sat_s:.1f} °C")
-    l1[2].metric("Δ TENSÃO", f"{dif_v:.1f} V")
-    l1[3].metric("ΔT (AR)", f"{dt_ar:.2f} °C")
-    l1[4].metric("Δ CAP. COMP", f"{d_comp:.1f} µF")
+    
+    res2.metric("SC FINAL", f"{sc:.1f} K")
+    res3.metric("ΔT AR", f"{dt_ar:.1f} °C")
+    res4.metric("Δ CORRENTE", f"{i_med - i_nom:.2f} A")
 
-    # --- SEGUNDA LINHA ---
-    l2 = st.columns(5)
-    l2[0].metric("SC FINAL", f"{sc:.1f} K")
-    l2[1].metric("SAT. ALTA", f"{t_sat_d:.1f} °C")
-    l2[2].metric("Δ CORRENTE", f"{dif_i:.2f} A")
-    l2[3].metric("COP", "0.00") # Espaço para cálculo de eficiência
-    l2[4].metric("Δ FAN", f"{d_fan:.1f} µF")
-
-    # --- 4. PARECER TÉCNICO ---
     st.markdown("---")
-    st.subheader("3. Parecer Técnico")
-    st.text_area("Diagnóstico Final:", value=st.session_state.dados.get('laudo_diag', ''), key="laudo_final_v3")
+    st.session_state.dados['laudo_diag'] = st.text_area("Diagnóstico Final e Recomendações:", value=st.session_state.dados['laudo_diag'], height=150)
+    
+    if st.button("Gerar Relatório WhatsApp"):
+        msg = f"*RELATÓRIO TÉCNICO - {st.session_state.dados['data']}*\n\n"
+        msg += f"*Cliente:* {st.session_state.dados['nome']}\n"
+        msg += f"*Equipamento:* {st.session_state.dados['fabricante']} {st.session_state.dados['capacidade']} BTU\n"
+        msg += f"*SH:* {sh:.1f}K | *SC:* {sc:.1f}K\n"
+        msg += f"*Parecer:* {st.session_state.dados['laudo_diag']}"
+        
+        zap_url = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg)}"
+        st.link_button("🚀 Enviar para Cliente", zap_url)
 
+# ==============================================================================
+# 4. EXECUÇÃO PRINCIPAL
+# ==============================================================================
+menu = st.sidebar.radio("Navegação", ["📋 Cadastro e Equipamento", "🔍 Diagnóstico Técnico"])
+
+if menu == "📋 Cadastro e Equipamento":
+    renderizar_aba_1()
+elif menu == "🔍 Diagnóstico Técnico":
+    renderizar_aba_diagnosticos()
+    
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
 # ==============================================================================
@@ -426,121 +412,137 @@ with st.sidebar:
         st.rerun()
 
 
-# ==============================================================================
-# 4. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
-# ==============================================================================
-# Use a seleção do sidebar para chamar a função correta
-if aba_selecionada == "Home":
-    # --- NOVA APRESENTAÇÃO DA ABA HOME (COM LOGO MPN SOLUÇÕES ) ---
-    st.markdown("<br>", unsafe_allow_html=True) # Espaçamento superior
+import streamlit as st
+import os
+from datetime import datetime
+import numpy as np
 
-    # 1. CENTRALIZAÇÃO E EXIBIÇÃO DA LOGOMARCA
-    col1, col2, col3 = st.columns([1, 2, 1]) 
-    with col2: 
-        # NOME DO ARQUIVO DE IMAGEM QUE ESTÁ SENDO USADO
+# ==============================================================================
+# 1. MOTOR DE ESTADO E CONFIGURAÇÃO (O CORAÇÃO DO APP)
+# ==============================================================================
+st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
+
+if 'dados' not in st.session_state:
+    st.session_state.dados = {
+        'nome': '', 'fluido': 'R410A', 'laudo_diag': '',
+        'p_suc_diag': 0.0, 't_suc_diag': 0.0,
+        'p_des_diag': 0.0, 't_liq_diag': 0.0
+    }
+
+# ==============================================================================
+# 2. FUNÇÕES TÉCNICAS (CÁLCULOS DE PRECISÃO)
+# ==============================================================================
+def calcular_t_sat(p, fluido):
+    """Retorna a temperatura de saturação baseada na pressão (PSI) e fluido"""
+    if p <= 0: return 0.0
+    # Tabelas PT simplificadas para simulação de precisão
+    tabelas = {
+        "R410A": {"xp": [90, 110, 120, 150, 350, 450], "fp": [-3.5, 2.3, 4.8, 11.5, 41.5, 54.0]},
+        "R32":   {"xp": [90, 115, 140, 170, 380, 480], "fp": [-3.6, 3.0, 8.5, 14.8, 44.0, 56.5]},
+        "R22":   {"xp": [50, 60, 70, 80, 200, 250],    "fp": [-3.0, 1.5, 5.8, 9.7, 38.5, 48.0]}
+    }
+    tab = tabelas.get(fluido, tabelas["R410A"])
+    return float(np.interp(p, tab["xp"], tab["fp"]))
+
+# ==============================================================================
+# 3. INTERFACES DE NAVEGAÇÃO
+# ==============================================================================
+
+def exibir_home():
+    st.markdown("<br>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
         NOME_ARQUIVO_LOGO = "logo.png"
-        
-        # VERIFICAÇÃO ADICIONAL DO ARQUIVO NO DISCO (PARA AJUDAR NO DIAGNÓSTICO)
         if os.path.exists(NOME_ARQUIVO_LOGO):
-            try:
-                # SE O ARQUIVO EXISTE, TENTA EXIBIR
-                st.image(NOME_ARQUIVO_LOGO, use_container_width=True) 
-            except Exception as e:
-                st.error(f"⚠️ Erro ao tentar abrir a imagem '{NOME_ARQUIVO_LOGO}'. Verifique se o arquivo está corrompido.")
-                st.write(f"Detalhes do erro do sistema: {e}")
+            st.image(NOME_ARQUIVO_LOGO, use_container_width=True)
         else:
-            st.error(f"⚠️ Erro: Arquivo '{NOME_ARQUIVO_LOGO}' não encontrado na pasta raiz.")
-            st.info("Verifique se o nome do arquivo salvo no computador é EXATAMENTE 'logo.png' (maiúsculas/minúsculas importam).")
+            # Fallback visual caso a imagem não exista para não quebrar o layout
+            st.markdown(f"""
+                <div style="background:#0d47a1; padding:40px; border-radius:15px; text-align:center;">
+                    <h1 style="color:white; margin:0;">MPN Soluções</h1>
+                    <p style="color:#90caf9;">Engenharia Térmica</p>
+                </div>
+            """, unsafe_allow_html=True)
 
-    st.markdown("<br><br>", unsafe_allow_html=True) 
-
-    # 2. TÍTULO E BOAS-VINDAS CENTRALIZADOS E ESTILIZADOS
     st.markdown("""
-        <div style="text-align: center;">
-            <h1 style="color: #0d47a1; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-                MPN Soluções
-            </h1>
-            <p style="color: #1976d2; font-size: 1.3em;">
-                Soluções em Refrigeração e Climatização
-            </p>
-            <hr style="border: 1px solid #90caf9; width: 60%; margin: 20px auto;">
-            <p style="color: #455a64; font-size: 1.1em; font-weight: bold;">
-                Bem-vindo ao Sistema HVAC Pro de Gestão Inteligente.
-            </p>
-            <p style="color: #546e7a; font-size: 1.0em;">
-                Selecione uma opção no Painel de Controle lateral para iniciar sua inspeção ou diagnóstico.
-            </p>
+        <div style="text-align: center; margin-top: 30px;">
+            <h2 style="color: #0d47a1;">Bem-vindo ao HVAC Pro</h2>
+            <p style="font-size: 1.2em; color: #546e7a;">Gestão Inteligente de Refrigeração e Climatização</p>
+            <hr style="width: 50%; margin: 20px auto; border-color: #e0e0e0;">
+            <p>Utilize o menu lateral para iniciar o <b>Cadastro</b> ou realizar o <b>Diagnóstico de Ciclo</b>.</p>
         </div>
     """, unsafe_allow_html=True)
-    # ------------------------------------------------
-
-elif aba_selecionada == "1. Cadastro de Equipamentos":
-    renderizar_aba_1() # Chama a função que contém todo o código da Aba 1
-
-elif aba_selecionada == "2. Diagnósticos":
-    renderizar_aba_diagnosticos() # Chama a função que contém o esqueleto da Aba 2
-
-elif aba_selecionada == "Relatórios":
-    st.header("Página de Relatórios (Em desenvolvimento)")
-    st.write("Em breve: Visualização e exportação de relatórios.")
-# [COLE AQUI - Logo após o fim da renderizar_aba_1]
 
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
-    # Busca o fluido que você selecionou na Aba 1
-    fluido_selecionado = st.session_state.dados.get('fluido', 'R410A')
-    st.info(f"❄️ Fluido Refrigerante em Análise: **{fluido_selecionado}**")
-    st.markdown("---")
+    fluido = st.session_state.dados.get('fluido', 'R410A')
+    st.info(f"❄️ Analisando Ciclo Frigorífico: **{fluido}**")
 
-    # --- BLOCO 1: ENTRADA DE MEDIÇÕES ---
+    # --- 1. ENTRADA DE MEDIÇÕES ---
     st.subheader("1. Medições de Campo")
     col_suc, col_des = st.columns(2)
     
     with col_suc:
-        st.markdown("### 🔵 Baixa Pressão")
-        pres_suc = st.number_input("Pressão de Sucção (PSI):", min_value=0.0, step=1.0, key="p_suc_diag")
-        temp_suc = st.number_input("Temp. Tubulação Sucção (°C):", step=0.1, key="t_suc_diag")
+        st.markdown("### 🔵 Baixa Pressão (Sucção)")
+        p_suc = st.number_input("Pressão (PSI):", value=st.session_state.dados['p_suc_diag'], step=1.0, key="ps_in")
+        t_suc = st.number_input("Temp. Tubo (°C):", value=st.session_state.dados['t_suc_diag'], step=0.1, key="ts_in")
 
     with col_des:
-        st.markdown("### 🔴 Alta Pressão")
-        pres_des = st.number_input("Pressão de Descarga (PSI):", min_value=0.0, step=1.0, key="p_des_diag")
-        temp_liq = st.number_input("Temp. Tubulação Líquido (°C):", step=0.1, key="t_liq_diag")
+        st.markdown("### 🔴 Alta Pressão (Líquido)")
+        p_des = st.number_input("Pressão (PSI):", value=st.session_state.dados['p_des_diag'], step=1.0, key="pd_in")
+        t_liq = st.number_input("Temp. Tubo (°C):", value=st.session_state.dados['t_liq_diag'], step=0.1, key="tl_in")
 
+    # Sincronização com session_state para persistência
+    st.session_state.dados.update({'p_suc_diag': p_suc, 't_suc_diag': t_suc, 'p_des_diag': p_des, 't_liq_diag': t_liq})
+
+    # --- 2. PROCESSAMENTO ---
+    t_sat_suc = calcular_t_sat(p_suc, fluido)
+    t_sat_des = calcular_t_sat(p_des, fluido)
+    sh = t_suc - t_sat_suc
+    sc = t_sat_des - t_liq
+
+    # --- 3. RESULTADOS ---
     st.markdown("---")
-
-    # --- BLOCO 2: PROCESSAMENTO (CÁLCULOS) ---
-    # Nota: No próximo passo, inseriremos a tabela PT aqui
-    t_sat_suc = 0.0  
-    t_sat_des = 0.0  
-    
-    sh = temp_suc - t_sat_suc
-    sc = t_sat_des - temp_liq
-
-    # --- BLOCO 3: EXIBIÇÃO DE RESULTADOS ---
-    st.subheader("2. Resultados Calculados")
+    st.subheader("2. Resultados do Ciclo")
     res1, res2 = st.columns(2)
     
     with res1:
-        st.metric(label="Superaquecimento (SH)", value=f"{sh:.1f} K")
-        if 5 <= sh <= 7: st.success("✅ SH dentro do padrão (5K a 7K)")
-        elif sh < 5: st.error("⚠️ SH Baixo: Risco de retorno de líquido")
-        else: st.warning("⚠️ SH Alto: Possível falta de fluido ou restrição")
+        st.metric("Superaquecimento (SH)", f"{sh:.1f} K", delta_color="normal")
+        if 5 <= sh <= 7: st.success("✅ SH Ideal (5K ~ 7K)")
+        elif sh < 5: st.error("⚠️ SH Baixo: Risco de Golpe de Líquido")
+        else: st.warning("⚠️ SH Alto: Falta de fluido ou restrição")
 
     with res2:
-        st.metric(label="Sub-resfriamento (SC)", value=f"{sc:.1f} K")
-        if 4 <= sc <= 7: st.success("✅ SC dentro do padrão (4K a 7K)")
-        else: st.info("ℹ️ SC fora do padrão: Verifique condensação")
+        st.metric("Sub-resfriamento (SC)", f"{sc:.1f} K")
+        if 4 <= sc <= 7: st.success("✅ SC Ideal (4K ~ 7K)")
+        else: st.info("ℹ️ SC Fora do Padrão: Verifique a troca de calor na condensadora")
 
+    # --- 4. LAUDO ---
     st.markdown("---")
-
-    # --- BLOCO 4: CONCLUSÃO E LAUDO ---
-    st.subheader("3. Parecer Técnico Final")
+    st.subheader("3. Parecer Técnico")
     st.session_state.dados['laudo_diag'] = st.text_area(
-        "Descreva o diagnóstico ou anomalias encontradas:",
-        placeholder="Ex: Sistema operando com pressões estáveis, superaquecimento normal...",
-        key="laudo_area_diag"
+        "Conclusão do Diagnóstico:", 
+        value=st.session_state.dados['laudo_diag'],
+        placeholder="Descreva as condições encontradas...",
+        height=150
     )
-# No seu Menu Lateral ou Rádio de Seleção:
-if escolha == "1. Cadastro de Equipamentos":
-    renderizar_aba_1()
-    renderizar_checklist() # Se quiser o checklist logo abaixo dos dados
+
+# ==============================================================================
+# 4. LÓGICA DE NAVEGAÇÃO PRINCIPAL
+# ==============================================================================
+st.sidebar.title("🎮 Painel de Controle")
+aba_selecionada = st.sidebar.radio("Selecione a Aba:", 
+    ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"])
+
+# Execução Dinâmica
+if aba_selecionada == "Home":
+    exibir_home()
+elif aba_selecionada == "1. Cadastro de Equipamentos":
+    # Aqui entraria sua função renderizar_aba_1()
+    st.info("Interface de Cadastro Ativa")
+elif aba_selecionada == "2. Diagnósticos":
+    renderizar_aba_diagnosticos()
+elif aba_selecionada == "Relatórios":
+    st.header("📊 Relatórios")
+    st.write("Módulo de exportação em desenvolvimento.")
