@@ -12,35 +12,74 @@ import urllib.parse
 import requests
 
 
-# Dentro de renderizar_aba_1, na seção de endereço:
-ce1, ce2, ce3 = st.columns([1, 2, 1])
-cep_input = ce1.text_input("CEP *", value=st.session_state.dados.get('cep', ''), key="cep_f")
-
-# O GATILHO QUE CHAMA A FUNÇÃO:
-if cep_input != st.session_state.dados.get('cep', ''):
-    st.session_state.dados['cep'] = cep_input
-    if buscar_cep(cep_input): 
-        st.rerun() # Isso faz a tela "piscar" e já aparecer o endereço preenchido
-
+# ==============================================================================
+# 1. FUNÇÕES AUXILIARES (DEFINIR NO TOPO)
+# ==============================================================================
 def buscar_cep(cep):
-    # Remove hífen ou pontos caso o usuário digite
-    cep = cep.replace("-", "").replace(".", "").strip()
-    
-    if len(cep) == 8 and cep.isdigit():
+    """Busca o endereço via API Viacep e injeta no session_state"""
+    cep_limpo = "".join(filter(str.isdigit, cep))
+    if len(cep_limpo) == 8:
         try:
-            response = requests.get(f"https://viacep.com.br/ws/{cep}/json/")
-            if response.status_code == 200:
-                dados_cep = response.json()
-                if "erro" not in dados_cep:
-                    # Atualiza o dicionário global de dados
-                    st.session_state.dados['endereco'] = dados_cep.get('logradouro', '')
-                    st.session_state.dados['bairro'] = dados_cep.get('bairro', '')
-                    st.session_state.dados['cidade'] = dados_cep.get('localidade', '')
-                    st.session_state.dados['uf'] = dados_cep.get('uf', '')
+            r = requests.get(f"https://viacep.com.br/ws/{cep_limpo}/json/")
+            if r.status_code == 200:
+                d = r.json()
+                if "erro" not in d:
+                    st.session_state.dados['endereco'] = d.get('logradouro', '')
+                    st.session_state.dados['bairro'] = d.get('bairro', '')
+                    st.session_state.dados['cidade'] = d.get('localidade', '')
+                    st.session_state.dados['uf'] = d.get('uf', '')
                     return True
         except:
             pass
     return False
+
+# ==============================================================================
+# 2. CONFIGURAÇÃO DA PÁGINA E MOTOR DE SESSÃO
+# ==============================================================================
+st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
+
+if 'dados' not in st.session_state:
+    st.session_state.dados = {
+        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
+        'data': datetime.now().strftime("%d/%m/%Y"),
+        'cep': '', 'cep_processado': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 
+        'numero': '', 'complemento': '', 'fabricante': 'Carrier', 'modelo': '', 
+        'capacidade': '12.000', 'fluido': 'R410A', 'status_maquina': '🟢 Operacional'
+    }
+
+# ==============================================================================
+# 3. INTERFACE (ESTRUTURA DA ABA)
+# ==============================================================================
+def renderizar_aba_1():
+    st.subheader("📋 Cadastro de Cliente e Ativo")
+    
+    with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
+        ce1, ce2, ce3 = st.columns([1, 2, 1])
+        
+        # Entrada do CEP
+        cep_input = ce1.text_input("CEP *", value=st.session_state.dados.get('cep', ''), key="cep_f")
+
+        # --- GATILHO DE AUTOMAÇÃO ---
+        clean_cep = "".join(filter(str.isdigit, cep_input))
+        
+        if clean_cep != st.session_state.dados.get('cep_processado', ''):
+            if len(clean_cep) == 8:
+                with st.spinner('Buscando endereço...'):
+                    if buscar_cep(clean_cep):
+                        st.session_state.dados['cep'] = cep_input
+                        st.session_state.dados['cep_processado'] = clean_cep
+                        st.rerun()
+            elif len(clean_cep) == 0:
+                st.session_state.dados['cep_processado'] = ''
+
+        # Campos de endereço (preenchidos automaticamente ou manualmente)
+        st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados.get('endereco', ''), key="cli_end_f")
+        st.session_state.dados['numero'] = ce3.text_input("Nº/Apto:", value=st.session_state.dados.get('numero', ''), key="cli_num_f")
+
+# ==============================================================================
+# 4. EXECUÇÃO PRINCIPAL
+# ==============================================================================
+renderizar_aba_1()
 
 # 1. CONFIGURAÇÃO INICIAL (TESTADA)
 
