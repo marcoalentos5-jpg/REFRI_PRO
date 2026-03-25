@@ -301,7 +301,7 @@ def renderizar_aba_diagnosticos():
     with l2_c5: st.metric("Δ Fan", f"{(cm_f - cn_f):.2f} µF")
 
     # ==============================================================================
-    # 2.2. PARECER TÉCNICO (ÚNICO E FINAL)
+    # 3. PARECER TÉCNICO (ÚNICO E FINAL)
     # ==============================================================================
     st.markdown("---")
     st.subheader("3. Parecer Técnico")
