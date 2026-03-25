@@ -156,112 +156,79 @@ def f_sat_precisao(p, g):
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
     
-    # Garantir que os dados existam no session_state
-    fluido = st.session_state.dados.get('fluido', 'R410A') 
-    
-    # 1. ENTRADA DE DADOS (Verifique se estas variáveis existem antes de calcular)
-    col1, col2 = st.columns(2)
-    with col1:
-        p_suc = st.number_input("P. Sucção (PSI)", min_value=0.0, key="ps_final")
-        t_suc = st.number_input("T. Tubo Suc. (°C)", key="ts_final")
-    with col2:
-        p_des = st.number_input("P. Descarga (PSI)", min_value=0.0, key="pd_final")
-        t_liq = st.number_input("T. Tubo Líq. (°C)", key="tl_final")
-
-    # 2. CÁLCULO (Agora a função f_sat_precisao será encontrada)
-    t_sat_s = f_sat_precisao(p_suc, fluido)
-    t_sat_d = f_sat_precisao(p_des, fluido)
-    
-    sh = (t_suc - t_sat_s) if p_suc > 0 else 0.0
-    sc = (t_sat_d - t_liq) if p_des > 0 else 0.0
-
-    # 3. RESULTADOS (5 colunas x 1 linha apenas para evitar triplicação)
-    st.markdown("---")
-    st.subheader("2. Resultados Calculados")
-    res = st.columns(5)
-    res[0].metric("SH TOTAL", f"{sh:.1f} K")
-    res[1].metric("SC Final", f"{sc:.1f} K")
-    res[2].metric("Sat. Baixa", f"{t_sat_s:.1f} °C")
-    res[3].metric("Sat. Alta", f"{t_sat_d:.1f} °C")
-    res[4].metric("Δ T Ar", "0.0 °C")
-    
-    # --- RESGATE DE DADOS (Puxando da Aba 1 e Session State) ---
-    # Isso evita que os resultados fiquem em 0.00 se já foram preenchidos antes
+    # 1. Resgate do Fluido da Aba 1
     fluido = st.session_state.dados.get('fluido', 'R410A')
     st.info(f"❄️ Fluido Refrigerante: **{fluido}**")
 
-    # --- 1. MEDIÇÕES DE CAMPO ---
+    # 2. MEDIÇÕES DE CAMPO (Inputs)
     st.subheader("1. Medições de Campo")
-    col1, col2, col3, col4, col5 = st.columns(5)
+    c1, c2, c3, c4, c5 = st.columns(5)
 
-    with col1:
+    with c1:
         st.markdown("🔵 **EVAPORADORA**")
-        p_suc = st.number_input("P. Sucção (PSI)", format="%.2f", step=0.1, key="ps_diag_input")
-        t_suc = st.number_input("T. Tubo Suc. (°C)", format="%.2f", step=0.1, key="ts_diag_input")
-        t_ret = st.number_input("T. Retorno (°C)", format="%.2f", step=0.1, key="tr_diag_input")
-        t_ins = st.number_input("T. Insufla. (°C)", format="%.2f", step=0.1, key="ti_diag_input")
+        p_suc = st.number_input("P. Sucção (PSI)", format="%.2f", step=0.1, key="ps_in")
+        t_suc = st.number_input("T. Tubo Suc. (°C)", format="%.2f", step=0.1, key="ts_in")
+        t_ret = st.number_input("T. Retorno (°C)", format="%.2f", step=0.1, key="tr_in")
+        t_ins = st.number_input("T. Insufla. (°C)", format="%.2f", step=0.1, key="ti_in")
 
-    with col2:
+    with c2:
         st.markdown("🔴 **CONDENSADORA**")
-        p_des = st.number_input("P. Desc. (PSI)", format="%.2f", step=0.1, key="pd_diag_input")
-        t_liq = st.number_input("T. Tubo Líq. (°C)", format="%.2f", step=0.1, key="tl_diag_input")
+        p_des = st.number_input("P. Desc. (PSI)", format="%.2f", step=0.1, key="pd_in")
+        t_liq = st.number_input("T. Tubo Líq. (°C)", format="%.2f", step=0.1, key="tl_in")
 
-    with col3:
+    with c3:
         st.markdown("⚡ **TENSÃO**")
-        v_lin = st.number_input("Tens. Linha (V)", format="%.2f", value=220.0, key="vl_diag_input")
-        v_med = st.number_input("Tens. Medida (V)", format="%.2f", value=220.0, key="vm_diag_input")
+        v_lin = st.number_input("Tens. Linha (V)", value=220.0, step=1.0, key="vl_in")
+        v_med = st.number_input("Tens. Medida (V)", value=220.0, step=1.0, key="vm_in")
 
-    with col4:
+    with c4:
         st.markdown("🔌 **CORRENTE**")
-        # Aqui ele tenta puxar o RLA que você já digitou na Aba 1
-        rla_ref = st.session_state.dados.get('capacidade', 0.0) # Ajuste se a key for outra
-        i_med = st.number_input("Corr. Medida (A)", format="%.2f", key="im_diag_input")
+        rla = st.number_input("RLA Nominal (A)", value=0.0, step=0.1, key="rla_in")
+        i_med = st.number_input("Corr. Medida (A)", value=0.0, step=0.1, key="im_in")
 
-    with col5:
-        st.markdown("🔋 **CAPACIT.**")
-        # Puxa os dados nominais da Aba 1 e pede apenas a medição atual
-        cm_c = st.number_input("Lido Comp. (µF)", format="%.2f", key="cmc_diag_input")
-        cm_f = st.number_input("Lido Fan (µF)", format="%.2f", key="cmf_diag_input")
+    with c5:
+        st.markdown("🔋 **CAPACITORES**")
+        cm_c = st.number_input("Lido Comp. (µF)", value=0.0, key="cmc_in")
+        cm_f = st.number_input("Lido Fan (µF)", value=0.0, key="cmf_in")
 
-    # --- 2. CÁLCULOS (MOTOR DE PRECISÃO) ---
-    # Chamando a função de saturação que deve estar definida no topo do seu arquivo
+    # --- 3. PROCESSAMENTO DOS CÁLCULOS (Define as variáveis antes do uso) ---
     t_sat_s = f_sat_precisao(p_suc, fluido)
     t_sat_d = f_sat_precisao(p_des, fluido)
     
     sh = (t_suc - t_sat_s) if p_suc > 0 else 0.0
     sc = (t_sat_d - t_liq) if p_des > 0 else 0.0
     dt_ar = (t_ret - t_ins) if (t_ret > 0 and t_ins > 0) else 0.0
-    
-    # --- 3. EXIBIÇÃO ÚNICA DE RESULTADOS (O FIM DA TRIPLICAÇÃO) ---
+    dif_v = v_lin - v_med  # RESOLVE O ERRO DA LINHA 293
+    dif_i = i_med - rla
+
+    # --- 4. EXIBIÇÃO DE RESULTADOS (Layout Único 5x2) ---
     st.markdown("---")
     st.subheader("2. Resultados Calculados")
-
-    # Linha 1
-    res1, res2, res3, res4, res5 = st.columns(5)
-    res1.metric("Δ T Ar", f"{dt_ar:.2f} °C")
     
-    with res2:
+    # Linha 1
+    r1, r2, r3, r4, r5 = st.columns(5)
+    r1.metric("Δ T Ar", f"{dt_ar:.2f} °C")
+    with r2:
         if sh < 5 and p_suc > 0:
-            st.markdown(f'<div style="color:white; background:red; padding:5px; border-radius:5px; text-align:center;">SH: {sh:.1f}K<br>⚠️ RISCO LÍQUIDO</div>', unsafe_allow_html=True)
+            st.error(f"SH: {sh:.1f} K") # Alerta visual de risco
         else:
             st.metric("SH TOTAL", f"{sh:.1f} K")
-            
-    res3.metric("SC Final", f"{sc:.1f} K")
-    res4.metric("Queda Tens.", f"{v_lin - v_med:.1f} V")
-    res5.metric("Corr. Δ", f"{i_med:.2f} A")
+    r3.metric("SC Final", f"{sc:.1f} K")
+    r4.metric("Queda Tens.", f"{dif_v:.1f} V")
+    r5.metric("Corr. Δ", f"{dif_i:.2f} A")
 
     # Linha 2
-    res6, res7, res8, res9, res10 = st.columns(5)
-    res6.metric("Sat. Baixa", f"{t_sat_s:.1f} °C")
-    res7.metric("Sat. Alta", f"{t_sat_d:.1f} °C")
-    res8.metric("Status RLA", "Normal" if i_med <= 20 else "Sobrepres.") # Exemplo
-    res9.metric("Δ Capacitor", f"{cm_c:.1f} µF")
-    res10.metric("Eficiência", "---")
+    r6, r7, r8, r9, r10 = st.columns(5)
+    r6.metric("Sat. Baixa", f"{t_sat_s:.1f} °C")
+    r7.metric("Sat. Alta", f"{t_sat_d:.1f} °C")
+    r8.metric("Status RLA", "Normal" if i_med <= rla or rla == 0 else "Sobrecarga")
+    r9.metric("Cap. Comp", f"{cm_c:.1f} µF")
+    r10.metric("Cap. Fan", f"{cm_f:.1f} µF")
 
-    # --- 4. PARECER TÉCNICO ---
+    # --- 5. PARECER TÉCNICO ---
     st.markdown("---")
     st.subheader("3. Parecer Técnico")
-    st.session_state.dados['laudo_diag'] = st.text_area("Diagnóstico Final:", key="laudo_area_v2")
+    st.session_state.dados['laudo_diag'] = st.text_area("Diagnóstico Final:", key="txt_laudo")
     # ==============================================================================
     # 2.1. COLE O NOVO BLOCO (5 COLUNAS X 2 LINHAS) EXATAMENTE AQUI:
     # ==============================================================================
