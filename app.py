@@ -241,14 +241,7 @@ def renderizar_aba_diagnosticos():
         else:
             st.markdown(f'<div class="alerta-pressao" style="background-color: #f44336; color: white; padding: 10px; border-radius: 5px; text-align: center; font-weight: bold;">{texto_base}  -  🚨 SOBREPRESSÃO: ACIMA DE 130 PSI</div>', unsafe_allow_html=True)
 
-    # --- 4. RESULTADOS CALCULADOS (DISTRIBUIÇÃO 5x2) ---
-    st.markdown("---")
-    st.subheader("2. Resultados Calculados")
     
-    # Linha 1
-    l1_c1, l1_c2, l1_c3, l1_c4, l1_c5 = st.columns(5)
-    with l1_c1:
-        st.metric("Δ T", f"{dt_ar:.2f} °C")
     with l1_c2:
         if sh < 5 and p_suc > 0:
             st.markdown(f'<div class="sh-critico">SH TOTAL: {sh:.2f} K<br>⚠️ RISCO LÍQUIDO</div>', unsafe_allow_html=True)
@@ -275,95 +268,41 @@ def renderizar_aba_diagnosticos():
     with l2_c5:
         d_comp = cm_c - cn_c if (cm_c > 0 and cn_c > 0) else 0.0
         st.metric("Δ Comp.", f"{d_comp:.2f} µF")
-    # ==============================================================================
-    # 2.1. COLE O NOVO BLOCO (5 COLUNAS X 2 LINHAS) EXATAMENTE AQUI:
+        
+   # ==============================================================================
+    # 2.1. RESULTADOS CALCULADOS (ORGANIZAÇÃO 5x2 CONFORME O PAPEL)
     # ==============================================================================
     st.markdown("---")
     st.subheader("2. Resultados Calculados")
     
-    # --- LINHA 1 ---
+    # Estilo para números Verdes e Grandes
+    st.markdown('<style>div[data-testid="stMetricValue"] > div { font-size: 1.8rem !important; color: #00e676; }</style>', unsafe_allow_html=True)
+
+    # LINHA 1: SH TOTAL | Sat. Baixa | Δ Tensão | Δ T | Δ Comp.
     l1_c1, l1_c2, l1_c3, l1_c4, l1_c5 = st.columns(5)
-    
     with l1_c1:
-        st.metric("Δ T", f"{dt_ar:.2f} °C")
-    
-    with l1_c2:
-        # SH TOTAL com alerta visual de risco líquido
         if sh < 5 and p_suc > 0:
-            st.markdown(f'<div class="sh-critico">SH TOTAL: {sh:.2f} K<br>⚠️ RISCO LÍQUIDO</div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="color:#ff4b4b; font-weight:bold; font-size:14px;">SH TOTAL: {sh:.2f} K<br>⚠️ RISCO LÍQUIDO</div>', unsafe_allow_html=True)
         else:
             st.metric("SH TOTAL", f"{sh:.2f} K")
+    with l1_c2: st.metric("Sat. Baixa", f"{t_sat_s:.2f} °C")
+    with l1_c3: st.metric("Δ Tensão", f"{dif_v:.2f} V")
+    with l1_c4: st.metric("Δ T", f"{dt_ar:.2f} °C")
+    with l1_c5: st.metric("Δ Comp.", f"{(cm_c - cn_c):.2f} µF")
 
-    with l1_c3:
-        st.metric("SC Final", f"{sc:.2f} K")
-
-    with l1_c4:
-        # COP (Capacidade / Potência)
-        cop_val = 0.0 # Espaço para cálculo futuro
-        st.metric("COP", f"{cop_val:.2f}")
-
-    with l1_c5:
-        st.metric("Queda Tens.", f"{dif_v:.2f} V")
-
-    # --- LINHA 2 ---
+    # LINHA 2: SC FINAL | Sat. Alta | Δ Corrente | COP | Δ Fan
     l2_c1, l2_c2, l2_c3, l2_c4, l2_c5 = st.columns(5)
-
-    with l2_c1:
-        # Temperatura de Saturação de Baixa (abaixo do SH)
-        st.metric("Sat. Baixa", f"{t_sat_s:.2f} °C")
-
-    with l2_c2:
-        st.metric("Sat. Alta", f"{t_sat_d:.2f} °C")
-
+    with l2_c1: st.metric("SC FINAL", f"{sc:.2f} K")
+    with l2_c2: st.metric("Sat. Alta", f"{t_sat_d:.2f} °C")
     with l2_c3:
-        st.metric("Dif. RLA", f"{dif_i:.2f} A")
-        if i_med > rla and rla > 0:
-            st.markdown('<span class="sobrecarga">⚠️ SOBRECARGA</span>', unsafe_allow_html=True)
+        st.metric("Δ Corrente", f"{dif_i:.2f} A")
+        if i_med > rla and rla > 0: st.markdown('<div style="color:#ff4b4b; font-size:12px; font-weight:bold;">⚠️ SOBRECARGA</div>', unsafe_allow_html=True)
+    with l2_c4: st.metric("COP", "0.00")
+    with l2_c5: st.metric("Δ Fan", f"{(cm_f - cn_f):.2f} µF")
 
-    with l2_c4:
-        # Delta Fan (Capacitor Ventilador)
-        d_fan = cm_f - cn_f if (cm_f > 0 and cn_f > 0) else 0.0
-        st.metric("Δ Fan", f"{d_fan:.2f} µF")
-
-    with l2_c5:
-        # Delta Compressor (Capacitor Compressor)
-        d_comp = cm_c - cn_c if (cm_c > 0 and cn_c > 0) else 0.0
-        st.metric("Δ Comp.", f"{d_comp:.2f} µF")
-
-    # 3. Depois vem o Parecer Técnico (Notas)
-    st.markdown("---")
-    st.subheader("3. Parecer Técnico")
-    
-    # --- 4. RESULTADOS CALCULADOS ---
-    
-    st.subheader("2. Resultados Calculados")
-    res1, res2, res3, res4, res5 = st.columns(5)
-
-    with res1:
-        st.metric("ΔT Ar", f"{dt_ar:.2f} °C")
-        if sh < 5 and p_suc > 0:
-            st.markdown(f'<div class="sh-critico">SH: {sh:.2f} K<br>⚠️ RISCO LÍQUIDO</div>', unsafe_allow_html=True)
-        else:
-            st.metric("SH Final", f"{sh:.2f} K")
-
-    with res2:
-        st.metric("SC Final", f"{sc:.2f} K")
-        st.caption(f"T. Sat Alta: {t_sat_d:.2f}°C")
-
-    with res3:
-        st.metric("Queda Tens.", f"{dif_v:.2f} V")
-
-    with res4:
-        st.metric("Dif. RLA", f"{dif_i:.2f} A")
-        if i_med > rla and rla > 0:
-            st.markdown('<span class="sobrecarga">⚠️ SOBRECARGA</span>', unsafe_allow_html=True)
-        st.caption(f"LRA Ref: {lra:.2f} A")
-
-    with res5:
-        st.metric("Δ Comp.", f"{cm_c - cn_c:.2f} µF")
-        st.caption(f"Δ Fan: {cm_f - cn_f:.2f} µF")
-
-    # --- 5. PARECER TÉCNICO FINAL ---
+    # ==============================================================================
+    # 3. PARECER TÉCNICO (ÚNICO E FINAL)
+    # ==============================================================================
     st.markdown("---")
     st.subheader("3. Parecer Técnico")
     st.session_state.dados['laudo_diag'] = st.text_area(
@@ -373,20 +312,14 @@ def renderizar_aba_diagnosticos():
     )
 
 # ==============================================================================
-# 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
+# 3. SIDEBAR - DADOS DO TÉCNICO E ENVIO WHATSAPP
 # ==============================================================================
-# Mudamos esta seção para antes da Lógica de Exibição das Abas para definir aba_selecionada
 with st.sidebar:
     st.title("🚀 Painel de Controle")
-
-    # A. NAVEGAÇÃO E EXIBIÇÃO DAS ABAS (ATIVADA AQUI)
     opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
-    # Use st.sidebar.radio para criar os botões de seleção de aba e DEFINIR a variável
     aba_selecionada = st.sidebar.radio("Selecione a Aba:", opcoes_abas)
     
     st.markdown("---")
-    
-    # B. DADOS DO TÉCNICO RESPONSÁVEL
     st.subheader("👤 Técnico Responsável")
     st.session_state.dados['tecnico_nome'] = st.text_input("Nome:", value=st.session_state.dados['tecnico_nome'])
     st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ Técnico:", value=st.session_state.dados['tecnico_documento'])
@@ -394,92 +327,40 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # VALIDAÇÃO DE CAMPOS OBRIGATÓRIOS
     if not st.session_state.dados['nome'] or not st.session_state.dados['whatsapp']:
         st.error("📋 STATUS: PENDENTE (Preencha Cliente e WhatsApp)")
     else:
         st.success("📋 STATUS: PRONTO PARA ENVIO")
         
-    # MENSAGEM WHATSAPP - ENVIO DE TODOS OS DADOS SEM EXCEÇÃO
-    msg_zap = (
-        f"*LAUDO TÉCNICO HVAC*\n\n"
-        f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
-        f"🆔 CPF/CNPJ: {st.session_state.dados['cpf_cnpj']}\n"
-        f"📍 END: {st.session_state.dados['endereco']}, {st.session_state.dados['numero']} - {st.session_state.dados['bairro']}\n"
-        f"🏙️ {st.session_state.dados['cidade']}/{st.session_state.dados['uf']} | CEP: {st.session_state.dados['cep']}\n"
-        f"📞 Contato: {st.session_state.dados['whatsapp']} | Email: {st.session_state.dados['email']}\n\n"
-        f"⚙️ *EQUIPAMENTO:*\n"
-        f"📌 TAG: {st.session_state.dados['tag_id']} | Linha: {st.session_state.dados['linha']}\n"
-        f"🏭 Fab: {st.session_state.dados['fabricante']} | Mod: {st.session_state.dados['modelo']}\n"
-        f"❄️ Cap: {st.session_state.dados['capacidade']} BTU | Fluido: {st.session_state.dados['fluido']}\n"
-        f"🔢 S.Evap: {st.session_state.dados['serie_evap']} | S.Cond: {st.session_state.dados['serie_cond']}\n"
-        f"📍 Loc.Evap: {st.session_state.dados['local_evap']} | Loc.Cond: {st.session_state.dados['local_cond']}\n"
-        f"🛠️ Serviço: {st.session_state.dados['tipo_servico']}\n"
-        f"🩺 Status: {st.session_state.dados['status_maquina']}\n\n"
-        f"👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}\n"
-        f"📜 Registro: {st.session_state.dados['tecnico_registro']}\n"
-        f"📅 Data: {st.session_state.dados['data']}"
-    )
-    
-    link_final = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_zap)}"
-    st.link_button("📲 Enviar Laudo via WhatsApp", link_final, use_container_width=True)
+        # MENSAGEM WHATSAPP ATUALIZADA COM DADOS DO DIAGNÓSTICO
+        msg_zap = (
+            f"*LAUDO TÉCNICO HVAC - MPN SOLUÇÕES*\n\n"
+            f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
+            f"📞 Contato: {st.session_state.dados['whatsapp']}\n\n"
+            f"⚙️ *EQUIPAMENTO:*\n"
+            f"📌 TAG: {st.session_state.dados['tag_id']} | Mod: {st.session_state.dados['modelo']}\n"
+            f"❄️ Cap: {st.session_state.dados['capacidade']} BTU | Fluido: {st.session_state.dados['fluido']}\n\n"
+            f"🩺 *DIAGNÓSTICO TÉCNICO:*\n"
+            f"✅ SH TOTAL: {sh:.2f} K\n"
+            f"✅ SC FINAL: {sc:.2f} K\n"
+            f"✅ Δ TENSÃO: {dif_v:.2f} V\n"
+            f"✅ Δ TEMP: {dt_ar:.2f} °C\n\n"
+            f"📝 *PARECER FINAL:*\n"
+            f"{st.session_state.dados.get('laudo_diag', 'Nenhum parecer informado.')}\n\n"
+            f"👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}\n"
+            f"📅 Data: {st.session_state.dados['data']}"
+        )
+        
+        # Correção do link com urllib
+        import urllib.parse
+        link_final = f"https://wa.me/55{st.session_state.dados['whatsapp'].replace(' ', '').replace('-', '')}?text={urllib.parse.quote(msg_zap)}"
+        st.link_button("📲 Enviar Laudo via WhatsApp", link_final, use_container_width=True)
 
-    st.markdown("---")
-    # LIMPAR FORMULÁRIO (PROTEGENDO DADOS DO TÉCNICO)
     if st.button("🗑️ Limpar Formulário", use_container_width=True):
         chaves_tecnico = ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']
         for key in st.session_state.dados.keys():
-            if key not in chaves_tecnico:
-                st.session_state.dados[key] = ""
+            if key not in chaves_tecnico: st.session_state.dados[key] = ""
         st.rerun()
-
-
-# ==============================================================================
-# 4. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
-# ==============================================================================
-# Use a seleção do sidebar para chamar a função correta
-if aba_selecionada == "Home":
-    # --- NOVA APRESENTAÇÃO DA ABA HOME (COM LOGO MPN SOLUÇÕES ) ---
-    st.markdown("<br>", unsafe_allow_html=True) # Espaçamento superior
-
-    # 1. CENTRALIZAÇÃO E EXIBIÇÃO DA LOGOMARCA
-    col1, col2, col3 = st.columns([1, 2, 1]) 
-    with col2: 
-        # NOME DO ARQUIVO DE IMAGEM QUE ESTÁ SENDO USADO
-        NOME_ARQUIVO_LOGO = "logo.png"
-        
-        # VERIFICAÇÃO ADICIONAL DO ARQUIVO NO DISCO (PARA AJUDAR NO DIAGNÓSTICO)
-        if os.path.exists(NOME_ARQUIVO_LOGO):
-            try:
-                # SE O ARQUIVO EXISTE, TENTA EXIBIR
-                st.image(NOME_ARQUIVO_LOGO, use_container_width=True) 
-            except Exception as e:
-                st.error(f"⚠️ Erro ao tentar abrir a imagem '{NOME_ARQUIVO_LOGO}'. Verifique se o arquivo está corrompido.")
-                st.write(f"Detalhes do erro do sistema: {e}")
-        else:
-            st.error(f"⚠️ Erro: Arquivo '{NOME_ARQUIVO_LOGO}' não encontrado na pasta raiz.")
-            st.info("Verifique se o nome do arquivo salvo no computador é EXATAMENTE 'logo.png' (maiúsculas/minúsculas importam).")
-
-    st.markdown("<br><br>", unsafe_allow_html=True) 
-
-    # 2. TÍTULO E BOAS-VINDAS CENTRALIZADOS E ESTILIZADOS
-    st.markdown("""
-        <div style="text-align: center;">
-            <h1 style="color: #0d47a1; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-                MPN Soluções
-            </h1>
-            <p style="color: #1976d2; font-size: 1.3em;">
-                Soluções em Refrigeração e Climatização
-            </p>
-            <hr style="border: 1px solid #90caf9; width: 60%; margin: 20px auto;">
-            <p style="color: #455a64; font-size: 1.1em; font-weight: bold;">
-                Bem-vindo ao Sistema HVAC Pro de Gestão Inteligente.
-            </p>
-            <p style="color: #546e7a; font-size: 1.0em;">
-                Selecione uma opção no Painel de Controle lateral para iniciar sua inspeção ou diagnóstico.
-            </p>
-        </div>
-    """, unsafe_allow_html=True)
     # ------------------------------------------------
 
 elif aba_selecionada == "1. Cadastro de Equipamentos":
