@@ -153,153 +153,92 @@ def f_sat_precisao(p, g):
 # ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO FINAL CONSOLIDADA E ESTILIZADA)
 # ==============================================================================
+
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
     
-    # --- RESGATE DE DADOS E CONFIGURAÇÃO ---
-    # Busca o fluido selecionado na Aba 1
+    # --- CONFIGURAÇÃO DE ESTILO (DESTAQUE VERDE) ---
     fluido = st.session_state.dados.get('fluido', 'R410A')
-    st.info(f"❄️ Fluido Refrigerante em Análise: **{fluido}**")
-
-    # --- CSS PARA DESTAQUE E BELEZA DOS CAMPOS (PERSONALIZAÇÃO) ---
     st.markdown("""
         <style>
-        /* Estilo para as métricas (Números Grandes e Verdes) */
+        /* Estilo para números grandes e destacados */
         div[data-testid="stMetricValue"] > div {
-            font-size: 2.2rem !important; /* Aumenta o tamanho */
-            color: #00e676 !important;    /* Verde brilhante */
+            font-size: 2rem !important;
+            color: #00e676 !important;
             font-weight: bold;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.3); /* Sombra para destaque */
         }
-        /* Estilo para as legendas das métricas */
-        div[data-testid="stMetricLabel"] > label {
-            font-size: 1.1rem !important;
-            color: #eceff1 !important;    /* Branco acinzentado */
-            text-transform: uppercase;   /* Letras maiúsculas */
-            letter-spacing: 1px;
+        /* Alerta para Superaquecimento crítico */
+        .sh-alerta {
+            background-color: #ff1744; color: white; padding: 10px;
+            border-radius: 8px; text-align: center; font-weight: bold;
         }
-        /* Estilo para o Alerta Crítico (Risco Líquido) */
-        .sh-critico {
-            background-color: #ff1744;    /* Vermelho vibrante */
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 1.2em;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-        /* Estilo para a Sobrecarga Elétrica */
-        .sobrecarga {
-            color: #ff5252;
-            font-weight: bold;
-            font-size: 14px;
-            animation: piscar 1s infinite; /* Efeito piscar opcional */
-        }
-        @keyframes piscar { 50% { opacity: 0; } }
         </style>
     """, unsafe_allow_html=True)
 
-    # --- 1. MEDIÇÕES DE CAMPO (INPUTS ORGANIZADOS) ---
+    # --- 1. ENTRADA DE DADOS (MEDIÇÕES) ---
     st.subheader("1. Medições de Campo")
-    
-    # Layout de 5 colunas para inputs (conforme o papel original)
-    col1, col2, col3, col4, col5 = st.columns(5)
+    c1, c2, c3, c4, c5 = st.columns(5)
+    with c1:
+        p_suc = st.number_input("P. Sucção (PSI)", format="%.2f", key="ps_v3")
+        t_suc = st.number_input("T. Tubo Suc. (°C)", format="%.2f", key="ts_v3")
+    with c2:
+        p_des = st.number_input("P. Desc. (PSI)", format="%.2f", key="pd_v3")
+        t_liq = st.number_input("T. Tubo Líq. (°C)", format="%.2f", key="tl_v3")
+    with c3:
+        v_lin = st.number_input("Tens. Linha (V)", value=220.0, key="vl_v3")
+        v_med = st.number_input("Tens. Medida (V)", value=220.0, key="vm_v3")
+    with c4:
+        t_ret = st.number_input("T. Retorno (°C)", format="%.2f", key="tr_v3")
+        t_ins = st.number_input("T. Insufla. (°C)", format="%.2f", key="ti_v3")
+        rla = st.number_input("RLA (A)", value=0.0, key="rla_v3")
+        i_med = st.number_input("Corr. Medida (A)", value=0.0, key="im_v3")
+    with c5:
+        cn_c = st.number_input("C. Nom. Comp", value=0.0, key="cnc_v3")
+        cm_c = st.number_input("C. Lido Comp", value=0.0, key="cmc_v3")
+        cn_f = st.number_input("C. Nom. Fan", value=0.0, key="cnf_v3")
+        cm_f = st.number_input("C. Lido Fan", value=0.0, key="cmf_v3")
 
-    with col1:
-        st.markdown("🔵 **EVAPORADORA**")
-        p_suc = st.number_input("P. Sucção (PSI)", format="%.2f", step=0.1, key="ps_final_v2")
-        t_suc = st.number_input("T. Tubo Suc. (°C)", format="%.2f", step=0.1, key="ts_final_v2")
-        t_ret = st.number_input("T. Retorno (°C)", format="%.2f", step=0.1, key="tr_final_v2")
-        t_ins = st.number_input("T. Insufla. (°C)", format="%.2f", step=0.1, key="ti_final_v2")
-
-    with col2:
-        st.markdown("🔴 **CONDENSADORA**")
-        p_des = st.number_input("P. Desc. (PSI)", format="%.2f", step=0.1, key="pd_final_v2")
-        t_liq = st.number_input("T. Tubo Líq. (°C)", format="%.2f", step=0.1, key="tl_final_v2")
-
-    with col3:
-        st.markdown("⚡ **TENSÃO**")
-        v_lin = st.number_input("Tens. Linha (V)", format="%.2f", value=220.0, step=1.0, key="vl_final_v2")
-        v_med = st.number_input("Tens. Medida (V)", format="%.2f", value=220.0, step=1.0, key="vm_final_v2")
-
-    with col4:
-        st.markdown("🔌 **CORRENTE**")
-        # Definição ÚNICA da variável lra (para evitar o NameError)
-        lra = st.number_input("LRA (A)", format="%.2f", step=0.1, key="lra_final_v2") 
-        rla = st.number_input("RLA Nominal (A)", format="%.2f", step=0.1, key="rla_final_v2")
-        i_med = st.number_input("Corr. Medida (A)", format="%.2f", step=0.1, key="im_final_v2")
-
-    with col5:
-        st.markdown("🔋 **CAPACIT.**")
-        cn_c = st.number_input("C. Nom. Comp (µF)", format="%.2f", key="cnc_final_v2")
-        cn_f = st.number_input("C. Nom. Fan (µF)", format="%.2f", key="cnf_final_v2")
-        cm_c = st.number_input("C. Lido Comp (µF)", format="%.2f", key="cmc_final_v2")
-        cm_f = st.number_input("C. Lido Fan (µF)", format="%.2f", key="cmf_final_v2")
-
-    # --- 2. CÁLCULOS E PROCESSAMENTO (MOTOR DE PRECISÃO) ---
-    # (Certifique-se que a função f_sat_precisao está definida no topo do arquivo)
-    
+    # --- 2. PROCESSAMENTO DOS CÁLCULOS ---
     t_sat_s = f_sat_precisao(p_suc, fluido)
     t_sat_d = f_sat_precisao(p_des, fluido)
     
-    # Cálculos das métricas principais
     sh = (t_suc - t_sat_s) if p_suc > 0 else 0.0
     sc = (t_sat_d - t_liq) if p_des > 0 else 0.0
-    dt_ar = (t_ret - t_ins) if (t_ret > 0 and t_ins > 0) else 0.0
-    
-    # Cálculos elétricos
     dif_v = v_lin - v_med
-    dif_i = (i_med - rla) if rla > 0 else 0.0
-    d_comp = cm_c - cn_c if (cm_c > 0 and cn_c > 0) else 0.0
-    d_fan = cm_f - cn_f if (cm_f > 0 and cn_f > 0) else 0.0
+    dt_ar = (t_ret - t_ins) if (t_ret > 0 and t_ins > 0) else 0.0
+    dif_i = i_med - rla
+    d_comp = cm_c - cn_c
+    d_fan = cm_f - cn_f
 
-    # --- 3. EXIBIÇÃO ÚNICA DE RESULTADOS (O FIM DA TRIPLICAÇÃO) ---
+    # --- 3. RESULTADOS CALCULADOS (ORDEM DO RASCUNHO) ---
     st.markdown("---")
     st.subheader("2. Resultados Calculados")
-
-    # LINHA 1 (Métricas Principais em 5 colunas)
-    res1, res2, res3, res4, res5 = st.columns(5)
     
-    res1.metric("Δ T Ar", f"{dt_ar:.2f} °C")
-    
-    with res2:
-        # SH TOTAL com alerta visual de risco líquido (destaque vermelho)
+    # --- PRIMEIRA LINHA ---
+    l1 = st.columns(5)
+    with l1[0]: # SH TOTAL
         if sh < 5 and p_suc > 0:
-            st.markdown(f'<div class="sh-critico">SH TOTAL: {sh:.1f} K<br>⚠️ RISCO LÍQUIDO</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="sh-alerta">SH: {sh:.1f} K<br>⚠️ RISCO</div>', unsafe_allow_html=True)
         else:
             st.metric("SH TOTAL", f"{sh:.1f} K")
-            
-    res3.metric("SC Final", f"{sc:.1f} K")
-    res4.metric("COP Est.", "0.00") # Espaço para cálculo futuro
-    res5.metric("Queda Tens.", f"{dif_v:.1f} V")
+    l1[1].metric("SAT. BAIXA", f"{t_sat_s:.1f} °C")
+    l1[2].metric("Δ TENSÃO", f"{dif_v:.1f} V")
+    l1[3].metric("ΔT (AR)", f"{dt_ar:.2f} °C")
+    l1[4].metric("Δ CAP. COMP", f"{d_comp:.1f} µF")
 
-    # LINHA 2 (Métricas Técnicas e Saturação em 5 colunas)
-    res6, res7, res8, res9, res10 = st.columns(5)
-    
-    res6.metric("Sat. Baixa", f"{t_sat_s:.1f} °C")
-    res7.metric("Sat. Alta", f"{t_sat_d:.1f} °C")
-    
-    with res8:
-        st.metric("Dif. RLA", f"{dif_i:.2f} A")
-        # Alerta de sobrecarga elétrica
-        if i_med > rla and rla > 0:
-            st.markdown('<span class="sobrecarga">⚠️ SOBRECARGA</span>', unsafe_allow_html=True)
-        if lra > 0:
-            st.caption(f"LRA Ref: {lra:.2f} A") # Exibe o LRA definido acima
-            
-    res9.metric("Δ Cap. Comp", f"{d_comp:.1f} µF")
-    res10.metric("Δ Cap. Fan", f"{d_fan:.2f} µF")
+    # --- SEGUNDA LINHA ---
+    l2 = st.columns(5)
+    l2[0].metric("SC FINAL", f"{sc:.1f} K")
+    l2[1].metric("SAT. ALTA", f"{t_sat_d:.1f} °C")
+    l2[2].metric("Δ CORRENTE", f"{dif_i:.2f} A")
+    l2[3].metric("COP", "0.00") # Espaço para cálculo de eficiência
+    l2[4].metric("Δ FAN", f"{d_fan:.1f} µF")
 
-    # --- 4. PARECER TÉCNICO ÚNICO ---
+    # --- 4. PARECER TÉCNICO ---
     st.markdown("---")
     st.subheader("3. Parecer Técnico")
-    # Usa value=st.session_state... para não apagar o texto ao trocar de aba
-    st.session_state.dados['laudo_diag'] = st.text_area(
-        label="Notas e Diagnóstico Final:", 
-        value=st.session_state.dados.get('laudo_diag', ''),
-        key="area_laudo_final_v2"
-    )
+    st.text_area("Diagnóstico Final:", value=st.session_state.dados.get('laudo_diag', ''), key="laudo_final_v3")
+
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
 # ==============================================================================
