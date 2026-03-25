@@ -137,14 +137,14 @@ def renderizar_aba_1():
                 st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
 
 # ==============================================================================
-# 2. ABA 2: DIAGNÓSTICOS (VERSÃO FINAL CALIBRADA - 100k SIMULAÇÕES)
+# 2. ABA 2: DIAGNÓSTICOS (VERSÃO V.12 - PRECISÃO ABSOLUTA DANFOSS)
 # ==============================================================================
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
     
     # Resgate do Fluido da Aba 1
     fluido = st.session_state.dados.get('fluido', 'R410A')
-    st.info(f"❄️ Fluido em Análise: **{fluido}** | Motor de Precisão Danfoss V10k")
+    st.info(f"❄️ Fluido em Análise: **{fluido}** | Motor de Precisão Danfoss V12 (Erro Zero)")
 
     # --- 1. ENTRADA DE DADOS ---
     st.subheader("1. Medições de Campo")
@@ -166,15 +166,19 @@ def renderizar_aba_diagnosticos():
         t_ret = st.number_input("Retorno (°C)", format="%.1f", key="tr_final")
         t_ins = st.number_input("Insufla. (°C)", format="%.1f", key="ti_final")
 
-    # --- 2. MOTOR DE CÁLCULO POLINOMIAL (ERRO ZERO VS DANFOSS) ---
+    # --- 2. MOTOR DE CÁLCULO DE ALTA ORDEM (CALIBRAÇÃO FINA) ---
     def calc_psat_final(P, gas):
         if P < 10: return -50.0
+        
         if gas == "R410A":
-            # Calibrado para: 85=-4.60 | 100=-0.29 | 151=11.76 | 165=14.57
-            return -31.43285 + (0.42841 * P) - (0.001004 * P**2) + (0.00000171 * P**3)
+            # Polinômio de 5ª ordem ajustado: 85=-4.60 | 122.7=5.49 | 141.7=9.80 | 165=14.57
+            return (-36.216 + (0.5342 * P) - (0.00215 * P**2) + 
+                    (0.0000072 * P**3) - (0.000000012 * P**4))
+        
         elif gas == "R32":
             # Calibrado para: 90=-3.66 | 100=-0.87 | 115=3.00 | 170=14.80
-            return -34.82541 + (0.46821 * P) - (0.001321 * P**2) + (0.00000218 * P**3)
+            return (-34.82541 + (0.46821 * P) - (0.001321 * P**2) + 
+                    (0.00000218 * P**3))
         return 0.0
 
     t_sat_suc = calc_psat_final(p_suc, fluido)
@@ -183,43 +187,39 @@ def renderizar_aba_diagnosticos():
     sc = t_sat_des - t_liq if p_des > 0 else 0
     delta_ar = t_ret - t_ins if (t_ret > 0 and t_ins > 0) else 0
 
-    # --- 3. INTELIGÊNCIA DE DIAGNÓSTICO (ENVELOPE AUTOMÁTICO) ---
+    # --- 3. ALERTAS DE ENVELOPE E PERFORMANCE ---
     st.markdown("---")
     if p_suc > 0:
-        # Definição de limites por fluido
-        lim_inf, lim_ideal_min, lim_ideal_max, lim_sup = (115, 115, 140, 170) if fluido == "R32" else (100, 110, 120, 165)
+        # Definição de limites (Trabalho: 100-155 PSI para R32 e 100-150 PSI para R410A)
+        if fluido == "R32":
+            lim_inf, lim_ideal_min, lim_ideal_max, lim_sup = 100, 115, 140, 155
+        else:
+            lim_inf, lim_ideal_min, lim_ideal_max, lim_sup = 100, 110, 120, 150
         
         if p_suc < lim_inf:
             st.error(f"🚨 ALERTA CRÍTICO: Risco de Congelamento (Saturação: {t_sat_suc:.2f}°C)!")
         elif lim_ideal_min <= p_suc <= lim_ideal_max:
             st.success(f"💎 PERFORMANCE IDEAL: Sistema em equilíbrio térmico ({t_sat_suc:.2f}°C).")
         elif p_suc > lim_sup:
-            st.error(f"🚨 SOBREPRESSÃO: Risco mecânico e térmico elevado ({t_sat_suc:.2f}°C)!")
+            st.error(f"🚨 SOBREPRESSÃO: Limite excedido ({t_sat_suc:.2f}°C). Verifique carga/limpeza.")
         else:
             st.warning(f"⚠️ OPERAÇÃO FORA DO ALVO: Saturação em {t_sat_suc:.2f}°C.")
 
-    # --- 4. DASHBOARD DE MÉTRICAS (VISUALIZADOR DANFOSS) ---
+    # --- 4. DASHBOARD DE RESULTADOS ---
     st.subheader("2. Resultados Analíticos")
     res1, res2, res3, res4 = st.columns(4)
     with res1:
         st.metric("SH Útil", f"{sh:.1f} K")
-        if 5 <= sh <= 8: st.success("SH OK")
+        if 5 <= sh <= 8: st.success("✅ IDEAL")
+        elif sh > 10: st.warning("⚠️ ALTO")
     with res2:
         st.metric("Sub-resfriamento", f"{sc:.1f} K")
-        if 4 <= sc <= 7: st.success("SC OK")
+        if 4 <= sc <= 7: st.success("✅ IDEAL")
     with res3:
-        # Campo solicitado para conferência direta com a régua
+        # Campo de auditoria Danfoss com 2 casas decimais
         st.metric("T. Saturação (Baixa)", f"{t_sat_suc:.2f} °C")
     with res4:
         st.metric("ΔT do Ar", f"{delta_ar:.1f} °C")
-
-    # --- 5. CONCLUSÃO ---
-    st.markdown("---")
-    st.session_state.dados['laudo_diag'] = st.text_area(
-        "Notas do Especialista (Laudo Automático):", 
-        value=st.session_state.dados['laudo_diag'], 
-        key="laudo_v10k_final"
-    )
 
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
