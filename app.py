@@ -443,29 +443,32 @@ with st.sidebar:
         st.rerun()
 
 # ==============================================================================
-# 8. LÓGICA DE EXIBIÇÃO (DIRECIONAMENTO)
+# 8. LÓGICA DE EXIBIÇÃO (CORRIGIDA PARA NÃO DAR ERRO)
 # ==============================================================================
-if aba_selecionada == "Home":
+
+# Note que mudei de 'aba_selecionada' para 'aba' (que é o que está na sua Sidebar)
+if aba == "Home":
     st.markdown("<br>", unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([1, 2, 1])
+    # Aumentei a logo e centralizei conforme sua prioridade
+    col1, col2, col3 = st.columns([0.5, 2, 0.5]) 
     with col2:
         if os.path.exists("logo.png"): 
             st.image("logo.png", use_container_width=True)
         else: 
             st.markdown("<h1 style='text-align: center;'>❄️ MPN</h1>", unsafe_allow_html=True)
-    st.markdown("<div style='text-align: center;'><h1>MPN Soluções</h1><p>Gestão Inteligente HVAC Pro</p></div>", unsafe_allow_html=True)
+    
+    # Textos da Home ajustados para o seu novo padrão
+    st.markdown("<div style='text-align: center;'><h1>Bem-vindo ao REFRI PRÓ</h1><h3>Gestão Inteligente em Refrigeração e Climatização</h3><p>Sistema de gestão técnica e diagnósticos em tempo real da MPN Soluções.</p></div>", unsafe_allow_html=True)
+    st.info("Selecione '1. Cadastro' no menu lateral para iniciar o atendimento.")
 
-elif aba_selecionada == "1. Cadastro": 
+elif aba == "1. Cadastro": 
     renderizar_aba_1()
 
-elif aba_selecionada == "2. Diagnósticos": 
+elif aba == "2. Diagnósticos": 
     renderizar_aba_diagnosticos()
 
-elif aba_selecionada == "3. Assistente de Campo": 
-    # Chama a função de análise IA que criamos anteriormente
+elif aba == "3. Assistente de Campo": 
     renderizar_aba_assistente() 
 
-elif aba_selecionada == "Relatórios":
-    # Chama a função que gera o laudo completo para o cliente
+elif aba == "Relatórios":
     renderizar_aba_laudo()
-    
