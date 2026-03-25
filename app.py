@@ -9,7 +9,38 @@ import urllib.parse
 import os # Biblioteca para verificar arquivos no sistema
 import numpy as np
 import urllib.parse
+import requests
 
+
+# Dentro de renderizar_aba_1, na seção de endereço:
+ce1, ce2, ce3 = st.columns([1, 2, 1])
+cep_input = ce1.text_input("CEP *", value=st.session_state.dados.get('cep', ''), key="cep_f")
+
+# O GATILHO QUE CHAMA A FUNÇÃO:
+if cep_input != st.session_state.dados.get('cep', ''):
+    st.session_state.dados['cep'] = cep_input
+    if buscar_cep(cep_input): 
+        st.rerun() # Isso faz a tela "piscar" e já aparecer o endereço preenchido
+
+def buscar_cep(cep):
+    # Remove hífen ou pontos caso o usuário digite
+    cep = cep.replace("-", "").replace(".", "").strip()
+    
+    if len(cep) == 8 and cep.isdigit():
+        try:
+            response = requests.get(f"https://viacep.com.br/ws/{cep}/json/")
+            if response.status_code == 200:
+                dados_cep = response.json()
+                if "erro" not in dados_cep:
+                    # Atualiza o dicionário global de dados
+                    st.session_state.dados['endereco'] = dados_cep.get('logradouro', '')
+                    st.session_state.dados['bairro'] = dados_cep.get('bairro', '')
+                    st.session_state.dados['cidade'] = dados_cep.get('localidade', '')
+                    st.session_state.dados['uf'] = dados_cep.get('uf', '')
+                    return True
+        except:
+            pass
+    return False
 
 # 1. CONFIGURAÇÃO INICIAL (TESTADA)
 
@@ -81,25 +112,40 @@ def renderizar_aba_1():
         st.session_state.dados['tel_fixo'] = cx2.text_input("Fixo:", value=st.session_state.dados.get('tel_fixo', ''), key="cli_fixo_f")
         st.session_state.dados['email'] = cx3.text_input("E-mail:", value=st.session_state.dados.get('email', ''), key="cli_email_f")
 
+
+# --- PARTE FINAL DO EXPANDER (Cadastro de Endereço) ---
         st.markdown("---")
         ce1, ce2, ce3 = st.columns([1, 2, 1])
-        cep_input = ce1.text_input("CEP *", value=st.session_state.dados.get('cep', ''), key="cli_cep_f")
         
-        # Busca de CEP com Rerun para atualizar campos automaticamente
-        if cep_input != st.session_state.dados.get('cep', ''):
-            st.session_state.dados['cep'] = cep_input
-            if buscar_cep(cep_input): 
-                st.rerun()
+        # 1. Campo de entrada do CEP
+        cep_input = ce1.text_input("CEP *", value=st.session_state.dados.get('cep', ''), key="cli_cep_f")
 
+        # 2. Gatilho de Automação (DENTRO do expander para manter a lógica próxima ao campo)
+        if cep_input != st.session_state.dados.get('cep', ''):
+            clean_cep = cep_input.replace("-", "").replace(".", "").strip()
+            if len(clean_cep) == 8:
+                with st.spinner('Buscando endereço...'):
+                    if buscar_cep(clean_cep):
+                        st.session_state.dados['cep'] = cep_input
+                        st.rerun()
+
+        # 3. Logradouro e Número
         st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados.get('endereco', ''), key="cli_end_f")
         st.session_state.dados['numero'] = ce3.text_input("Nº/Apto:", value=st.session_state.dados.get('numero', ''), key="cli_num_f")
 
+        # 4. Complemento, Bairro, Cidade e UF
         ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.4])
         st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados.get('complemento', ''), key="cli_comp_f")
         st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados.get('bairro', ''), key="cli_bair_f")
         st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados.get('cidade', ''), key="cli_cid_f")
         st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados.get('uf', ''), max_chars=2, key="cli_uf_f")
 
+    # --- FINAL DA FUNÇÃO renderizar_aba_1 ---
+    # Coloque o tratamento de MAIÚSCULO aqui (apenas uma vez)
+    if st.session_state.dados.get('uf'):
+        st.session_state.dados['uf'] = st.session_state.dados['uf'].upper()
+
+    
     # --- SEÇÃO EQUIPAMENTO ---
     st.markdown("### ⚙️ Especificações do Equipamento")
     with st.expander("Detalhes Técnicos do Ativo", expanded=True):
