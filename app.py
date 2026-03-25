@@ -120,26 +120,32 @@ def renderizar_aba_1():
         ce1, ce2, ce3 = st.columns([1, 2, 1])
         cep_input = ce1.text_input("CEP *", value=st.session_state.dados.get('cep', ''), key="cli_cep_f")
 
-        # GATILHO DE CEP: Executa a busca de forma inteligente
-        # Primeiro, higienizamos o que foi digitado
+# --- GATILHO DE CEP CORRIGIDO E SEGURO ---
+        # 1. Limpamos o que foi digitado
         clean_cep = cep_input.replace("-", "").replace(".", "").strip()
         
-        # Só dispara se o valor digitado for diferente do que já processamos antes
+        # 2. Só rodamos se o valor for novo e tiver 8 dígitos
         if clean_cep != st.session_state.dados.get('cep_processado', ''):
             if len(clean_cep) == 8:
                 with st.spinner('Buscando endereço...'):
-                    if buscar_cep(clean_cep):
-                        # Salvamos o CEP original e marcamos como processado
-                        st.session_state.dados['cep'] = cep_input
-                        st.session_state.dados['cep_processado'] = clean_cep
-                        st.rerun()
-            # Se o usuário apagar o campo, limpamos a marca de processamento
+                    try:
+                        if buscar_cep(clean_cep):
+                            # Salva o estado para evitar que o gatilho rode de novo
+                            st.session_state.dados['cep'] = cep_input
+                            st.session_state.dados['cep_processado'] = clean_cep
+                            st.rerun()
+                    except NameError:
+                        st.error("Erro: A função 'buscar_cep' não foi definida no topo do arquivo.")
+            
+            # Se o usuário limpar o campo, resetamos o processado
             elif len(clean_cep) == 0:
                 st.session_state.dados['cep_processado'] = ''
 
+        # --- CAMPOS DE EXIBIÇÃO ---
+        # Note que esses campos devem vir LOGO APÓS o gatilho
         st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados.get('endereco', ''), key="cli_end_f")
         st.session_state.dados['numero'] = ce3.text_input("Nº/Apto:", value=st.session_state.dados.get('numero', ''), key="cli_num_f")
-
+        
         # Linha 4: Detalhes do Endereço
         ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.4])
         st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados.get('complemento', ''), key="cli_comp_f")
