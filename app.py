@@ -301,7 +301,7 @@ def renderizar_aba_diagnosticos():
     with l2_c5: st.metric("Δ Fan", f"{(cm_f - cn_f):.2f} µF")
 
     # ==============================================================================
-    # 3. PARECER TÉCNICO (ÚNICO E FINAL)
+    # 2.2. PARECER TÉCNICO (ÚNICO E FINAL)
     # ==============================================================================
     st.markdown("---")
     st.subheader("3. Parecer Técnico")
@@ -422,10 +422,17 @@ def renderizar_aba_diagnosticos():
 
     st.markdown("---")
 
-    # --- BLOCO 4: CONCLUSÃO E LAUDO ---
+  # ... (Bloco de Resultados 5x2 que arrumamos antes) ...
+
+    # --- BLOCO 4: CONCLUSÃO E LAUDO (MANTENHA APENAS ESTE) ---
+    st.markdown("---")
     st.subheader("3. Parecer Técnico Final")
     st.session_state.dados['laudo_diag'] = st.text_area(
         "Descreva o diagnóstico ou anomalias encontradas:",
-        placeholder="Ex: Sistema operando com pressões estáveis, superaquecimento normal...",
+        value=st.session_state.dados.get('laudo_diag', ''), # Importante para não apagar o texto ao trocar de aba
+        placeholder="Ex: Sistema operando com pressões estáveis...",
         key="laudo_area_diag"
     )
+
+elif aba_selecionada == "1. Cadastro de Equipamentos":
+    # Seu código do cadastro aqui...
