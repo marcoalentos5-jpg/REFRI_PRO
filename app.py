@@ -254,8 +254,18 @@ with st.sidebar:
     # B. DADOS DO TÉCNICO RESPONSÁVEL
     st.subheader("👤 Técnico Responsável")
     st.session_state.dados['tecnico_nome'] = st.text_input("Nome:", value=st.session_state.dados['tecnico_nome'])
-    st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ Técnico:", value=st.session_state.dados['tecnico_documento'])
     st.session_state.dados['tecnico_registro'] = st.text_input("Inscrição (CFT/CREA):", value=st.session_state.dados['tecnico_registro'])
+    # 1. Nome do Técnico
+nome_tec = st.session_state.get('dados', {}).get('tecnico_nome', 'Marcos Alexandre')
+st.session_state.setdefault('dados', {})['tecnico_nome'] = st.text_input("Técnico Responsável:", value=nome_tec)
+
+# 2. Documento (A linha 257 corrigida)
+doc_tec = st.session_state.get('dados', {}).get('tecnico_documento', '')
+st.session_state.setdefault('dados', {})['tecnico_documento'] = st.text_input("CPF/CNPJ Técnico:", value=doc_tec)
+
+# 3. Registro Profissional
+reg_tec = st.session_state.get('dados', {}).get('tecnico_registro', '')
+st.session_state.setdefault('dados', {})['tecnico_registro'] = st.text_input("Registro Federal (CFT/CREA):", value=reg_tec)
     
     st.markdown("---")
     
