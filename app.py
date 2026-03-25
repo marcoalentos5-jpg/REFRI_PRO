@@ -136,8 +136,9 @@ def renderizar_aba_1():
                 st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Manutenção Preventiva", "Manutenção Corretiva", "Instalação", "Infraestrutura"], index=0)
                 st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados['tag_id'])
 
+
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO CALIBRADA - MOTOR V.20)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO FINAL CONSOLIDADA)
 # ==============================================================================
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
@@ -189,92 +190,84 @@ def renderizar_aba_diagnosticos():
         cm_c = st.number_input("C. Med. Comp", format="%.2f", key="cmc_final")
         cm_f = st.number_input("C. Med. Fan", format="%.2f", key="cmf_final")
 
-    # --- 2. MOTOR DE CÁLCULO (INTERPOLAÇÃO REAL) ---
-    def f_sat_precisao(p, g):
+    # --- 2. MOTOR DE CÁLCULO (DEFINIÇÃO ÚNICA) ---
+    def f_sat_precisao_local(p, g):
         if p <= 5: return -50.0
-        if g == "R410A":
-            # TABELA RECALCULADA 90-150 (Conforme seus dados de campo)
-            
-            pressões = [90.0, 100.0, 105.0, 110.0, 115.0, 120.0, 122.7, 130.9, 141.7, 150.0]
-            saturações = [-3.50, -0.29, 1.06, 2.36, 3.62, 4.84, 5.50, 7.40, 9.80, 11.50]
-            
-           # --- 2. MOTOR DE PRECISÃO (SISTEMA DE BUSCA DIRETA - SEM ERRO) ---
-    def f_sat_precisao(p, g):
-        if p <= 5: return -50.0
-        
-        # TABELA R410A (Seus pontos auditados)
         if g == "R410A":
             xp = [90.0, 100.0, 105.0, 110.0, 115.0, 120.0, 122.7, 130.9, 141.7, 150.0]
             fp = [-3.50, -0.29, 1.06, 2.36, 3.62, 4.84, 5.50, 7.40, 9.80, 11.50]
         elif g == "R32":
             xp = [90.0, 100.0, 115.0, 140.0, 170.0]
             fp = [-3.66, -0.87, 3.00, 8.50, 14.80]
-        else:
-            return 0.0
+        else: return 0.0
 
         for i in range(len(xp) - 1):
             if xp[i] <= p <= xp[i+1]:
                 return fp[i] + (p - xp[i]) * (fp[i+1] - fp[i]) / (xp[i+1] - xp[i])
         return fp[0] if p < xp[0] else fp[-1]
 
-    # --- INICIALIZAÇÃO DE VARIÁVEIS (EVITA O ERRO NA LINHA 236) ---
-    t_sat_s = f_sat_precisao(p_suc, fluido)
-    t_sat_d = f_sat_precisao(p_des, fluido)
+    # --- PROCESSAMENTO ---
+    t_sat_s = f_sat_precisao_local(p_suc, fluido)
+    t_sat_d = f_sat_precisao_local(p_des, fluido)
     sh = (t_suc - t_sat_s) if p_suc > 0 else 0.0
     sc = (t_sat_d - t_liq) if p_des > 0 else 0.0
     dt_ar = (t_ret - t_ins) if (t_ret > 0 and t_ins > 0) else 0.0
     dif_v = v_lin - v_med
-    dif_i = (rla - i_med) if rla > 0 else 0.0
-   
-      # --- 3. ALERTAS DE EXTREMOS (CALIBRADOS: 110-130 PSI) ---
-    if p_suc > 0:
-                texto_base = f"TEMP. SATURAÇÃO = {t_sat_s:.2f}ºC"
-        
-       # --- 3. ALERTAS DE EXTREMOS (LINHA 233 CORRIGIDA) ---
+    dif_i = (i_med - rla) if rla > 0 else 0.0 # Positivo se estiver acima do nominal
+
+    # --- 3. ALERTA DE PRESSÃO (ÚNICO) ---
     if p_suc > 0:
         texto_base = f"TEMP. SATURAÇÃO = {t_sat_s:.2f}ºC"
-        
         if p_suc < 110:
-            st.markdown(f'<div class="alerta-pressao" style="background-color: #ffc107; color: black; padding: 10px; border-radius: 5px; text-align: center; font-weight: bold;">{texto_base}  -  ⚠️ SUBPRESSÃO: ABAIXO DE 110 PSI</div>', unsafe_allow_html=True)
+            color, msg = "#ffc107", "⚠️ SUBPRESSÃO: ABAIXO DE 110 PSI"
+            t_color = "black"
         elif 110 <= p_suc <= 130:
-            st.markdown(f'<div class="alerta-pressao" style="background-color: #4caf50; color: white; padding: 10px; border-radius: 5px; text-align: center; font-weight: bold;">{texto_base}  -  ✅ PRESSÃO IDEAL: 110 A 130 PSI</div>', unsafe_allow_html=True)
+            color, msg = "#4caf50", "✅ PRESSÃO IDEAL: 110 A 130 PSI"
+            t_color = "white"
         else:
-            st.markdown(f'<div class="alerta-pressao" style="background-color: #f44336; color: white; padding: 10px; border-radius: 5px; text-align: center; font-weight: bold;">{texto_base}  -  🚨 SOBREPRESSÃO: ACIMA DE 130 PSI</div>', unsafe_allow_html=True)
+            color, msg = "#f44336", "🚨 SOBREPRESSÃO: ACIMA DE 130 PSI"
+            t_color = "white"
+        
+        st.markdown(f'<div class="alerta-pressao" style="background-color: {color}; color: {t_color};">{texto_base}  -  {msg}</div>', unsafe_allow_html=True)
 
-    # --- 4. RESULTADOS CALCULADOS (DISTRIBUIÇÃO 5x2) ---
+    # --- 4. RESULTADOS CALCULADOS (APENAS UM BLOCO 5x2) ---
     st.markdown("---")
     st.subheader("2. Resultados Calculados")
     
     # Linha 1
     l1_c1, l1_c2, l1_c3, l1_c4, l1_c5 = st.columns(5)
-    with l1_c1:
-        st.metric("Δ T", f"{dt_ar:.2f} °C")
+    l1_c1.metric("Δ T Ar", f"{dt_ar:.2f} °C")
     with l1_c2:
         if sh < 5 and p_suc > 0:
-            st.markdown(f'<div class="sh-critico">SH TOTAL: {sh:.2f} K<br>⚠️ RISCO LÍQUIDO</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="sh-critico">SH: {sh:.2f} K<br>⚠️ RISCO LÍQUIDO</div>', unsafe_allow_html=True)
         else:
             st.metric("SH TOTAL", f"{sh:.2f} K")
-    with l1_c3:
-        st.metric("SC Final", f"{sc:.2f} K")
-    with l1_c4:
-        st.metric("COP", "0.00")
-    with l1_c5:
-        st.metric("Queda Tens.", f"{dif_v:.2f} V")
+    l1_c3.metric("SC Final", f"{sc:.2f} K")
+    l1_c4.metric("COP Est.", "0.00")
+    l1_c5.metric("Queda Tens.", f"{dif_v:.2f} V")
 
     # Linha 2
     l2_c1, l2_c2, l2_c3, l2_c4, l2_c5 = st.columns(5)
-    with l2_c1:
-        st.metric("Sat. Baixa", f"{t_sat_s:.2f} °C")
-    with l2_c2:
-        st.metric("Sat. Alta", f"{t_sat_d:.2f} °C")
+    l2_c1.metric("Sat. Baixa", f"{t_sat_s:.2f} °C")
+    l2_c2.metric("Sat. Alta", f"{t_sat_d:.2f} °C")
+    
     with l2_c3:
         st.metric("Dif. RLA", f"{dif_i:.2f} A")
-    with l2_c4:
-        d_fan = cm_f - cn_f if (cm_f > 0 and cn_f > 0) else 0.0
-        st.metric("Δ Fan", f"{d_fan:.2f} µF")
-    with l2_c5:
-        d_comp = cm_c - cn_c if (cm_c > 0 and cn_c > 0) else 0.0
-        st.metric("Δ Comp.", f"{d_comp:.2f} µF")
+        if i_med > rla and rla > 0:
+            st.markdown('<span class="sobrecarga">⚠️ SOBRECARGA</span>', unsafe_allow_html=True)
+            
+    l2_c4.metric("Δ Fan", f"{cm_f - cn_f:.2f} µF")
+    l2_c5.metric("Δ Comp.", f"{cm_c - cn_c:.2f} µF")
+
+    # --- 5. PARECER TÉCNICO ---
+    st.markdown("---")
+    st.subheader("3. Parecer Técnico")
+    st.session_state.dados['laudo_diag'] = st.text_area(
+        "Notas e Diagnóstico Final:", 
+        value=st.session_state.dados.get('laudo_diag', ''),
+        key="laudo_final_v5"
+    )
+    
     # ==============================================================================
     # 2.1. COLE O NOVO BLOCO (5 COLUNAS X 2 LINHAS) EXATAMENTE AQUI:
     # ==============================================================================
