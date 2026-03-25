@@ -194,9 +194,11 @@ def renderizar_aba_diagnosticos():
         if p <= 5: return -50.0
         if g == "R410A":
             # TABELA RECALCULADA 90-150 (Conforme seus dados de campo)
+            
             pressões = [90.0, 100.0, 105.0, 110.0, 115.0, 120.0, 122.7, 130.9, 141.7, 150.0]
             saturações = [-3.50, -0.29, 1.06, 2.36, 3.62, 4.84, 5.50, 7.40, 9.80, 11.50]
-            # --- 2. MOTOR DE PRECISÃO (SISTEMA DE BUSCA DIRETA - SEM ERRO) ---
+            
+           # --- 2. MOTOR DE PRECISÃO (SISTEMA DE BUSCA DIRETA - SEM ERRO) ---
     def f_sat_precisao(p, g):
         if p <= 5: return -50.0
         
@@ -210,14 +212,19 @@ def renderizar_aba_diagnosticos():
         else:
             return 0.0
 
-        # Lógica de Interpolação Manual (Substitui o np.interp para evitar erros)
         for i in range(len(xp) - 1):
             if xp[i] <= p <= xp[i+1]:
-                # Cálculo da inclinação entre os dois pontos mais próximos
                 return fp[i] + (p - xp[i]) * (fp[i+1] - fp[i]) / (xp[i+1] - xp[i])
-        
-        # Caso esteja fora dos limites da tabela, retorna o extremo
         return fp[0] if p < xp[0] else fp[-1]
+
+    # --- INICIALIZAÇÃO DE VARIÁVEIS (EVITA O ERRO NA LINHA 236) ---
+    t_sat_s = f_sat_precisao(p_suc, fluido)
+    t_sat_d = f_sat_precisao(p_des, fluido)
+    sh = (t_suc - t_sat_s) if p_suc > 0 else 0.0
+    sc = (t_sat_d - t_liq) if p_des > 0 else 0.0
+    dt_ar = (t_ret - t_ins) if (t_ret > 0 and t_ins > 0) else 0.0
+    dif_v = v_lin - v_med
+    dif_i = (rla - i_med) if rla > 0 else 0.0
 
     # --- 3. ALERTAS DE EXTREMOS (110-130 PSI) ---
     if p_suc > 0:
@@ -256,11 +263,9 @@ def renderizar_aba_diagnosticos():
         st.metric("Δ Comp.", f"{cm_c - cn_c:.2f} µF")
         st.caption(f"Δ Fan: {cm_f - cn_f:.2f} µF")
 
-    # --- 4. PARECER TÉCNICO FINAL (LINHA 257 CORRIGIDA) ---
+    # --- 5. PARECER TÉCNICO FINAL ---
     st.markdown("---")
     st.subheader("3. Parecer Técnico")
-    
-    # O segredo aqui é fechar as aspas e o parêntese na mesma instrução
     st.session_state.dados['laudo_diag'] = st.text_area(
         label="Notas e Diagnóstico Final:", 
         value=st.session_state.dados.get('laudo_diag', ''),
