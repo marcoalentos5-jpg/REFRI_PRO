@@ -4,25 +4,23 @@ import requests
 import urllib.parse
 import os
 
-import streamlit as st
-from datetime import datetime
-import os
-
-import streamlit as st
-from datetime import datetime
-import os
 
 # 1. Configuração ÚNICA
 st.set_page_config(page_title="REFRI PRO MPN", page_icon="❄️", layout="wide")
 
-# 2. INICIALIZAÇÃO BLINDADA (Garante que os campos existam antes da Sidebar)
+# 2. INICIALIZAÇÃO BLINDADA (Adicione os campos do cliente aqui também)
 if 'dados' not in st.session_state:
     st.session_state['dados'] = {}
 
-# Garante cada campo individualmente para evitar o erro de 'KeyError'
+# Dados do Técnico (Fixos)
 st.session_state['dados'].setdefault('tecnico_nome', 'Marcos Alexandre Almeida do Nascimento')
 st.session_state['dados'].setdefault('tecnico_registro', '')
 st.session_state['dados'].setdefault('cpf_cnpj', '')
+
+# Dados do Atendimento (Campos que serão preenchidos depois)
+st.session_state['dados'].setdefault('nome', '')
+st.session_state['dados'].setdefault('whatsapp', '')
+st.session_state['dados'].setdefault('tag_id', '')
 
 # 3. Estilo Visual (Logo Centralizada e Grande)
 st.markdown("""
