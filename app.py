@@ -47,35 +47,46 @@ if 'dados' not in st.session_state:
         'capacidade': '12.000', 'fluido': 'R410A', 'status_maquina': '🟢 Operacional'
     }
 
+
+# ... (Imports e Função buscar_cep ficam lá no topo) ...
+
 # ==============================================================================
-# 3. INTERFACE (ESTRUTURA DA ABA)
+# 3. INTERFACE (TUDO DEVE ESTAR DENTRO DESTA FUNÇÃO)
 # ==============================================================================
 def renderizar_aba_1():
     st.subheader("📋 Cadastro de Cliente e Ativo")
-    
+
     with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
+        # --- COLUNA DE IDENTIFICAÇÃO ---
+        c1, c2, c3 = st.columns([2, 1, 1])
+        st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados.get('nome', ''), key="cli_nome_f")
+        
+        st.markdown("---")
+
+        # --- SEÇÃO DE ENDEREÇO (O BLOCO QUE VOCÊ ESTAVA BUSCANDO) ---
         ce1, ce2, ce3 = st.columns([1, 2, 1])
         
-        # Entrada do CEP
+        # 1. Campo de entrada do CEP
         cep_input = ce1.text_input("CEP *", value=st.session_state.dados.get('cep', ''), key="cep_f")
 
-        # --- GATILHO DE AUTOMAÇÃO ---
+        # 2. Gatilho lógico (Não cria componente visual, por isso não tem 'key')
         clean_cep = "".join(filter(str.isdigit, cep_input))
-        
         if clean_cep != st.session_state.dados.get('cep_processado', ''):
             if len(clean_cep) == 8:
-                with st.spinner('Buscando endereço...'):
-                    if buscar_cep(clean_cep):
-                        st.session_state.dados['cep'] = cep_input
-                        st.session_state.dados['cep_processado'] = clean_cep
-                        st.rerun()
-            elif len(clean_cep) == 0:
-                st.session_state.dados['cep_processado'] = ''
+                if buscar_cep(clean_cep):
+                    st.session_state.dados['cep_processado'] = clean_cep
+                    st.rerun()
 
-        # Campos de endereço (preenchidos automaticamente ou manualmente)
-        st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados.get('endereco', ''), key="cli_end_f")
-        st.session_state.dados['numero'] = ce3.text_input("Nº/Apto:", value=st.session_state.dados.get('numero', ''), key="cli_num_f")
+        # 3. Campos que recebem o resultado da busca
+        #st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados.get('endereco', ''), key="cli_end_f")
+        #st.session_state.dados['numero'] = ce3.text_input("Nº/Apto:", value=st.session_state.dados.get('numero', ''), key="cli_num_f")
 
+# ==============================================================================
+# 4. EXECUÇÃO (APENAS UMA LINHA NO FINAL DO ARQUIVO)
+# ==============================================================================
+if __name__ == "__main__":
+    renderizar_aba_1()
+    # CERTIFIQUE-SE DE QUE NÃO HÁ NADA ESCRITO ABAIXO DESTA LINHA!
 # ==============================================================================
 # 4. EXECUÇÃO PRINCIPAL
 # ==============================================================================
