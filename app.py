@@ -225,9 +225,9 @@ def renderizar_aba_diagnosticos():
 
     with col4:
         st.markdown("🔌 **CORRENTE**")
-        rla = st.number_input("RLA Nominal (A)", format="%.2f", step=0.1, key="rla_final_v2")
         # Definição ÚNICA da variável lra (para evitar o NameError)
         lra = st.number_input("LRA (A)", format="%.2f", step=0.1, key="lra_final_v2") 
+        rla = st.number_input("RLA Nominal (A)", format="%.2f", step=0.1, key="rla_final_v2")
         i_med = st.number_input("Corr. Medida (A)", format="%.2f", step=0.1, key="im_final_v2")
 
     with col5:
@@ -300,7 +300,6 @@ def renderizar_aba_diagnosticos():
         value=st.session_state.dados.get('laudo_diag', ''),
         key="area_laudo_final_v2"
     )
-
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
 # ==============================================================================
