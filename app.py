@@ -424,6 +424,7 @@ def renderizar_aba_diagnosticos():
 
   # ... (Bloco de Resultados 5x2 que arrumamos antes) ...
 
+    
     # --- BLOCO 4: CONCLUSÃO E LAUDO (MANTENHA APENAS ESTE) ---
     st.markdown("---")
     st.subheader("3. Parecer Técnico Final")
@@ -433,6 +434,3 @@ def renderizar_aba_diagnosticos():
         placeholder="Ex: Sistema operando com pressões estáveis...",
         key="laudo_area_diag"
     )
-
-elif aba_selecionada == "1. Cadastro de Equipamentos":
-    # Seu código do cadastro aqui...
