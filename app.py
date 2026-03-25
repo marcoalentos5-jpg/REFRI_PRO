@@ -268,7 +268,10 @@ def f_sat_precisao(p, g):
 
 # 1.3. RENDERIZAR CHECKLIST ==================
 
-def renderizar_checklist()
+def renderizar_checklist():
+    st.markdown("---")
+    st.subheader("✅ Checklist PMOC")
+    # ... resto do código
 
 
     
