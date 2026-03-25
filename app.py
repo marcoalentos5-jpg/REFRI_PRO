@@ -13,11 +13,12 @@ st.set_page_config(
 )
 
 # 2. Inicialização da Memória (Evita o erro vermelho que apareceu no print)
+
 if 'dados' not in st.session_state:
     st.session_state['dados'] = {
-        'tecnico_nome': 'Marcos Alexandre',
-        'registro_tecnico': '',
-        'cpf_cnpj': ''
+        'tecnico_registro': '', 
+        'tecnico_nome': 'Marcos Alexandre Almeida do Nascimento',
+        'CPF_CNPJj': ''
     }
 
 # 3. Estilo Visual (Centraliza a Logo e limpa o layout)
