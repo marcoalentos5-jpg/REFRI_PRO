@@ -252,34 +252,40 @@ def renderizar_aba_diagnosticos():
         key="txt_laudo_vfinal"
     )
 
+# --- FIM DA FUNÇÃO ANTERIOR (Certifique-se que ela terminou aqui) ---
+
 # ==============================================================================
-# 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
+# 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ENCENSTADO NA ESQUERDA)
 # ==============================================================================
-# Mudamos esta seção para antes da Lógica de Exibição das Abas para definir aba_selecionada
 with st.sidebar:
     st.title("🚀 Painel de Controle")
 
-    # A. NAVEGAÇÃO E EXIBIÇÃO DAS ABAS (ATIVADA AQUI)
+    # A. NAVEGAÇÃO
     opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
-    # Use st.sidebar.radio para criar os botões de seleção de aba e DEFINIR a variável
-    aba_selecionada = st.sidebar.radio("Selecione a Aba:", opcoes_abas)
+    
+    # Removi o 'sidebar.' aqui porque o 'with' já faz esse papel
+    aba_selecionada = st.radio("Selecione a Aba:", opcoes_abas)
     
     st.markdown("---")
     
     # B. DADOS DO TÉCNICO RESPONSÁVEL
     st.subheader("👤 Técnico Responsável")
-    st.session_state.dados['tecnico_nome'] = st.text_input("Nome:", value=st.session_state.dados['tecnico_nome'])
-    st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ Técnico:", value=st.session_state.dados['tecnico_documento'])
-    st.session_state.dados['tecnico_registro'] = st.text_input("Inscrição (CFT/CREA):", value=st.session_state.dados['tecnico_registro'])
+    
+    # Usando .get() para evitar erros se a chave não existir no início
+    st.session_state.dados['tecnico_nome'] = st.text_input("Nome:", value=st.session_state.dados.get('tecnico_nome', ''))
+    st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ Técnico:", value=st.session_state.dados.get('tecnico_documento', ''))
+    st.session_state.dados['tecnico_registro'] = st.text_input("Inscrição (CFT/CREA):", value=st.session_state.dados.get('tecnico_registro', ''))
     
     st.markdown("---")
     
     # VALIDAÇÃO DE CAMPOS OBRIGATÓRIOS
-    if not st.session_state.dados['nome'] or not st.session_state.dados['whatsapp']:
+    nome_cli = st.session_state.dados.get('nome', '')
+    zap_cli = st.session_state.dados.get('whatsapp', '')
+    
+    if not nome_cli or not zap_cli:
         st.error("📋 STATUS: PENDENTE (Preencha Cliente e WhatsApp)")
     else:
         st.success("📋 STATUS: PRONTO PARA ENVIO")
-        
     # MENSAGEM WHATSAPP - ENVIO DE TODOS OS DADOS SEM EXCEÇÃO
     msg_zap = (
         f"*LAUDO TÉCNICO HVAC*\n\n"
