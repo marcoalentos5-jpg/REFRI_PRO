@@ -1,33 +1,60 @@
 # Certifique-se que esta linha 'def' esteja encostada na margem esquerda (sem espaços antes dela)
+
+import streamlit as st
+import numpy as np
+import requests
+
+# ==============================================================================
+# 1. FUNÇÕES TÉCNICAS E DE UTILIDADE (FORA DAS ABAS)
+# ==============================================================================
+def buscar_cep(cep):
+    try:
+        response = requests.get(f"https://viacep.com.br/ws/{cep}/json/", timeout=5)
+        if response.status_code == 200:
+            dados = response.json()
+            return dados if "erro" not in dados else None
+        return None
+    except:
+        return None
+
+def f_sat_precisao(p, g):
+    """Calcula a temperatura de saturação baseada na pressão (p) e gás (g)"""
+    if p <= 5: return -50.0
+    tabelas = {
+        "R410A": {"xp": [90.0, 100.0, 110.0, 122.7, 130.9, 141.7, 150.0, 350.0, 450.0], "fp": [-3.50, -0.29, 2.36, 5.50, 7.40, 9.80, 11.50, 41.50, 54.00]},
+        "R32":   {"xp": [90.0, 100.0, 115.0, 140.0, 170.0, 380.0, 480.0], "fp": [-3.66, -0.87, 3.00, 8.50, 14.80, 44.00, 56.50]},
+        "R22":   {"xp": [50.0, 60.0, 70.0, 80.0, 100.0, 200.0, 250.0], "fp": [-3.00, 1.50, 5.80, 9.70, 16.50, 38.50, 48.00]},
+        "R134a": {"xp": [20.0, 30.0, 40.0, 50.0, 70.0, 150.0, 200.0], "fp": [-8.00, 1.50, 9.50, 16.20, 27.50, 53.00, 65.50]},
+        "R290":  {"xp": [40.0, 50.0, 65.0, 80.0, 100.0, 150.0, 190.0], "fp": [-10.5, -4.2, 3.50, 10.20, 17.50, 32.50, 42.00]}
+    }
+    if g not in tabelas: return 0.0
+    return float(np.interp(p, tabelas[g]["xp"], tabelas[g]["fp"]))
+
+# ==============================================================================
+# 2. RENDERIZAÇÃO DA ABA 1 (CADASTRO)
+# ==============================================================================
 def renderizar_aba_1():
     st.subheader("📋 Cadastro de Cliente e Ativo")
 
-    # --- SEÇÃO 1: CLIENTE E ENDEREÇO (LOGICA DE CEP BLINDADA) ---
+    # --- SEÇÃO 1: CLIENTE E ENDEREÇO ---
     with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
-        # Função interna de atualização automática
         def atualizar_endereco():
             cep = st.session_state.cli_cep_f.strip().replace("-", "").replace(".", "")
             if len(cep) == 8:
-                try:
-                    dados_cep = buscar_cep(cep)
-                    if dados_cep and isinstance(dados_cep, dict) and "erro" not in dados_cep:
-                        st.session_state.dados['endereco'] = dados_cep.get('logradouro', '')
-                        st.session_state.dados['bairro'] = dados_cep.get('bairro', '')
-                        st.session_state.dados['cidade'] = dados_cep.get('localidade', '')
-                        st.session_state.dados['uf'] = dados_cep.get('uf', '')
-                        st.session_state.dados['cep'] = cep
-                except:
-                    pass
+                res = buscar_cep(cep)
+                if res:
+                    st.session_state.dados.update({
+                        'endereco': res.get('logradouro', ''),
+                        'bairro': res.get('bairro', ''),
+                        'cidade': res.get('localidade', ''),
+                        'uf': res.get('uf', ''),
+                        'cep': cep
+                    })
 
         c1, c2, c3 = st.columns([2, 1, 1])
         st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados.get('nome', ''), key="cli_nome_f")
         st.session_state.dados['cpf_cnpj'] = c2.text_input("CPF/CNPJ", value=st.session_state.dados.get('cpf_cnpj', ''), key="cli_doc_f")
         st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp *", value=st.session_state.dados.get('whatsapp', ''), key="cli_zap_f")
-
-        cx1, cx2, cx3 = st.columns([1, 1, 2])
-        st.session_state.dados['celular'] = cx1.text_input("Celular:", value=st.session_state.dados.get('celular', ''), key="cli_cel_f")
-        st.session_state.dados['tel_fixo'] = cx2.text_input("Fixo:", value=st.session_state.dados.get('tel_fixo', ''), key="cli_fixo_f")
-        st.session_state.dados['email'] = cx3.text_input("E-mail:", value=st.session_state.dados.get('email', ''), key="cli_email_f")
 
         st.markdown("---")
         ce1, ce2, ce3 = st.columns([1, 2, 1])
@@ -41,24 +68,16 @@ def renderizar_aba_1():
         st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados.get('cidade', ''), key="cli_cid_f")
         st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados.get('uf', ''), max_chars=2, key="cli_uf_f")
 
-    # --- SEÇÃO 2: EQUIPAMENTO (LAYOUT FINAL REORDENADO) ---
+    # --- SEÇÃO 2: EQUIPAMENTO (LAYOUT FINAL REFINADO) ---
     st.markdown("### ⚙️ Especificações do Equipamento")
     with st.expander("Detalhes Técnicos do Ativo", expanded=True):
         e1, e2, e3 = st.columns(3) 
         
         with e1:
             fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
-            fab_val = st.session_state.dados.get('fabricante', 'Carrier')
-            fab_idx = fab_list.index(fab_val) if fab_val in fab_list else 0
-            st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx, key="fab_f")
+            st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, key="fab_f")
             st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados.get('modelo', ''), key="mod_f")
-            
-            lista_fluidos = ["R410A", "R134a", "R22", "R32", "R290"]
-            f_atual = st.session_state.dados.get('fluido', 'R410A')
-            f_idx = lista_fluidos.index(f_atual) if f_atual in lista_fluidos else 0
-            st.session_state.dados['fluido'] = st.selectbox("Fluido Refr.:", lista_fluidos, index=f_idx, key="fluid_f")
-            
-            # POTÊNCIA ABAIXO DO FLUIDO
+            st.session_state.dados['fluido'] = st.selectbox("Fluido Refr.:", ["R410A", "R134a", "R22", "R32", "R290"], key="fluid_f")
             st.session_state.dados['potencia'] = st.text_input("Potência (CV/HP):", value=st.session_state.dados.get('potencia', ''), key="pot_f")
 
         with e2:
@@ -68,36 +87,28 @@ def renderizar_aba_1():
             st.session_state.dados['local_evap'] = st.text_input("Localização da Evaporadora:", value=st.session_state.dados.get('local_evap', ''), key="levap_f")
 
         with e3:
-            lista_caps = {"9.000": 9000, "12.000": 12000, "18.000": 18000, "24.000": 24000, "30.000": 30000, "60.000": 60000}
-            cap_sel = st.selectbox("Capacidade (BTU/h):", list(lista_caps.keys()), index=1, key="cap_f")
-            st.session_state.dados['btu_nom'] = lista_caps[cap_sel]
-
+            st.session_state.dados['btu_nom'] = st.selectbox("Capacidade (BTU/h):", [9000, 12000, 18000, 24000, 30000, 60000], key="cap_f")
             st.session_state.dados['oleo'] = st.selectbox("Tipo de Óleo:", ["POE", "Mineral", "PVE"], key="oleo_f")
             st.session_state.dados['freq'] = st.selectbox("Frequência:", [60, 50], key="freq_f")
-            
-            # TAG/ID COMO ÚLTIMO CAMPO FÍSICO
-            st.session_state.dados['tag_id'] = st.text_input("TAG/ID:", value=st.session_state.dados.get('tag_id', ''), key="tag_f")
-            # 9. Óleo e Frequência
-            st.session_state.dados['oleo'] = st.selectbox("Tipo de Óleo:", ["POE", "Mineral", "PVE"], key="oleo_f")
-            st.session_state.dados['freq'] = st.selectbox("Frequência:", [60, 50], key="freq_f")
-            
-            # 10. TAG/ID (ÚLTIMO CAMPO)
             st.session_state.dados['tag_id'] = st.text_input("TAG/ID:", value=st.session_state.dados.get('tag_id', ''), key="tag_f")
 
-# --- FUNÇÃO TÉCNICA (Mantenha fora das abas, no escopo principal do código) ---
-def f_sat_precisao(p, g):
-    if p <= 5: return -50.0
-    tabelas = {
-        "R410A": {"xp": [90.0, 100.0, 110.0, 122.7, 130.9, 141.7, 150.0, 350.0, 450.0], "fp": [-3.50, -0.29, 2.36, 5.50, 7.40, 9.80, 11.50, 41.50, 54.00]},
-        "R32":   {"xp": [90.0, 100.0, 115.0, 140.0, 170.0, 380.0, 480.0], "fp": [-3.66, -0.87, 3.00, 8.50, 14.80, 44.00, 56.50]},
-        "R22":   {"xp": [50.0, 60.0, 70.0, 80.0, 100.0, 200.0, 250.0], "fp": [-3.00, 1.50, 5.80, 9.70, 16.50, 38.50, 48.00]},
-        "R134a": {"xp": [20.0, 30.0, 40.0, 50.0, 70.0, 150.0, 200.0], "fp": [-8.00, 1.50, 9.50, 16.20, 27.50, 53.00, 65.50]},
-        "R290":  {"xp": [40.0, 50.0, 65.0, 80.0, 100.0, 150.0, 190.0], "fp": [-10.5, -4.2, 3.50, 10.20, 17.50, 32.50, 42.00]}
-    }
-    if g not in tabelas: return 0.0
-    return float(np.interp(p, tabelas[g]["xp"], tabelas[g]["fp"]))
+# ==============================================================================
+# 3. SIDEBAR E NAVEGAÇÃO (NÍVEL PRINCIPAL)
+# ==============================================================================
+with st.sidebar:
+    st.title("🚀 Painel de Controle")
+    aba_selecionada = st.radio("Selecione a Aba:", ["Home", "1. Cadastro", "2. Diagnóstico"], key="main_nav")
+    
+    st.markdown("---")
+    st.subheader("👤 Técnico Responsável")
+    st.session_state.dados['tec_nome'] = st.text_input("Nome:", value=st.session_state.dados.get('tec_nome', ''), key="t_n")
+    st.session_state.dados['tec_reg'] = st.text_input("Registro (CFT/CREA):", value=st.session_state.dados.get('tec_reg', ''), key="t_r")
 
-
+# LÓGICA DE EXIBIÇÃO
+if aba_selecionada == "1. Cadastro":
+    renderizar_aba_1()
+elif aba_selecionada == "2. Diagnóstico":
+    st.info("Aba de Diagnóstico pronta para receber cálculos de Superaquecimento.")
 # ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO SUPREMA - INTEGRADA E BLINDADA)
 # ==============================================================================
