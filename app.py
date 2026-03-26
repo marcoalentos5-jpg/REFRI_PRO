@@ -83,7 +83,7 @@ def renderizar_aba_1():
         st.session_state.dados['email'] = cx3.text_input("E-mail:", value=st.session_state.dados.get('email', ''), key="cli_email_f")
 
         # --- LÓGICA DE CEP ULTRA-RÁPIDA ---
-       def renderizar_aba_1():
+        def renderizar_aba_1():
     st.subheader("📋 Cadastro de Cliente e Ativo")
 
     # --- SEÇÃO 1: CLIENTE E ENDEREÇO (LOGICA DE CEP BLINDADA) ---
