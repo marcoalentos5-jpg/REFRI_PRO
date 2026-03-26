@@ -263,7 +263,7 @@ def renderizar_aba_diagnosticos():
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (NÍVEL PRINCIPAL)
 # ==============================================================================
-with st.sidebar:
+    with st.sidebar:
     st.title("🚀 Painel de Controle")
 
     # A. NAVEGAÇÃO
