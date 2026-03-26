@@ -366,56 +366,106 @@ elif aba_selecionada == "Relatórios":
 
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
-    # Busca o fluido que você selecionou na Aba 1
-    fluido_selecionado = st.session_state.dados.get('fluido', 'R410A')
-    st.info(f"❄️ Fluido Refrigerante em Análise: **{fluido_selecionado}**")
-    st.markdown("---")
+    
+    # CSS para garantir o visual limpo e campos desabilitados com fundo branco
+    st.markdown("""
+        <style>
+        div[data-testid="stMetricValue"] > div { color: #00e676 !important; font-weight: bold; }
+        .stNumberInput input:disabled {
+            background-color: #ffffff !important;
+            color: #31333F !important;
+            opacity: 1 !important;
+            -webkit-text-fill-color: #31333F !important;
+            border: 1px solid rgba(49, 51, 63, 0.2) !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
 
-    # --- BLOCO 1: ENTRADA DE MEDIÇÕES ---
+    fluido = st.session_state.dados.get('fluido', 'R410A')
+
+    # --- 1. ENTRADA DE DADOS (MEDIÇÕES DE CAMPO COM PERSISTÊNCIA) ---
     st.subheader("1. Medições de Campo")
-    col_suc, col_des = st.columns(2)
+    c1, c2, c3, c4 = st.columns(4)
+
+    with c1:
+        st.markdown("**🔵 BAIXA / AR**")
+        p_suc = st.number_input("P. Sucção (PSI)", value=st.session_state.dados.get('p_suc', 0.0), format="%.1f", key="ps_v100")
+        st.session_state.dados['p_suc'] = p_suc
+        t_suc = st.number_input("T. Tubo Suc. (°C)", value=st.session_state.dados.get('t_suc', 0.0), format="%.1f", key="ts_v100")
+        st.session_state.dados['t_suc'] = t_suc
+        t_ret = st.number_input("1. T. Retorno (°C)", value=st.session_state.dados.get('t_ret', 0.0), format="%.1f", key="tr_v100")
+        st.session_state.dados['t_ret'] = t_ret
+        t_ins = st.number_input("2. T. Insuflação (°C)", value=st.session_state.dados.get('t_ins', 0.0), format="%.1f", key="ti_v100")
+        st.session_state.dados['t_ins'] = t_ins
+
+    with c2:
+        st.markdown("**🔴 ALTA / TENSÃO**")
+        p_des = st.number_input("P. Descarga (PSI)", value=st.session_state.dados.get('p_des', 0.0), format="%.1f", key="pd_v100")
+        st.session_state.dados['p_des'] = p_des
+        t_liq = st.number_input("T. Tubo Líq. (°C)", value=st.session_state.dados.get('t_liq', 0.0), format="%.1f", key="tl_v100")
+        st.session_state.dados['t_liq'] = t_liq
+        v_med = st.number_input("Tens. Medida (V)", value=st.session_state.dados.get('v_med', 0.0), format="%.1f", key="vm_v100")
+        st.session_state.dados['v_med'] = v_med
+
+    with c3:
+        st.markdown("**⚡ CORRENTE / CARGA**")
+        rla = st.number_input("RLA (A)", value=st.session_state.dados.get('rla', 0.0), format="%.1f", key="rla_v100")
+        st.session_state.dados['rla'] = rla
+        i_med = st.number_input("Corr. Medida (A)", value=st.session_state.dados.get('i_med', 0.0), format="%.1f", key="im_v100")
+        st.session_state.dados['i_med'] = i_med
+        
+        # CÁLCULO DE CARGA (Simulado para evitar Divisão por Zero)
+        perc_calc = (i_med / rla * 100) if (rla and rla > 0) else 0.0
+        st.number_input("Carga do Comp. (%)", value=perc_calc, format="%.1f", disabled=True, key="perc_v100")
+        
+        if perc_calc >= 110.0:
+            st.error(f"🚨 SOBRECARGA: {perc_calc:.1f}%!")
+        elif perc_calc > 0:
+            st.success(f"Carga: {perc_calc:.1f}%")
+
+    with c4:
+        st.markdown("**🔋 CAPACITORES (µF)**")
+        cn_c = st.number_input("C. Nom. Comp", value=st.session_state.dados.get('cn_c', 0.0), key="cnc_v100")
+        st.session_state.dados['cn_c'] = cn_c
+        cm_c = st.number_input("C. Lido Comp", value=st.session_state.dados.get('cm_c', 0.0), key="cmc_v100")
+        st.session_state.dados['cm_c'] = cm_c
+
+    # --- 2. MOTOR DE CÁLCULO (PROCESSAMENTO SILENCIOSO) ---
+    t_sat_suc = f_sat_precisao(p_suc, fluido) if p_suc > 0 else 0.0
+    t_sat_des = f_sat_precisao(p_des, fluido) if p_des > 0 else 0.0
     
-    with col_suc:
-        st.markdown("### 🔵 Baixa Pressão")
-        pres_suc = st.number_input("Pressão de Sucção (PSI):", min_value=0.0, step=1.0, key="p_suc_diag")
-        temp_suc = st.number_input("Temp. Tubulação Sucção (°C):", step=0.1, key="t_suc_diag")
+    sh = t_suc - t_sat_suc
+    sc = t_sat_des - t_liq
+    dt_ar = abs(t_ret - t_ins) # Sempre absoluto para evitar números negativos
 
-    with col_des:
-        st.markdown("### 🔴 Alta Pressão")
-        pres_des = st.number_input("Pressão de Descarga (PSI):", min_value=0.0, step=1.0, key="p_des_diag")
-        temp_liq = st.number_input("Temp. Tubulação Líquido (°C):", step=0.1, key="t_liq_diag")
-
+    # --- 3. RESULTADOS CALCULADOS (EXIBIÇÃO EM MÉTRICAS) ---
     st.markdown("---")
-
-    # --- BLOCO 2: PROCESSAMENTO (CÁLCULOS) ---
-    # Nota: No próximo passo, inseriremos a tabela PT aqui
-    t_sat_suc = 0.0  
-    t_sat_des = 0.0  
-    
-    sh = temp_suc - t_sat_suc
-    sc = t_sat_des - temp_liq
-
-    # --- BLOCO 3: EXIBIÇÃO DE RESULTADOS ---
     st.subheader("2. Resultados Calculados")
-    res1, res2 = st.columns(2)
+    res1, res2, res3, res4 = st.columns(4)
     
     with res1:
-        st.metric(label="Superaquecimento (SH)", value=f"{sh:.1f} K")
-        if 5 <= sh <= 7: st.success("✅ SH dentro do padrão (5K a 7K)")
-        elif sh < 5: st.error("⚠️ SH Baixo: Risco de retorno de líquido")
-        else: st.warning("⚠️ SH Alto: Possível falta de fluido ou restrição")
+        st.metric("SH TOTAL", f"{sh:.1f} K")
+        if 5 <= sh <= 7: st.success("✅ SH OK")
+        elif p_suc > 0: st.warning("⚠️ Fora do padrão")
 
     with res2:
-        st.metric(label="Sub-resfriamento (SC)", value=f"{sc:.1f} K")
-        if 4 <= sc <= 7: st.success("✅ SC dentro do padrão (4K a 7K)")
-        else: st.info("ℹ️ SC fora do padrão: Verifique condensação")
+        st.metric("SC FINAL", f"{sc:.1f} K")
+        if 4 <= sc <= 7: st.success("✅ SC OK")
+        elif p_des > 0: st.info("ℹ️ Verificar")
 
+    with res3:
+        st.metric("ΔT (AR)", f"{dt_ar:.1f} °C")
+        
+    with res4:
+        st.metric("SAT. SUCÇÃO", f"{t_sat_suc:.1f} °C")
+
+    # --- 4. CONCLUSÃO E LAUDO (UNIFICADO E PERSISTENTE) ---
     st.markdown("---")
-
-    # --- BLOCO 4: CONCLUSÃO E LAUDO ---
     st.subheader("3. Parecer Técnico Final")
     st.session_state.dados['laudo_diag'] = st.text_area(
-        "Descreva o diagnóstico ou anomalias encontradas:",
-        placeholder="Ex: Sistema operando com pressões estáveis, superaquecimento normal...",
-        key="laudo_area_diag"
+        "Diagnóstico e Observações:",
+        value=st.session_state.dados.get('laudo_diag', ''),
+        placeholder="Digite aqui o parecer final...",
+        height=150,
+        key="laudo_final_area"
     )
