@@ -476,13 +476,24 @@ def renderizar_aba_diagnosticos():
 
     st.markdown("---")
 
-    # --- BLOCO 2: PROCESSAMENTO (CÁLCULOS) ---
-    # Nota: No próximo passo, inseriremos a tabela PT aqui
-    t_sat_suc = 0.0  
-    t_sat_des = 0.0  
+    # --- BLOCO 2: PROCESSAMENTO (CÁLCULOS TÉCNICOS) ---
+    # 1. Pegamos o fluido que foi definido na Aba 1
+    fluido_selecionado = st.session_state.dados.get('fluido', 'R410A')
+
+    # 2. Calculamos as Temperaturas de Saturação usando sua função f_sat_precisao
+    # t_sat_suc (Baixa) e t_sat_des (Alta)
+    p_suc = st.session_state.dados.get('p_suc_psi', 0.0)
+    p_alta = st.session_state.dados.get('p_des_psi', 0.0)
     
-    sh = temp_suc - t_sat_suc
-    sc = t_sat_des - temp_liq
+    t_sat_suc = f_sat_precisao(p_suc, fluido_selecionado)
+    t_sat_des = f_sat_precisao(p_alta, fluido_selecionado)
+
+    # 3. Cálculo do SH e SC (Diferencial de temperatura)
+    temp_suc = st.session_state.dados.get('t_tubo_suc', 0.0)
+    temp_liq = st.session_state.dados.get('t_tubo_liq', 0.0)
+
+    sh = temp_suc - t_sat_suc if temp_suc != 0 else 0.0
+    sc = t_sat_des - temp_liq if t_sat_des != 0 else 0.0
 
     # --- BLOCO 3: EXIBIÇÃO DE RESULTADOS ---
     st.subheader("2. Resultados Calculados")
@@ -490,14 +501,16 @@ def renderizar_aba_diagnosticos():
     
     with res1:
         st.metric(label="Superaquecimento (SH)", value=f"{sh:.1f} K")
-        if 5 <= sh <= 7: st.success("✅ SH dentro do padrão (5K a 7K)")
-        elif sh < 5: st.error("⚠️ SH Baixo: Risco de retorno de líquido")
-        else: st.warning("⚠️ SH Alto: Possível falta de fluido ou restrição")
+        if temp_suc != 0: # Só valida se houver medição
+            if 5 <= sh <= 7: st.success("✅ SH dentro do padrão (5K a 7K)")
+            elif sh < 5: st.error("⚠️ SH Baixo: Risco de retorno de líquido")
+            else: st.warning("⚠️ SH Alto: Possível falta de fluido ou restrição")
 
     with res2:
         st.metric(label="Sub-resfriamento (SC)", value=f"{sc:.1f} K")
-        if 4 <= sc <= 7: st.success("✅ SC dentro do padrão (4K a 7K)")
-        else: st.info("ℹ️ SC fora do padrão: Verifique condensação")
+        if t_sat_des != 0:
+            if 4 <= sc <= 7: st.success("✅ SC dentro do padrão (4K a 7K)")
+            else: st.info("ℹ️ SC fora do padrão: Verifique condensação")
 
     st.markdown("---")
 
