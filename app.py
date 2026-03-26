@@ -252,10 +252,11 @@ def renderizar_aba_diagnosticos():
         key="txt_laudo_vfinal"
     )
 
-# --- FIM DA FUNÇÃO ANTERIOR (Certifique-se que ela terminou aqui) ---
+
+# --- Fim da função renderizar_aba_1 (Certifique-se que o código abaixo está FORA dela) ---
 
 # ==============================================================================
-# 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ENCENSTADO NA ESQUERDA)
+# 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (NÍVEL PRINCIPAL)
 # ==============================================================================
 with st.sidebar:
     st.title("🚀 Painel de Controle")
@@ -263,22 +264,26 @@ with st.sidebar:
     # A. NAVEGAÇÃO
     opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
     
-    # Removi o 'sidebar.' aqui porque o 'with' já faz esse papel
-    aba_selecionada = st.radio("Selecione a Aba:", opcoes_abas)
+    # Adicionei uma KEY única para evitar conflitos de ID do Streamlit
+    aba_selecionada = st.radio("Selecione a Aba:", opcoes_abas, key="menu_navegacao")
     
     st.markdown("---")
     
     # B. DADOS DO TÉCNICO RESPONSÁVEL
     st.subheader("👤 Técnico Responsável")
     
-    # Usando .get() para evitar erros se a chave não existir no início
-    st.session_state.dados['tecnico_nome'] = st.text_input("Nome:", value=st.session_state.dados.get('tecnico_nome', ''))
-    st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ Técnico:", value=st.session_state.dados.get('tecnico_documento', ''))
-    st.session_state.dados['tecnico_registro'] = st.text_input("Inscrição (CFT/CREA):", value=st.session_state.dados.get('tecnico_registro', ''))
+    # Inicia as chaves se não existirem para evitar erro de inicialização
+    if 'tecnico_nome' not in st.session_state.dados: st.session_state.dados['tecnico_nome'] = ""
+    if 'tecnico_documento' not in st.session_state.dados: st.session_state.dados['tecnico_documento'] = ""
+    if 'tecnico_registro' not in st.session_state.dados: st.session_state.dados['tecnico_registro'] = ""
+
+    st.session_state.dados['tecnico_nome'] = st.text_input("Nome:", value=st.session_state.dados['tecnico_nome'], key="tec_nome_sidebar")
+    st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ Técnico:", value=st.session_state.dados['tecnico_documento'], key="tec_doc_sidebar")
+    st.session_state.dados['tecnico_registro'] = st.text_input("Inscrição (CFT/CREA):", value=st.session_state.dados['tecnico_registro'], key="tec_reg_sidebar")
     
     st.markdown("---")
     
-    # VALIDAÇÃO DE CAMPOS OBRIGATÓRIOS
+    # C. VALIDAÇÃO DE CAMPOS OBRIGATÓRIOS
     nome_cli = st.session_state.dados.get('nome', '')
     zap_cli = st.session_state.dados.get('whatsapp', '')
     
@@ -286,6 +291,7 @@ with st.sidebar:
         st.error("📋 STATUS: PENDENTE (Preencha Cliente e WhatsApp)")
     else:
         st.success("📋 STATUS: PRONTO PARA ENVIO")
+    
     # MENSAGEM WHATSAPP - ENVIO DE TODOS OS DADOS SEM EXCEÇÃO
     msg_zap = (
         f"*LAUDO TÉCNICO HVAC*\n\n"
