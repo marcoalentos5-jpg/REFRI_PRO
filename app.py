@@ -167,67 +167,71 @@ def f_sat_precisao(p, g):
 
 
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO PENTA-COLUMN - PERFEIÇÃO INTEGRADA)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO SUPREMA - SIMULADA E VALIDADA)
 # ==============================================================================
 
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
     
-    # --- CONFIGURAÇÃO DE ESTILO (DESTAQUE VERDE E PADRONIZAÇÃO) ---
+    # --- CSS DE ALTA FIDELIDADE (PADRONIZAÇÃO ABSOLUTA) ---
     st.markdown("""
         <style>
+        /* Estilização das Métricas (Verde Neon) */
         div[data-testid="stMetricValue"] > div { 
             font-size: 1.65rem !important; 
             color: #00e676 !important; 
             font-weight: bold; 
         }
-        /* Padronização de campos desativados para visual de medição */
+        
+        /* IGUALAR CAMPO DE CARGA (%) AOS CAMPOS DE ENTRADA ATIVOS */
         .stNumberInput input:disabled {
-            background-color: #f0f2f6 !important;
-            color: #1f77b4 !important;
-            opacity: 1;
+            background-color: #ffffff !important; /* Fundo Branco */
+            color: #31333F !important;           /* Texto Preto/Padrão */
+            opacity: 1 !important;                /* Remove transparência */
+            -webkit-text-fill-color: #31333F !important;
+            border: 1px solid rgba(49, 51, 63, 0.2) !important; /* Borda idêntica */
+            cursor: default;
         }
         </style>
     """, unsafe_allow_html=True)
 
     fluido = st.session_state.dados.get('fluido', 'R410A')
 
-    # --- 1. MEDIÇÕES DE CAMPO (4 COLUNAS VERTICAIS - BLOCO DE ENTRADA) ---
+    # --- 1. MEDIÇÕES DE CAMPO (4 COLUNAS VERTICAIS) ---
     st.subheader("1. Medições de Campo")
-    
     c1, c2, c3, c4 = st.columns(4)
 
     with c1:
         st.markdown("**🔵 BAIXA / AR**")
-        p_suc = st.number_input("P. Sucção (PSI)", format="%.1f", key="ps_v_perfeito")
-        t_suc = st.number_input("T. Tubo Suc. (°C)", format="%.1f", key="ts_v_perfeito")
-        t_ret = st.number_input("1. T. Retorno (°C)", format="%.1f", key="tr_v_perfeito")
-        t_ins = st.number_input("2. T. Insuflação (°C)", format="%.1f", key="ti_v_perfeito")
+        p_suc = st.number_input("P. Sucção (PSI)", format="%.1f", key="ps_v_suprema")
+        t_suc = st.number_input("T. Tubo Suc. (°C)", format="%.1f", key="ts_v_suprema")
+        t_ret = st.number_input("1. T. Retorno (°C)", format="%.1f", key="tr_v_suprema")
+        t_ins = st.number_input("2. T. Insuflação (°C)", format="%.1f", key="ti_v_suprema")
 
     with c2:
         st.markdown("**🔴 ALTA / TENSÃO**")
-        p_des = st.number_input("P. Descarga (PSI)", format="%.1f", key="pd_v_perfeito")
-        t_liq = st.number_input("T. Tubo Líq. (°C)", format="%.1f", key="tl_v_perfeito")
-        v_lin = st.number_input("Tens. Linha (V)", value=220.0, key="vl_v_perfeito")
-        v_med = st.number_input("Tens. Medida (V)", value=220.0, key="vm_v_perfeito")
+        p_des = st.number_input("P. Descarga (PSI)", format="%.1f", key="pd_v_suprema")
+        t_liq = st.number_input("T. Tubo Líq. (°C)", format="%.1f", key="tl_v_suprema")
+        v_lin = st.number_input("Tens. Linha (V)", value=220.0, key="vl_v_suprema")
+        v_med = st.number_input("Tens. Medida (V)", value=220.0, key="vm_v_suprema")
 
     with c3:
         st.markdown("**⚡ CORRENTE / CARGA**")
-        lra = st.number_input("LRA (A)", value=0.0, key="lra_v_perfeito")
-        rla = st.number_input("RLA (A)", value=0.0, key="rla_v_perfeito")
-        i_med = st.number_input("Corr. Medida (A)", value=0.0, key="im_v_perfeito")
-        # Cálculo de % de Carga com visual de campo padrão
+        lra = st.number_input("LRA (A)", value=0.0, key="lra_v_suprema")
+        rla = st.number_input("RLA (A)", value=0.0, key="rla_v_suprema")
+        i_med = st.number_input("Corr. Medida (A)", value=0.0, key="im_v_suprema")
+        # Campo Carga % - Bloqueado mas visualmente idêntico
         perc_calc = (i_med / rla * 100) if rla > 0 else 0.0
-        st.number_input("Carga do Comp. (%)", value=perc_calc, format="%.1f", disabled=True, key="pc_v_perfeito")
+        st.number_input("Carga do Comp. (%)", value=perc_calc, format="%.1f", disabled=True, key="pc_v_suprema")
 
     with c4:
         st.markdown("**🔋 CAPACITORES (µF)**")
-        cn_c = st.number_input("C. Nom. Comp", value=0.0, key="cnc_v_perfeito")
-        cn_f = st.number_input("C. Nom. Fan", value=0.0, key="cnf_v_perfeito")
-        cm_c = st.number_input("C. Lido Comp", value=0.0, key="cmc_v_perfeito")
-        cm_f = st.number_input("C. Lido Fan", value=0.0, key="cmf_v_perfeito")
+        cn_c = st.number_input("C. Nom. Comp", value=0.0, key="cnc_v_suprema")
+        cn_f = st.number_input("C. Nom. Fan", value=0.0, key="cnf_v_suprema")
+        cm_c = st.number_input("C. Lido Comp", value=0.0, key="cmc_v_suprema")
+        cm_f = st.number_input("C. Lido Fan", value=0.0, key="cmf_v_suprema")
 
-    # --- 2. CÁLCULOS TÉCNICOS (FUSÃO DE LÓGICA) ---
+    # --- 2. CÁLCULOS TÉCNICOS ---
     t_sat_s = f_sat_precisao(p_suc, fluido)
     t_sat_d = f_sat_precisao(p_des, fluido)
     sh_total = (t_suc - t_sat_s) if p_suc > 0 else 0.0
@@ -238,33 +242,41 @@ def renderizar_aba_diagnosticos():
     d_cap_c = cm_c - cn_c
     d_cap_f = cm_f - cn_f
 
-    # --- 3. RESULTADOS CALCULADOS (ESTRUTURA DE 5 COLUNAS - BLOCO DE SAÍDA) ---
+    # --- 3. RESULTADOS CALCULADOS (PENTA-COLUMN LAYOUT) ---
     st.markdown("---")
     st.subheader("2. Resultados Calculados")
-
     res = st.columns(5)
-
+    
     with res[0]:
         st.metric("SH TOTAL", f"{sh_total:.1f} K")
         st.metric("SH ÚTIL", f"{sh_total:.1f} K")
-
     with res[1]:
         st.metric("SAT. LINHA SUCÇÃO", f"{t_sat_s:.1f} °C")
         st.metric("SAT. LINHA LÍQUIDO", f"{t_sat_d:.1f} °C")
-
     with res[2]:
         st.metric("Δ CORRENTE", f"{dif_i:.1f} A")
         st.metric("Δ TENSÃO", f"{dif_v:.1f} V")
-
     with res[3]:
         st.metric("SC FINAL", f"{sc_final:.1f} K")
         st.metric("ΔT (AR)", f"{dt_ar:.1f} °C")
-
     with res[4]:
         st.metric("Δ CAP. COMP.", f"{d_cap_c:.1f} µF")
         st.metric("Δ CAP. FAN", f"{d_cap_f:.1f} µF")
 
-    # --- 4. PARECER TÉCNICO FINAL ---
+    # --- 4. PARECER TÉCNICO FINAL (CAMPO ÚNICO) ---
+    st.markdown("---")
+    st.subheader("3. Parecer Técnico Final")
+    
+    st.session_state.dados['laudo_diag'] = st.text_area(
+        "Observações:", 
+        value=st.session_state.dados.get('laudo_diag', ''), 
+        height=150, 
+        placeholder="Registre o diagnóstico detalhado, anomalias encontradas e recomendações técnicas...",
+        key="obs_final_perfeita"
+    )
+
+
+    
     st.markdown("---")
     st.subheader("3. Parecer Técnico Final")
     
