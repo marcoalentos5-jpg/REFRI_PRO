@@ -167,13 +167,13 @@ def f_sat_precisao(p, g):
 
 
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO SUPREMA - SIMULADA E VALIDADA)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO 100% - ESTÁVEL E VALIDADA)
 # ==============================================================================
 
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
     
-    # CSS para padronização visual
+    # CSS para garantir que o campo 'Carga %' (desabilitado) tenha fundo branco
     st.markdown("""
         <style>
         div[data-testid="stMetricValue"] > div { color: #00e676 !important; font-weight: bold; }
@@ -189,63 +189,67 @@ def renderizar_aba_diagnosticos():
 
     fluido = st.session_state.dados.get('fluido', 'R410A')
 
-    # --- 1. MEDIÇÕES DE CAMPO (PERSISTENTES) ---
+    # --- 1. MEDIÇÕES DE CAMPO ---
     st.subheader("1. Medições de Campo")
     c1, c2, c3, c4 = st.columns(4)
 
     with c1:
         st.markdown("**🔵 BAIXA / AR**")
-        p_suc = st.number_input("P. Sucção (PSI)", value=st.session_state.dados.get('p_suc'), format="%.1f", key="ps_v12")
+        p_suc = st.number_input("P. Sucção (PSI)", value=st.session_state.dados.get('p_suc'), format="%.1f", key="ps_v100")
         st.session_state.dados['p_suc'] = p_suc
-        t_suc = st.number_input("T. Tubo Suc. (°C)", value=st.session_state.dados.get('t_suc'), format="%.1f", key="ts_v12")
+        
+        t_suc = st.number_input("T. Tubo Suc. (°C)", value=st.session_state.dados.get('t_suc'), format="%.1f", key="ts_v100")
         st.session_state.dados['t_suc'] = t_suc
-        t_ret = st.number_input("1. T. Retorno (°C)", value=st.session_state.dados.get('t_ret'), format="%.1f", key="tr_v12")
+        
+        t_ret = st.number_input("1. T. Retorno (°C)", value=st.session_state.dados.get('t_ret'), format="%.1f", key="tr_v100")
         st.session_state.dados['t_ret'] = t_ret
-        t_ins = st.number_input("2. T. Insuflação (°C)", value=st.session_state.dados.get('t_ins'), format="%.1f", key="ti_v12")
+        
+        t_ins = st.number_input("2. T. Insuflação (°C)", value=st.session_state.dados.get('t_ins'), format="%.1f", key="ti_v100")
         st.session_state.dados['t_ins'] = t_ins
 
     with c2:
         st.markdown("**🔴 ALTA / TENSÃO**")
-        p_des = st.number_input("P. Descarga (PSI)", value=st.session_state.dados.get('p_des'), format="%.1f", key="pd_v12")
+        p_des = st.number_input("P. Descarga (PSI)", value=st.session_state.dados.get('p_des'), format="%.1f", key="pd_v100")
         st.session_state.dados['p_des'] = p_des
-        t_liq = st.number_input("T. Tubo Líq. (°C)", value=st.session_state.dados.get('t_liq'), format="%.1f", key="tl_v12")
+        
+        t_liq = st.number_input("T. Tubo Líq. (°C)", value=st.session_state.dados.get('t_liq'), format="%.1f", key="tl_v100")
         st.session_state.dados['t_liq'] = t_liq
-        v_med = st.number_input("Tens. Medida (V)", value=st.session_state.dados.get('v_med'), format="%.1f", key="vm_v12")
+        
+        v_med = st.number_input("Tens. Medida (V)", value=st.session_state.dados.get('v_med'), format="%.1f", key="vm_v100")
         st.session_state.dados['v_med'] = v_med
 
     with c3:
         st.markdown("**⚡ CORRENTE / CARGA**")
-        rla = st.number_input("RLA (A)", value=st.session_state.dados.get('rla'), format="%.1f", key="rla_v12")
+        rla = st.number_input("RLA (A)", value=st.session_state.dados.get('rla'), format="%.1f", key="rla_v100")
         st.session_state.dados['rla'] = rla
-        i_med = st.number_input("Corr. Medida (A)", value=st.session_state.dados.get('i_med'), format="%.1f", key="im_v12")
+        
+        i_med = st.number_input("Corr. Medida (A)", value=st.session_state.dados.get('i_med'), format="%.1f", key="im_v100")
         st.session_state.dados['i_med'] = i_med
         
-        # CÁLCULO DE CARGA COM ALERTA > 110%
+        # CÁLCULO DE CARGA COM TRAVA CONTRA DIVISÃO POR ZERO
         perc_calc = (i_med / rla * 100) if (rla and rla > 0 and i_med) else 0.0
         st.number_input("Carga do Comp. (%)", value=perc_calc, format="%.1f", disabled=True)
         
         if perc_calc >= 110.0:
-            st.error(f"⚠️ CRÍTICO: Sobrecarga de {perc_calc:.1f}%! Risco de queima mecânica.")
+            st.error(f"⚠️ SOBRECARGA: {perc_calc:.1f}% - Risco de Queima!")
         elif perc_calc > 0:
-            st.success(f"Carga está em {perc_calc:.1f}%")
+            st.success(f"Carga: {perc_calc:.1f}%")
 
     with c4:
         st.markdown("**🔋 CAPACITORES (µF)**")
-        cn_c = st.number_input("C. Nom. Comp", value=st.session_state.dados.get('cn_c'), key="cnc_v12")
+        cn_c = st.number_input("C. Nom. Comp", value=st.session_state.dados.get('cn_c'), key="cnc_v100")
         st.session_state.dados['cn_c'] = cn_c
-        cm_c = st.number_input("C. Lido Comp", value=st.session_state.dados.get('cm_c'), key="cmc_v12")
+        
+        cm_c = st.number_input("C. Lido Comp", value=st.session_state.dados.get('cm_c'), key="cmc_v100")
         st.session_state.dados['cm_c'] = cm_c
 
-    # --- 2. MOTOR DE CÁLCULO BLINDADO ---
-    # Saturação e Superaquecimento
+    # --- 2. MOTOR DE CÁLCULO (VALIDADO) ---
     t_sat_s = f_sat_precisao(p_suc, fluido) if p_suc else None
     sh = (t_suc - t_sat_s) if (t_suc is not None and t_sat_s is not None) else None
     
-    # Sub-resfriamento
     t_sat_d = f_sat_precisao(p_des, fluido) if p_des else None
     sc = (t_sat_d - t_liq) if (t_sat_d is not None and t_liq is not None) else None
     
-    # Delta T do Ar (Tratando inversões de leitura)
     dt_ar = abs(t_ret - t_ins) if (t_ret is not None and t_ins is not None) else None
 
     # --- 3. EXIBIÇÃO DE RESULTADOS ---
@@ -262,12 +266,11 @@ def renderizar_aba_diagnosticos():
     st.markdown("---")
     st.subheader("3. Parecer Técnico Final")
     st.session_state.dados['laudo_diag'] = st.text_area(
-        "Observações Técnicas:", 
+        "Diagnóstico e Observações:", 
         value=st.session_state.dados.get('laudo_diag', ''), 
         height=150, 
-        key="laudo_diag_final_v12"
+        key="laudo_unico_v100"
     )
-
 
     
     st.markdown("---")
