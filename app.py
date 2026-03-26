@@ -167,7 +167,7 @@ def f_sat_precisao(p, g):
 
 
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO PERFEIÇÃO ABSOLUTA - V6 CONSOLIDADA)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO SUPREMA - FINAL E BLINDADA)
 # ==============================================================================
 
 def renderizar_aba_diagnosticos():
@@ -183,11 +183,11 @@ def renderizar_aba_diagnosticos():
             font-weight: bold; 
         }
         
-        /* FORÇAR CAMPO DE CARGA (%) A SER IDÊNTICO AOS ATIVOS */
+        /* FORÇAR CAMPO DE CARGA (%) A SER IDÊNTICO AOS ATIVOS (FUNDO BRANCO) */
         .stNumberInput input:disabled {
-            background-color: #ffffff !important; /* Fundo Branco solicitado */
-            color: #31333F !important;           /* Texto nítido */
-            opacity: 1 !important;                /* Remove transparência de desabilitado */
+            background-color: #ffffff !important; 
+            color: #31333F !important;           
+            opacity: 1 !important;                
             -webkit-text-fill-color: #31333F !important;
             border: 1px solid rgba(49, 51, 63, 0.2) !important;
             cursor: default;
@@ -197,56 +197,56 @@ def renderizar_aba_diagnosticos():
 
     fluido = st.session_state.dados.get('fluido', 'R410A')
 
-    # --- 1. MEDIÇÕES DE CAMPO (CAMPOS VAZIOS PARA DIGITAÇÃO RÁPIDA) ---
+    # --- 1. MEDIÇÕES DE CAMPO (VALOR None PARA DIGITAÇÃO RÁPIDA) ---
     st.subheader("1. Medições de Campo")
     c1, c2, c3, c4 = st.columns(4)
 
     with c1:
         st.markdown("**🔵 BAIXA / AR**")
-        p_suc = st.number_input("P. Sucção (PSI)", value=None, format="%.1f", key="ps_v_perfeicao")
-        t_suc = st.number_input("T. Tubo Suc. (°C)", value=None, format="%.1f", key="ts_v_perfeicao")
-        t_ret = st.number_input("1. T. Retorno (°C)", value=None, format="%.1f", key="tr_v_perfeicao")
-        t_ins = st.number_input("2. T. Insuflação (°C)", value=None, format="%.1f", key="ti_v_perfeicao")
+        p_suc = st.number_input("P. Sucção (PSI)", value=None, format="%.1f", key="ps_v_final")
+        t_suc = st.number_input("T. Tubo Suc. (°C)", value=None, format="%.1f", key="ts_v_final")
+        t_ret = st.number_input("1. T. Retorno (°C)", value=None, format="%.1f", key="tr_v_final")
+        t_ins = st.number_input("2. T. Insuflação (°C)", value=None, format="%.1f", key="ti_v_final")
 
     with c2:
         st.markdown("**🔴 ALTA / TENSÃO**")
-        p_des = st.number_input("P. Descarga (PSI)", value=None, format="%.1f", key="pd_v_perfeicao")
-        t_liq = st.number_input("T. Tubo Líq. (°C)", value=None, format="%.1f", key="tl_v_perfeicao")
-        v_lin = st.number_input("Tens. Linha (V)", value=220.0, format="%.1f", key="vl_v_perfeicao")
-        v_med = st.number_input("Tens. Medida (V)", value=None, format="%.1f", key="vm_v_perfeicao")
+        p_des = st.number_input("P. Descarga (PSI)", value=None, format="%.1f", key="pd_v_final")
+        t_liq = st.number_input("T. Tubo Líq. (°C)", value=None, format="%.1f", key="tl_v_final")
+        v_lin = st.number_input("Tens. Linha (V)", value=220.0, format="%.1f", key="vl_v_final")
+        v_med = st.number_input("Tens. Medida (V)", value=None, format="%.1f", key="vm_v_final")
 
     with c3:
         st.markdown("**⚡ CORRENTE / CARGA**")
-        lra = st.number_input("LRA (A)", value=None, format="%.1f", key="lra_v_perfeicao")
-        rla = st.number_input("RLA (A)", value=None, format="%.1f", key="rla_v_perfeicao")
-        i_med = st.number_input("Corr. Medida (A)", value=None, format="%.1f", key="im_v_perfeicao")
-        # Cálculo de Carga % (Segurança contra divisão por zero ou campos vazios)
+        lra = st.number_input("LRA (A)", value=None, format="%.1f", key="lra_v_final")
+        rla = st.number_input("RLA (A)", value=None, format="%.1f", key="rla_v_final")
+        i_med = st.number_input("Corr. Medida (A)", value=None, format="%.1f", key="im_v_final")
+        # Cálculo de Carga % (Seguro contra None/Divisão por zero)
         perc_calc = (i_med / rla * 100) if (rla and i_med) else 0.0
-        st.number_input("Carga do Comp. (%)", value=perc_calc, format="%.1f", disabled=True, key="pc_v_perfeicao")
+        st.number_input("Carga do Comp. (%)", value=perc_calc, format="%.1f", disabled=True, key="pc_v_final")
 
     with c4:
         st.markdown("**🔋 CAPACITORES (µF)**")
-        cn_c = st.number_input("C. Nom. Comp", value=None, format="%.1f", key="cnc_v_perfeicao")
-        cn_f = st.number_input("C. Nom. Fan", value=None, format="%.1f", key="cnf_v_perfeicao")
-        cm_c = st.number_input("C. Lido Comp", value=None, format="%.1f", key="cmc_v_perfeicao")
-        cm_f = st.number_input("C. Lido Fan", value=None, format="%.1f", key="cmf_v_perfeicao")
+        cn_c = st.number_input("C. Nom. Comp", value=None, format="%.1f", key="cnc_v_final")
+        cn_f = st.number_input("C. Nom. Fan", value=None, format="%.1f", key="cnf_v_final")
+        cm_c = st.number_input("C. Lido Comp", value=None, format="%.1f", key="cmc_v_final")
+        cm_f = st.number_input("C. Lido Fan", value=None, format="%.1f", key="cmf_v_final")
 
-    # --- 2. CÁLCULOS TÉCNICOS (LÓGICA DE PRECISÃO) ---
-    t_sat_s = f_sat_precisao(p_suc, fluido) if p_suc else -50.0
-    t_sat_d = f_sat_precisao(p_des, fluido) if p_des else -50.0
-    sh_total = (t_suc - t_sat_s) if (t_suc and p_suc) else 0.0
-    sc_final = (t_sat_d - t_liq) if (p_des and t_liq) else 0.0
-    dt_ar = (t_ret - t_ins) if (t_ret and t_ins) else 0.0
-    dif_v = (v_lin - v_med) if (v_lin and v_med) else 0.0
-    dif_i = (i_med - rla) if (i_med and rla) else 0.0
-    d_cap_c = (cm_c - cn_c) if (cm_c and cn_c) else 0.0
-    d_cap_f = (cm_f - cn_f) if (cm_f and cn_f) else 0.0
+    # --- 2. CÁLCULOS COM PROTEÇÃO CONTRA CAMPOS VAZIOS (BLINDAGEM ANTI-ERRO) ---
+    t_sat_s = f_sat_precisao(p_suc, fluido) if p_suc is not None else -50.0
+    t_sat_d = f_sat_precisao(p_des, fluido) if p_des is not None else -50.0
+    
+    sh_total = (t_suc - t_sat_s) if (t_suc is not None and p_suc is not None) else 0.0
+    sc_final = (t_sat_d - t_liq) if (p_des is not None and t_liq is not None) else 0.0
+    dt_ar = (t_ret - t_ins) if (t_ret is not None and t_ins is not None) else 0.0
+    dif_v = (v_lin - v_med) if (v_lin is not None and v_med is not None) else 0.0
+    dif_i = (i_med - rla) if (i_med is not None and rla is not None) else 0.0
+    d_cap_c = (cm_c - cn_c) if (cm_c is not None and cn_c is not None) else 0.0
+    d_cap_f = (cm_f - cn_f) if (cm_f is not None and cn_f is not None) else 0.0
 
     # --- 3. RESULTADOS CALCULADOS (PENTA-COLUMN LAYOUT) ---
     st.markdown("---")
     st.subheader("2. Resultados Calculados")
     res = st.columns(5)
-    
     with res[0]:
         st.metric("SH TOTAL", f"{sh_total:.1f} K")
         st.metric("SH ÚTIL", f"{sh_total:.1f} K")
@@ -263,7 +263,7 @@ def renderizar_aba_diagnosticos():
         st.metric("Δ CAP. COMP.", f"{d_cap_c:.1f} µF")
         st.metric("Δ CAP. FAN", f"{d_cap_f:.1f} µF")
 
-    # --- 4. PARECER TÉCNICO FINAL (CAMPO ÚNICO E LIMPO) ---
+    # --- 4. PARECER TÉCNICO FINAL (CAMPO ÚNICO DEFINITIVO) ---
     st.markdown("---")
     st.subheader("3. Parecer Técnico Final")
     
@@ -271,10 +271,9 @@ def renderizar_aba_diagnosticos():
         "Observações:", 
         value=st.session_state.dados.get('laudo_diag', ''), 
         height=150, 
-        placeholder="Digite aqui o parecer técnico, anomalias e recomendações...",
-        key="campo_unico_v6_final" # Key única para resetar estados repetidos
+        placeholder="Digite o parecer técnico final aqui...",
+        key="campo_unico_perfeicao_final"
     )
-
     
     st.markdown("---")
     st.subheader("3. Parecer Técnico Final")
