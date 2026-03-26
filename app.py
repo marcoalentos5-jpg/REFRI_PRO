@@ -100,7 +100,8 @@ def renderizar_aba_1():
         st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados.get('cidade', ''), key="cli_cid_f")
         st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados.get('uf', ''), max_chars=2, key="cli_uf_f")
 
-    # --- SEÇÃO EQUIPAMENTO REVISADA (ESTRUTURA DE 4 COLUNAS) ---
+
+# --- SEÇÃO EQUIPAMENTO REVISADA ---
     st.markdown("### ⚙️ Especificações do Equipamento")
     with st.expander("Detalhes Técnicos do Ativo", expanded=True):
         e1, e2, e3, e4 = st.columns(4) 
@@ -111,31 +112,25 @@ def renderizar_aba_1():
             fab_idx = fab_list.index(fab_val) if fab_val in fab_list else 0
             st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx, key="fab_f")
             st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados.get('modelo', ''), key="mod_f")
-            st.session_state.dados['local_evap'] = st.text_input("Local Evaporadora:", value=st.session_state.dados.get('local_evap', ''), key="levap_f")
 
         with e2:
             st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados.get('serie_evap', ''), key="sevap_f")
             st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND)", value=st.session_state.dados.get('serie_cond', ''), key="scond_f")
-            st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados.get('tag_id', ''), key="tag_f")
+            st.session_state.dados['local_evap'] = st.text_input("Localização:", value=st.session_state.dados.get('local_evap', ''), key="levap_f")
 
         with e3:
-            # Mapeamento para garantir que 'btu_nom' seja numérico para o COP
+            # Capacidade convertida para número para não travar os cálculos da Aba 2
             lista_caps = {"9.000": 9000, "12.000": 12000, "18.000": 18000, "24.000": 24000, "30.000": 30000, "60.000": 60000}
-            cap_selecionada = st.selectbox("Capacidade (BTU/h):", list(lista_caps.keys()), index=1, key="cap_f")
-            st.session_state.dados['btu_nom'] = lista_caps[cap_selecionada] 
+            cap_sel = st.selectbox("Capacidade (BTU/h):", list(lista_caps.keys()), index=1, key="cap_f")
+            st.session_state.dados['btu_nom'] = lista_caps[cap_sel]
             
-            lista_fluidos = ["R410A", "R134a", "R22", "R32", "R290"]
-            f_atual = st.session_state.dados.get('fluido', 'R410A')
-            f_idx = lista_fluidos.index(f_atual) if f_atual in lista_fluidos else 0
-            st.session_state.dados['fluido'] = st.selectbox("Fluido:", lista_fluidos, index=f_idx, key="fluid_f")
-            
+            # Status da Máquina
             st.session_state.dados['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], key="stat_f")
 
         with e4:
-            # DNA Técnico: Essencial para cálculos de potência e compatibilidade
+            # DNA TÉCNICO (O que faltava para o diagnóstico de precisão)
             st.session_state.dados['oleo'] = st.selectbox("Tipo de Óleo:", ["POE (Sintético)", "Mineral", "PVE", "PAG"], key="oleo_f")
             st.session_state.dados['freq'] = st.selectbox("Frequência (Hz):", [60, 50], key="freq_f")
-            st.session_state.dados['tipo_servico'] = st.selectbox("Serviço:", ["Preventiva", "Corretiva", "Instalação"], key="serv_f")
 
 # --- FIX: O CAMPO FLUIDO QUE NÃO RESETA ---
 
