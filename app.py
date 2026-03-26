@@ -82,22 +82,36 @@ def renderizar_aba_1():
         st.session_state.dados['tel_fixo'] = cx2.text_input("Fixo:", value=st.session_state.dados.get('tel_fixo', ''), key="cli_fixo_f")
         st.session_state.dados['email'] = cx3.text_input("E-mail:", value=st.session_state.dados.get('email', ''), key="cli_email_f")
 
+        # --- LÓGICA DE CEP ULTRA-RÁPIDA ---
+        def atualizar_endereco():
+            cep = st.session_state.cli_cep_f.strip().replace("-", "")
+            if len(cep) == 8:
+                dados_cep = buscar_cep(cep) # Sua função de API (ViaCEP, etc)
+                if dados_cep:
+                    # Injeta os dados direto no dicionário de persistência
+                    st.session_state.dados['endereco'] = dados_cep.get('logradouro', '')
+                    st.session_state.dados['bairro'] = dados_cep.get('bairro', '')
+                    st.session_state.dados['cidade'] = dados_cep.get('localidade', '')
+                    st.session_state.dados['uf'] = dados_cep.get('uf', '')
+                    st.session_state.dados['cep'] = cep
+
         st.markdown("---")
         ce1, ce2, ce3 = st.columns([1, 2, 1])
         
-        # Logica de CEP Blindada:
-        cep_atual = st.session_state.dados.get('cep', '')
-        cep_digitado = ce1.text_input("CEP *", value=cep_atual, key="cli_cep_input")
-        
-        if cep_digitado != cep_atual and len(cep_digitado) >= 8:
-            dados_cep = buscar_cep(cep_digitado)
-            if dados_cep:
-                st.session_state.dados.update(dados_cep) # Atualiza logradouro, bairro, etc.
-                st.session_state.dados['cep'] = cep_digitado
-                st.rerun()
+        # O pulo do gato: on_change disparando a função acima
+        ce1.text_input("CEP *", 
+                       value=st.session_state.dados.get('cep', ''), 
+                       key="cli_cep_f", 
+                       on_change=atualizar_endereco)
 
-        st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados.get('endereco', ''), key="cli_end_f")
-        st.session_state.dados['numero'] = ce3.text_input("Nº/Apto:", value=st.session_state.dados.get('numero', ''), key="cli_num_f")
+        # Campos de endereço lendo os valores atualizados pela função
+        st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", 
+                                                           value=st.session_state.dados.get('endereco', ''), 
+                                                           key="cli_end_f")
+        
+        st.session_state.dados['numero'] = ce3.text_input("Nº/Apto:", 
+                                                         value=st.session_state.dados.get('numero', ''), 
+                                                         key="cli_num_f")
 
         ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.4])
         st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados.get('complemento', ''), key="cli_comp_f")
@@ -105,9 +119,7 @@ def renderizar_aba_1():
         st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados.get('cidade', ''), key="cli_cid_f")
         st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados.get('uf', ''), max_chars=2, key="cli_uf_f")
 
-    # --- SEÇÃO 2: EQUIPAMENTO (CONFORME SUA SOLICITAÇÃO) ---
-
-# --- SEÇÃO 2: EQUIPAMENTO (A ORDEM FINAL E BLINDADA) ---
+# --- SEÇÃO 2: EQUIPAMENTO (REORGANIZAÇÃO DE POTÊNCIA E TAG) ---
     st.markdown("### ⚙️ Especificações do Equipamento")
     with st.expander("Detalhes Técnicos do Ativo", expanded=True):
         e1, e2, e3 = st.columns(3) 
@@ -122,34 +134,37 @@ def renderizar_aba_1():
             # 2. Modelo
             st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados.get('modelo', ''), key="mod_f")
             
-            # 3. Fluido
+            # 3. Fluido Refr.
             lista_fluidos = ["R410A", "R134a", "R22", "R32", "R290"]
             f_atual = st.session_state.dados.get('fluido', 'R410A')
             f_idx = lista_fluidos.index(f_atual) if f_atual in lista_fluidos else 0
             st.session_state.dados['fluido'] = st.selectbox("Fluido Refr.:", lista_fluidos, index=f_idx, key="fluid_f")
 
+            # 4. Potência (ABAIXO DO FLUIDO)
+            st.session_state.dados['potencia'] = st.text_input("Potência (CV/HP):", value=st.session_state.dados.get('potencia', ''), key="pot_f")
+
         with e2:
-            # 4. Nº Série (EVAP)
+            # 5. Nº Série (EVAP)
             st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados.get('serie_evap', ''), key="sevap_f")
             
-            # 5. Nº Série (COND)
+            # 6. Nº Série (COND)
             st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND)", value=st.session_state.dados.get('serie_cond', ''), key="scond_f")
             
-            # 6. Localizações específicas (Empilhadas)
+            # 7. Localizações
             st.session_state.dados['local_cond'] = st.text_input("Localização da Condensadora:", value=st.session_state.dados.get('local_cond', ''), key="lcond_f")
             st.session_state.dados['local_evap'] = st.text_input("Localização da Evaporadora:", value=st.session_state.dados.get('local_evap', ''), key="levap_f")
 
         with e3:
-            # 7. Capacidade
+            # 8. Capacidade
             lista_caps = {"9.000": 9000, "12.000": 12000, "18.000": 18000, "24.000": 24000, "30.000": 30000, "60.000": 60000}
             cap_sel = st.selectbox("Capacidade (BTU/h):", list(lista_caps.keys()), index=1, key="cap_f")
             st.session_state.dados['btu_nom'] = lista_caps[cap_sel]
 
-            # 8. DNA Técnico (Óleo e Frequência)
+            # 9. Óleo e Frequência
             st.session_state.dados['oleo'] = st.selectbox("Tipo de Óleo:", ["POE", "Mineral", "PVE"], key="oleo_f")
             st.session_state.dados['freq'] = st.selectbox("Frequência:", [60, 50], key="freq_f")
             
-            # 9. TAG/ID COMO ÚLTIMO CAMPO (FÍSICO):
+            # 10. TAG/ID (ÚLTIMO CAMPO)
             st.session_state.dados['tag_id'] = st.text_input("TAG/ID:", value=st.session_state.dados.get('tag_id', ''), key="tag_f")
 
 # --- FUNÇÃO TÉCNICA (Mantenha fora das abas, no escopo principal do código) ---
