@@ -196,7 +196,7 @@ def renderizar_aba_diagnosticos():
     with c1:
         st.markdown("**🔵 BAIXA / AR**")
         # O segredo da persistência: ler do session_state e salvar logo após o input
-        p_suc = st.number_input("P. Sucção (PSI)", value=st.session_state.dados.
+        p_suc = st.number_input("P. Sucção (PSI)"), value=st.session_state.dados.
     st.markdown("---")
     st.subheader("3. Parecer Técnico Final")
     
