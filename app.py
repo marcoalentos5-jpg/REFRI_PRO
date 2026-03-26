@@ -103,36 +103,33 @@ def renderizar_aba_1():
 
 # --- SEÇÃO EQUIPAMENTO REVISADA ---
 
-# --- SEÇÃO EQUIPAMENTO (LAYOUT ORIGINAL RESTAURADO) ---
-    st.markdown("### ⚙️ Especificações do Equipamento")
-    with st.expander("Detalhes Técnicos do Ativo", expanded=True):
-        e1, e2, e3 = st.columns(3) # Voltamos para o seu padrão de 3 colunas
-        
-        with e1:
-            fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
-            fab_val = st.session_state.dados.get('fabricante', 'Carrier')
-            fab_idx = fab_list.index(fab_val) if fab_val in fab_list else 0
-            st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx, key="fab_f")
-            st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados.get('modelo', ''), key="mod_f")
-            st.session_state.dados['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], key="stat_f")
 
-        with e2:
-            st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados.get('serie_evap', ''), key="sevap_f")
-            st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND)", value=st.session_state.dados.get('serie_cond', ''), key="scond_f")
-            st.session_state.dados['local_evap'] = st.text_input("Local Evaporadora:", value=st.session_state.dados.get('local_evap', ''), key="levap_f")
+# --- SEÇÃO EQUIPAMENTO (LAYOUT LIMPO RESTAURADO) ---
+st.markdown("### ⚙️ Especificações do Equipamento")
+with st.expander("Detalhes Técnicos do Ativo", expanded=True):
+    e1, e2, e3 = st.columns(3) # Layout original de 3 colunas
+    
+    with e1:
+        fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
+        fab_val = st.session_state.dados.get('fabricante', 'Carrier')
+        fab_idx = fab_list.index(fab_val) if fab_val in fab_list else 0
+        st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx, key="fab_f")
+        st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados.get('modelo', ''), key="mod_f")
 
-        with e3:
-            # Capacidade: Mantendo o visual, mas salvando o número para o cálculo do COP
-            lista_caps = {"9.000": 9000, "12.000": 12000, "18.000": 18000, "24.000": 24000, "30.000": 30000, "60.000": 60000}
-            cap_sel = st.selectbox("Capacidade (BTU/h):", list(lista_caps.keys()), index=1, key="cap_f")
-            st.session_state.dados['btu_nom'] = lista_caps[cap_sel]
+    with e2:
+        st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados.get('serie_evap', ''), key="sevap_f")
+        st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND)", value=st.session_state.dados.get('serie_cond', ''), key="scond_f")
+        st.session_state.dados['local_evap'] = st.text_input("Localização:", value=st.session_state.dados.get('local_evap', ''), key="levap_f")
 
-            # Inserindo Óleo e Frequência aqui para não criar colunas extras
-            st.session_state.dados['oleo'] = st.selectbox("Tipo de Óleo:", ["POE", "Mineral", "PVE"], key="oleo_f")
-            st.session_state.dados['freq'] = st.selectbox("Frequência:", [60, 50], key="freq_f")
-            
-            # REMOVIDO: TAG e FLUIDO daqui, pois você já os tem no cabeçalho fixo (evita erro de Duplicate Key)
+    with e3:
+        # Capacidade: Salvando o número para cálculos, mas mantendo o visual limpo
+        lista_caps = {"9.000": 9000, "12.000": 12000, "18.000": 18000, "24.000": 24000, "30.000": 30000, "60.000": 60000}
+        cap_sel = st.selectbox("Capacidade (BTU/h):", list(lista_caps.keys()), index=1, key="cap_f")
+        st.session_state.dados['btu_nom'] = lista_caps[cap_sel]
 
+        # DNA Técnico (Óleo e Frequência) - Sem criar colunas extras
+        st.session_state.dados['oleo'] = st.selectbox("Tipo de Óleo:", ["POE", "Mineral", "PVE"], key="oleo_f")
+        st.session_state.dados['freq'] = st.selectbox("Frequência:", [60, 50], key="freq_f")
 
 # --- FIX: O CAMPO FLUIDO QUE NÃO RESETA ---
 
