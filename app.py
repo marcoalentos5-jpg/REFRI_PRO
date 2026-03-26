@@ -167,114 +167,124 @@ def f_sat_precisao(p, g):
 
 
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO SUPREMA - SIMULADA E VALIDADA)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO SUPREMA - INTEGRADA E BLINDADA)
 # ==============================================================================
 
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
     
-    # --- CSS DE ALTA FIDELIDADE (PADRONIZAÇÃO ABSOLUTA) ---
+    # Recupera o fluido selecionado na Aba 1
+    fluido = st.session_state.dados.get('fluido', 'R410A')
+    st.info(f"❄️ Fluido Refrigerante em Análise: **{fluido}**")
+
+    # CSS para garantir visual limpo e profissional
     st.markdown("""
         <style>
-        /* Estilização das Métricas (Verde Neon) */
-        div[data-testid="stMetricValue"] > div { 
-            font-size: 1.65rem !important; 
-            color: #00e676 !important; 
-            font-weight: bold; 
-        }
-        
-        /* IGUALAR CAMPO DE CARGA (%) AOS CAMPOS DE ENTRADA ATIVOS */
+        div[data-testid="stMetricValue"] > div { color: #00e676 !important; font-weight: bold; }
         .stNumberInput input:disabled {
-            background-color: #ffffff !important; /* Fundo Branco */
-            color: #31333F !important;           /* Texto Preto/Padrão */
-            opacity: 1 !important;                /* Remove transparência */
+            background-color: #ffffff !important;
+            color: #31333F !important;
+            opacity: 1 !important;
             -webkit-text-fill-color: #31333F !important;
-            border: 1px solid rgba(49, 51, 63, 0.2) !important; /* Borda idêntica */
-            cursor: default;
+            border: 1px solid rgba(49, 51, 63, 0.2) !important;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    fluido = st.session_state.dados.get('fluido', 'R410A')
-
-    # --- 1. MEDIÇÕES DE CAMPO (4 COLUNAS VERTICAIS) ---
+    # --- 1. MEDIÇÕES DE CAMPO (4 COLUNAS - PERSISTÊNCIA ATIVA) ---
     st.subheader("1. Medições de Campo")
     c1, c2, c3, c4 = st.columns(4)
 
     with c1:
         st.markdown("**🔵 BAIXA / AR**")
-        p_suc = st.number_input("P. Sucção (PSI)", format="%.1f", key="ps_v_suprema")
-        t_suc = st.number_input("T. Tubo Suc. (°C)", format="%.1f", key="ts_v_suprema")
-        t_ret = st.number_input("1. T. Retorno (°C)", format="%.1f", key="tr_v_suprema")
-        t_ins = st.number_input("2. T. Insuflação (°C)", format="%.1f", key="ti_v_suprema")
+        p_suc = st.number_input("P. Sucção (PSI)", value=st.session_state.dados.get('p_suc', 0.0), format="%.1f", key="ps_diag_v1")
+        st.session_state.dados['p_suc'] = p_suc
+        t_suc = st.number_input("T. Tubo Suc. (°C)", value=st.session_state.dados.get('t_suc', 0.0), format="%.1f", key="ts_diag_v1")
+        st.session_state.dados['t_suc'] = t_suc
+        t_ret = st.number_input("1. T. Retorno (°C)", value=st.session_state.dados.get('t_ret', 0.0), format="%.1f", key="tr_diag_v1")
+        st.session_state.dados['t_ret'] = t_ret
+        t_ins = st.number_input("2. T. Insuflação (°C)", value=st.session_state.dados.get('t_ins', 0.0), format="%.1f", key="ti_diag_v1")
+        st.session_state.dados['t_ins'] = t_ins
 
     with c2:
         st.markdown("**🔴 ALTA / TENSÃO**")
-        p_des = st.number_input("P. Descarga (PSI)", format="%.1f", key="pd_v_suprema")
-        t_liq = st.number_input("T. Tubo Líq. (°C)", format="%.1f", key="tl_v_suprema")
-        v_lin = st.number_input("Tens. Linha (V)", value=220.0, key="vl_v_suprema")
-        v_med = st.number_input("Tens. Medida (V)", value=220.0, key="vm_v_suprema")
+        p_des = st.number_input("P. Descarga (PSI)", value=st.session_state.dados.get('p_des', 0.0), format="%.1f", key="pd_diag_v1")
+        st.session_state.dados['p_des'] = p_des
+        t_liq = st.number_input("T. Tubo Líq. (°C)", value=st.session_state.dados.get('t_liq', 0.0), format="%.1f", key="tl_diag_v1")
+        st.session_state.dados['t_liq'] = t_liq
+        v_med = st.number_input("Tens. Medida (V)", value=st.session_state.dados.get('v_med', 220.0), format="%.1f", key="vm_diag_v1")
+        st.session_state.dados['v_med'] = v_med
 
     with c3:
         st.markdown("**⚡ CORRENTE / CARGA**")
-        lra = st.number_input("LRA (A)", value=0.0, key="lra_v_suprema")
-        rla = st.number_input("RLA (A)", value=0.0, key="rla_v_suprema")
-        i_med = st.number_input("Corr. Medida (A)", value=0.0, key="im_v_suprema")
-        # Campo Carga % - Bloqueado mas visualmente idêntico
-        perc_calc = (i_med / rla * 100) if rla > 0 else 0.0
-        st.number_input("Carga do Comp. (%)", value=perc_calc, format="%.1f", disabled=True, key="pc_v_suprema")
+        rla = st.number_input("RLA (A)", value=st.session_state.dados.get('rla', 0.0), format="%.1f", key="rla_diag_v1")
+        st.session_state.dados['rla'] = rla
+        i_med = st.number_input("Corr. Medida (A)", value=st.session_state.dados.get('i_med', 0.0), format="%.1f", key="im_diag_v1")
+        st.session_state.dados['i_med'] = i_med
+        
+        # Cálculo de Carga % com trava de segurança
+        perc_calc = (i_med / rla * 100) if (rla and rla > 0) else 0.0
+        st.number_input("Carga do Comp. (%)", value=perc_calc, format="%.1f", disabled=True, key="pc_diag_v1")
+        
+        if perc_calc >= 110.0:
+            st.error(f"🚨 SOBRECARGA: {perc_calc:.1f}%!")
+        elif perc_calc > 0:
+            st.success(f"Carga: {perc_calc:.1f}%")
 
     with c4:
         st.markdown("**🔋 CAPACITORES (µF)**")
-        cn_c = st.number_input("C. Nom. Comp", value=0.0, key="cnc_v_suprema")
-        cn_f = st.number_input("C. Nom. Fan", value=0.0, key="cnf_v_suprema")
-        cm_c = st.number_input("C. Lido Comp", value=0.0, key="cmc_v_suprema")
-        cm_f = st.number_input("C. Lido Fan", value=0.0, key="cmf_v_suprema")
+        cn_c = st.number_input("C. Nom. Comp", value=st.session_state.dados.get('cn_c', 0.0), key="cnc_diag_v1")
+        st.session_state.dados['cn_c'] = cn_c
+        cm_c = st.number_input("C. Lido Comp", value=st.session_state.dados.get('cm_c', 0.0), key="cmc_diag_v1")
+        st.session_state.dados['cm_c'] = cm_c
 
-    # --- 2. CÁLCULOS TÉCNICOS ---
-    t_sat_s = f_sat_precisao(p_suc, fluido)
-    t_sat_d = f_sat_precisao(p_des, fluido)
-    sh_total = (t_suc - t_sat_s) if p_suc > 0 else 0.0
-    sc_final = (t_sat_d - t_liq) if p_des > 0 else 0.0
-    dt_ar = t_ret - t_ins
-    dif_v = v_lin - v_med
-    dif_i = i_med - rla
-    d_cap_c = cm_c - cn_c
-    d_cap_f = cm_f - cn_f
+    # --- 2. MOTOR DE CÁLCULO REAL (INTERLIGADO AO f_sat_precisao) ---
+    t_sat_s = f_sat_precisao(p_suc, fluido) if p_suc > 0 else 0.0
+    t_sat_d = f_sat_precisao(p_des, fluido) if p_des > 0 else 0.0
+    
+    sh = (t_suc - t_sat_s) if p_suc > 0 else 0.0
+    sc = (t_sat_d - t_liq) if p_des > 0 else 0.0
+    dt_ar = abs(t_ret - t_ins) if (t_ret and t_ins) else 0.0
 
-    # --- 3. RESULTADOS CALCULADOS (PENTA-COLUMN LAYOUT) ---
+    # --- 3. EXIBIÇÃO DE RESULTADOS ---
     st.markdown("---")
     st.subheader("2. Resultados Calculados")
-    res = st.columns(5)
+    res = st.columns(4)
     
     with res[0]:
-        st.metric("SH TOTAL", f"{sh_total:.1f} K")
-        st.metric("SH ÚTIL", f"{sh_total:.1f} K")
-    with res[1]:
-        st.metric("SAT. LINHA SUCÇÃO", f"{t_sat_s:.1f} °C")
-        st.metric("SAT. LINHA LÍQUIDO", f"{t_sat_d:.1f} °C")
-    with res[2]:
-        st.metric("Δ CORRENTE", f"{dif_i:.1f} A")
-        st.metric("Δ TENSÃO", f"{dif_v:.1f} V")
-    with res[3]:
-        st.metric("SC FINAL", f"{sc_final:.1f} K")
-        st.metric("ΔT (AR)", f"{dt_ar:.1f} °C")
-    with res[4]:
-        st.metric("Δ CAP. COMP.", f"{d_cap_c:.1f} µF")
-        st.metric("Δ CAP. FAN", f"{d_cap_f:.1f} µF")
+        st.metric("SH TOTAL", f"{sh:.1f} K")
+        if 5 <= sh <= 7: st.success("✅ SH OK")
+        elif p_suc > 0: st.warning("⚠️ Fora do padrão")
 
-    # --- 4. PARECER TÉCNICO FINAL (CAMPO ÚNICO) ---
+    with res[1]:
+        st.metric("SC FINAL", f"{sc:.1f} K")
+        if 4 <= sc <= 7: st.success("✅ SC OK")
+        elif p_des > 0: st.info("ℹ️ Verificar SC")
+
+    with res[2]:
+        st.metric("ΔT (AR)", f"{dt_ar:.1f} °C")
+        if dt_ar >= 8: st.success("✅ Troca Térmica OK")
+
+    with res[3]:
+        st.metric("SAT. SUCÇÃO", f"{t_sat_s:.1f} °C")
+
+    # --- 4. PARECER TÉCNICO ÚNICO (SEM DUPLICATAS) ---
     st.markdown("---")
     st.subheader("3. Parecer Técnico Final")
     
+    # Gerar sugestão automática apenas se o laudo estiver vazio
+    if not st.session_state.dados.get('laudo_diag'):
+        if sh > 12: sug = "Superaquecimento alto: Possível falta de fluido."
+        elif dt_ar < 8 and p_suc > 0: sug = "Baixo Delta T: Verificar filtros e serpentina."
+        else: sug = ""
+        st.session_state.dados['laudo_diag'] = sug
+
     st.session_state.dados['laudo_diag'] = st.text_area(
-        "Observações:", 
+        "Diagnóstico e Observações:", 
         value=st.session_state.dados.get('laudo_diag', ''), 
         height=150, 
-        placeholder="Registre o diagnóstico detalhado, anomalias encontradas e recomendações técnicas...",
-        key="obs_final_perfeita"
+        key="laudo_final_v100"
     )
-
 
     
     st.markdown("---")
