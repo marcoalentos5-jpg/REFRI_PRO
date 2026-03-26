@@ -106,41 +106,51 @@ def renderizar_aba_1():
         st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados.get('uf', ''), max_chars=2, key="cli_uf_f")
 
     # --- SEÇÃO 2: EQUIPAMENTO (CONFORME SUA SOLICITAÇÃO) ---
+
+# --- SEÇÃO 2: EQUIPAMENTO (A ORDEM FINAL E BLINDADA) ---
     st.markdown("### ⚙️ Especificações do Equipamento")
     with st.expander("Detalhes Técnicos do Ativo", expanded=True):
         e1, e2, e3 = st.columns(3) 
         
         with e1:
+            # 1. Fabricante
             fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
             fab_val = st.session_state.dados.get('fabricante', 'Carrier')
             fab_idx = fab_list.index(fab_val) if fab_val in fab_list else 0
             st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx, key="fab_f")
+            
+            # 2. Modelo
             st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados.get('modelo', ''), key="mod_f")
             
+            # 3. Fluido
             lista_fluidos = ["R410A", "R134a", "R22", "R32", "R290"]
             f_atual = st.session_state.dados.get('fluido', 'R410A')
             f_idx = lista_fluidos.index(f_atual) if f_atual in lista_fluidos else 0
             st.session_state.dados['fluido'] = st.selectbox("Fluido Refr.:", lista_fluidos, index=f_idx, key="fluid_f")
 
         with e2:
+            # 4. Nº Série (EVAP)
             st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados.get('serie_evap', ''), key="sevap_f")
+            
+            # 5. Nº Série (COND)
             st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND)", value=st.session_state.dados.get('serie_cond', ''), key="scond_f")
             
-            # Localizações específicas:
+            # 6. Localizações específicas (Empilhadas)
             st.session_state.dados['local_cond'] = st.text_input("Localização da Condensadora:", value=st.session_state.dados.get('local_cond', ''), key="lcond_f")
             st.session_state.dados['local_evap'] = st.text_input("Localização da Evaporadora:", value=st.session_state.dados.get('local_evap', ''), key="levap_f")
 
         with e3:
+            # 7. Capacidade
             lista_caps = {"9.000": 9000, "12.000": 12000, "18.000": 18000, "24.000": 24000, "30.000": 30000, "60.000": 60000}
             cap_sel = st.selectbox("Capacidade (BTU/h):", list(lista_caps.keys()), index=1, key="cap_f")
             st.session_state.dados['btu_nom'] = lista_caps[cap_sel]
 
+            # 8. DNA Técnico (Óleo e Frequência)
             st.session_state.dados['oleo'] = st.selectbox("Tipo de Óleo:", ["POE", "Mineral", "PVE"], key="oleo_f")
             st.session_state.dados['freq'] = st.selectbox("Frequência:", [60, 50], key="freq_f")
             
-            # TAG/ID COMO ÚLTIMO CAMPO:
+            # 9. TAG/ID COMO ÚLTIMO CAMPO (FÍSICO):
             st.session_state.dados['tag_id'] = st.text_input("TAG/ID:", value=st.session_state.dados.get('tag_id', ''), key="tag_f")
-
 
 # --- FUNÇÃO TÉCNICA (Mantenha fora das abas, no escopo principal do código) ---
 def f_sat_precisao(p, g):
