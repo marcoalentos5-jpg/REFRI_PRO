@@ -189,16 +189,24 @@ def renderizar_aba_diagnosticos():
 
     fluido = st.session_state.dados.get('fluido', 'R410A')
 
-    # --- 1. MEDIÇÕES DE CAMPO (COM SALVAMENTO IMEDIATO) ---
-    st.subheader("1. Medições de Campo")
-    c1, c2, c3, c4 = st.columns(4)
+    # --- 1. MEDIÇÕES DE CAMPO (PERSISTENTES) ---
+st.subheader("1. Medições de Campo")
+c1, c2, c3, c4 = st.columns(4)
 
-    with c1:
-        st.markdown("**🔵 BAIXA / AR**")
-        # O segredo da persistência: ler do session_state e salvar logo após o input
-        p_suc = st.number_input("P. Sucção (PSI)"), value=st.session_state.dados.
-    st.markdown("---")
-    st.subheader("3. Parecer Técnico Final")
+with c1:
+    st.markdown("**🔵 BAIXA / AR**")
+    # O parêntese deve fechar apenas após o 'key'
+    p_suc = st.number_input("P. Sucção (PSI)", value=st.session_state.dados.get('p_suc', 0.0), format="%.1f", key="ps_v12")
+    st.session_state.dados['p_suc'] = p_suc
+    
+    t_suc = st.number_input("T. Tubo Suc. (°C)", value=st.session_state.dados.get('t_suc', 0.0), format="%.1f", key="ts_v12")
+    st.session_state.dados['t_suc'] = t_suc
+    
+    t_ret = st.number_input("1. T. Retorno (°C)", value=st.session_state.dados.get('t_ret', 0.0), format="%.1f", key="tr_v12")
+    st.session_state.dados['t_ret'] = t_ret
+    
+    t_ins = st.number_input("2. T. Insuflação (°C)", value=st.session_state.dados.get('t_ins', 0.0), format="%.1f", key="ti_v12")
+    st.session_state.dados['t_ins'] = t_ins
     
     st.session_state.dados['laudo_diag'] = st.text_area(
         "Diagnóstico e Observações:", 
