@@ -69,7 +69,7 @@ def buscar_cep(cep):
 def renderizar_aba_1():
     st.subheader("📋 Cadastro de Cliente e Ativo")
 
-    # --- SEÇÃO CLIENTE ---
+    # --- SEÇÃO 1: CLIENTE ---
     with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
         c1, c2, c3 = st.columns([2, 1, 1])
         st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados.get('nome', ''), key="cli_nome_f")
@@ -100,82 +100,51 @@ def renderizar_aba_1():
         st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados.get('cidade', ''), key="cli_cid_f")
         st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados.get('uf', ''), max_chars=2, key="cli_uf_f")
 
+    # --- SEÇÃO 2: EQUIPAMENTO (AGORA DENTRO DA FUNÇÃO) ---
+    st.markdown("### ⚙️ Especificações do Equipamento")
+    with st.expander("Detalhes Técnicos do Ativo", expanded=True):
+        e1, e2, e3 = st.columns(3) 
+        
+        with e1:
+            fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
+            fab_val = st.session_state.dados.get('fabricante', 'Carrier')
+            fab_idx = fab_list.index(fab_val) if fab_val in fab_list else 0
+            st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx, key="fab_f")
+            st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados.get('modelo', ''), key="mod_f")
+            
+            # Fluido e Serviço movidos para cá para organizar o layout
+            lista_fluidos = ["R410A", "R134a", "R22", "R32", "R290"]
+            f_atual = st.session_state.dados.get('fluido', 'R410A')
+            f_idx = lista_fluidos.index(f_atual) if f_atual in lista_fluidos else 0
+            st.session_state.dados['fluido'] = st.selectbox("Fluido Refr.:", lista_fluidos, index=f_idx, key="fluid_f")
 
-# --- SEÇÃO EQUIPAMENTO REVISADA ---
+        with e2:
+            st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados.get('serie_evap', ''), key="sevap_f")
+            st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND)", value=st.session_state.dados.get('serie_cond', ''), key="scond_f")
+            st.session_state.dados['local_evap'] = st.text_input("Localização:", value=st.session_state.dados.get('local_evap', ''), key="levap_f")
+            st.session_state.dados['tag_id'] = st.text_input("TAG/ID:", value=st.session_state.dados.get('tag_id', ''), key="tag_f")
 
+        with e3:
+            lista_caps = {"9.000": 9000, "12.000": 12000, "18.000": 18000, "24.000": 24000, "30.000": 30000, "60.000": 60000}
+            cap_sel = st.selectbox("Capacidade (BTU/h):", list(lista_caps.keys()), index=1, key="cap_f")
+            st.session_state.dados['btu_nom'] = lista_caps[cap_sel]
 
-# --- SEÇÃO EQUIPAMENTO (LAYOUT LIMPO RESTAURADO) ---
-st.markdown("### ⚙️ Especificações do Equipamento")
-with st.expander("Detalhes Técnicos do Ativo", expanded=True):
-    e1, e2, e3 = st.columns(3) # Layout original de 3 colunas
-    
-    with e1:
-        fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
-        fab_val = st.session_state.dados.get('fabricante', 'Carrier')
-        fab_idx = fab_list.index(fab_val) if fab_val in fab_list else 0
-        st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx, key="fab_f")
-        st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados.get('modelo', ''), key="mod_f")
+            st.session_state.dados['oleo'] = st.selectbox("Tipo de Óleo:", ["POE", "Mineral", "PVE"], key="oleo_f")
+            st.session_state.dados['freq'] = st.selectbox("Frequência:", [60, 50], key="freq_f")
+            st.session_state.dados['tipo_servico'] = st.selectbox("Tipo de Serviço:", ["Preventiva", "Corretiva", "Instalação"], key="serv_f")
 
-    with e2:
-        st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados.get('serie_evap', ''), key="sevap_f")
-        st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND)", value=st.session_state.dados.get('serie_cond', ''), key="scond_f")
-        st.session_state.dados['local_evap'] = st.text_input("Localização:", value=st.session_state.dados.get('local_evap', ''), key="levap_f")
-
-    with e3:
-        # Capacidade: Salvando o número para cálculos, mas mantendo o visual limpo
-        lista_caps = {"9.000": 9000, "12.000": 12000, "18.000": 18000, "24.000": 24000, "30.000": 30000, "60.000": 60000}
-        cap_sel = st.selectbox("Capacidade (BTU/h):", list(lista_caps.keys()), index=1, key="cap_f")
-        st.session_state.dados['btu_nom'] = lista_caps[cap_sel]
-
-        # DNA Técnico (Óleo e Frequência) - Sem criar colunas extras
-        st.session_state.dados['oleo'] = st.selectbox("Tipo de Óleo:", ["POE", "Mineral", "PVE"], key="oleo_f")
-        st.session_state.dados['freq'] = st.selectbox("Frequência:", [60, 50], key="freq_f")
-
-# --- FIX: O CAMPO FLUIDO QUE NÃO RESETA ---
-
-lista_fluidos = ["R410A", "R134a", "R22", "R32", "R290"]
-f_atual = st.session_state.dados.get('fluido', 'R410A')
-f_idx = lista_fluidos.index(f_atual) if f_atual in lista_fluidos else 0
-st.session_state.dados['fluido'] = st.selectbox("Fluido:", lista_fluidos, index=f_idx, key="fluid_f")
-
-# Observe que estas linhas agora estão alinhadas com a de cima:
-st.session_state.dados['tipo_servico'] = st.selectbox("Serviço:", ["Preventiva", "Corretiva", "Instalação"], key="serv_f")
-st.session_state.dados['tag_id'] = st.text_input("TAG:", value=st.session_state.dados.get('tag_id', ''), key="tag_f")
-
+# --- FUNÇÃO TÉCNICA (Mantenha fora das abas, no escopo principal do código) ---
 def f_sat_precisao(p, g):
     if p <= 5: return -50.0
-    
-    # Dados baseados em tabelas PT de precisão (Danfoss/RefTools)
     tabelas = {
-        "R410A": {
-            "xp": [90.0, 100.0, 110.0, 122.7, 130.9, 141.7, 150.0, 350.0, 450.0],
-            "fp": [-3.50, -0.29, 2.36, 5.50, 7.40, 9.80, 11.50, 41.50, 54.00]
-        },
-        "R32": {
-            "xp": [90.0, 100.0, 115.0, 140.0, 170.0, 380.0, 480.0],
-            "fp": [-3.66, -0.87, 3.00, 8.50, 14.80, 44.00, 56.50]
-        },
-        "R22": {
-            "xp": [50.0, 60.0, 70.0, 80.0, 100.0, 200.0, 250.0],
-            "fp": [-3.00, 1.50, 5.80, 9.70, 16.50, 38.50, 48.00]
-        },
-        "R134a": {
-            "xp": [20.0, 30.0, 40.0, 50.0, 70.0, 150.0, 200.0],
-            "fp": [-8.00, 1.50, 9.50, 16.20, 27.50, 53.00, 65.50]
-        },
-        "R290": {
-            "xp": [40.0, 50.0, 65.0, 80.0, 100.0, 150.0, 190.0],
-            "fp": [-10.5, -4.2, 3.50, 10.20, 17.50, 32.50, 42.00]
-        }
+        "R410A": {"xp": [90.0, 100.0, 110.0, 122.7, 130.9, 141.7, 150.0, 350.0, 450.0], "fp": [-3.50, -0.29, 2.36, 5.50, 7.40, 9.80, 11.50, 41.50, 54.00]},
+        "R32":   {"xp": [90.0, 100.0, 115.0, 140.0, 170.0, 380.0, 480.0], "fp": [-3.66, -0.87, 3.00, 8.50, 14.80, 44.00, 56.50]},
+        "R22":   {"xp": [50.0, 60.0, 70.0, 80.0, 100.0, 200.0, 250.0], "fp": [-3.00, 1.50, 5.80, 9.70, 16.50, 38.50, 48.00]},
+        "R134a": {"xp": [20.0, 30.0, 40.0, 50.0, 70.0, 150.0, 200.0], "fp": [-8.00, 1.50, 9.50, 16.20, 27.50, 53.00, 65.50]},
+        "R290":  {"xp": [40.0, 50.0, 65.0, 80.0, 100.0, 150.0, 190.0], "fp": [-10.5, -4.2, 3.50, 10.20, 17.50, 32.50, 42.00]}
     }
-
     if g not in tabelas: return 0.0
-    
-    xp = tabelas[g]["xp"]
-    fp = tabelas[g]["fp"]
-
-    # Interpolação Linear para precisão decimal
-    return float(np.interp(p, xp, fp))
+    return float(np.interp(p, tabelas[g]["xp"], tabelas[g]["fp"]))
 
 
 # ==============================================================================
