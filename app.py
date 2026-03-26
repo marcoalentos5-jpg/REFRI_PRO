@@ -1,89 +1,5 @@
-
-# ==============================================================================
-# 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES (CONGELADO)
-# ==============================================================================
-import streamlit as st
-from datetime import datetime
-import requests
-import urllib.parse
-import os # Biblioteca para verificar arquivos no sistema
-import numpy as np
-import urllib.parse
-
-
-# 1. CONFIGURAÇÃO INICIAL (TESTADA)
-
-st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
-
-# CSS: Estilização (CONGELADO)
-st.markdown("""
-    <style>
-    .stTextInput>div>div>input[aria-label="Data da Visita:"] {
-        background-color: #e0f2f1 !important;
-        color: #004d40 !important;
-        font-weight: bold;
-        border: 1px solid #b2dfdb !important;
-    }
-    div.stLinkButton > a {
-        background-color: #25D366 !important;
-        color: white !important;
-        font-weight: bold;
-        border-radius: 8px !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# 1.1. MOTOR DE SESSÃO (CHAVES VERIFICADAS)
-
-if 'dados' not in st.session_state:
-    st.session_state.dados = {
-        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
-        'data': datetime.now().strftime("%d/%m/%Y"),
-        'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '', 'complemento': '',
-        'fabricante': 'Carrier', 'modelo': '', 'capacidade': '12.000', 'linha': 'Residencial',
-        'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '',
-        'tipo_servico': 'Manutenção Preventiva', 'tag_id': 'TAG-01',
-        'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
-        'status_maquina': '🟢 Operacional'
-    }
-
-def buscar_cep(cep):
-    cep_limpo = "".join(filter(str.isdigit, cep))
-    if len(cep_limpo) == 8:
-        try:
-            r = requests.get(f"https://viacep.com.br/ws/{cep_limpo}/json/")
-            if r.status_code == 200:
-                d = r.json()
-                if "erro" not in d:
-                    st.session_state.dados['endereco'] = d.get('logradouro', '')
-                    st.session_state.dados['bairro'] = d.get('bairro', '')
-                    st.session_state.dados['cidade'] = d.get('localidade', '')
-                    st.session_state.dados['uf'] = d.get('uf', '')
-                    return True
-        except: pass
-    return False
-
-# ==============================================================================
-# 1.2 FUNÇÃO DA ABA 1: Identificação e Equipamento (VERSÃO FINAL BLINDADA)
-# ==============================================================================
-
+# Certifique-se que esta linha 'def' esteja encostada na margem esquerda (sem espaços antes dela)
 def renderizar_aba_1():
-    st.subheader("📋 Cadastro de Cliente e Ativo")
-
-    # --- SEÇÃO 1: CLIENTE (COM CORREÇÃO DE CEP) ---
-    with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
-        c1, c2, c3 = st.columns([2, 1, 1])
-        st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados.get('nome', ''), key="cli_nome_f")
-        st.session_state.dados['cpf_cnpj'] = c2.text_input("CPF/CNPJ", value=st.session_state.dados.get('cpf_cnpj', ''), key="cli_doc_f")
-        st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp *", value=st.session_state.dados.get('whatsapp', ''), key="cli_zap_f")
-
-        cx1, cx2, cx3 = st.columns([1, 1, 2])
-        st.session_state.dados['celular'] = cx1.text_input("Celular:", value=st.session_state.dados.get('celular', ''), key="cli_cel_f")
-        st.session_state.dados['tel_fixo'] = cx2.text_input("Fixo:", value=st.session_state.dados.get('tel_fixo', ''), key="cli_fixo_f")
-        st.session_state.dados['email'] = cx3.text_input("E-mail:", value=st.session_state.dados.get('email', ''), key="cli_email_f")
-
-        # --- LÓGICA DE CEP ULTRA-RÁPIDA ---
-        def renderizar_aba_1():
     st.subheader("📋 Cadastro de Cliente e Ativo")
 
     # --- SEÇÃO 1: CLIENTE E ENDEREÇO (LOGICA DE CEP BLINDADA) ---
@@ -161,7 +77,6 @@ def renderizar_aba_1():
             
             # TAG/ID COMO ÚLTIMO CAMPO FÍSICO
             st.session_state.dados['tag_id'] = st.text_input("TAG/ID:", value=st.session_state.dados.get('tag_id', ''), key="tag_f")
-
             # 9. Óleo e Frequência
             st.session_state.dados['oleo'] = st.selectbox("Tipo de Óleo:", ["POE", "Mineral", "PVE"], key="oleo_f")
             st.session_state.dados['freq'] = st.selectbox("Frequência:", [60, 50], key="freq_f")
