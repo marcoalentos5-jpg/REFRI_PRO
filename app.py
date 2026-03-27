@@ -12,9 +12,32 @@ import urllib.parse
 from datetime import datetime
 
 
-import streamlit as st
-from datetime import datetime
-import requests
+# 1. Primeiro as funções de cálculo
+def f_sat_precisao(p, g):
+    # ... seu código da função aqui ...
+    return temp
+
+# 2. Depois as funções das abas
+def renderizar_aba_1():
+    # ... código da identificação ...
+
+def renderizar_aba_diagnosticos():
+    # ... código dos diagnósticos que arrumamos ...
+
+# 3. POR ÚLTIMO, a lógica de navegação (O "Cérebro" do App)
+# ESTA PARTE DEVE FICAR NO FINAL DO ARQUIVO, SEM ESPAÇOS NA ESQUERDA
+aba_selecionada = st.sidebar.radio(
+    "📍 Selecione a Etapa:",
+    ["1. Identificação", "2. Diagnósticos", "3. Relatório"],
+    key="menu_principal"
+)
+
+if aba_selecionada == "1. Identificação":
+    renderizar_aba_1()
+elif aba_selecionada == "2. Diagnósticos":
+    renderizar_aba_diagnosticos()
+elif aba_selecionada == "3. Relatório":
+    st.info("Página de Relatório em construção...")
 
 # ==============================================================================
 # 1. MOTOR DE CÁLCULO TERMODINÂMICO (O SEGREDO DA SATURAÇÃO - PADRÃO DANFOSS)
@@ -180,8 +203,22 @@ def renderizar_aba_diagnosticos():
 # ==============================================================================
 # LÓGICA DE NAVEGAÇÃO (MANTENHA ESTA PARTE IGUAL)
 # ==============================================================================
-if aba_selecionada == "2. Diagnósticos":
+# 1. Primeiro, você cria o menu e guarda a escolha na variável
+aba_selecionada = st.sidebar.radio(
+    "📍 Selecione a Etapa:",
+    ["1. Identificação", "2. Diagnósticos", "3. Relatório"],
+    key="menu_principal"
+)
+
+# 2. Depois, você usa o 'if' para decidir o que mostrar
+if aba_selecionada == "1. Identificação":
+    renderizar_aba_1() # Nome da sua função da aba 1
+
+elif aba_selecionada == "2. Diagnósticos":
     renderizar_aba_diagnosticos()
+
+elif aba_selecionada == "3. Relatório":
+    st.info("Página de Relatório em construção...")
 
 
 # ==============================================================================
