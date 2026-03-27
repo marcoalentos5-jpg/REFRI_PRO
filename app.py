@@ -82,56 +82,54 @@ if 'dados' not in st.session_state:
         'parecer': ''
     }
 
+
 # ==============================================================================
-# 4. FUNÇÃO DA ABA 2: DIAGNÓSTICOS (LAYOUT FINAL 5 COLUNAS x 2 LINHAS)
+# 4. FUNÇÃO DA ABA 2: DIAGNÓSTICOS (LAYOUT FORÇADO 5x2 COM MOLDURAS)
 # ==============================================================================
 def renderizar_aba_2():
     d = st.session_state.dados
     fluido_sel = d.get('fluido', 'R410A')
 
-    st.markdown(f"### 🧪 Central de Diagnóstico Técnico - Fluido: {fluido_sel}")
+    st.markdown(f"### 🔍 Central de Diagnóstico Técnico")
     
     # --- 1. MEDIÇÕES DE CAMPO ---
     st.markdown("#### 1. Medições de Campo")
-    
     c1, c2, c3, c4 = st.columns(4)
     
     with c1:
         st.caption("🔵 BAIXA / AR")
-        d['p_suc_psi'] = st.number_input("P. Sucção (PSI)", value=float(d.get('p_suc_psi', 0.0)), key='psuc')
-        d['t_tubo_suc'] = st.number_input("T. Tubo Suc. (°C)", value=float(d.get('t_tubo_suc', 0.0)), key='tsuc')
-        d['t_retorno'] = st.number_input("1. T. Retorno (°C)", value=float(d.get('t_retorno', 0.0)), key='tret')
-        d['t_insufla'] = st.number_input("2. T. Insuflação (°C)", value=float(d.get('t_insufla', 0.0)), key='tins')
+        d['p_suc_psi'] = st.number_input("P. Sucção (PSI)", value=float(d.get('p_suc_psi', 0.0)), key='psuc_v2')
+        d['t_tubo_suc'] = st.number_input("T. Tubo Suc. (°C)", value=float(d.get('t_tubo_suc', 0.0)), key='tsuc_v2')
+        d['t_retorno'] = st.number_input("1. T. Retorno (°C)", value=float(d.get('t_retorno', 0.0)), key='tret_v2')
+        d['t_insufla'] = st.number_input("2. T. Insuflação (°C)", value=float(d.get('t_insufla', 0.0)), key='tins_v2')
 
     with c2:
         st.caption("🔴 ALTA / TENSÃO")
-        d['p_desc_psi'] = st.number_input("P. Descarga (PSI)", value=float(d.get('p_desc_psi', 0.0)), key='pdesc')
-        d['t_tubo_liq'] = st.number_input("T. Tubo Líq. (°C)", value=float(d.get('t_tubo_liq', 0.0)), key='tliq')
-        d['v_linha'] = st.number_input("Tens. Linha (V)", value=float(d.get('v_linha', 220.0)), key='vlin')
-        d['v_medida'] = st.number_input("Tens. Medida (V)", value=float(d.get('v_medida', 220.0)), key='vmed')
+        d['p_desc_psi'] = st.number_input("P. Descarga (PSI)", value=float(d.get('p_desc_psi', 0.0)), key='pdesc_v2')
+        d['t_tubo_liq'] = st.number_input("T. Tubo Líq. (°C)", value=float(d.get('t_tubo_liq', 0.0)), key='tliq_v2')
+        d['v_linha'] = st.number_input("Tens. Linha (V)", value=float(d.get('v_linha', 220.0)), key='vlin_v2')
+        d['v_medida'] = st.number_input("Tens. Medida (V)", value=float(d.get('v_medida', 220.0)), key='vmed_v2')
 
     with c3:
         st.caption("⚡ CORRENTE / CARGA")
-        d['lra'] = st.number_input("LRA (A)", value=float(d.get('lra', 0.0)), key='lra_in')
-        d['rla'] = st.number_input("RLA (A)", value=float(d.get('rla', 0.0)), key='rla_in')
-        d['i_medida'] = st.number_input("Corr. Medida (A)", value=float(d.get('i_medida', 0.0)), key='imed')
-        # Cálculo rápido de carga para exibição
-        carga_percent = (d['i_medida'] / d['rla'] * 100) if d['rla'] > 0 else 0.0
-        st.write(f"Carga do Comp. (%): **{carga_percent:.1f}%**")
+        d['lra'] = st.number_input("LRA (A)", value=float(d.get('lra', 0.0)), key='lra_v2')
+        d['rla'] = st.number_input("RLA (A)", value=float(d.get('rla', 0.0)), key='rla_v2')
+        d['i_medida'] = st.number_input("Corr. Medida (A)", value=float(d.get('i_medida', 0.0)), key='imed_v2')
+        carga = (d['i_medida'] / d['rla'] * 100) if d['rla'] > 0 else 0.0
+        st.write(f"Carga do Comp.: **{carga:.1f}%**")
 
     with c4:
         st.caption("🔋 CAPACITORES (µF)")
-        d['c_nom_comp'] = st.number_input("C. Nom. Comp", value=float(d.get('c_nom_comp', 0.0)), key='cnomc')
-        d['c_lido_comp'] = st.number_input("C. Lido Comp", value=float(d.get('c_lido_comp', 0.0)), key='clidc')
-        d['c_nom_fan'] = st.number_input("C. Nom. Fan", value=float(d.get('c_nom_fan', 0.0)), key='cnomf')
-        d['c_lido_fan'] = st.number_input("C. Lido Fan", value=float(d.get('c_lido_fan', 0.0)), key='clidf')
+        d['c_nom_comp'] = st.number_input("C. Nom. Comp", value=float(d.get('c_nom_comp', 0.0)), key='cnomc_v2')
+        d['c_lido_comp'] = st.number_input("C. Lido Comp", value=float(d.get('c_lido_comp', 0.0)), key='clidc_v2')
+        d['c_nom_fan'] = st.number_input("C. Nom. Fan", value=float(d.get('c_nom_fan', 0.0)), key='cnomf_v2')
+        d['c_lido_fan'] = st.number_input("C. Lido Fan", value=float(d.get('c_lido_fan', 0.0)), key='clidf_v2')
 
-    # --- PROCESSAMENTO DOS CÁLCULOS (O MOTOR) ---
+    # --- CÁLCULOS ---
     sat_suc = calcular_saturacao(d['p_suc_psi'], fluido_sel)
     sat_liq = calcular_saturacao(d['p_desc_psi'], fluido_sel)
-    
     sh_total = d['t_tubo_suc'] - sat_suc
-    sh_util = sh_total * 0.8  # Estimativa de eficiência
+    sh_util = sh_total * 0.8
     sc_final = sat_liq - d['t_tubo_liq']
     delta_i = d['i_medida'] - d['rla']
     delta_v = d['v_linha'] - d['v_medida']
@@ -139,61 +137,46 @@ def renderizar_aba_2():
     delta_cap_c = d['c_nom_comp'] - d['c_lido_comp']
     delta_cap_f = d['c_nom_fan'] - d['c_lido_fan']
 
-    # --- 2. RESULTADOS CALCULADOS (GRADE 5 COLUNAS x 2 LINHAS) ---
+    # --- 2. RESULTADOS CALCULADOS (AQUI ESTÁ O AJUSTE VISUAL) ---
     st.markdown("---")
-    st.markdown("### 2. Resultados Calculados")
+    st.markdown("#### 2. Resultados Calculados")
 
-    # CSS PARA AS MOLDURAS (DISPLAY DIGITAL)
+    # CSS PARA FORÇAR AS MOLDURAS (COMO NA IMAGEM D7BCD9)
     st.markdown("""
         <style>
-            .card-resultado {
-                border: 2px solid #ffffff;
-                border-radius: 12px;
-                padding: 15px;
-                text-align: center;
-                margin-bottom: 10px;
-                background-color: #0e1117;
-                min-height: 110px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
+            .moldura-resultado {
+                border: 2px solid #ffffff !important;
+                border-radius: 15px !important;
+                padding: 20px !important;
+                text-align: center !important;
+                background-color: transparent !important;
+                margin-bottom: 15px !important;
             }
-            .card-resultado p { color: #aaaaaa; margin: 0; font-size: 11px; font-weight: bold; text-transform: uppercase; }
-            .card-resultado h2 { color: #ffffff; margin: 5px 0 0 0; font-size: 24px; }
+            .moldura-resultado p { color: #aaaaaa !important; margin: 0 !important; font-size: 12px !important; font-weight: bold; }
+            .moldura-resultado h2 { color: #ffffff !important; margin: 5px 0 0 0 !important; font-size: 28px !important; }
         </style>
     """, unsafe_allow_html=True)
 
-    # CRIANDO AS 5 COLUNAS PARA A DISTRIBUIÇÃO HORIZONTAL
-    res_c1, res_c2, res_c3, res_c4, res_c5 = st.columns(5)
+    # CRIANDO 5 COLUNAS PARA A GRADE
+    r1, r2, r3, r4, r5 = st.columns(5)
 
-    # LINHA 1 (Campos de 1 a 5)
-    with res_c1:
-        st.markdown(f'<div class="card-resultado"><p>SH TOTAL</p><h2>{sh_total:.1f} K</h2></div>', unsafe_allow_html=True)
-    with res_c2:
-        st.markdown(f'<div class="card-resultado"><p>SH ÚTIL</p><h2>{sh_util:.1f} K</h2></div>', unsafe_allow_html=True)
-    with res_c3:
-        st.markdown(f'<div class="card-resultado"><p>SAT. SUCÇÃO</p><h2>{sat_suc:.1f} °C</h2></div>', unsafe_allow_html=True)
-    with res_c4:
-        st.markdown(f'<div class="card-resultado"><p>Δ CORRENTE</p><h2>{delta_i:.1f} A</h2></div>', unsafe_allow_html=True)
-    with res_c5:
-        st.markdown(f'<div class="card-resultado"><p>Δ T (AR)</p><h2>{delta_t_ar:.1f} K</h2></div>', unsafe_allow_html=True)
+    # LINHA 1
+    with r1: st.markdown(f'<div class="moldura-resultado"><p>SH TOTAL</p><h2>{sh_total:.1f} K</h2></div>', unsafe_allow_html=True)
+    with r2: st.markdown(f'<div class="moldura-resultado"><p>SH ÚTIL</p><h2>{sh_util:.1f} K</h2></div>', unsafe_allow_html=True)
+    with r3: st.markdown(f'<div class="moldura-resultado"><p>SAT. SUCÇÃO</p><h2>{sat_suc:.1f} °C</h2></div>', unsafe_allow_html=True)
+    with r4: st.markdown(f'<div class="moldura-resultado"><p>Δ CORRENTE</p><h2>{delta_i:.1f} A</h2></div>', unsafe_allow_html=True)
+    with r5: st.markdown(f'<div class="moldura-resultado"><p>Δ T (AR)</p><h2>{delta_t_ar:.1f} K</h2></div>', unsafe_allow_html=True)
 
-    # LINHA 2 (Campos de 6 a 10) - Empilhados abaixo dos primeiros
-    with res_c1:
-        st.markdown(f'<div class="card-resultado"><p>SC FINAL</p><h2>{sc_final:.1f} K</h2></div>', unsafe_allow_html=True)
-    with res_c2:
-        st.markdown(f'<div class="card-resultado"><p>SAT. LÍQUIDO</p><h2>{sat_liq:.1f} °C</h2></div>', unsafe_allow_html=True)
-    with res_c3:
-        st.markdown(f'<div class="card-resultado"><p>Δ TENSÃO</p><h2>{delta_v:.1f} V</h2></div>', unsafe_allow_html=True)
-    with res_c4:
-        st.markdown(f'<div class="card-resultado"><p>Δ CAP. COMP.</p><h2>{delta_cap_c:.1f} µF</h2></div>', unsafe_allow_html=True)
-    with res_c5:
-        st.markdown(f'<div class="card-resultado"><p>Δ CAP. FAN</p><h2>{delta_cap_f:.1f} µF</h2></div>', unsafe_allow_html=True)
+    # LINHA 2 (Abaixo dos mesmos 'with' para alinhar)
+    with r1: st.markdown(f'<div class="moldura-resultado"><p>SC FINAL</p><h2>{sc_final:.1f} K</h2></div>', unsafe_allow_html=True)
+    with r2: st.markdown(f'<div class="moldura-resultado"><p>SAT. LÍQUIDO</p><h2>{sat_liq:.1f} °C</h2></div>', unsafe_allow_html=True)
+    with r3: st.markdown(f'<div class="moldura-resultado"><p>Δ TENSÃO</p><h2>{delta_v:.1f} V</h2></div>', unsafe_allow_html=True)
+    with r4: st.markdown(f'<div class="moldura-resultado"><p>Δ CAP. COMP.</p><h2>{delta_cap_c:.1f} µF</h2></div>', unsafe_allow_html=True)
+    with r5: st.markdown(f'<div class="moldura-resultado"><p>Δ CAP. FAN</p><h2>{delta_cap_f:.1f} µF</h2></div>', unsafe_allow_html=True)
 
-    # --- 3. PARECER TÉCNICO ---
-    st.markdown("---")
-    st.markdown("### 3. Parecer Técnico Final")
-    d['parecer'] = st.text_area("Diagnóstico e Observações:", value=d.get('parecer', ''), height=120)
+    # --- 3. PARECER DO TÉCNICO ---
+    st.markdown("#### 3. Parecer Técnico Final")
+    d['parecer'] = st.text_area("Diagnóstico e Observações:", value=d.get('parecer', ''), height=100)
 
 # ==============================================================================
 # 1.2 FUNÇÃO DA ABA 1: Identificação e Equipamento (LIMPEZA DEFINITIVA)
