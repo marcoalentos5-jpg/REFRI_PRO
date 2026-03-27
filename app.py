@@ -255,51 +255,64 @@ def renderizar_aba_diagnosticos():
     d_cap_f = round(cm_f - cn_f, 2)
     d_cap_c = round(cm_c - cn_c, 2)
 
-    # --- 4. RESULTADOS CALCULADOS (DISTRIBUIÇÃO SOLICITADA EM 5 COLUNAS) ---
+
+# --- 3. RESULTADOS CALCULADOS (FONTE REDUZIDA E COR PERSONALIZADA) ---
     st.markdown("---")
     st.subheader("2. Resultados Calculados")
 
-    # CSS para destaque dos campos (Bordas e Fundo)
+    # CSS para diminuir a fonte e mudar a cor do texto das métricas
     st.markdown("""
         <style>
+        /* Estilo do Card */
         div[data-testid="stMetric"] {
-            background-color: #1E1E1E;
+            background-color: #1A1C23;
             border: 1px solid #333;
-            padding: 12px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            border-left: 5px solid #00CCFF;
+            padding: 8px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            border-left: 4px solid #00CCFF;
+        }
+        /* Ajuste do Label (Título do campo) */
+        div[data-testid="stMetricLabel"] p {
+            font-size: 0.85rem !important;
+            color: #888 !important; /* Cinza para o título */
+        }
+        /* Ajuste do Valor (O número calculado) */
+        div[data-testid="stMetricValue"] div {
+            font-size: 1.1rem !important;
+            color: #B0C4DE !important; /* Cor LightSteelBlue para o resultado */
+            font-weight: 600;
         }
         </style>
     """, unsafe_allow_html=True)
 
     res = st.columns(5)
 
-    # COLUNA 1
+    # COLUNA 1: Superaquecimentos
     with res[0]:
         st.metric("SH TOTAL", f"{sh:.1f} K")
         st.metric("SH ÚTIL", f"{sh_util:.1f} K")
 
-    # COLUNA 2
+    # COLUNA 2: Temperaturas de Troca
     with res[1]:
         st.metric("SAT. SUCÇÃO", f"{t_sat_s:.1f} °C")
         st.metric("Δ T (AR)", f"{dt_ar:.1f} K")
 
-    # COLUNA 3
+    # COLUNA 3: Sub-resfriamento e Alvo
     with res[2]:
         st.metric("SC FINAL", f"{sc:.1f} K")
         st.metric("SUCÇÃO ALVO", f"{ref['p_suc']}")
 
-    # COLUNA 4
+    # COLUNA 4: Diferenciais Elétricos
     with res[3]:
         st.metric("Δ TENSÃO", f"{d_tensao:.1f} V")
         st.metric("Δ CORRENTE", f"{d_corrente:.1f} A")
 
-    # COLUNA 5
+    # COLUNA 5: Diferenciais de Capacitância
     with res[4]:
         st.metric("Δ CAP. COMP.", f"{d_cap_c:.1f} µF")
         st.metric("Δ CAP. FAN", f"{d_cap_f:.1f} µF")
-
+    
     # --- 5. DIAGNÓSTICO INTELIGENTE (IA) ---
     st.markdown("---")
     st.subheader("🤖 Diagnóstico Inteligente (IA)")
