@@ -173,53 +173,53 @@ def f_sat_precisao(p, g):
 
 
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (20 CAMPOS ORGANIZADOS POR SEÇÕES)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO FINAL CONSOLIDADA)
 # ==============================================================================
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
     d = st.session_state.dados
     fluido = d.get('fluido', 'R410A')
 
-    # --- 1. MEDIÇÕES DE CAMPO ---
+    # --- 1. MEDIÇÕES DE CAMPO (20 CAMPOS ORGANIZADOS EM 4 SEÇÕES) ---
     st.subheader("1. Medições de Campo")
     
     # SEÇÃO A: 🔵 CICLO FRIGORÍFICO
     st.markdown("##### 🔵 Ciclo Frigorífico")
     a1, a2, a3, a4, a5 = st.columns(5)
-    p_suc = a1.number_input("P. Sucção (PSI)", value=float(d.get('p_baixa', 0.0)), format="%.1f", key="ps_m")
-    t_suc = a2.number_input("T. Tubo Suc. (°C)", value=float(d.get('temp_sucção', 0.0)), format="%.1f", key="ts_m")
-    p_des = a3.number_input("P. Descarga (PSI)", value=float(d.get('p_alta', 0.0)), format="%.1f", key="pd_m")
-    t_liq = a4.number_input("T. Tubo Líq. (°C)", value=float(d.get('temp_liquido', 0.0)), format="%.1f", key="tl_m")
-    t_com = a5.number_input("T. Desc. Comp (°C)", value=0.0, key="tc_m")
+    p_suc = a1.number_input("SUCÇÃO (PSI)", value=float(d.get('p_baixa', 0.0)), format="%.1f", key="ps_m")
+    t_suc = a2.number_input("TUB. SUCÇÃO (°C)", value=float(d.get('temp_sucção', 0.0)), format="%.1f", key="ts_m")
+    p_des = a3.number_input("DESCARGA (PSI)", value=float(d.get('p_alta', 0.0)), format="%.1f", key="pd_m")
+    t_liq = a4.number_input("TUB. LÍQUIDO (°C)", value=float(d.get('temp_liquido', 0.0)), format="%.1f", key="tl_m")
+    t_com = a5.number_input("TUB. Desc. Comp. (°C)", value=0.0, format="%.1f", key="tc_m")
 
     # SEÇÃO B: 🔴 AR E AMBIENTE
     st.markdown("##### 🔴 Ar e Ambiente")
     b1, b2, b3, b4, b5 = st.columns(5)
-    t_ret = b1.number_input("T. Retorno Ar (°C)", value=float(d.get('temp_entrada_ar', 0.0)), format="%.1f", key="tr_m")
-    t_ins = b2.number_input("T. Insuflação (°C)", value=float(d.get('temp_saida_ar', 0.0)), format="%.1f", key="ti_m")
-    t_amb = b3.number_input("T. Amb. Ext. (°C)", value=float(d.get('temp_amb_ext', 35.0)), key="ta_m")
-    u_rel = b4.number_input("Umid. Rel. (%)", value=float(d.get('umidade', 50.0)), key="ur_m")
-    p_oil = b5.number_input("Pressão Óleo (PSI)", value=0.0, key="po_m")
+    t_ret = b1.number_input("Retorno Ar (°C)", value=float(d.get('temp_entrada_ar', 0.0)), format="%.1f", key="tr_m")
+    t_ins = b2.number_input("Insuflação (°C)", value=float(d.get('temp_saida_ar', 0.0)), format="%.1f", key="ti_m")
+    t_amb = b3.number_input("TEMP. Amb. Ext. (°C)", value=float(d.get('temp_amb_ext', 35.0)), format="%.1f", key="ta_m")
+    u_rel = b4.number_input("Umid. Rel. DO AR (%)", value=float(d.get('umidade', 50.0)), format="%.1f", key="ur_m")
+    p_oil = b5.number_input("Pressão Óleo (PSI)", value=0.0, format="%.1f", key="po_m")
 
-    # SEÇÃO C: ⚡ ELÉTRICA (TENSÃO E CORRENTE)
+    # SEÇÃO C: ⚡ PARÂMETROS ELÉTRICOS
     st.markdown("##### ⚡ Parâmetros Elétricos")
     c1, c2, c3, c4, c5 = st.columns(5)
-    v_lin = c1.number_input("Tens. Nom. (V)", value=float(d.get('v_nominal', 220.0)), key="vn_m")
-    v_med = c2.number_input("Tens. Medida (V)", value=float(d.get('v_medida', 220.0)), key="vm_m")
-    i_med = c3.number_input("Corr. Medida (A)", value=float(d.get('i_medida', 0.0)), key="im_m")
-    rla   = c4.number_input("RLA (A)", value=float(d.get('rla', 0.0)), key="rla_m")
-    lra   = c5.number_input("LRA (A)", value=float(d.get('lra', 0.0)), key="lra_m")
+    v_lin = c1.number_input("Tensão Nominal (V)", value=float(d.get('v_nominal', 220.0)), key="vn_m")
+    v_med = c2.number_input("Tensão Medida (V)", value=float(d.get('v_medida', 220.0)), key="vm_m")
+    i_med = c3.number_input("Corrente Medida (A)", value=float(d.get('i_medida', 0.0)), key="im_m")
+    rla   = c4.number_input("RLA - Nominal (A)", value=float(d.get('rla', 0.0)), key="rla_m")
+    lra   = c5.number_input("LRA - Partida (A)", value=float(d.get('lra', 0.0)), key="lra_m")
 
-    # SEÇÃO D: 🔋 CAPACITORES E VENTILAÇÃO
-    st.markdown("##### 🔋 Capacitores e Ventilação")
+    # SEÇÃO D: 🔋 CAPACITÂNCIA E VENTILAÇÃO
+    st.markdown("##### 🔋 Capacitância e Ventilação")
     d1, d2, d3, d4, d5 = st.columns(5)
-    cn_c  = d1.number_input("Cap. Nom. Comp", value=float(d.get('cn_c', 0.0)), key="cnc_m")
-    cm_c  = d2.number_input("Cap. Lido Comp", value=float(d.get('cm_c', 0.0)), key="cmc_m")
-    cn_f  = d3.number_input("Cap. Nom. Fan", value=float(d.get('cn_f', 0.0)), key="cnf_m")
-    cm_f  = d4.number_input("Cap. Lido Fan", value=float(d.get('cm_f', 0.0)), key="cmf_m")
-    i_fan = d5.number_input("Corr. Fan (A)", value=0.0, key="if_m")
+    cn_c  = d1.number_input("CAPACITÂNCIA Nom. Comp", value=float(d.get('cn_c', 0.0)), format="%.1f", key="cnc_m")
+    cm_c  = d2.number_input("CAPACITÂNCIA Lido Comp", value=float(d.get('cm_c', 0.0)), format="%.1f", key="cmc_m")
+    cn_f  = d3.number_input("CAPACITÂNCIA Nom. Fan", value=float(d.get('cn_f', 0.0)), format="%.1f", key="cnf_m")
+    cm_f  = d4.number_input("CAPACITÂNCIA Lido Fan", value=float(d.get('cm_f', 0.0)), format="%.1f", key="cmf_m")
+    i_fan = d5.number_input("CORRENTE Fan (A)", value=0.0, format="%.2f", key="if_m")
 
-    # --- 2. PROCESSAMENTO TÉCNICO ---
+    # --- 2. PROCESSAMENTO TÉCNICO (CÁLCULOS) ---
     t_sat_s = f_sat_precisao(p_suc, fluido) if p_suc > 5 else 0.0
     t_sat_d = f_sat_precisao(p_des, fluido) if p_des > 5 else 0.0
     
@@ -232,7 +232,7 @@ def renderizar_aba_diagnosticos():
     d_cap_f     = round(cm_f - cn_f, 2)
     d_cap_c     = round(cm_c - cn_c, 2)
 
-    # --- 3. RESULTADOS CALCULADOS (5 COLUNAS X 2 LINHAS) ---
+    # --- 3. RESULTADOS CALCULADOS (10 RESULTADOS EM 5 COLUNAS) ---
     st.markdown("---")
     st.subheader("2. Resultados Calculados")
     
@@ -259,12 +259,18 @@ def renderizar_aba_diagnosticos():
         diag_previsto = "Análise: Superaquecimento Elevado. Sugere falta de fluido ou restrição."
     elif dt_ar < 8 and t_ret > 0:
         diag_previsto = "Análise: Baixo Diferencial de Temperatura (Delta T do Ar)."
+    elif t_com > 100:
+        diag_previsto = "ALERTA: Temperatura de Descarga crítica! Risco de carbonização do óleo."
 
-    d['laudo_diag'] = st.text_area("Diagnóstico Final:", value=d.get('laudo_diag', diag_previsto), height=150, key="txt_laudo_mestre")
+    d['laudo_diag'] = st.text_area("Diagnóstico e Observações:", value=d.get('laudo_diag', diag_previsto), height=150, key="txt_final_v1")
 
-    # Sincronização Final
-    d.update({'p_baixa': p_suc, 'temp_sucção': t_suc, 'p_alta': p_des, 'temp_liquido': t_liq, 'rla': rla, 'cm_c': cm_c, 'cm_f': cm_f})
-
+    # Sincronização Final dos Dados
+    d.update({
+        'p_baixa': p_suc, 'temp_sucção': t_suc, 'p_alta': p_des, 'temp_liquido': t_liq,
+        'temp_entrada_ar': t_ret, 'temp_saida_ar': t_ins, 'i_medida': i_med, 
+        'rla': rla, 'cm_c': cm_c, 'cm_f': cm_f, 'v_nominal': v_lin, 'v_medida': v_med,
+        'cn_c': cn_c, 'cn_f': cn_f, 'lra': lra
+    })
 
     
     # Atualização Global dos Dados
