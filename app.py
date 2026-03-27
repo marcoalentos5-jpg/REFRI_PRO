@@ -64,91 +64,94 @@ def buscar_cep(cep):
 
 
 # ==============================================================================
-# 1.2 FUNÇÃO DA ABA 1: Identificação e Equipamento (VERSÃO TOTALMENTE LIMPA)
+# 1.2 FUNÇÃO DA ABA 1: Identificação e Equipamento (LIMPEZA DEFINITIVA)
 # ==============================================================================
 def renderizar_aba_1():
     st.subheader("📋 Cadastro de Cliente e Ativo")
     d = st.session_state.dados
 
-    # --- SEÇÃO CLIENTE (Omitida aqui para focar no erro, mas mantenha a sua) ---
-    # [Mantenha seu código de Nome, CPF, CEP e Endereço aqui...]
+    # --- SEÇÃO CLIENTE E ENDEREÇO ---
+    with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
+        c1, c2, c3 = st.columns([2, 1, 1])
+        d['nome'] = c1.text_input("Nome / Razão Social *", value=d.get('nome', ''), key="cli_n")
+        d['cpf_cnpj'] = c2.text_input("CPF/CNPJ", value=d.get('cpf_cnpj', ''), key="cli_d")
+        d['whatsapp'] = c3.text_input("WhatsApp *", value=d.get('whatsapp', ''), key="cli_w")
 
-    # --- SEÇÃO EQUIPAMENTO (CÓDIGO CORRIGIDO) ---
+        cx1, cx2, cx3 = st.columns([1, 1, 2])
+        d['celular'] = cx1.text_input("Celular:", value=d.get('celular', ''), key="cli_c")
+        d['tel_fixo'] = cx2.text_input("Fixo:", value=d.get('tel_fixo', ''), key="cli_f")
+        d['email'] = cx3.text_input("E-mail:", value=d.get('email', ''), key="cli_e")
+
+        st.markdown("---")
+        ce1, ce2, ce3 = st.columns([1, 2, 1])
+        cep_input = ce1.text_input("CEP *", value=d.get('cep', ''), key="cli_cep")
+        
+        # LOGICA CEP
+        if len("".join(filter(str.isdigit, cep_input))) == 8 and cep_input != d.get('last_cep', ''):
+            if buscar_cep(cep_input):
+                d['cep'] = cep_input
+                d['last_cep'] = cep_input
+                st.rerun()
+
+        d['endereco'] = ce2.text_input("Logradouro:", value=d.get('endereco', ''), key="cli_end")
+        d['numero'] = ce3.text_input("Nº/Apto:", value=d.get('numero', ''), key="cli_num")
+
+        ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.4])
+        d['complemento'] = ce4.text_input("Complemento:", value=d.get('complemento', ''), key="cli_cm")
+        d['bairro'] = ce5.text_input("Bairro:", value=d.get('bairro', ''), key="cli_ba")
+        d['cidade'] = ce6.text_input("Cidade:", value=d.get('cidade', ''), key="cli_ci")
+        d['uf'] = ce7.text_input("UF:", value=d.get('uf', ''), key="cli_uf")
+
+    # --- SEÇÃO EQUIPAMENTO (ESTRUTURA ÚNICA) ---
     st.markdown("### ⚙️ Especificações do Equipamento")
     with st.expander("Detalhes Técnicos do Ativo", expanded=True):
         
-        # LINHA 1: Fabricante | Série Evap | Capacidade
-        c1, c2, c3 = st.columns(3)
-        with c1:
+        # LINHA 1
+        l1_c1, l1_c2, l1_c3 = st.columns(3)
+        with l1_c1:
             fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea", "Outro"])
-            fab_idx = fab_list.index(d['fabricante']) if d['fabricante'] in fab_list else 0
-            d['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx, key="f1")
-        with c2:
-            d['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=d.get('serie_evap', ''), key="f2")
-        with c3:
-            d['capacidade'] = st.text_input("Capacidade (BTU/TR):", value=d.get('capacidade', '12.000'), key="f3")
+            f_idx = fab_list.index(d['fabricante']) if d['fabricante'] in fab_list else 0
+            d['fabricante'] = st.selectbox("Fabricante:", fab_list, index=f_idx, key="eq_f")
+        with l1_c2:
+            d['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=d.get('serie_evap', ''), key="eq_se")
+        with l1_c3:
+            d['capacidade'] = st.text_input("Capacidade (BTU/TR):", value=d.get('capacidade', '12.000'), key="eq_ca")
 
-        # LINHA 2: Modelo | Série Cond | Potência
-        c4, c5, c6 = st.columns(3)
-        with c4:
-            d['modelo'] = st.text_input("Modelo:", value=d.get('modelo', ''), key="f4")
-        with c5:
-            d['serie_cond'] = st.text_input("Nº Série (COND)", value=d.get('serie_cond', ''), key="f5")
-        with c6:
-            d['potencia'] = st.text_input("Potência Nominal (W/kW):", value=d.get('potencia', ''), key="f6")
+        # LINHA 2
+        l2_c1, l2_c2, l2_c3 = st.columns(3)
+        with l2_c1:
+            d['modelo'] = st.text_input("Modelo:", value=d.get('modelo', ''), key="eq_mo")
+        with l2_c2:
+            d['serie_cond'] = st.text_input("Nº Série (COND)", value=d.get('serie_cond', ''), key="eq_sc")
+        with l2_c3:
+            d['potencia'] = st.text_input("Potência Nominal (W/kW):", value=d.get('potencia', ''), key="eq_po")
 
-        # LINHA 3: Local Evap | Local Cond | Fluido
-        c7, c8, c9 = st.columns(3)
-        with c7:
-            d['local_evap'] = st.text_input("Local Evaporadora:", value=d.get('local_evap', ''), key="f7")
-        with c8:
-            d['local_cond'] = st.text_input("Local Condensadora:", value=d.get('local_cond', ''), key="f8")
-        with c9:
-            lista_fluidos = ["R410A", "R32", "R22", "R134a", "R290", "R404A"]
-            f_idx = lista_fluidos.index(d['fluido']) if d['fluido'] in lista_fluidos else 0
-            d['fluido'] = st.selectbox("Fluido Refrigerante:", lista_fluidos, index=f_idx, key="f9")
+        # LINHA 3
+        l3_c1, l3_c2, l3_c3 = st.columns(3)
+        with l3_c1:
+            d['local_evap'] = st.text_input("Local Evaporadora:", value=d.get('local_evap', ''), key="eq_le")
+        with l3_c2:
+            d['local_cond'] = st.text_input("Local Condensadora:", value=d.get('local_cond', ''), key="eq_lc")
+        with l3_c3:
+            fluidos = ["R410A", "R32", "R22", "R134a", "R290", "R404A"]
+            fl_idx = fluidos.index(d['fluido']) if d['fluido'] in fluidos else 0
+            d['fluido'] = st.selectbox("Fluido Refrigerante:", fluidos, index=fl_idx, key="eq_fl")
 
-        # LINHA 4: Óleo e Status | Carga e Tensão | Data e TAG
-        c10, c11, c12 = st.columns(3)
-        with c10:
-            d['tipo_oleo'] = st.selectbox("Tipo de Óleo:", ["POE", "Mineral", "PVE", "PAG", "AB"], key="f10")
-            d['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], key="f11")
-
-        with c11:
-            d['carga_gas'] = st.text_input("Carga de Fluido (kg/g):", value=d.get('carga_gas', ''), key="f12")
-            d['tensao'] = st.selectbox("Tensão Nominal (V):", ["220V/1F", "220V/3F", "380V/3F", "440V/3F", "127V"], key="f13")
-
-        with c12:
+        # LINHA 4
+        l4_c1, l4_c2, l4_c3 = st.columns(3)
+        with l4_c1:
+            d['tipo_oleo'] = st.selectbox("Tipo de Óleo:", ["POE", "Mineral", "PVE", "PAG", "AB"], key="eq_ol")
+            d['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], key="eq_st")
+        with l4_c2:
+            d['carga_gas'] = st.text_input("Carga de Fluido (kg/g):", value=d.get('carga_gas', ''), key="eq_cg")
+            d['tensao'] = st.selectbox("Tensão Nominal (V):", ["220V/1F", "220V/3F", "380V/3F", "440V/3F", "127V"], key="eq_te")
+        with l4_c3:
             try:
-                data_maint = datetime.strptime(d.get('ultima_maint', datetime.now().strftime("%d/%m/%Y")), "%d/%m/%Y").date()
+                dt = datetime.strptime(d.get('ultima_maint', datetime.now().strftime("%d/%m/%Y")), "%d/%m/%Y").date()
             except:
-                data_maint = datetime.now().date()
-            nova_data = st.date_input("Última Manutenção:", value=data_maint, format="DD/MM/YYYY", key="f14")
-            d['ultima_maint'] = nova_data.strftime("%d/%m/%Y")
-            
-            d['tag_id'] = st.text_input("TAG/Patrimônio:", value=d.get('tag_id', ''), key="f15")
-
-    # A FUNÇÃO DEVE TERMINAR AQUI. NÃO PODE HAVER NADA DEPOIS DISSO DENTRO DESTE BLOCO.
-    
-        
-        # LINHA 4: A LINHA DO ALINHAMENTO CRÍTICO (TUDO NA MESMA HORIZONTAL)
-        c1_l4, c2_l4, c3_l4 = st.columns(3)
-        
-        with c1_l4:
-            # CAMPO SOLICITADO 1: TIPO DE ÓLEO
-            d['tipo_oleo'] = st.selectbox("Tipo de Óleo:", ["POE", "Mineral", "PVE", "PAG", "AB"], key="oleo_v5")
-            
-            # STATUS PRESERVADO E ALINHADO
-            d['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], key="stat_v5")
-
-        with c2_l4:
-            # CAMPO SOLICITADO 2: CARGA DE FLUIDO NOMINAL
-            d['carga_gas'] = st.text_input("Carga de Fluido (kg/g):", value=d.get('carga_gas', ''), placeholder="Ex: 1.2 kg", key="carga_v5")
-
-        with c3_l4:
-            # MANUTENÇÃO E TAG
-            d['ultima_maint'] = st.text_input("Última Manutenção:", value=d.get('ultima_maint', 'N/A'), key="maint_v5")
-            d['tag_id'] = st.text_input("TAG/Patrimônio:", value=d.get('tag_id', ''), key="tag_v5")
+                dt = datetime.now().date()
+            d['ultima_maint'] = st.date_input("Última Manutenção:", value=dt, format="DD/MM/YYYY", key="eq_dt").strftime("%d/%m/%Y")
+            d['tag_id'] = st.text_input("TAG/Patrimônio:", value=d.get('tag_id', ''), key="eq_ta")
 
 # --- MOTOR DE CÁLCULO PT (DIRETRIZ: PRECISÃO INDUSTRIAL) ---
 def f_sat_precisao(p, g):
