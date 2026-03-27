@@ -515,71 +515,84 @@ elif aba_selecionada == "Relatórios":
     st.write("Em breve: Visualização e exportação de relatórios.")
 # [COLE AQUI - Logo após o fim da renderizar_aba_1]
 
+
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
-    # Busca o fluido que você selecionou na Aba 1
-    fluido_selecionado = st.session_state.dados.get('fluido', 'R410A')
-    st.info(f"❄️ Fluido Refrigerante em Análise: **{fluido_selecionado}**")
-    st.markdown("---")
+    
+    # 1. Recuperação Segura de Dados (Sincronizado com a Aba 1)
+    d = st.session_state.dados
+    fluido = d.get('fluido', 'R410A')
+    st.info(f"❄️ Fluido em Análise: **{fluido}**")
 
-    # --- BLOCO 1: ENTRADA DE MEDIÇÕES ---
+    # --- 1. MEDIÇÕES DE CAMPO ---
+    # Aqui usamos os valores que já existem no session_state para não ter que digitar de novo
     st.subheader("1. Medições de Campo")
     col_suc, col_des = st.columns(2)
     
     with col_suc:
         st.markdown("### 🔵 Baixa Pressão")
-        pres_suc = st.number_input("Pressão de Sucção (PSI):", min_value=0.0, step=1.0, key="p_suc_diag")
-        temp_suc = st.number_input("Temp. Tubulação Sucção (°C):", step=0.1, key="t_suc_diag")
+        # Buscamos 'p_baixa' que foi definido na Aba 1
+        p_suc = st.number_input("Pressão de Sucção (PSI):", value=float(d.get('p_baixa', 0.0)), step=1.0, key="p_suc_diag_final")
+        t_suc = st.number_input("Temp. Tubulação Sucção (°C):", value=float(d.get('temp_sucção', 0.0)), step=0.1, key="t_suc_diag_final")
 
     with col_des:
         st.markdown("### 🔴 Alta Pressão")
-        pres_des = st.number_input("Pressão de Descarga (PSI):", min_value=0.0, step=1.0, key="p_des_diag")
-        temp_liq = st.number_input("Temp. Tubulação Líquido (°C):", step=0.1, key="t_liq_diag")
+        # Buscamos 'p_alta' que foi definido na Aba 1
+        p_des = st.number_input("Pressão de Descarga (PSI):", value=float(d.get('p_alta', 0.0)), step=1.0, key="p_des_diag_final")
+        t_liq = st.number_input("Temp. Tubulação Líquido (°C):", value=float(d.get('temp_liquido', 0.0)), step=0.1, key="t_liq_diag_final")
 
     st.markdown("---")
 
-    # --- BLOCO 2: PROCESSAMENTO (CÁLCULOS TÉCNICOS) ---
-    # 1. Pegamos o fluido que foi definido na Aba 1
-    fluido_selecionado = st.session_state.dados.get('fluido', 'R410A')
+    # --- 2. MOTOR DE CÁLCULO ---
+    # t_sat_suc (Baixa) e t_sat_des (Alta) usando sua função de precisão
+    t_sat_suc = f_sat_precisao(p_suc, fluido) if p_suc > 0 else 0.0
+    t_sat_des = f_sat_precisao(p_des, fluido) if p_des > 0 else 0.0
 
-    # 2. Calculamos as Temperaturas de Saturação usando sua função f_sat_precisao
-    # t_sat_suc (Baixa) e t_sat_des (Alta)
-    p_suc = st.session_state.dados.get('p_suc_psi', 0.0)
-    p_alta = st.session_state.dados.get('p_des_psi', 0.0)
-    
-    t_sat_suc = f_sat_precisao(p_suc, fluido_selecionado)
-    t_sat_des = f_sat_precisao(p_alta, fluido_selecionado)
+    # Cálculo do SH e SC
+    sh = t_suc - t_sat_suc if p_suc > 0 else 0.0
+    sc = t_sat_des - t_liq if p_des > 0 else 0.0
 
-    # 3. Cálculo do SH e SC (Diferencial de temperatura)
-    temp_suc = st.session_state.dados.get('t_tubo_suc', 0.0)
-    temp_liq = st.session_state.dados.get('t_tubo_liq', 0.0)
-
-    sh = temp_suc - t_sat_suc if temp_suc != 0 else 0.0
-    sc = t_sat_des - temp_liq if t_sat_des != 0 else 0.0
-
-    # --- BLOCO 3: EXIBIÇÃO DE RESULTADOS ---
+    # --- 3. EXIBIÇÃO DE RESULTADOS ---
     st.subheader("2. Resultados Calculados")
     res1, res2 = st.columns(2)
     
     with res1:
         st.metric(label="Superaquecimento (SH)", value=f"{sh:.1f} K")
-        if temp_suc != 0: # Só valida se houver medição
-            if 5 <= sh <= 7: st.success("✅ SH dentro do padrão (5K a 7K)")
-            elif sh < 5: st.error("⚠️ SH Baixo: Risco de retorno de líquido")
-            else: st.warning("⚠️ SH Alto: Possível falta de fluido ou restrição")
+        if p_suc > 0:
+            if 5 <= sh <= 8: 
+                st.success("✅ SH Ideal (Fluido 100% Vapor)")
+            elif sh < 5: 
+                st.error("🚨 SH Baixo: Risco de Golpe de Líquido!")
+            else: 
+                st.warning("⚠️ SH Alto: Baixa eficiência / Falta de fluido")
 
     with res2:
         st.metric(label="Sub-resfriamento (SC)", value=f"{sc:.1f} K")
-        if t_sat_des != 0:
-            if 4 <= sc <= 7: st.success("✅ SC dentro do padrão (4K a 7K)")
-            else: st.info("ℹ️ SC fora do padrão: Verifique condensação")
+        if p_des > 0:
+            if 5 <= sc <= 12: 
+                st.success("✅ SC Ideal (Líquido Sub-resfriado)")
+            else: 
+                st.info("ℹ️ SC fora do padrão: Verifique a condensadora")
 
     st.markdown("---")
 
-    # --- BLOCO 4: CONCLUSÃO E LAUDO ---
+    # --- 4. CONCLUSÃO E LAUDO ---
     st.subheader("3. Parecer Técnico Final")
-    st.session_state.dados['laudo_diag'] = st.text_area(
-        "Descreva o diagnóstico ou anomalias encontradas:",
-        placeholder="Ex: Sistema operando com pressões estáveis, superaquecimento normal...",
-        key="laudo_area_diag"
+    
+    # Criamos uma sugestão automática baseada nos números
+    sugestao = ""
+    if sh > 12: sugestao = "Diagnóstico: SH elevado indica falta de carga ou restrição."
+    elif sh < 3 and p_suc > 0: sugestao = "Diagnóstico: Risco iminente de quebra do compressor por líquido."
+    
+    d['laudo_diag'] = st.text_area(
+        "Relatório de Diagnóstico:",
+        value=d.get('laudo_diag', sugestao),
+        placeholder="Descreva as anomalias...",
+        key="laudo_final_unico" # Chave única para evitar erro de duplicata
     )
+
+    # Atualiza o dicionário global para garantir que os dados fiquem salvos
+    d.update({
+        'p_baixa': p_suc, 'temp_sucção': t_suc,
+        'p_alta': p_des, 'temp_liquido': t_liq
+    })
