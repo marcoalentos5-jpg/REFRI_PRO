@@ -64,7 +64,7 @@ def buscar_cep(cep):
 
 
 # ==============================================================================
-# 1.2 FUNÇÃO DA ABA 1: Identificação e Equipamento (VERSÃO INDUSTRIAL V2)
+# 1.2 FUNÇÃO DA ABA 1: Identificação e Equipamento (VERSÃO V3 - POTÊNCIA + STATUS)
 # ==============================================================================
 def renderizar_aba_1():
     st.subheader("📋 Cadastro de Cliente e Ativo")
@@ -73,36 +73,32 @@ def renderizar_aba_1():
     # --- SEÇÃO CLIENTE ---
     with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
         c1, c2, c3 = st.columns([2, 1, 1])
-        d['nome'] = c1.text_input("Nome / Razão Social *", value=d.get('nome', ''), key="cli_nome_v2")
-        d['cpf_cnpj'] = c2.text_input("CPF/CNPJ", value=d.get('cpf_cnpj', ''), key="cli_doc_v2")
-        d['whatsapp'] = c3.text_input("WhatsApp *", value=d.get('whatsapp', ''), key="cli_zap_v2")
+        d['nome'] = c1.text_input("Nome / Razão Social *", value=d.get('nome', ''), key="cli_nome_v3")
+        d['cpf_cnpj'] = c2.text_input("CPF/CNPJ", value=d.get('cpf_cnpj', ''), key="cli_doc_v3")
+        d['whatsapp'] = c3.text_input("WhatsApp *", value=d.get('whatsapp', ''), key="cli_zap_v3")
 
         cx1, cx2, cx3 = st.columns([1, 1, 2])
-        d['celular'] = cx1.text_input("Celular:", value=d.get('celular', ''), key="cli_cel_v2")
-        d['tel_fixo'] = cx2.text_input("Fixo:", value=d.get('tel_fixo', ''), key="cli_fixo_v2")
-        d['email'] = cx3.text_input("E-mail:", value=d.get('email', ''), key="cli_email_v2")
+        d['celular'] = cx1.text_input("Celular:", value=d.get('celular', ''), key="cli_cel_v3")
+        d['tel_fixo'] = cx2.text_input("Fixo:", value=d.get('tel_fixo', ''), key="cli_fixo_v3")
+        d['email'] = cx3.text_input("E-mail:", value=d.get('email', ''), key="cli_email_v3")
 
         st.markdown("---")
         ce1, ce2, ce3 = st.columns([1, 2, 1])
         
-        # LÓGICA DE CEP REVISADA PARA FUNCIONAMENTO AUTOMÁTICO
-        cep_digitado = ce1.text_input("CEP *", value=d.get('cep', ''), key="cli_cep_v2")
-        
-        if cep_digitado != d.get('cep', ''):
-            cep_limpo = "".join(filter(str.isdigit, cep_digitado))
-            if len(cep_limpo) == 8:
-                if buscar_cep(cep_limpo):
-                    d['cep'] = cep_digitado # Atualiza o estado para evitar loop
-                    st.rerun()
+        cep_digitado = ce1.text_input("CEP *", value=d.get('cep', ''), key="cli_cep_v3")
+        if cep_digitado != d.get('cep', '') and len("".join(filter(str.isdigit, cep_digitado))) == 8:
+            if buscar_cep(cep_digitado):
+                d['cep'] = cep_digitado
+                st.rerun()
 
-        d['endereco'] = ce2.text_input("Logradouro:", value=d.get('endereco', ''), key="cli_end_v2")
-        d['numero'] = ce3.text_input("Nº/Apto:", value=d.get('numero', ''), key="cli_num_v2")
+        d['endereco'] = ce2.text_input("Logradouro:", value=d.get('endereco', ''), key="cli_end_v3")
+        d['numero'] = ce3.text_input("Nº/Apto:", value=d.get('numero', ''), key="cli_num_v3")
 
         ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.4])
-        d['complemento'] = ce4.text_input("Complemento:", value=d.get('complemento', ''), key="cli_comp_v2")
-        d['bairro'] = ce5.text_input("Bairro:", value=d.get('bairro', ''), key="cli_bair_v2")
-        d['cidade'] = ce6.text_input("Cidade:", value=d.get('cidade', ''), key="cli_cid_v2")
-        d['uf'] = ce7.text_input("UF:", value=d.get('uf', ''), max_chars=2, key="cli_uf_v2")
+        d['complemento'] = ce4.text_input("Complemento:", value=d.get('complemento', ''), key="cli_comp_v3")
+        d['bairro'] = ce5.text_input("Bairro:", value=d.get('bairro', ''), key="cli_bair_v3")
+        d['cidade'] = ce6.text_input("Cidade:", value=d.get('cidade', ''), key="cli_cid_v3")
+        d['uf'] = ce7.text_input("UF:", value=d.get('uf', ''), max_chars=2, key="cli_uf_v3")
 
     # --- SEÇÃO EQUIPAMENTO ---
     st.markdown("### ⚙️ Especificações do Equipamento")
@@ -110,31 +106,32 @@ def renderizar_aba_1():
         e1, e2, e3 = st.columns(3)
         
         with e1:
-            fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
+            fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea", "Outro"])
             fab_idx = fab_list.index(d['fabricante']) if d['fabricante'] in fab_list else 0
-            d['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx, key="fab_v2")
-            d['modelo'] = st.text_input("Modelo:", value=d.get('modelo', ''), key="mod_v2")
-            # STATUS PRESERVADO CONFORME SOLICITADO
-            d['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], key="stat_v2")
+            d['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx, key="fab_v3")
+            d['modelo'] = st.text_input("Modelo:", value=d.get('modelo', ''), key="mod_v3")
+            # STATUS PRESERVADO
+            d['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], key="stat_v3")
 
         with e2:
-            d['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=d.get('serie_evap', ''), key="sevap_v2")
-            d['serie_cond'] = st.text_input("Nº Série (COND)", value=d.get('serie_cond', ''), key="scond_v2")
-            d['local_evap'] = st.text_input("Local Evaporadora:", value=d.get('local_evap', ''), key="levap_v2")
-            # DETALHE 1: LOCAL DA CONDENSADORA ABAIXO DO LOCAL DA EVAPORADORA
-            d['local_cond'] = st.text_input("Local Condensadora:", value=d.get('local_cond', ''), key="lcond_v2")
+            d['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=d.get('serie_evap', ''), key="sevap_v3")
+            d['serie_cond'] = st.text_input("Nº Série (COND)", value=d.get('serie_cond', ''), key="scond_v3")
+            d['local_evap'] = st.text_input("Local Evaporadora:", value=d.get('local_evap', ''), key="levap_v3")
+            d['local_cond'] = st.text_input("Local Condensadora:", value=d.get('local_cond', ''), key="lcond_v3")
 
         with e3:
-            cap_list = ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"]
-            cap_idx = cap_list.index(d['capacidade']) if d['capacidade'] in cap_list else 1
-            d['capacidade'] = st.selectbox("Capacidade (BTU):", cap_list, index=cap_idx, key="cap_v2")
+            d['capacidade'] = st.text_input("Capacidade (BTU/TR):", value=d.get('capacidade', '12.000'), key="cap_v3")
+            # NOVO CAMPO: POTÊNCIA
+            d['potencia'] = st.text_input("Potência Nominal (W/kW):", value=d.get('potencia', ''), help="Ex: 2200W ou 2.2kW", key="pot_v3")
             
             lista_fluidos = ["R410A", "R32", "R22", "R134a", "R290", "R404A"]
             f_idx = lista_fluidos.index(d['fluido']) if d['fluido'] in lista_fluidos else 0
-            d['fluido'] = st.selectbox("Fluido Refrigerante:", lista_fluidos, index=f_idx, key="fluid_v2")
+            d['fluido'] = st.selectbox("Fluido Refrigerante:", lista_fluidos, index=f_idx, key="fluid_v3")
             
-            d['tipo_servico'] = st.selectbox("Serviço:", ["Preventiva", "Corretiva", "Instalação", "Diagnóstico"], key="serv_v2")
-            d['tag_id'] = st.text_input("TAG:", value=d.get('tag_id', ''), key="tag_v2")
+            # SUGESTÃO: ÚLTIMA MANUTENÇÃO (FAVORECE A ANÁLISE)
+            d['ultima_maint'] = st.text_input("Última Manutenção:", value=d.get('ultima_maint', 'N/A'), key="maint_v3")
+            d['tag_id'] = st.text_input("TAG/Patrimônio:", value=d.get('tag_id', ''), key="tag_v3")
+
 
 # --- MOTOR DE CÁLCULO PT (DIRETRIZ: PRECISÃO INDUSTRIAL) ---
 def f_sat_precisao(p, g):
