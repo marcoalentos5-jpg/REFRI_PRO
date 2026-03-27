@@ -180,29 +180,34 @@ def renderizar_aba_diagnosticos():
     d = st.session_state.dados
     fluido = d.get('fluido', 'R410A')
 
-    # --- 1. MEDIÇÕES DE CAMPO (5 COLUNAS X 2 LINHAS) ---
+
+# --- 1. MEDIÇÕES DE CAMPO (ORGANIZADAS EM LINHAS DE 5 COLUNAS) ---
     st.subheader("1. Medições de Campo")
     
-    # LINHA 1 MEDIÇÕES
-    l1_c1, l1_c2, l1_c3, l1_c4, l1_c5 = st.columns(5)
-    p_suc = l1_c1.number_input("P. Sucção (PSI)", value=float(d.get('p_baixa', 0.0)), format="%.1f", key="ps_v1")
-    t_suc = l1_c2.number_input("T. Tubo Suc. (°C)", value=float(d.get('temp_sucção', 0.0)), format="%.1f", key="ts_v1")
-    p_des = l1_c3.number_input("P. Descarga (PSI)", value=float(d.get('p_alta', 0.0)), format="%.1f", key="pd_v1")
-    t_liq = l1_c4.number_input("T. Tubo Líq. (°C)", value=float(d.get('temp_liquido', 0.0)), format="%.1f", key="tl_v1")
-    v_lin = l1_c5.number_input("Tens. Nom. (V)", value=220.0, key="vn_v1")
+    # LINHA 1: Ciclo Frigorífico Principal
+    l1 = st.columns(5)
+    p_suc = l1[0].number_input("P. Sucção (PSI)", value=float(d.get('p_baixa', 0.0)), format="%.1f", key="ps_v1")
+    t_suc = l1[1].number_input("T. Tubo Suc. (°C)", value=float(d.get('temp_sucção', 0.0)), format="%.1f", key="ts_v1")
+    p_des = l1[2].number_input("P. Descarga (PSI)", value=float(d.get('p_alta', 0.0)), format="%.1f", key="pd_v1")
+    t_liq = l1[3].number_input("T. Tubo Líq. (°C)", value=float(d.get('temp_liquido', 0.0)), format="%.1f", key="tl_v1")
+    v_lin = l1[4].number_input("Tens. Nom. (V)", value=220.0, key="vn_v1")
 
-    # LINHA 2 MEDIÇÕES
-    l2_c1, l2_c2, l2_c3, l2_c4, l2_c5 = st.columns(5)
-    t_ret = l2_c1.number_input("T. Retorno Ar (°C)", value=float(d.get('temp_entrada_ar', 0.0)), format="%.1f", key="tr_v1")
-    t_ins = l2_c2.number_input("T. Insuflação (°C)", value=float(d.get('temp_saida_ar', 0.0)), format="%.1f", key="ti_v1")
-    v_med = l2_c3.number_input("Tens. Medida (V)", value=220.0, key="vm_v1")
-    i_med = l2_c4.number_input("Corr. Medida (A)", value=float(d.get('i_medida', 0.0)), key="im_v1")
-    # Para capacitores, buscamos os nominais da Aba 1 ou usamos 0.0
-    cn_c = d.get('cn_c', 0.0) 
-    cn_f = d.get('cn_f', 0.0)
-    cm_c = l2_c5.number_input("Cap. Lido Comp", value=float(d.get('cm_c', 0.0)), key="cmc_v1")
-    cm_f = st.number_input("Cap. Lido Fan", value=float(d.get('cm_f', 0.0)), key="cmf_v1") # Fora da grid para não quebrar 5x2
+    # LINHA 2: Performance de Ar e Elétrica
+    l2 = st.columns(5)
+    t_ret = l2[0].number_input("T. Retorno Ar (°C)", value=float(d.get('temp_entrada_ar', 0.0)), format="%.1f", key="tr_v1")
+    t_ins = l2[1].number_input("T. Insuflação (°C)", value=float(d.get('temp_saida_ar', 0.0)), format="%.1f", key="ti_v1")
+    v_med = l2[2].number_input("Tens. Medida (V)", value=220.0, key="vm_v1")
+    i_med = l2[3].number_input("Corr. Medida (A)", value=float(d.get('i_medida', 0.0)), key="im_v1")
+    rla_ref = l2[4].number_input("RLA (A)", value=float(d.get('rla', 0.0)), key="rla_v1")
 
+    # LINHA 3: Capacitores (Fica alinhado à esquerda, sem esticar)
+    
+    l3 = st.columns(5)
+    cm_c = l3[0].number_input("Cap. Lido Comp (µF)", value=float(d.get('cm_c', 0.0)), key="cmc_v1")
+    cm_f = l3[1].number_input("Cap. Lido Fan (µF)", value=float(d.get('cm_f', 0.0)), key="cmf_v1")
+    # As outras 3 colunas da l3 ficam vazias para manter o tamanho dos campos igual aos de cima
+
+    
     # --- 2. PROCESSAMENTO TÉCNICO (CÁLCULOS) ---
     t_sat_s = f_sat_precisao(p_suc, fluido) if p_suc > 5 else 0.0
     t_sat_d = f_sat_precisao(p_des, fluido) if p_des > 5 else 0.0
