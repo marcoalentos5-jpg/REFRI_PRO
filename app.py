@@ -1,4 +1,3 @@
-# Certifique-se que esta linha 'def' esteja encostada na margem esquerda (sem espaços antes dela)
 
 import streamlit as st
 import numpy as np
@@ -8,39 +7,69 @@ import urllib.parse
 import os 
 
 # ==============================================================================
-# 1. FUNÇÕES DE CÁLCULO (O CÉREBRO TÉCNICO)
+# 1. FUNÇÕES DE CÁLCULO E INICIALIZAÇÃO (O CÉREBRO)
 # ==============================================================================
 
+# Inicialização única do Estado (Session State)
+if 'dados' not in st.session_state:
+    st.session_state.dados = {
+        'tec_nome': '', 'cliente': '', 'nome': '', 'p_baixa': 0.0,
+        'p_alta': 0.0, 'temp_sucção': 0.0, 'temp_liquido': 0.0,
+        'temp_entrada_ar': 0.0, 'temp_saida_ar': 0.0, 'fluido': 'R410A',
+        'laudo_diag': '', 'rla': 0.0, 'i_med': 0.0, 'v_lin': 220.0, 
+        'v_med': 220.0, 'cn_c': 0.0, 'cm_c': 0.0, 'tag_id': ''
+    }
+
 def calcular_temp_saturacao(pressao, fluido):
-    """Calcula a temperatura de saturação (Ponto de Orvalho) aproximada para o ciclo"""
+    """Calcula a temperatura de saturação aproximada (Ponto de Orvalho)"""
     try:
         p = float(pressao)
-        if fluido == "R410A":
-            # Fórmula aproximada: PSI para Celsius (R410A)
-            return round((p / 13.5) - 1.0, 2)
-        elif fluido == "R22":
-            return round((p / 7.0) - 13.0, 2)
-        elif fluido == "R134a":
-            return round((p / 4.5) - 15.0, 2)
-        elif fluido == "R32":
-            return round((p / 14.0) - 2.0, 2)
-        elif fluido == "R290":
-            return round((p / 6.0) - 25.0, 2)
-        else:
-            return round((p / 12.0), 2)
+        if fluido == "R410A": return round((p / 13.5) - 1.0, 2)
+        elif fluido == "R22": return round((p / 7.0) - 13.0, 2)
+        elif fluido == "R134a": return round((p / 4.5) - 15.0, 2)
+        elif fluido == "R32": return round((p / 14.0) - 2.0, 2)
+        elif fluido == "R290": return round((p / 6.0) - 25.0, 2)
+        else: return round((p / 12.0), 2)
     except:
         return 0.0
 
 def f_sat_precisao(p, fluido):
-    """Apelido para a função de saturação (evita erro de nome na Aba 2)"""
+    """Apelido para compatibilidade entre as abas"""
     return calcular_temp_saturacao(p, fluido)
 
-# ==============================================================================
-# 1. FUNÇÕES TÉCNICAS E DE UTILIDADE (FORA DAS ABAS)
-# ==============================================================================
+# --- FUNÇÕES TÉCNICAS DE APOIO (UTILIDADES) ---
+
 def buscar_cep(cep):
+    """Consulta automática de endereço"""
     try:
-        response = requests.get(f"https://viacep.com.br/ws/{cep}/json/", timeout=5)
+        cep_limpo = cep.replace("-", "").replace(".", "")
+        url = f"https://viacep.com.br/ws/{cep_limpo}/json/"
+        r = requests.get(url, timeout=5)
+        return r.json() if r.status_code == 200 else None
+    except:
+        return None
+
+def limpar_dados_tecnicos():
+    """Zera apenas as medições, mantendo os dados do cliente e técnico"""
+    chaves_para_zerar = [
+        'p_baixa', 'p_alta', 'temp_sucção', 'temp_liquido', 
+        'temp_entrada_ar', 'temp_saida_ar', 'i_med', 'v_med', 'laudo_diag'
+    ]
+    for chave in chaves_para_zerar:
+        st.session_state.dados[chave] = 0.0 if chave != 'laudo_diag' else ""
+    st.rerun()
+
+
+# ==============================================================================
+# 1.1. FUNÇÕES TÉCNICAS E DE UTILIDADE (O MOTOR DO APP)
+# ==============================================================================
+
+def buscar_cep(cep):
+    """Consulta automática de endereço via API"""
+    try:
+        # Remove caracteres não numéricos
+        cep_limpo = ''.join(filter(str.isdigit, str(cep)))
+        response = requests.get(f"https://viacep.com.br/ws/{cep_limpo}/json/", timeout=5)
         if response.status_code == 200:
             dados = response.json()
             return dados if "erro" not in dados else None
@@ -49,17 +78,43 @@ def buscar_cep(cep):
         return None
 
 def f_sat_precisao(p, g):
-    """Calcula a temperatura de saturação baseada na pressão (p) e gás (g)"""
-    if p <= 5: return -50.0
+    """
+    Calcula a temperatura de saturação exata usando interpolação linear.
+    p = Pressão (PSI)
+    g = Gás Refrigerante (Fluido)
+    """
+    if p <= 5: return -50.0  # Proteção contra vácuo ou leitura errada
+    
     tabelas = {
-        "R410A": {"xp": [90.0, 100.0, 110.0, 122.7, 130.9, 141.7, 150.0, 350.0, 450.0], "fp": [-3.50, -0.29, 2.36, 5.50, 7.40, 9.80, 11.50, 41.50, 54.00]},
-        "R32":   {"xp": [90.0, 100.0, 115.0, 140.0, 170.0, 380.0, 480.0], "fp": [-3.66, -0.87, 3.00, 8.50, 14.80, 44.00, 56.50]},
-        "R22":   {"xp": [50.0, 60.0, 70.0, 80.0, 100.0, 200.0, 250.0], "fp": [-3.00, 1.50, 5.80, 9.70, 16.50, 38.50, 48.00]},
-        "R134a": {"xp": [20.0, 30.0, 40.0, 50.0, 70.0, 150.0, 200.0], "fp": [-8.00, 1.50, 9.50, 16.20, 27.50, 53.00, 65.50]},
-        "R290":  {"xp": [40.0, 50.0, 65.0, 80.0, 100.0, 150.0, 190.0], "fp": [-10.5, -4.2, 3.50, 10.20, 17.50, 32.50, 42.00]}
+        "R410A": {"xp": [90.0, 100.0, 110.0, 122.7, 130.9, 141.7, 150.0, 350.0, 450.0], 
+                  "fp": [-3.50, -0.29, 2.36, 5.50, 7.40, 9.80, 11.50, 41.50, 54.00]},
+        "R32":   {"xp": [90.0, 100.0, 115.0, 140.0, 170.0, 380.0, 480.0], 
+                  "fp": [-3.66, -0.87, 3.00, 8.50, 14.80, 44.00, 56.50]},
+        "R22":   {"xp": [50.0, 60.0, 70.0, 80.0, 100.0, 200.0, 250.0], 
+                  "fp": [-3.00, 1.50, 5.80, 9.70, 16.50, 38.50, 48.00]},
+        "R134a": {"xp": [20.0, 30.0, 40.0, 50.0, 70.0, 150.0, 200.0], 
+                  "fp": [-8.00, 1.50, 9.50, 16.20, 27.50, 53.00, 65.50]},
+        "R290":  {"xp": [40.0, 50.0, 65.0, 80.0, 100.0, 150.0, 190.0], 
+                  "fp": [-10.5, -4.2, 3.50, 10.20, 17.50, 32.50, 42.00]}
     }
-    if g not in tabelas: return 0.0
+    
+    if g not in tabelas: 
+        # Fallback caso o fluido selecionado não esteja na tabela de precisão
+        return round((p / 13.0) - 1.0, 2)
+        
     return float(np.interp(p, tabelas[g]["xp"], tabelas[g]["fp"]))
+
+def limpar_dados_tecnicos():
+    """Zera as medições mantendo cadastro do cliente"""
+    chaves_para_zerar = [
+        'p_baixa', 'p_alta', 'temp_sucção', 'temp_liquido', 
+        'temp_entrada_ar', 'temp_saida_ar', 'i_med', 'v_med', 'laudo_diag'
+    ]
+    for chave in chaves_para_zerar:
+        st.session_state.dados[chave] = 0.0 if chave != 'laudo_diag' else ""
+    st.rerun()
+
+# --- FIM DA SEÇÃO TÉCNICA ---
 
 # ==============================================================================
 # 2. RENDERIZAÇÃO DA ABA 1 (CADASTRO)
@@ -67,12 +122,12 @@ def f_sat_precisao(p, g):
 def renderizar_aba_1():
     st.subheader("📋 Cadastro de Cliente e Ativo")
 
-    # --- SEÇÃO 1: CLIENTE E ENDEREÇO (Sua Estrutura Original) ---
+    # --- SEÇÃO 1: CLIENTE E ENDEREÇO ---
     with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
         def atualizar_endereco():
+            # Acessa o valor diretamente da key do widget
             cep = st.session_state.cli_cep_f.strip().replace("-", "").replace(".", "")
             if len(cep) == 8:
-                # Certifique-se que a função buscar_cep(cep) existe no seu código
                 res = buscar_cep(cep) 
                 if res:
                     st.session_state.dados.update({
@@ -100,17 +155,21 @@ def renderizar_aba_1():
         st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados.get('cidade', ''), key="cli_cid_f")
         st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados.get('uf', ''), max_chars=2, key="cli_uf_f")
 
-    # --- SEÇÃO 2: EQUIPAMENTO (Sua Estrutura Original) ---
+    # --- SEÇÃO 2: EQUIPAMENTO ---
     st.markdown("### ⚙️ Especificações do Equipamento")
     with st.expander("Detalhes Técnicos do Ativo", expanded=True):
         e1, e2, e3 = st.columns(3) 
         
         with e1:
             fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
-            st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, key="fab_f")
+            # Define o índice padrão para evitar erro de seleção
+            fab_index = fab_list.index(st.session_state.dados.get('fabricante', 'LG')) if st.session_state.dados.get('fabricante') in fab_list else 0
+            st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_index, key="fab_f")
             st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados.get('modelo', ''), key="mod_f")
-            # Unificando o fluido para os cálculos
-            fluido_sel = st.selectbox("Fluido Refr.:", ["R410A", "R134a", "R22", "R32", "R290"], key="fluid_f")
+            
+            fluido_opcoes = ["R410A", "R134a", "R22", "R32", "R290"]
+            fluido_idx = fluido_opcoes.index(st.session_state.dados.get('fluido', 'R410A')) if st.session_state.dados.get('fluido') in fluido_opcoes else 0
+            fluido_sel = st.selectbox("Fluido Refr.:", fluido_opcoes, index=fluido_idx, key="fluid_f")
             st.session_state.dados['fluido'] = fluido_sel
             st.session_state.dados['potencia'] = st.text_input("Potência (CV/HP):", value=st.session_state.dados.get('potencia', ''), key="pot_f")
 
@@ -121,12 +180,14 @@ def renderizar_aba_1():
             st.session_state.dados['local_evap'] = st.text_input("Localização da Evaporadora:", value=st.session_state.dados.get('local_evap', ''), key="levap_f")
 
         with e3:
-            st.session_state.dados['btu_nom'] = st.selectbox("Capacidade (BTU/h):", [9000, 12000, 18000, 24000, 30000, 60000], key="cap_f")
+            cap_opcoes = [9000, 12000, 18000, 24000, 30000, 60000]
+            cap_idx = cap_opcoes.index(st.session_state.dados.get('btu_nom', 12000)) if st.session_state.dados.get('btu_nom') in cap_opcoes else 1
+            st.session_state.dados['btu_nom'] = st.selectbox("Capacidade (BTU/h):", cap_opcoes, index=cap_idx, key="cap_f")
             st.session_state.dados['oleo'] = st.selectbox("Tipo de Óleo:", ["POE", "Mineral", "PVE"], key="oleo_f")
             st.session_state.dados['freq'] = st.selectbox("Frequência:", [60, 50], key="freq_f")
             st.session_state.dados['tag_id'] = st.text_input("TAG/ID:", value=st.session_state.dados.get('tag_id', ''), key="tag_f")
 
-    # --- SEÇÃO 3: MEDIÇÕES TÉCNICAS (Nova Seção de Calor Latente) ---
+    # --- SEÇÃO 3: MEDIÇÕES TÉCNICAS ---
     st.markdown("### 📊 Performance e Ciclo Frigorífico")
     with st.expander("Dados de Pressão e Temperatura", expanded=True):
         
@@ -138,9 +199,9 @@ def renderizar_aba_1():
         with lb2:
             t_suc = st.number_input("Temp. Tubo Sucção (°C)", value=float(st.session_state.dados.get('temp_sucção', 12.0)), key="t_suc_input")
         with lb3:
-            # Cálculo de Saturação (A "Esponja")
-            t_sat_baixa = calcular_temp_saturacao(p_baixa, fluido_sel)
-            st.metric("T. Saturação (Orvalho)", f"{t_sat_baixa} °C")
+            # Uso da função de precisão que criamos
+            t_sat_baixa = f_sat_precisao(p_baixa, fluido_sel)
+            st.metric("T. Saturação (Orvalho)", f"{t_sat_baixa:.2f} °C")
 
         st.markdown("---")
 
@@ -152,12 +213,13 @@ def renderizar_aba_1():
         with la2:
             t_liq = st.number_input("Temp. Linha Líquido (°C)", value=float(st.session_state.dados.get('temp_liquido', 38.0)), key="t_liq_input")
         with la3:
-            t_sat_alta = round((p_alta / 11.5) + 12.0, 2) 
-            st.metric("T. Saturação (Bolha)", f"{t_sat_alta} °C")
+            # Saturação de Alta também pela função de precisão
+            t_sat_alta = f_sat_precisao(p_alta, fluido_sel)
+            st.metric("T. Saturação (Bolha)", f"{t_sat_alta:.2f} °C")
 
         st.markdown("---")
 
-        # LINHA 3: DIFERENCIAL DE AR (Calor Sensível do Quarto)
+        # LINHA 3: DIFERENCIAL DE AR
         st.subheader("🌬️ Performance Térmica do Ar")
         ar1, ar2, ar3 = st.columns(3)
         with ar1:
@@ -168,7 +230,7 @@ def renderizar_aba_1():
             delta_t = round(t_in - t_out, 2)
             st.metric("Delta T (Ar)", f"{delta_t} °C")
 
-        # ATUALIZAÇÃO FINAL DOS DADOS
+        # ATUALIZAÇÃO FINAL DOS DADOS (Sincroniza com a Aba de Diagnóstico)
         st.session_state.dados.update({
             'p_baixa': p_baixa, 'temp_sucção': t_suc,
             'p_alta': p_alta, 'temp_liquido': t_liq,
@@ -176,8 +238,7 @@ def renderizar_aba_1():
             'temp_entrada_ar': t_in, 'temp_saida_ar': t_out
         })
 
-# ==============================================================================
-# 2.1 RENDERIZAÇÃO DA ABA 2 (DIAGNÓSTICO)
+
 # ==============================================================================
 def renderizar_aba_2():
     st.header("🔍 Diagnóstico Térmico e de Performance")
