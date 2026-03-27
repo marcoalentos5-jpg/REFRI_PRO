@@ -1,20 +1,24 @@
 
+
 # ==============================================================================
-# 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES (CONGELADO)
+# 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES (CONGELADO E ATUALIZADO)
 # ==============================================================================
 import streamlit as st
 from datetime import datetime
 import requests
 import urllib.parse
-import os # Biblioteca para verificar arquivos no sistema
+import os
 import numpy as np
-import urllib.parse
-from datetime import datetime
-import pandas as pd # Certifique-se de ter o pandas instalado: pip install pandas
+import pandas as pd
+import math
+from fpdf import FPDF
+import io
 
+# 1. CONFIGURAÇÃO INICIAL (DIRETRIZ: LAYOUT CONGELADO)
+st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
 
 # ==============================================================================
-# 1. BIBLIOTECA DE DEFEITOS (O CÉREBRO)
+# 1. BIBLIOTECA DE DEFEITOS & MOTORES TÉCNICOS
 # ==============================================================================
 BD_DEFEITOS = [
     {"nome": "Falta de Gás", "cond": lambda sh, sc: sh > 12 and sc < 3, "causa": "Vazamento ou carga incompleta.", "solucao": "Localizar vazamento e completar carga."},
@@ -23,8 +27,47 @@ BD_DEFEITOS = [
     {"nome": "Compressor Cansado", "cond": lambda sh, sc: sh < 4 and sc < 3, "causa": "Perda de eficiência mecânica.", "solucao": "Substituição do compressor."}
 ]
 
+def motor_laudo_auto(sh, sc, fluido):
+    """Gera o texto técnico automático para o PDF baseado nos cálculos"""
+    if sh > 12 and sc < 3: return f"Análise indica baixa carga de fluido {fluido}. Superaquecimento elevado e sub-resfriamento baixo sugerem vazamento ou carga incompleta."
+    if sh < 5 and sc > 10: return "Identificada obstrução térmica na unidade externa (condensadora). Necessária limpeza para restabelecer a troca de calor."
+    if sh > 15 and sc > 8: return "Detectada restrição no fluxo de refrigerante (obstrução de capilar ou filtro). Necessária intervenção no ciclo frigorífico."
+    return "O sistema apresenta parâmetros de pressões e temperaturas dentro da normalidade operacional."
+
+def gerar_pdf_pj(d):
+    """Gera o relatório em formato de tabela para empresas P.J."""
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_fill_color(0, 51, 102) # Azul Corporativo
+    pdf.rect(0, 0, 210, 35, 'F')
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_font("Arial", 'B', 16)
+    pdf.cell(0, 15, "RELATÓRIO TÉCNICO - MPN SOLUÇÕES", ln=True, align='C')
+    pdf.set_font("Arial", size=10)
+    pdf.cell(0, 5, f"DATA: {datetime.now().strftime('%d/%m/%Y %H:%M')}", ln=True, align='C')
+    
+    pdf.ln(20); pdf.set_text_color(0, 0, 0)
+    pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, "1. IDENTIFICAÇÃO DO ATENDIMENTO", ln=True)
+    pdf.set_font("Arial", size=9)
+    # Tabela de Identificação
+    pdf.cell(100, 8, f" CLIENTE: {d.get('nome')}", border=1)
+    pdf.cell(90, 8, f" CPF/CNPJ: {d.get('cpf_cnpj')}", border=1, ln=True)
+    pdf.cell(100, 8, f" EQUIPAMENTO: {d.get('fabricante')} {d.get('modelo')}", border=1)
+    pdf.cell(90, 8, f" TAG: {d.get('tag_id')}", border=1, ln=True)
+
+    pdf.ln(5); pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, "2. PARECER TÉCNICO (DIAGNÓSTICO FINAL)", ln=True)
+    pdf.set_font("Arial", size=10)
+    pdf.multi_cell(0, 8, d.get('laudo_final', 'Laudo não preenchido.'), border=1)
+
+    pdf.ln(30)
+    pdf.line(25, pdf.get_y(), 85, pdf.get_y()); pdf.line(125, pdf.get_y(), 185, pdf.get_y())
+    pdf.set_font("Arial", 'B', 8)
+    pdf.set_xy(25, pdf.get_y()+2); pdf.cell(60, 5, f"TÉCNICO: {d.get('tecnico_nome')}", align='C')
+    pdf.set_xy(125, pdf.get_y()+2); pdf.cell(60, 5, f"CLIENTE: {d.get('nome')}", align='C')
+    return pdf.output()
+
 # ==============================================================================
-# 2. FUNÇÃO PARA SALVAR HISTÓRICO (BANCO DE DADOS)
+# 2. FUNÇÕES DE DADOS (CEP E HISTÓRICO)
 # ==============================================================================
 def salvar_no_historico(dados_diag):
     df_novo = pd.DataFrame([dados_diag])
@@ -34,88 +77,6 @@ def salvar_no_historico(dados_diag):
     except FileNotFoundError:
         df_final = df_novo
     df_final.to_csv('historico_diagnosticos.csv', index=False)
-
-# ==============================================================================
-# 3. INTEGRAÇÃO GEMINI / DIAGNÓSTICO IA
-# ==============================================================================
-def renderizar_aba_diagnosticos():
-    # ... (Seu código de inputs anterior permanece igual aqui) ...
-
-    # --- PROCESSAMENTO DO BANCO DE DEFEITOS ---
-    veredito_ia = "✅ Sistema Operando Normalmente"
-    detalhes_ia = "Nenhum padrão de falha crítica detectado nos parâmetros de SH/SC."
-    cor_alerta = "success"
-
-    for def_at in BD_DEFEITOS:
-        if def_at["cond"](sh, sc):
-            veredito_ia = f"⚠️ Defeito: {def_at['nome']}"
-            detalhes_ia = f"Causa: {def_at['causa']} | Solução: {def_at['solucao']}"
-            cor_alerta = "error"
-            break
-
-    # --- EXIBIÇÃO DO DIAGNÓSTICO INTELIGENTE ---
-    st.markdown("---")
-    st.subheader("🤖 Diagnóstico de IA & Banco de Dados")
-    
-    if cor_alerta == "error":
-        st.error(veredito_ia)
-    else:
-        st.success(veredito_ia)
-    
-    st.info(f"**Análise do Especialista Virtual:** {detalhes_ia}")
-
-    # --- BOTÃO DE SALVAR NO HISTÓRICO ---
-    if st.button("💾 Registrar no Histórico de Diagnósticos"):
-        registro = {
-            "data": datetime.now().strftime("%d/%m/%Y %H:%M"),
-            "fluido": fluido,
-            "sh": sh,
-            "sc": sc,
-            "veredito": veredito_ia
-        }
-        salvar_no_historico(registro)
-        st.toast("Diagnóstico salvo no Banco de Dados!")
-
-    # --- INTEGRAÇÃO DIRETA GEMINI (OPCIONAL/MOCKUP) ---
-    with st.expander("✨ Consultar IA Gemini (Análise Profunda)"):
-        st.write("O Gemini está analisando suas medições elétricas e frigoríficas...")
-        # Aqui, quando você plugar sua chave API, o texto abaixo será dinâmico
-        st.write(f"Sugestão da IA: 'Baseado no SH de {sh}K e Corrente de {i_med}A, verifique se a hélice do ventilador não está patinando.'")
-
-
-# 1. CONFIGURAÇÃO INICIAL (DIRETRIZ: LAYOUT CONGELADO)
-st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
-
-# CSS: Estilização (CONGELADO E PROTEGIDO)
-st.markdown("""
-    <style>
-    .stTextInput>div>div>input[aria-label="Data da Visita:"] {
-        background-color: #e0f2f1 !important;
-        color: #004d40 !important;
-        font-weight: bold;
-        border: 1px solid #b2dfdb !important;
-    }
-    div.stLinkButton > a {
-        background-color: #25D366 !important;
-        color: white !important;
-        font-weight: bold;
-        border-radius: 8px !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# 1.1. MOTOR DE SESSÃO (DIRETRIZ: SINCRONIZAÇÃO TOTAL)
-if 'dados' not in st.session_state:
-    st.session_state.dados = {
-        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
-        'data': datetime.now().strftime("%d/%m/%Y"),
-        'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '', 'complemento': '',
-        'fabricante': 'Carrier', 'modelo': '', 'capacidade': '12.000', 'linha': 'Residencial',
-        'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '',
-        'tipo_servico': 'Manutenção Preventiva', 'tag_id': 'TAG-01',
-        'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
-        'status_maquina': '🟢 Operacional', 'tipo_oleo': 'POE', 'frequencia': 'Inverter'
-    }
 
 def buscar_cep(cep):
     cep_limpo = "".join(filter(str.isdigit, cep))
@@ -133,6 +94,87 @@ def buscar_cep(cep):
         except: pass
     return False
 
+# ==============================================================================
+# 3. MOTOR DE SESSÃO E SIDEBAR (PAINEL DE AÇÕES)
+# ==============================================================================
+if 'dados' not in st.session_state:
+    st.session_state.dados = {
+        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
+        'data': datetime.now().strftime("%d/%m/%Y"),
+        'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '', 'complemento': '',
+        'fabricante': 'Carrier', 'modelo': '', 'capacidade': '12.000', 'linha': 'Residencial',
+        'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '',
+        'tipo_servico': 'Manutenção Preventiva', 'tag_id': 'TAG-01',
+        'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
+        'status_maquina': '🟢 Operacional', 'tipo_oleo': 'POE', 'frequencia': 'Inverter',
+        'laudo_final': ''
+    }
+
+with st.sidebar:
+    st.header("📲 Painel de Saída")
+    st.markdown("---")
+    if st.button("📄 Gerar Relatório PDF (PJ)"):
+        pdf_bytes = gerar_pdf_pj(st.session_state.dados)
+        st.download_button(label="⬇️ Baixar Relatório", data=pdf_bytes, file_name=f"Relatorio_{st.session_state.dados['nome']}.pdf", mime="application/pdf")
+    
+    tel_wa = st.session_state.dados.get('whatsapp', '')
+    if st.button("🟢 Enviar via WhatsApp"):
+        if tel_wa:
+            msg_wa = urllib.parse.quote(f"Olá, aqui é o técnico {st.session_state.dados['tecnico_nome']}. Segue o laudo do seu equipamento.")
+            st.markdown(f'<a href="https://wa.me/{tel_wa}?text={msg_wa}" target="_blank">Abrir WhatsApp</a>', unsafe_allow_html=True)
+        else: st.warning("Cadastre o WhatsApp do cliente.")
+
+# CSS: Estilização (CONGELADO)
+st.markdown("""
+    <style>
+    .stTextInput>div>div>input[aria-label="Data da Visita:"] { background-color: #e0f2f1 !important; color: #004d40 !important; font-weight: bold; border: 1px solid #b2dfdb !important; }
+    div.stLinkButton > a { background-color: #25D366 !important; color: white !important; font-weight: bold; border-radius: 8px !important; }
+    </style>
+""", unsafe_allow_html=True)
+
+# ==============================================================================
+# 4. INTERFACE DE DIAGNÓSTICO
+# ==============================================================================
+def renderizar_aba_diagnosticos():
+    # Simulando variáveis necessárias (SH/SC devem vir dos seus inputs de cálculo)
+    sh = st.number_input("Superaquecimento Medido (K)", value=0.0)
+    sc = st.number_input("Sub-resfriamento Medido (K)", value=0.0)
+    fluido = st.session_state.dados.get('fluido', 'R410A')
+
+    # --- PROCESSAMENTO DO BANCO DE DEFEITOS ---
+    veredito_ia = "✅ Sistema Operando Normalmente"
+    detalhes_ia = motor_laudo_auto(sh, sc, fluido)
+    cor_alerta = "success"
+
+    for def_at in BD_DEFEITOS:
+        if def_at["cond"](sh, sc):
+            veredito_ia = f"⚠️ Defeito: {def_at['nome']}"
+            detalhes_ia = f"Causa: {def_at['causa']} | Solução: {def_at['solucao']}"
+            cor_alerta = "error"
+            break
+
+    # --- EXIBIÇÃO DO DIAGNÓSTICO ---
+    st.markdown("---")
+    st.subheader("🤖 Diagnóstico de IA & Banco de Dados")
+    if cor_alerta == "error": st.error(veredito_ia)
+    else: st.success(veredito_ia)
+    st.info(f"**Análise Sugerida:** {detalhes_ia}")
+
+    # --- REVISÃO FINAL DO TÉCNICO (O QUE VAI PARA O PDF) ---
+    st.session_state.dados['laudo_final'] = st.text_area("Parecer do Técnico (Edite se necessário):", value=detalhes_ia, height=150)
+
+    if st.button("💾 Registrar no Histórico"):
+        registro = {
+            "data": datetime.now().strftime("%d/%m/%Y %H:%M"),
+            "cliente": st.session_state.dados['nome'],
+            "veredito": veredito_ia,
+            "sh": sh, "sc": sc
+        }
+        salvar_no_historico(registro)
+        st.toast("Diagnóstico salvo no Histórico!")
+
+# Chamada da função (Coloque dentro da sua lógica de TABS do app principal)
+# renderizar_aba_diagnosticos()
 
 # ==============================================================================
 # 1.2 FUNÇÃO DA ABA 1: Identificação e Equipamento (LIMPEZA DEFINITIVA)
