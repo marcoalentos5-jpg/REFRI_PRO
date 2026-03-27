@@ -215,26 +215,41 @@ def renderizar_aba_diagnosticos():
         cm_c = st.number_input("C. Lido Comp", value=float(d.get('cm_c', 0.0)), key="cmc_v1")
         cm_f = st.number_input("C. Lido Fan", value=float(d.get('cm_f', 0.0)), key="cmf_v1")
 
-    # --- 2. PROCESSAMENTO TÉCNICO ---
+    # --- 2. PROCESSAMENTO TÉCNICO (CÁLCULOS TÉCNICOS) ---
     t_sat_s = f_sat_precisao(p_suc, fluido) if p_suc > 5 else 0.0
     t_sat_d = f_sat_precisao(p_des, fluido) if p_des > 5 else 0.0
     
-    sh = round(t_suc - t_sat_s, 2) if t_sat_s != 0 else 0.0
-    sc = round(t_sat_d - t_liq, 2) if t_sat_d != 0 else 0.0
-    delta_i = round(i_med - rla, 2)
-    delta_cap = round(cm_c - cn_c, 2)
-    dt_ar = round(t_ret - t_ins, 2)
+    # Cálculos de Performance
+    sh_total = round(t_suc - t_sat_s, 2) if t_sat_s != 0 else 0.0
+    sc_final = round(t_sat_d - t_liq, 2) if t_sat_d != 0 else 0.0
+    
+    # Novos Deltas e SH Útil
+    delta_t_ar = round(t_ret - t_ins, 2)              # Δ T (Ar)
+    delta_v    = round(v_med - v_lin, 2)              # Δ TENSÃO
+    delta_i    = round(i_med - rla, 2)                # Δ CORRENTE
+    sh_util    = round(sh_total * 0.7, 2)             # SH ÚTIL (Estimado/Referência)
+    delta_cap_f = round(cm_f - cn_f, 2)               # Δ CAP. FAN
+    delta_cap_c = round(cm_c - cn_c, 2)               # Δ CAP. COMP.
 
-    # --- 3. RESULTADOS CALCULADOS (5 MÉTRICAS) ---
+    # --- 3. RESULTADOS CALCULADOS (5 COLUNAS X 2 LINHAS) ---
     st.markdown("---")
     st.subheader("2. Resultados Calculados")
-    res = st.columns(5)
     
-    res[0].metric("SH TOTAL", f"{sh:.1f} K")
-    res[1].metric("SAT. SUCÇÃO", f"{t_sat_s:.1f} °C")
-    res[2].metric("Δ CORRENTE", f"{delta_i:.1f} A")
-    res[3].metric("SC FINAL", f"{sc:.1f} K")
-    res[4].metric("Δ CAP. COMP.", f"{delta_cap:.1f} µF")
+    # LINHA 1 DE RESULTADOS
+    r1_c1, r1_c2, r1_c3, r1_c4, r1_c5 = st.columns(5)
+    r1_c1.metric("SH TOTAL", f"{sh_total:.1f} K")
+    r1_c2.metric("SAT. SUCÇÃO", f"{t_sat_s:.1f} °C")
+    r1_c3.metric("Δ T (AR)", f"{delta_t_ar:.1f} K")    # Novo
+    r1_c4.metric("SC FINAL", f"{sc_final:.1f} K")
+    r1_c5.metric("SH ÚTIL", f"{sh_util:.1f} K")        # Novo
+
+    # LINHA 2 DE RESULTADOS
+    r2_c1, r2_c2, r2_c3, r2_c4, r2_c5 = st.columns(5)
+    r2_c1.metric("Δ TENSÃO", f"{delta_v:.1f} V")       # Novo
+    r2_c2.metric("Δ CORRENTE", f"{delta_i:.1f} A")
+    r2_c3.metric("Δ CAP. COMP.", f"{delta_cap_c:.1f} µF")
+    r2_c4.metric("Δ CAP. FAN", f"{delta_cap_f:.1f} µF") # Novo
+    r2_c5.metric("STATUS", "ESTÁVEL" if 5 <= sh_total <= 7 else "REVISAR")
 
     # --- 4. PARECER TÉCNICO FINAL ---
     st.markdown("---")
