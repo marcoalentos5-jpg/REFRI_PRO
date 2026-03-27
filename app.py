@@ -121,16 +121,19 @@ def limpar_dados_tecnicos():
 # ==============================================================================
 def renderizar_aba_1():
     st.subheader("📋 Cadastro de Cliente e Ativo")
+    
+    # Referência curta para o dicionário mestre
+    d = st.session_state.dados
 
     # --- SEÇÃO 1: CLIENTE E ENDEREÇO ---
     with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
         def atualizar_endereco():
-            # Acessa o valor diretamente da key do widget
+            # Busca o CEP diretamente do estado do widget
             cep = st.session_state.cli_cep_f.strip().replace("-", "").replace(".", "")
             if len(cep) == 8:
                 res = buscar_cep(cep) 
                 if res:
-                    st.session_state.dados.update({
+                    d.update({
                         'endereco': res.get('logradouro', ''),
                         'bairro': res.get('bairro', ''),
                         'cidade': res.get('localidade', ''),
@@ -139,21 +142,21 @@ def renderizar_aba_1():
                     })
 
         c1, c2, c3 = st.columns([2, 1, 1])
-        st.session_state.dados['nome'] = c1.text_input("Nome / Razão Social *", value=st.session_state.dados.get('nome', ''), key="cli_nome_f")
-        st.session_state.dados['cpf_cnpj'] = c2.text_input("CPF/CNPJ", value=st.session_state.dados.get('cpf_cnpj', ''), key="cli_doc_f")
-        st.session_state.dados['whatsapp'] = c3.text_input("WhatsApp *", value=st.session_state.dados.get('whatsapp', ''), key="cli_zap_f")
+        d['nome'] = c1.text_input("Nome / Razão Social *", value=d.get('nome', ''), key="cli_nome_f")
+        d['cpf_cnpj'] = c2.text_input("CPF/CNPJ", value=d.get('cpf_cnpj', ''), key="cli_doc_f")
+        d['whatsapp'] = c3.text_input("WhatsApp *", value=d.get('whatsapp', ''), key="cli_zap_f")
 
         st.markdown("---")
         ce1, ce2, ce3 = st.columns([1, 2, 1])
-        ce1.text_input("CEP *", value=st.session_state.dados.get('cep', ''), key="cli_cep_f", on_change=atualizar_endereco)
-        st.session_state.dados['endereco'] = ce2.text_input("Logradouro:", value=st.session_state.dados.get('endereco', ''), key="cli_end_f")
-        st.session_state.dados['numero'] = ce3.text_input("Nº/Apto:", value=st.session_state.dados.get('numero', ''), key="cli_num_f")
+        ce1.text_input("CEP *", value=d.get('cep', ''), key="cli_cep_f", on_change=atualizar_endereco)
+        d['endereco'] = ce2.text_input("Logradouro:", value=d.get('endereco', ''), key="cli_end_f")
+        d['numero'] = ce3.text_input("Nº/Apto:", value=d.get('numero', ''), key="cli_num_f")
 
         ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.4])
-        st.session_state.dados['complemento'] = ce4.text_input("Complemento:", value=st.session_state.dados.get('complemento', ''), key="cli_comp_f")
-        st.session_state.dados['bairro'] = ce5.text_input("Bairro:", value=st.session_state.dados.get('bairro', ''), key="cli_bair_f")
-        st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados.get('cidade', ''), key="cli_cid_f")
-        st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados.get('uf', ''), max_chars=2, key="cli_uf_f")
+        d['complemento'] = ce4.text_input("Complemento:", value=d.get('complemento', ''), key="cli_comp_f")
+        d['bairro'] = ce5.text_input("Bairro:", value=d.get('bairro', ''), key="cli_bair_f")
+        d['cidade'] = ce6.text_input("Cidade:", value=d.get('cidade', ''), key="cli_cid_f")
+        d['uf'] = ce7.text_input("UF:", value=d.get('uf', ''), max_chars=2, key="cli_uf_f")
 
     # --- SEÇÃO 2: EQUIPAMENTO ---
     st.markdown("### ⚙️ Especificações do Equipamento")
@@ -162,100 +165,82 @@ def renderizar_aba_1():
         
         with e1:
             fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
-            # Define o índice padrão para evitar erro de seleção
-            fab_index = fab_list.index(st.session_state.dados.get('fabricante', 'LG')) if st.session_state.dados.get('fabricante') in fab_list else 0
-            st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_index, key="fab_f")
-            st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados.get('modelo', ''), key="mod_f")
+            f_idx = fab_list.index(d.get('fabricante', 'LG')) if d.get('fabricante') in fab_list else 0
+            d['fabricante'] = st.selectbox("Fabricante:", fab_list, index=f_idx, key="fab_f")
+            d['modelo'] = st.text_input("Modelo:", value=d.get('modelo', ''), key="mod_f")
             
             fluido_opcoes = ["R410A", "R134a", "R22", "R32", "R290"]
-            fluido_idx = fluido_opcoes.index(st.session_state.dados.get('fluido', 'R410A')) if st.session_state.dados.get('fluido') in fluido_opcoes else 0
-            fluido_sel = st.selectbox("Fluido Refr.:", fluido_opcoes, index=fluido_idx, key="fluid_f")
-            st.session_state.dados['fluido'] = fluido_sel
-            st.session_state.dados['potencia'] = st.text_input("Potência (CV/HP):", value=st.session_state.dados.get('potencia', ''), key="pot_f")
+            fl_idx = fluido_opcoes.index(d.get('fluido', 'R410A')) if d.get('fluido') in fluido_opcoes else 0
+            d['fluido'] = st.selectbox("Fluido Refr.:", fluido_opcoes, index=fl_idx, key="fluid_f")
+            d['potencia'] = st.text_input("Potência (CV/HP):", value=d.get('potencia', ''), key="pot_f")
 
         with e2:
-            st.session_state.dados['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=st.session_state.dados.get('serie_evap', ''), key="sevap_f")
-            st.session_state.dados['serie_cond'] = st.text_input("Nº Série (COND)", value=st.session_state.dados.get('serie_cond', ''), key="scond_f")
-            st.session_state.dados['local_cond'] = st.text_input("Localização da Condensadora:", value=st.session_state.dados.get('local_cond', ''), key="lcond_f")
-            st.session_state.dados['local_evap'] = st.text_input("Localização da Evaporadora:", value=st.session_state.dados.get('local_evap', ''), key="levap_f")
+            d['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=d.get('serie_evap', ''), key="sevap_f")
+            d['serie_cond'] = st.text_input("Nº Série (COND)", value=d.get('serie_cond', ''), key="scond_f")
+            d['local_cond'] = st.text_input("Localização da Condensadora:", value=d.get('local_cond', ''), key="lcond_f")
+            d['local_evap'] = st.text_input("Localização da Evaporadora:", value=d.get('local_evap', ''), key="levap_f")
 
         with e3:
             cap_opcoes = [9000, 12000, 18000, 24000, 30000, 60000]
-            cap_idx = cap_opcoes.index(st.session_state.dados.get('btu_nom', 12000)) if st.session_state.dados.get('btu_nom') in cap_opcoes else 1
-            st.session_state.dados['btu_nom'] = st.selectbox("Capacidade (BTU/h):", cap_opcoes, index=cap_idx, key="cap_f")
-            st.session_state.dados['oleo'] = st.selectbox("Tipo de Óleo:", ["POE", "Mineral", "PVE"], key="oleo_f")
-            st.session_state.dados['freq'] = st.selectbox("Frequência:", [60, 50], key="freq_f")
-            st.session_state.dados['tag_id'] = st.text_input("TAG/ID:", value=st.session_state.dados.get('tag_id', ''), key="tag_f")
+            c_idx = cap_opcoes.index(d.get('btu_nom', 12000)) if d.get('btu_nom') in cap_opcoes else 1
+            d['btu_nom'] = st.selectbox("Capacidade (BTU/h):", cap_opcoes, index=c_idx, key="cap_f")
+            d['oleo'] = st.selectbox("Tipo de Óleo:", ["POE", "Mineral", "PVE"], key="oleo_f")
+            d['freq'] = st.selectbox("Frequência:", [60, 50], key="freq_f")
+            d['tag_id'] = st.text_input("TAG/ID:", value=d.get('tag_id', ''), key="tag_f")
 
     # --- SEÇÃO 3: MEDIÇÕES TÉCNICAS ---
     st.markdown("### 📊 Performance e Ciclo Frigorífico")
     with st.expander("Dados de Pressão e Temperatura", expanded=True):
-        
-        # LINHA 1: BAIXA
+        # Lado de Baixa
         st.subheader("❄️ Evaporação (Lado de Baixa)")
         lb1, lb2, lb3 = st.columns(3)
-        with lb1:
-            p_baixa = st.number_input("Pressão Sucção (PSI)", value=float(st.session_state.dados.get('p_baixa', 118.0)), key="p_baixa_input")
-        with lb2:
-            t_suc = st.number_input("Temp. Tubo Sucção (°C)", value=float(st.session_state.dados.get('temp_sucção', 12.0)), key="t_suc_input")
-        with lb3:
-            # Uso da função de precisão que criamos
-            t_sat_baixa = f_sat_precisao(p_baixa, fluido_sel)
-            st.metric("T. Saturação (Orvalho)", f"{t_sat_baixa:.2f} °C")
+        d['p_baixa'] = lb1.number_input("Pressão Sucção (PSI)", value=float(d.get('p_baixa', 118.0)), key="p_baixa_input")
+        d['temp_sucção'] = lb2.number_input("Temp. Tubo Sucção (°C)", value=float(d.get('temp_sucção', 12.0)), key="t_suc_input")
+        d['t_sat_baixa'] = f_sat_precisao(d['p_baixa'], d['fluido'])
+        lb3.metric("T. Saturação (Orvalho)", f"{d['t_sat_baixa']:.2f} °C")
 
         st.markdown("---")
 
-        # LINHA 2: ALTA
+        # Lado de Alta
         st.subheader("🔥 Condensação (Lado de Alta)")
         la1, la2, la3 = st.columns(3)
-        with la1:
-            p_alta = st.number_input("Pressão Descarga (PSI)", value=float(st.session_state.dados.get('p_alta', 380.0)), key="p_alta_input")
-        with la2:
-            t_liq = st.number_input("Temp. Linha Líquido (°C)", value=float(st.session_state.dados.get('temp_liquido', 38.0)), key="t_liq_input")
-        with la3:
-            # Saturação de Alta também pela função de precisão
-            t_sat_alta = f_sat_precisao(p_alta, fluido_sel)
-            st.metric("T. Saturação (Bolha)", f"{t_sat_alta:.2f} °C")
+        d['p_alta'] = la1.number_input("Pressão Descarga (PSI)", value=float(d.get('p_alta', 380.0)), key="p_alta_input")
+        d['temp_liquido'] = la2.number_input("Temp. Linha Líquido (°C)", value=float(d.get('temp_liquido', 38.0)), key="t_liq_input")
+        d['t_sat_alta'] = f_sat_precisao(d['p_alta'], d['fluido'])
+        la3.metric("T. Saturação (Bolha)", f"{d['t_sat_alta']:.2f} °C")
 
         st.markdown("---")
 
-        # LINHA 3: DIFERENCIAL DE AR
+        # Performance do Ar
         st.subheader("🌬️ Performance Térmica do Ar")
         ar1, ar2, ar3 = st.columns(3)
-        with ar1:
-            t_in = st.number_input("Temp. Retorno Ar (°C)", value=float(st.session_state.dados.get('temp_entrada_ar', 25.0)), key="t_in_input")
-        with ar2:
-            t_out = st.number_input("Temp. Insuflamento Ar (°C)", value=float(st.session_state.dados.get('temp_saida_ar', 12.0)), key="t_out_input")
-        with ar3:
-            delta_t = round(t_in - t_out, 2)
-            st.metric("Delta T (Ar)", f"{delta_t} °C")
+        d['temp_entrada_ar'] = ar1.number_input("Temp. Retorno Ar (°C)", value=float(d.get('temp_entrada_ar', 25.0)), key="t_in_input")
+        d['temp_saida_ar'] = ar2.number_input("Temp. Insuflamento Ar (°C)", value=float(d.get('temp_saida_ar', 12.0)), key="t_out_input")
+        delta_t = round(d['temp_entrada_ar'] - d['temp_saida_ar'], 2)
+        ar3.metric("Delta T (Ar)", f"{delta_t} °C")
 
-        # ATUALIZAÇÃO FINAL DOS DADOS (Sincroniza com a Aba de Diagnóstico)
-        st.session_state.dados.update({
-            'p_baixa': p_baixa, 'temp_sucção': t_suc,
-            'p_alta': p_alta, 'temp_liquido': t_liq,
-            't_sat_baixa': t_sat_baixa, 't_sat_alta': t_sat_alta,
-            'temp_entrada_ar': t_in, 'temp_saida_ar': t_out
-        })
-
-
+# ==============================================================================
+# 2.1 RENDERIZAÇÃO DA ABA 2 (DIAGNÓSTICO)
 # ==============================================================================
 def renderizar_aba_2():
     st.header("🔍 Diagnóstico Térmico e de Performance")
-    
-    # Recuperando os dados salvos na Aba 1
     d = st.session_state.dados
     
-    # Cálculos de Ciclo
-    sh = round(d.get('temp_sucção', 0) - d.get('t_sat_baixa', 0), 2)
-    sc = round(d.get('t_sat_alta', 0) - d.get('temp_liquido', 0), 2)
+    # Cálculos Automáticos com proteção contra valores nulos
+    t_suc = d.get('temp_sucção', 0)
+    t_sat_b = d.get('t_sat_baixa', 0)
+    t_sat_a = d.get('t_sat_alta', 0)
+    t_liq = d.get('temp_liquido', 0)
+    
+    sh = round(t_suc - t_sat_b, 2)
+    sc = round(t_sat_a - t_liq, 2)
     dt_ar = round(d.get('temp_entrada_ar', 0) - d.get('temp_saida_ar', 0), 2)
 
     # --- LINHA 1: MÉTRICAS PRINCIPAIS ---
     col_sh, col_sc, col_dt = st.columns(3)
     
     with col_sh:
-        st.metric("Superaquecimento (SH)", f"{sh} °C")
+        st.metric("Superaquecimento (SH)", f"{sh} K")
         if 5 <= sh <= 8:
             st.success("✅ SH Ideal: Fluido evaporando totalmente.")
         elif sh > 8:
@@ -264,7 +249,7 @@ def renderizar_aba_2():
             st.error("🚨 SH Baixo: Risco de líquido no compressor!")
 
     with col_sc:
-        st.metric("Sub-resfriamento (SC)", f"{sc} °C")
+        st.metric("Sub-resfriamento (SC)", f"{sc} K")
         if 5 <= sc <= 12:
             st.success("✅ SC Ideal: Condensação eficiente.")
         else:
