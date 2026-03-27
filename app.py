@@ -8,33 +8,66 @@ import requests
 import urllib.parse
 import os # Biblioteca para verificar arquivos no sistema
 import numpy as np
-import urllib.parse
-from datetime import datetime
 
 
-# 1. Primeiro as funções de cálculo
+
+
+import streamlit as st
+import numpy as np
+
+# --- 1. MOTOR DE CÁLCULO PT ---
 def f_sat_precisao(p, g):
-    # ... seu código da função aqui ...
-    return temp
-
-# 2. Depois as funções das abas
-def f_sat_precisao(p, g):
-    if p <= 5: return -50.0  # <-- Esta linha PRECISA de 4 espaços na frente
+    if p <= 5: return -50.0 
     
     tabelas = {
         "R410A": {"xp": [5, 550], "fp": [-50, 64.5]},
-        "R22":   {"xp": [5, 320], "fp": [-50, 58.5]}
+        "R22":   {"xp": [5, 320], "fp": [-50, 58.5]},
+        "R134a": {"xp": [5, 250], "fp": [-50, 76.2]},
+        "R404A": {"xp": [5, 350], "fp": [-50, 52.0]}
     }
     if g not in tabelas: return 0.0
     return float(np.interp(p, tabelas[g]["xp"], tabelas[g]["fp"]))
 
-# Linha 24 (Agora o Python aceita ela porque a de cima foi preenchida)
-def renderizar_aba_diagnosticos():
+# --- 2. FUNÇÃO DA ABA 1 (IDENTIFICAÇÃO) ---
+def renderizar_aba_1():
+    st.header("📋 Identificação do Serviço")
+    if 'dados' not in st.session_state:
+        st.session_state.dados = {}
+    
     d = st.session_state.dados
-    # ... resto do código da aba
-    # ... código da identificação ...
- 
-# 3. POR ÚLTIMO, a lógica de navegação (O "Cérebro" do App)
+    d['cliente'] = st.text_input("Nome do Cliente:", d.get('cliente', ''))
+    d['fluido'] = st.selectbox("Selecione o Fluido:", ["R410A", "R22", "R134a", "R404A"], index=0)
+    st.success("Dados salvos! Prossiga para a Aba de Diagnósticos.")
+
+# --- 3. FUNÇÃO DA ABA 2 (DIAGNÓSTICOS) ---
+def renderizar_aba_diagnosticos():
+    st.header("🔍 Central de Diagnóstico Técnico")
+    d = st.session_state.dados
+    fluido = d.get('fluido', 'R410A')
+
+    # Entradas de Dados
+    c1, c2 = st.columns(2)
+    with c1:
+        p_baixa = st.number_input("P. Sucção (PSI)", value=float(d.get('p_baixa', 0.0)), key="ps_f")
+        t_suc = st.number_input("T. Tubo Sucção (°C)", value=float(d.get('t_suc', 0.0)), key="ts_f")
+    with c2:
+        p_alta = st.number_input("P. Descarga (PSI)", value=float(d.get('p_alta', 0.0)), key="pd_f")
+        t_liq = st.number_input("T. Tubo Líquido (°C)", value=float(d.get('t_liq', 0.0)), key="tl_f")
+
+    # Cálculos em Tempo Real
+    t_sat_s = f_sat_precisao(p_baixa, fluido)
+    t_sat_d = f_sat_precisao(p_alta, fluido)
+    sh = round(t_suc - t_sat_s, 1) if t_sat_s != -50.0 else 0.0
+    sc = round(t_sat_d - t_liq, 1) if t_sat_d != -50.0 else 0.0
+
+    # Exibição dos Resultados (Molduras)
+    st.markdown("---")
+    res1, res2 = st.columns(2)
+    res1.metric("Superaquecimento (SH)", f"{sh} K")
+    res2.metric("Sub-resfriamento (SC)", f"{sc} K")
+
+# --- 4. LÓGICA DE NAVEGAÇÃO (O CÉREBRO) ---
+# Fora de qualquer função, encostado na esquerda:
 aba_selecionada = st.sidebar.radio(
     "📍 Selecione a Etapa:",
     ["1. Identificação", "2. Diagnósticos", "3. Relatório"],
