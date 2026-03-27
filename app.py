@@ -7,32 +7,33 @@ from datetime import datetime
 import urllib.parse
 import os 
 
-def buscar_cep(cep):
-    """Consulta a API ViaCEP para automatizar o cadastro do cliente"""
+# ==============================================================================
+# 1. FUNÇÕES DE CÁLCULO (O CÉREBRO TÉCNICO)
+# ==============================================================================
+
+def calcular_temp_saturacao(pressao, fluido):
+    """Calcula a temperatura de saturação (Ponto de Orvalho) aproximada para o ciclo"""
     try:
-        url = f"https://viacep.com.br/ws/{cep}/json/"
-        response = requests.get(url, timeout=5)
-        if response.status_code == 200:
-            return response.json()
-    except Exception:
-        return None
-    return None
+        p = float(pressao)
+        if fluido == "R410A":
+            # Fórmula aproximada: PSI para Celsius (R410A)
+            return round((p / 13.5) - 1.0, 2)
+        elif fluido == "R22":
+            return round((p / 7.0) - 13.0, 2)
+        elif fluido == "R134a":
+            return round((p / 4.5) - 15.0, 2)
+        elif fluido == "R32":
+            return round((p / 14.0) - 2.0, 2)
+        elif fluido == "R290":
+            return round((p / 6.0) - 25.0, 2)
+        else:
+            return round((p / 12.0), 2)
+    except:
+        return 0.0
 
-# Verificação e Inicialização do Dicionário de Dados
-if 'dados' not in st.session_state:
-    st.session_state.dados = {
-        'tec_nome': '',
-        'cliente': '',
-        'modelo_evap': '',
-        'fluido': 'R410A',
-        'p_baixa': 118.0,
-        'p_alta': 380.0,
-        'temp_sucção': 12.0,
-        'temp_liquido': 38.0,
-        'temp_entrada_ar': 25.0,
-        'temp_saida_ar': 12.0
-    }
-
+def f_sat_precisao(p, fluido):
+    """Apelido para a função de saturação (evita erro de nome na Aba 2)"""
+    return calcular_temp_saturacao(p, fluido)
 
 # ==============================================================================
 # 1. FUNÇÕES TÉCNICAS E DE UTILIDADE (FORA DAS ABAS)
