@@ -271,11 +271,27 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # B. DADOS DO TÉCNICO RESPONSÁVEL
+   # B. DADOS DO TÉCNICO RESPONSÁVEL
     st.subheader("👤 Técnico Responsável")
-    st.session_state.dados['tecnico_nome'] = st.text_input("Nome:", value=st.session_state.dados['tecnico_nome'])
-    st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ Técnico:", value=st.session_state.dados['tecnico_documento'])
-    st.session_state.dados['tecnico_registro'] = st.text_input("Inscrição (CFT/CREA):", value=st.session_state.dados['tecnico_registro'])
+    
+    # Correção: Uso de .get() para evitar erro de chave inexistente e inclusão de 'key' única
+    st.session_state.dados['tecnico_nome'] = st.text_input(
+        "Nome:", 
+        value=st.session_state.dados.get('tecnico_nome', ''), 
+        key="tec_nome_sidebar_v1"
+    )
+    
+    st.session_state.dados['tecnico_documento'] = st.text_input(
+        "CPF/CNPJ Técnico:", 
+        value=st.session_state.dados.get('tecnico_documento', ''), 
+        key="tec_doc_sidebar_v1"
+    )
+    
+    st.session_state.dados['tecnico_registro'] = st.text_input(
+        "Inscrição (CFT/CREA):", 
+        value=st.session_state.dados.get('tecnico_registro', ''), 
+        key="tec_reg_sidebar_v1"
+    )
     
     st.markdown("---")
     
