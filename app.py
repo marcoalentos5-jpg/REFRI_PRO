@@ -10,6 +10,77 @@ import os # Biblioteca para verificar arquivos no sistema
 import numpy as np
 import urllib.parse
 from datetime import datetime
+import pandas as pd # Certifique-se de ter o pandas instalado: pip install pandas
+
+
+# ==============================================================================
+# 1. BIBLIOTECA DE DEFEITOS (O CÉREBRO)
+# ==============================================================================
+BD_DEFEITOS = [
+    {"nome": "Falta de Gás", "cond": lambda sh, sc: sh > 12 and sc < 3, "causa": "Vazamento ou carga incompleta.", "solucao": "Localizar vazamento e completar carga."},
+    {"nome": "Condensadora Suja", "cond": lambda sh, sc: sh < 5 and sc > 10, "causa": "Obstrução de ar na unidade externa.", "solucao": "Limpeza química das aletas."},
+    {"nome": "Capilar Obstruído", "cond": lambda sh, sc: sh > 15 and sc > 8, "causa": "Sujeira ou umidade no sistema.", "solucao": "Troca do filtro e dispositivo de expansão."},
+    {"nome": "Compressor Cansado", "cond": lambda sh, sc: sh < 4 and sc < 3, "causa": "Perda de eficiência mecânica.", "solucao": "Substituição do compressor."}
+]
+
+# ==============================================================================
+# 2. FUNÇÃO PARA SALVAR HISTÓRICO (BANCO DE DADOS)
+# ==============================================================================
+def salvar_no_historico(dados_diag):
+    df_novo = pd.DataFrame([dados_diag])
+    try:
+        df_antigo = pd.read_csv('historico_diagnosticos.csv')
+        df_final = pd.concat([df_antigo, df_novo], ignore_index=True)
+    except FileNotFoundError:
+        df_final = df_novo
+    df_final.to_csv('historico_diagnosticos.csv', index=False)
+
+# ==============================================================================
+# 3. INTEGRAÇÃO GEMINI / DIAGNÓSTICO IA
+# ==============================================================================
+def renderizar_aba_diagnosticos():
+    # ... (Seu código de inputs anterior permanece igual aqui) ...
+
+    # --- PROCESSAMENTO DO BANCO DE DEFEITOS ---
+    veredito_ia = "✅ Sistema Operando Normalmente"
+    detalhes_ia = "Nenhum padrão de falha crítica detectado nos parâmetros de SH/SC."
+    cor_alerta = "success"
+
+    for def_at in BD_DEFEITOS:
+        if def_at["cond"](sh, sc):
+            veredito_ia = f"⚠️ Defeito: {def_at['nome']}"
+            detalhes_ia = f"Causa: {def_at['causa']} | Solução: {def_at['solucao']}"
+            cor_alerta = "error"
+            break
+
+    # --- EXIBIÇÃO DO DIAGNÓSTICO INTELIGENTE ---
+    st.markdown("---")
+    st.subheader("🤖 Diagnóstico de IA & Banco de Dados")
+    
+    if cor_alerta == "error":
+        st.error(veredito_ia)
+    else:
+        st.success(veredito_ia)
+    
+    st.info(f"**Análise do Especialista Virtual:** {detalhes_ia}")
+
+    # --- BOTÃO DE SALVAR NO HISTÓRICO ---
+    if st.button("💾 Registrar no Histórico de Diagnósticos"):
+        registro = {
+            "data": datetime.now().strftime("%d/%m/%Y %H:%M"),
+            "fluido": fluido,
+            "sh": sh,
+            "sc": sc,
+            "veredito": veredito_ia
+        }
+        salvar_no_historico(registro)
+        st.toast("Diagnóstico salvo no Banco de Dados!")
+
+    # --- INTEGRAÇÃO DIRETA GEMINI (OPCIONAL/MOCKUP) ---
+    with st.expander("✨ Consultar IA Gemini (Análise Profunda)"):
+        st.write("O Gemini está analisando suas medições elétricas e frigoríficas...")
+        # Aqui, quando você plugar sua chave API, o texto abaixo será dinâmico
+        st.write(f"Sugestão da IA: 'Baseado no SH de {sh}K e Corrente de {i_med}A, verifique se a hélice do ventilador não está patinando.'")
 
 
 # 1. CONFIGURAÇÃO INICIAL (DIRETRIZ: LAYOUT CONGELADO)
