@@ -400,8 +400,7 @@ def renderizar_aba_diagnosticos():
         temp_liq = st.number_input("Temp. Tubulação Líquido (°C):", step=0.1, key="t_liq_diag")
 
     st.markdown("---")
-
-O código Mestre_HVAC_Blindado_V1    
+  
 
 # --- BLOCO 2: PROCESSAMENTO (CÁLCULOS) ---
     # Nota: No próximo passo, inseriremos a tabela PT aqui
