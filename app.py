@@ -88,7 +88,9 @@ if 'dados' not in st.session_state:
 # ==============================================================================
 # 2. FUNÇÃO ÚNICA DA ABA DE DIAGNÓSTICOS (SUBSTITUI TODAS AS ANTERIORES)
 # ==============================================================================
+
 def renderizar_aba_diagnosticos():
+    # 1. Configurações Iniciais
     st.header("🔍 Central de Diagnóstico Técnico")
     d = st.session_state.dados
     fluido = d.get('fluido', 'R410A')
@@ -127,23 +129,19 @@ def renderizar_aba_diagnosticos():
         d['c_nom_fan'] = st.number_input("C. Nom. Fan", value=float(d.get('c_nom_fan', 0.0)), key="cnf_final")
         d['c_lido_fan'] = st.number_input("C. Lido Fan", value=float(d.get('c_lido_fan', 0.0)), key="cmf_final")
 
+    # --- 2. PROCESSAMENTO TÉCNICO (CÁLCULOS) ---
+    p_suc = d.get('p_baixa', 0.0)
+    t_suc = d.get('temp_sucção', 0.0)
+    p_des = d.get('p_alta', 0.0)
+    t_liq = d.get('temp_liquido', 0.0)
 
-    
-        # --- 2. PROCESSAMENTO TÉCNICO (DENTRO DA FUNÇÃO DA ABA) ---
-# Garante que pegamos os dados atualizados do session_state
-p_suc = d.get('p_baixa', 0.0)
-t_suc = d.get('temp_sucção', 0.0)
-p_des = d.get('p_alta', 0.0)
-t_liq = d.get('temp_liquido', 0.0)
+    # Motor de cálculo PT
+    t_sat_s = f_sat_precisao(p_suc, fluido)
+    t_sat_d = f_sat_precisao(p_des, fluido)
 
-# Cálculos de Saturação
-t_sat_s = f_sat_precisao(p_suc, fluido)
-t_sat_d = f_sat_precisao(p_des, fluido)
-
-# Superaquecimento (SH) e Sub-resfriamento (SC)
-sh = round(t_suc - t_sat_s, 2) if t_sat_s != 0 else 0.0
-sc = round(t_sat_d - t_liq, 2) if t_sat_d != 0 else 0.0
-dt_ar = round(d.get('temp_entrada_ar', 0.0) - d.get('temp_saida_ar', 0.0), 2)
+    sh = round(t_suc - t_sat_s, 2) if t_sat_s != -50.0 else 0.0
+    sc = round(t_sat_d - t_liq, 2) if t_sat_d != -50.0 else 0.0
+    dt_ar = round(d.get('temp_entrada_ar', 0.0) - d.get('temp_saida_ar', 0.0), 2)
 
     # --- 3. RESULTADOS CALCULADOS (LAYOUT 5x2 COM MOLDURAS) ---
     st.markdown("---")
