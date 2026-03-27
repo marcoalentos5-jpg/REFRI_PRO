@@ -1,8 +1,8 @@
 
+# ==============================================================================
+# 0. CONFIGURAÇÕES E IMPORTS (CORREÇÃO DE BUFFER E PDF)
+# ==============================================================================
 
-# ==============================================================================
-# 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES (CONGELADO E ATUALIZADO)
-# ==============================================================================
 import streamlit as st
 from datetime import datetime
 import requests
@@ -14,11 +14,13 @@ import math
 from fpdf import FPDF
 import io
 
-# 1. CONFIGURAÇÃO INICIAL (DIRETRIZ: LAYOUT CONGELADO)
-st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
+
+
+# 1. CONFIGURAÇÃO DA PÁGINA (CONGELADO)
+st.set_page_config(page_title="HV Pro - MPN Soluções", layout="wide", page_icon="⚙️")
 
 # ==============================================================================
-# 1. BIBLIOTECA DE DEFEITOS & MOTORES TÉCNICOS
+# 1. MOTORES TÉCNICOS E PDF (FIX: CORREÇÃO DE ARQUIVO DANIFICADO)
 # ==============================================================================
 BD_DEFEITOS = [
     {"nome": "Falta de Gás", "cond": lambda sh, sc: sh > 12 and sc < 3, "causa": "Vazamento ou carga incompleta.", "solucao": "Localizar vazamento e completar carga."},
@@ -27,154 +29,99 @@ BD_DEFEITOS = [
     {"nome": "Compressor Cansado", "cond": lambda sh, sc: sh < 4 and sc < 3, "causa": "Perda de eficiência mecânica.", "solucao": "Substituição do compressor."}
 ]
 
-def motor_laudo_auto(sh, sc, fluido):
-    """Gera o texto técnico automático para o PDF baseado nos cálculos"""
-    if sh > 12 and sc < 3: return f"Análise indica baixa carga de fluido {fluido}. Superaquecimento elevado e sub-resfriamento baixo sugerem vazamento ou carga incompleta."
-    if sh < 5 and sc > 10: return "Identificada obstrução térmica na unidade externa (condensadora). Necessária limpeza para restabelecer a troca de calor."
-    if sh > 15 and sc > 8: return "Detectada restrição no fluxo de refrigerante (obstrução de capilar ou filtro). Necessária intervenção no ciclo frigorífico."
-    return "O sistema apresenta parâmetros de pressões e temperaturas dentro da normalidade operacional."
-
-def gerar_pdf_pj(d):
-    """Gera o relatório em formato de tabela para empresas P.J."""
+def gerar_pdf_perfeito(d):
+    """Gera o PDF de forma segura para não corromper"""
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_fill_color(0, 51, 102) # Azul Corporativo
+    pdf.set_fill_color(0, 51, 102)
     pdf.rect(0, 0, 210, 35, 'F')
     pdf.set_text_color(255, 255, 255)
     pdf.set_font("Arial", 'B', 16)
-    pdf.cell(0, 15, "RELATÓRIO TÉCNICO - MPN SOLUÇÕES", ln=True, align='C')
-    pdf.set_font("Arial", size=10)
-    pdf.cell(0, 5, f"DATA: {datetime.now().strftime('%d/%m/%Y %H:%M')}", ln=True, align='C')
+    pdf.cell(0, 15, "RELATORIO TECNICO - MPN SOLUCOES", ln=True, align='C')
     
     pdf.ln(20); pdf.set_text_color(0, 0, 0)
-    pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, "1. IDENTIFICAÇÃO DO ATENDIMENTO", ln=True)
-    pdf.set_font("Arial", size=9)
-    # Tabela de Identificação
-    pdf.cell(100, 8, f" CLIENTE: {d.get('nome')}", border=1)
-    pdf.cell(90, 8, f" CPF/CNPJ: {d.get('cpf_cnpj')}", border=1, ln=True)
-    pdf.cell(100, 8, f" EQUIPAMENTO: {d.get('fabricante')} {d.get('modelo')}", border=1)
+    pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, "1. DADOS DO ATENDIMENTO", ln=True)
+    pdf.set_font("Arial", size=10)
+    pdf.cell(100, 8, f" CLIENTE: {d.get('nome').upper()}", border=1)
+    pdf.cell(90, 8, f" CNPJ/CPF: {d.get('cpf_cnpj')}", border=1, ln=True)
+    pdf.cell(100, 8, f" EQUIPAMENTO: {d.get('fabricante')} / {d.get('capacidade')}", border=1)
     pdf.cell(90, 8, f" TAG: {d.get('tag_id')}", border=1, ln=True)
 
-    pdf.ln(5); pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, "2. PARECER TÉCNICO (DIAGNÓSTICO FINAL)", ln=True)
+    pdf.ln(5); pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, "2. PARECER TECNICO FINAL", ln=True)
     pdf.set_font("Arial", size=10)
-    pdf.multi_cell(0, 8, d.get('laudo_final', 'Laudo não preenchido.'), border=1)
-
-    pdf.ln(30)
-    pdf.line(25, pdf.get_y(), 85, pdf.get_y()); pdf.line(125, pdf.get_y(), 185, pdf.get_y())
-    pdf.set_font("Arial", 'B', 8)
-    pdf.set_xy(25, pdf.get_y()+2); pdf.cell(60, 5, f"TÉCNICO: {d.get('tecnico_nome')}", align='C')
-    pdf.set_xy(125, pdf.get_y()+2); pdf.cell(60, 5, f"CLIENTE: {d.get('nome')}", align='C')
-    return pdf.output()
+    pdf.multi_cell(0, 8, d.get('laudo_final', 'Laudo nao preenchido.'), border=1)
+    
+    # Retorno seguro em bytes
+    return pdf.output(dest='S').encode('latin-1')
 
 # ==============================================================================
-# 2. FUNÇÕES DE DADOS (CEP E HISTÓRICO)
+# 2. FUNÇÕES DE DADOS (CEP AUTOMÁTICO)
 # ==============================================================================
-def salvar_no_historico(dados_diag):
-    df_novo = pd.DataFrame([dados_diag])
-    try:
-        df_antigo = pd.read_csv('historico_diagnosticos.csv')
-        df_final = pd.concat([df_antigo, df_novo], ignore_index=True)
-    except FileNotFoundError:
-        df_final = df_novo
-    df_final.to_csv('historico_diagnosticos.csv', index=False)
-
-def buscar_cep(cep):
-    cep_limpo = "".join(filter(str.isdigit, cep))
-    if len(cep_limpo) == 8:
+def buscar_cep():
+    cep = st.session_state.dados['cep'].replace("-", "").strip()
+    if len(cep) == 8:
         try:
-            r = requests.get(f"https://viacep.com.br/ws/{cep_limpo}/json/", timeout=5)
-            if r.status_code == 200:
-                d_api = r.json()
-                if "erro" not in d_api:
-                    st.session_state.dados['endereco'] = d_api.get('logradouro', '')
-                    st.session_state.dados['bairro'] = d_api.get('bairro', '')
-                    st.session_state.dados['cidade'] = d_api.get('localidade', '')
-                    st.session_state.dados['uf'] = d_api.get('uf', '')
-                    return True
-        except: pass
-    return False
+            r = requests.get(f"https://viacep.com.br/ws/{cep}/json/")
+            if r.status_code == 200 and "erro" not in r.json():
+                res = r.json()
+                st.session_state.dados['endereco'] = res.get('logradouro', '')
+                st.session_state.dados['bairro'] = res.get('bairro', '')
+                st.session_state.dados['cidade'] = res.get('localidade', '')
+                st.session_state.dados['uf'] = res.get('uf', '')
+                st.toast("Endereço localizado!")
+            else: st.error("CEP não encontrado.")
+        except: st.error("Erro ao buscar CEP.")
 
 # ==============================================================================
-# 3. MOTOR DE SESSÃO E SIDEBAR (PAINEL DE AÇÕES)
+# 3. MOTOR DE SESSÃO E INTERFACE
 # ==============================================================================
 if 'dados' not in st.session_state:
     st.session_state.dados = {
-        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
-        'data': datetime.now().strftime("%d/%m/%Y"),
-        'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '', 'complemento': '',
-        'fabricante': 'Carrier', 'modelo': '', 'capacidade': '12.000', 'linha': 'Residencial',
-        'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '',
-        'tipo_servico': 'Manutenção Preventiva', 'tag_id': 'TAG-01',
-        'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
-        'status_maquina': '🟢 Operacional', 'tipo_oleo': 'POE', 'frequencia': 'Inverter',
-        'laudo_final': ''
+        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'cep': '',
+        'endereco': '', 'bairro': '', 'cidade': '', 'uf': '',
+        'fabricante': 'Carrier', 'capacidade': '12.000 BTU', 'tag_id': 'TAG-01',
+        'tecnico_nome': 'Marcos Alexandre', 'laudo_final': ''
     }
 
+# SIDEBAR COM PDF BLINDADO
 with st.sidebar:
-    st.header("📲 Painel de Saída")
-    st.markdown("---")
-    if st.button("📄 Gerar Relatório PDF (PJ)"):
-        pdf_bytes = gerar_pdf_pj(st.session_state.dados)
-        st.download_button(label="⬇️ Baixar Relatório", data=pdf_bytes, file_name=f"Relatorio_{st.session_state.dados['nome']}.pdf", mime="application/pdf")
+    st.header("📲 Saída")
+    # Gerar o PDF só quando clicar no botão
+    if st.session_state.dados['nome']:
+        pdf_out = gerar_pdf_perfeito(st.session_state.dados)
+        st.download_button(
+            label="📄 Baixar PDF (PJ)",
+            data=pdf_out,
+            file_name=f"Relatorio_{st.session_state.dados['nome'].replace(' ', '_')}.pdf",
+            mime="application/pdf"
+        )
+    else: st.warning("Preencha o nome do cliente.")
+
+# ABAS DO SISTEMA
+aba1, aba2 = st.tabs(["📝 Cadastro", "🔍 Diagnóstico"])
+
+with aba1:
+    st.session_state.dados['nome'] = st.text_input("Nome/Razão Social", st.session_state.dados['nome'])
     
-    tel_wa = st.session_state.dados.get('whatsapp', '')
-    if st.button("🟢 Enviar via WhatsApp"):
-        if tel_wa:
-            msg_wa = urllib.parse.quote(f"Olá, aqui é o técnico {st.session_state.dados['tecnico_nome']}. Segue o laudo do seu equipamento.")
-            st.markdown(f'<a href="https://wa.me/{tel_wa}?text={msg_wa}" target="_blank">Abrir WhatsApp</a>', unsafe_allow_html=True)
-        else: st.warning("Cadastre o WhatsApp do cliente.")
+    col_cep1, col_cep2 = st.columns([1, 1])
+    st.session_state.dados['cep'] = col_cep1.text_input("CEP", st.session_state.dados['cep'])
+    col_cep2.button("🔍 Validar CEP", on_click=buscar_cep)
+    
+    st.session_state.dados['endereco'] = st.text_input("Endereço", st.session_state.dados['endereco'])
+    
+    # LISTA DE CAPACIDADES (FIX)
+    st.divider()
+    c1, c2 = st.columns(2)
+    st.session_state.dados['fabricante'] = c1.selectbox("Fabricante", ["Carrier", "Daikin", "LG", "Samsung", "Trane", "York"])
+    
+    lista_btus = ["9.000 BTU", "12.000 BTU", "18.000 BTU", "24.000 BTU", "30.000 BTU", "36.000 BTU", "48.000 BTU", "60.000 BTU", "5 TR", "10 TR"]
+    st.session_state.dados['capacidade'] = c2.selectbox("Capacidade (BTU/TR)", lista_btus)
 
-# CSS: Estilização (CONGELADO)
-st.markdown("""
-    <style>
-    .stTextInput>div>div>input[aria-label="Data da Visita:"] { background-color: #e0f2f1 !important; color: #004d40 !important; font-weight: bold; border: 1px solid #b2dfdb !important; }
-    div.stLinkButton > a { background-color: #25D366 !important; color: white !important; font-weight: bold; border-radius: 8px !important; }
-    </style>
-""", unsafe_allow_html=True)
+with aba2:
+    st.subheader("Diagnóstico IA")
+    # O laudo final que vai para o PDF
+    st.session_state.dados['laudo_final'] = st.text_area("Relatório Técnico Final", st.session_state.dados['laudo_final'], height=200)
 
-# ==============================================================================
-# 4. INTERFACE DE DIAGNÓSTICO
-# ==============================================================================
-def renderizar_aba_diagnosticos():
-    # Simulando variáveis necessárias (SH/SC devem vir dos seus inputs de cálculo)
-    sh = st.number_input("Superaquecimento Medido (K)", value=0.0)
-    sc = st.number_input("Sub-resfriamento Medido (K)", value=0.0)
-    fluido = st.session_state.dados.get('fluido', 'R410A')
-
-    # --- PROCESSAMENTO DO BANCO DE DEFEITOS ---
-    veredito_ia = "✅ Sistema Operando Normalmente"
-    detalhes_ia = motor_laudo_auto(sh, sc, fluido)
-    cor_alerta = "success"
-
-    for def_at in BD_DEFEITOS:
-        if def_at["cond"](sh, sc):
-            veredito_ia = f"⚠️ Defeito: {def_at['nome']}"
-            detalhes_ia = f"Causa: {def_at['causa']} | Solução: {def_at['solucao']}"
-            cor_alerta = "error"
-            break
-
-    # --- EXIBIÇÃO DO DIAGNÓSTICO ---
-    st.markdown("---")
-    st.subheader("🤖 Diagnóstico de IA & Banco de Dados")
-    if cor_alerta == "error": st.error(veredito_ia)
-    else: st.success(veredito_ia)
-    st.info(f"**Análise Sugerida:** {detalhes_ia}")
-
-    # --- REVISÃO FINAL DO TÉCNICO (O QUE VAI PARA O PDF) ---
-    st.session_state.dados['laudo_final'] = st.text_area("Parecer do Técnico (Edite se necessário):", value=detalhes_ia, height=150)
-
-    if st.button("💾 Registrar no Histórico"):
-        registro = {
-            "data": datetime.now().strftime("%d/%m/%Y %H:%M"),
-            "cliente": st.session_state.dados['nome'],
-            "veredito": veredito_ia,
-            "sh": sh, "sc": sc
-        }
-        salvar_no_historico(registro)
-        st.toast("Diagnóstico salvo no Histórico!")
-
-# Chamada da função (Coloque dentro da sua lógica de TABS do app principal)
-# renderizar_aba_diagnosticos()
 
 # ==============================================================================
 # 1.2 FUNÇÃO DA ABA 1: Identificação e Equipamento (LIMPEZA DEFINITIVA)
