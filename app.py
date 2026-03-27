@@ -62,8 +62,9 @@ def buscar_cep(cep):
         except: pass
     return False
 
+
 # ==============================================================================
-# 1.2 FUNÇÃO DA ABA 1: Identificação e Equipamento (VERSÃO INDUSTRIAL V1)
+# 1.2 FUNÇÃO DA ABA 1: Identificação e Equipamento (VERSÃO INDUSTRIAL V2)
 # ==============================================================================
 def renderizar_aba_1():
     st.subheader("📋 Cadastro de Cliente e Ativo")
@@ -72,33 +73,36 @@ def renderizar_aba_1():
     # --- SEÇÃO CLIENTE ---
     with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
         c1, c2, c3 = st.columns([2, 1, 1])
-        d['nome'] = c1.text_input("Nome / Razão Social *", value=d.get('nome', ''), key="cli_nome_v1")
-        d['cpf_cnpj'] = c2.text_input("CPF/CNPJ", value=d.get('cpf_cnpj', ''), key="cli_doc_v1")
-        d['whatsapp'] = c3.text_input("WhatsApp *", value=d.get('whatsapp', ''), key="cli_zap_v1")
+        d['nome'] = c1.text_input("Nome / Razão Social *", value=d.get('nome', ''), key="cli_nome_v2")
+        d['cpf_cnpj'] = c2.text_input("CPF/CNPJ", value=d.get('cpf_cnpj', ''), key="cli_doc_v2")
+        d['whatsapp'] = c3.text_input("WhatsApp *", value=d.get('whatsapp', ''), key="cli_zap_v2")
 
         cx1, cx2, cx3 = st.columns([1, 1, 2])
-        d['celular'] = cx1.text_input("Celular:", value=d.get('celular', ''), key="cli_cel_v1")
-        d['tel_fixo'] = cx2.text_input("Fixo:", value=d.get('tel_fixo', ''), key="cli_fixo_v1")
-        d['email'] = cx3.text_input("E-mail:", value=d.get('email', ''), key="cli_email_v1")
+        d['celular'] = cx1.text_input("Celular:", value=d.get('celular', ''), key="cli_cel_v2")
+        d['tel_fixo'] = cx2.text_input("Fixo:", value=d.get('tel_fixo', ''), key="cli_fixo_v2")
+        d['email'] = cx3.text_input("E-mail:", value=d.get('email', ''), key="cli_email_v2")
 
         st.markdown("---")
         ce1, ce2, ce3 = st.columns([1, 2, 1])
-        cep_atual = ce1.text_input("CEP *", value=d.get('cep', ''), key="cli_cep_v1")
         
-        # Lógica de Busca Automática Blindada
-        if cep_atual != d.get('cep', '') and len(cep_atual.replace("-","")) == 8:
-            d['cep'] = cep_atual
-            if buscar_cep(cep_atual):
-                st.rerun()
+        # LÓGICA DE CEP REVISADA PARA FUNCIONAMENTO AUTOMÁTICO
+        cep_digitado = ce1.text_input("CEP *", value=d.get('cep', ''), key="cli_cep_v2")
+        
+        if cep_digitado != d.get('cep', ''):
+            cep_limpo = "".join(filter(str.isdigit, cep_digitado))
+            if len(cep_limpo) == 8:
+                if buscar_cep(cep_limpo):
+                    d['cep'] = cep_digitado # Atualiza o estado para evitar loop
+                    st.rerun()
 
-        d['endereco'] = ce2.text_input("Logradouro:", value=d.get('endereco', ''), key="cli_end_v1")
-        d['numero'] = ce3.text_input("Nº/Apto:", value=d.get('numero', ''), key="cli_num_v1")
+        d['endereco'] = ce2.text_input("Logradouro:", value=d.get('endereco', ''), key="cli_end_v2")
+        d['numero'] = ce3.text_input("Nº/Apto:", value=d.get('numero', ''), key="cli_num_v2")
 
         ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.4])
-        d['complemento'] = ce4.text_input("Complemento:", value=d.get('complemento', ''), key="cli_comp_v1")
-        d['bairro'] = ce5.text_input("Bairro:", value=d.get('bairro', ''), key="cli_bair_v1")
-        d['cidade'] = ce6.text_input("Cidade:", value=d.get('cidade', ''), key="cli_cid_v1")
-        d['uf'] = ce7.text_input("UF:", value=d.get('uf', ''), max_chars=2, key="cli_uf_v1")
+        d['complemento'] = ce4.text_input("Complemento:", value=d.get('complemento', ''), key="cli_comp_v2")
+        d['bairro'] = ce5.text_input("Bairro:", value=d.get('bairro', ''), key="cli_bair_v2")
+        d['cidade'] = ce6.text_input("Cidade:", value=d.get('cidade', ''), key="cli_cid_v2")
+        d['uf'] = ce7.text_input("UF:", value=d.get('uf', ''), max_chars=2, key="cli_uf_v2")
 
     # --- SEÇÃO EQUIPAMENTO ---
     st.markdown("### ⚙️ Especificações do Equipamento")
@@ -108,59 +112,47 @@ def renderizar_aba_1():
         with e1:
             fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
             fab_idx = fab_list.index(d['fabricante']) if d['fabricante'] in fab_list else 0
-            d['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx, key="fab_v1")
-            d['modelo'] = st.text_input("Modelo:", value=d.get('modelo', ''), key="mod_v1")
-            d['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], key="stat_v1")
+            d['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx, key="fab_v2")
+            d['modelo'] = st.text_input("Modelo:", value=d.get('modelo', ''), key="mod_v2")
+            # STATUS PRESERVADO CONFORME SOLICITADO
+            d['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], key="stat_v2")
 
         with e2:
-            d['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=d.get('serie_evap', ''), key="sevap_v1")
-            d['serie_cond'] = st.text_input("Nº Série (COND)", value=d.get('serie_cond', ''), key="scond_v1")
-            d['local_evap'] = st.text_input("Local Evaporadora:", value=d.get('local_evap', ''), key="levap_v1")
-            d['frequencia'] = st.selectbox("Frequência:", ["Inverter", "ON-OFF"], key="freq_v1")
+            d['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=d.get('serie_evap', ''), key="sevap_v2")
+            d['serie_cond'] = st.text_input("Nº Série (COND)", value=d.get('serie_cond', ''), key="scond_v2")
+            d['local_evap'] = st.text_input("Local Evaporadora:", value=d.get('local_evap', ''), key="levap_v2")
+            # DETALHE 1: LOCAL DA CONDENSADORA ABAIXO DO LOCAL DA EVAPORADORA
+            d['local_cond'] = st.text_input("Local Condensadora:", value=d.get('local_cond', ''), key="lcond_v2")
 
         with e3:
-            cap_list = ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000", "80.000"]
+            cap_list = ["9.000", "12.000", "18.000", "24.000", "30.000", "36.000", "48.000", "60.000"]
             cap_idx = cap_list.index(d['capacidade']) if d['capacidade'] in cap_list else 1
-            d['capacidade'] = st.selectbox("Capacidade (BTU):", cap_list, index=cap_idx, key="cap_v1")
+            d['capacidade'] = st.selectbox("Capacidade (BTU):", cap_list, index=cap_idx, key="cap_v2")
             
             lista_fluidos = ["R410A", "R32", "R22", "R134a", "R290", "R404A"]
             f_idx = lista_fluidos.index(d['fluido']) if d['fluido'] in lista_fluidos else 0
-            d['fluido'] = st.selectbox("Fluido Refrigerante:", lista_fluidos, index=f_idx, key="fluid_v1")
+            d['fluido'] = st.selectbox("Fluido Refrigerante:", lista_fluidos, index=f_idx, key="fluid_v2")
             
-            d['tipo_servico'] = st.selectbox("Serviço:", ["Preventiva", "Corretiva", "Instalação", "Diagnóstico"], key="serv_v1")
-            d['tag_id'] = st.text_input("TAG:", value=d.get('tag_id', ''), key="tag_v1")
+            d['tipo_servico'] = st.selectbox("Serviço:", ["Preventiva", "Corretiva", "Instalação", "Diagnóstico"], key="serv_v2")
+            d['tag_id'] = st.text_input("TAG:", value=d.get('tag_id', ''), key="tag_v2")
 
 # --- MOTOR DE CÁLCULO PT (DIRETRIZ: PRECISÃO INDUSTRIAL) ---
 def f_sat_precisao(p, g):
     if p <= 5: return -50.0
     
+    # Tabelas otimizadas para R410A, R32, R22, R134a e R290
     tabelas = {
-        "R410A": {
-            "xp": [5.0, 50.0, 90.0, 122.7, 150.0, 200.0, 350.0, 450.0, 550.0],
-            "fp": [-50.0, -18.0, -3.5, 5.5, 11.5, 20.2, 41.5, 54.0, 64.5]
-        },
-        "R32": {
-            "xp": [5.0, 50.0, 90.0, 140.0, 200.0, 380.0, 480.0, 580.0],
-            "fp": [-50.0, -19.5, -3.6, 8.5, 19.8, 44.0, 56.5, 66.8]
-        },
-        "R22": {
-            "xp": [5.0, 30.0, 60.0, 80.0, 100.0, 200.0, 250.0, 320.0],
-            "fp": [-50.0, -15.2, 1.5, 9.7, 16.5, 38.5, 48.0, 58.5]
-        },
-        "R134a": {
-            "xp": [5.0, 15.0, 30.0, 50.0, 70.0, 150.0, 200.0, 250.0],
-            "fp": [-50.0, -15.5, 1.5, 16.2, 27.5, 53.0, 65.5, 76.2]
-        },
-        "R290": {
-            "xp": [5.0, 20.0, 40.0, 65.0, 100.0, 150.0, 200.0, 250.0],
-            "fp": [-50.0, -25.5, -10.5, 3.5, 17.5, 32.5, 44.8, 55.2]
-        }
+        "R410A": {"xp": [5, 50, 90, 122, 150, 350, 550], "fp": [-50, -18, -3.5, 5.5, 11.5, 41.5, 64.5]},
+        "R32": {"xp": [5, 50, 90, 140, 200, 480, 580], "fp": [-50, -19.5, -3.6, 8.5, 19.8, 56.5, 66.8]},
+        "R22": {"xp": [5, 30, 60, 100, 200, 320], "fp": [-50, -15.2, 1.5, 16.5, 38.5, 58.5]},
+        "R134a": {"xp": [5, 15, 30, 70, 150, 250], "fp": [-50, -15.5, 1.5, 27.5, 53, 76.2]},
+        "R290": {"xp": [5, 20, 65, 100, 150, 250], "fp": [-50, -25.5, 3.5, 17.5, 32.5, 55.2]}
     }
 
     if g not in tabelas: return 0.0
-    xp = tabelas[g]["xp"]
-    fp = tabelas[g]["fp"]
-    return float(np.interp(p, xp, fp))
+    
+    # Interpolação linear para encontrar a temperatura exata baseada na pressão
+    return float(np.interp(p, tabelas[g]["xp"], tabelas[g]["fp"]))
 
 
 # ==============================================================================
