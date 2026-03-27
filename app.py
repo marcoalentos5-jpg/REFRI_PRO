@@ -174,8 +174,9 @@ def f_sat_precisao(p, g):
 
 
 
-    # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO MASTER - COMPLETA E ORGANIZADA)
+
+# ==============================================================================
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO MASTER ATUALIZADA)
 # ==============================================================================
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
@@ -254,29 +255,50 @@ def renderizar_aba_diagnosticos():
     d_cap_f = round(cm_f - cn_f, 2)
     d_cap_c = round(cm_c - cn_c, 2)
 
-    # --- 4. RESULTADOS CALCULADOS (10 MÉTRICAS COM ALERTAS) ---
+    # --- 4. RESULTADOS CALCULADOS (DISTRIBUIÇÃO SOLICITADA EM 5 COLUNAS) ---
     st.markdown("---")
     st.subheader("2. Resultados Calculados")
 
-    # Lógica de Cores para Alertas
-    cls_sh = "metric-alerta" if not (5 <= sh <= 9) else "metric-ok"
-    cls_sc = "metric-alerta" if not (5 <= sc <= 8) else "metric-ok"
-    cls_dt = "metric-critico" if (dt_ar < 8 and t_ret > 0) else "metric-ok"
-    cls_status = "metric-critico" if (sh > 12 or dt_ar < 5) else ("metric-alerta" if (5 > sh or sh > 9) else "metric-ok")
+    # CSS para destaque dos campos (Bordas e Fundo)
+    st.markdown("""
+        <style>
+        div[data-testid="stMetric"] {
+            background-color: #1E1E1E;
+            border: 1px solid #333;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 5px solid #00CCFF;
+        }
+        </style>
+    """, unsafe_allow_html=True)
 
-    r1 = st.columns(5)
-    r1[0].metric("SH TOTAL", f"{sh:.1f} K", delta=None if 5<=sh<=9 else "FORA", delta_color="inverse")
-    r1[1].metric("SAT. SUCÇÃO", f"{t_sat_s:.1f} °C")
-    r1[2].metric("Δ T (AR)", f"{dt_ar:.1f} K")
-    r1[3].metric("SC FINAL", f"{sc:.1f} K")
-    r1[4].metric("SH ÚTIL", f"{sh_util:.1f} K")
+    res = st.columns(5)
 
-    r2 = st.columns(5)
-    r2[0].metric("Δ TENSÃO", f"{d_tensao:.1f} V")
-    r2[1].metric("Δ CORRENTE", f"{d_corrente:.1f} A")
-    r2[2].metric("Δ CAP. COMP.", f"{d_cap_c:.1f} µF")
-    r2[3].metric("Δ CAP. FAN", f"{d_cap_f:.1f} µF")
-    r2[4].metric("STATUS", "CRÍTICO" if sh > 12 else ("ALERTA" if "alerta" in cls_sh else "OK"))
+    # COLUNA 1
+    with res[0]:
+        st.metric("SH TOTAL", f"{sh:.1f} K")
+        st.metric("SH ÚTIL", f"{sh_util:.1f} K")
+
+    # COLUNA 2
+    with res[1]:
+        st.metric("SAT. SUCÇÃO", f"{t_sat_s:.1f} °C")
+        st.metric("Δ T (AR)", f"{dt_ar:.1f} K")
+
+    # COLUNA 3
+    with res[2]:
+        st.metric("SC FINAL", f"{sc:.1f} K")
+        st.metric("SUCÇÃO ALVO", f"{ref['p_suc']}")
+
+    # COLUNA 4
+    with res[3]:
+        st.metric("Δ TENSÃO", f"{d_tensao:.1f} V")
+        st.metric("Δ CORRENTE", f"{d_corrente:.1f} A")
+
+    # COLUNA 5
+    with res[4]:
+        st.metric("Δ CAP. COMP.", f"{d_cap_c:.1f} µF")
+        st.metric("Δ CAP. FAN", f"{d_cap_f:.1f} µF")
 
     # --- 5. DIAGNÓSTICO INTELIGENTE (IA) ---
     st.markdown("---")
@@ -296,16 +318,13 @@ def renderizar_aba_diagnosticos():
     st.subheader("3. Parecer Técnico Final")
     d['laudo_diag'] = st.text_area("Diagnóstico e Observações:", value=d.get('laudo_diag', "Análise: Estável."), height=150)
 
-    # Sincronização Final
-    d.update({'p_baixa': p_suc, 'temp_sucção': t_suc, 'p_alta': p_des, 'temp_liquido': t_liq, 'rla': rla, 'cm_c': cm_c, 'cm_f': cm_f})
-
-    
-    # Atualização Global dos Dados
+    # Sincronização e Atualização Global Final
     d.update({
         'p_baixa': p_suc, 'temp_sucção': t_suc, 'p_alta': p_des, 'temp_liquido': t_liq,
         'temp_entrada_ar': t_ret, 'temp_saida_ar': t_ins, 'i_medida': i_med, 
-        'cm_c': cm_c, 'cm_f': cm_f, 'lra': lra, 'rla': rla
+        'cm_c': cm_c, 'cm_f': cm_f, 'lra': lra, 'rla': rla, 'temp_descarga': t_com
     })
+
 
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
