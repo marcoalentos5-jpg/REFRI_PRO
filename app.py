@@ -275,7 +275,7 @@ def renderizar_aba_diagnosticos():
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (NÍVEL PRINCIPAL)
 # ==============================================================================
     with st.sidebar:
-    st.title("🚀 Painel de Controle")
+        st.title("🚀 Painel de Controle")
 
     # A. NAVEGAÇÃO
     opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
