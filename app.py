@@ -15,25 +15,35 @@ from fpdf import FPDF
 import io
 
 
-# ==============================================================================
-# 0. CONFIGURAÇÕES E IMPORTS (ESTABILIDADE TOTAL)
-# ==============================================================================
-import streamlit as st
-from datetime import datetime
-import requests
-import urllib.parse
-import os
-import pandas as pd
-from fpdf import FPDF
-import io
 
 # 1. CONFIGURAÇÃO DA PÁGINA
 st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
 
 # ==============================================================================
-# 1. MOTOR DE PDF (FIX: CORREÇÃO DE ARQUIVO DANIFICADO)
+# 1. INICIALIZAÇÃO DA SESSÃO (CORREÇÃO DO ERRO DE CHAVE/KEYERROR)
 # ==============================================================================
-def gerar_pdf_perfeito(d):
+# ESTA PARTE DEVE VIR ANTES DE QUALQUER OUTRA LÓGICA DE INTERFACE
+if 'dados' not in st.session_state:
+    st.session_state.dados = {
+        'nome': '', 
+        'cpf_cnpj': '', 
+        'whatsapp': '', 
+        'cep': '',
+        'endereco': '', 
+        'bairro': '', 
+        'cidade': '', 
+        'uf': '',
+        'fabricante': 'Carrier', 
+        'capacidade': '12.000 BTU', 
+        'tag_id': 'TAG-01',
+        'tecnico_nome': 'Marcos Alexandre', 
+        'laudo_final': ''  # <--- A CHAVE QUE ESTAVA FALTANDO E GERANDO ERRO
+    }
+
+# ==============================================================================
+# 2. MOTOR DE PDF (VERSÃO P.J. SEM ERRO DE ARQUIVO)
+# ==============================================================================
+def gerar_pdf_pj(d):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_fill_color(0, 51, 102)
@@ -43,66 +53,61 @@ def gerar_pdf_perfeito(d):
     pdf.cell(0, 15, "RELATORIO TECNICO - MPN SOLUCOES", ln=True, align='C')
     
     pdf.ln(20); pdf.set_text_color(0, 0, 0)
-    pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, "1. DADOS DO ATENDIMENTO", ln=True)
+    pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, "1. DADOS DO CLIENTE E EQUIPAMENTO", ln=True)
     pdf.set_font("Arial", size=10)
     
-    # Grid de dados limpando caracteres especiais para o PDF
-    nome_cli = str(d.get('nome', 'CLIENTE')).upper()
-    pdf.cell(100, 8, f" CLIENTE: {nome_cli}", border=1)
+    pdf.cell(100, 8, f" CLIENTE: {str(d.get('nome', '')).upper()}", border=1)
     pdf.cell(90, 8, f" CNPJ/CPF: {d.get('cpf_cnpj', '')}", border=1, ln=True)
     pdf.cell(100, 8, f" EQUIPAMENTO: {d.get('fabricante', '')} / {d.get('capacidade', '')}", border=1)
     pdf.cell(90, 8, f" TAG: {d.get('tag_id', '')}", border=1, ln=True)
 
     pdf.ln(5); pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, "2. PARECER TECNICO FINAL", ln=True)
     pdf.set_font("Arial", size=10)
-    laudo = d.get('laudo_final', 'Laudo nao preenchido.')
-    pdf.multi_cell(0, 8, laudo.encode('latin-1', 'ignore').decode('latin-1'), border=1)
+    # Limpeza de caracteres para evitar erro de codificação no PDF
+    texto_laudo = d.get('laudo_final', '').encode('latin-1', 'ignore').decode('latin-1')
+    pdf.multi_cell(0, 8, texto_laudo if texto_laudo else "Sem observacoes.", border=1)
     
     return pdf.output(dest='S').encode('latin-1')
 
 # ==============================================================================
-# 2. FUNÇÃO DE CEP (MECANISMO DE SINCRONIZAÇÃO)
+# 3. FUNÇÃO DE CEP (AUTO-PREENCHIMENTO)
 # ==============================================================================
 def buscar_cep():
-    cep = st.session_state.dados['cep'].replace("-", "").strip()
-    if len(cep) == 8:
+    cep_digito = st.session_state.dados['cep'].replace("-", "").strip()
+    if len(cep_digito) == 8:
         try:
-            r = requests.get(f"https://viacep.com.br/ws/{cep}/json/", timeout=5)
+            r = requests.get(f"https://viacep.com.br/ws/{cep_digito}/json/", timeout=5)
             if r.status_code == 200 and "erro" not in r.json():
                 res = r.json()
                 st.session_state.dados['endereco'] = res.get('logradouro', '')
                 st.session_state.dados['bairro'] = res.get('bairro', '')
                 st.session_state.dados['cidade'] = res.get('localidade', '')
                 st.session_state.dados['uf'] = res.get('uf', '')
-            else: st.error("CEP não encontrado.")
-        except: st.error("Erro na conexão.")
+            else: st.error("CEP não localizado.")
+        except: st.error("Erro ao conectar no serviço de CEP.")
 
 # ==============================================================================
-# 3. INICIALIZAÇÃO DA SESSÃO (FIX: ERRO LINHA 123)
-# ==============================================================================
-if 'dados' not in st.session_state:
-    st.session_state.dados = {
-        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'cep': '',
-        'endereco': '', 'bairro': '', 'cidade': '', 'uf': '',
-        'fabricante': 'Carrier', 'capacidade': '12.000 BTU', 'tag_id': 'TAG-01',
-        'tecnico_nome': 'Marcos Alexandre', 'laudo_final': ''
-    }
-
-# ==============================================================================
-# 4. SIDEBAR E AÇÕES
+# 4. SIDEBAR (PAINEL DE AÇÕES)
 # ==============================================================================
 with st.sidebar:
-    st.header("📲 Painel MPN")
-    if st.session_state.dados['nome']:
-        pdf_out = gerar_pdf_perfeito(st.session_state.dados)
-        st.download_button(
-            label="📄 BAIXAR RELATÓRIO PDF",
-            data=pdf_out,
-            file_name=f"Relatorio_{st.session_state.dados['nome'].replace(' ', '_')}.pdf",
-            mime="application/pdf",
-            use_container_width=True
-        )
+    st.header("📂 Gerenciador MPN")
     
+    # Só libera o botão de PDF se tiver nome do cliente
+    if st.session_state.dados['nome']:
+        try:
+            pdf_bytes = gerar_pdf_pj(st.session_state.dados)
+            st.download_button(
+                label="📄 BAIXAR RELATÓRIO PDF",
+                data=pdf_bytes,
+                file_name=f"Relatorio_{st.session_state.dados['nome'].replace(' ', '_')}.pdf",
+                mime="application/pdf",
+                use_container_width=True
+            )
+        except Exception as e:
+            st.error(f"Erro ao gerar PDF: {e}")
+    else:
+        st.warning("Preencha o Nome do Cliente para habilitar o PDF.")
+
     st.divider()
     tel = st.session_state.dados.get('whatsapp', '')
     if st.button("🟢 ENVIAR WHATSAPP", use_container_width=True):
@@ -110,37 +115,39 @@ with st.sidebar:
         st.markdown(f"[Confirmar Envio](https://wa.me/{tel}?text={msg})")
 
 # ==============================================================================
-# 5. INTERFACE (ABAS)
+# 5. INTERFACE PRINCIPAL (ABAS)
 # ==============================================================================
-aba1, aba2 = st.tabs(["📝 Cadastro P.J.", "🔍 Diagnóstico Técnico"])
+aba_cad, aba_diag = st.tabs(["📝 Cadastro", "🔍 Diagnóstico Técnico"])
 
-with aba1:
-    st.session_state.dados['nome'] = st.text_input("Razão Social / Nome", st.session_state.dados['nome'])
+with aba_cad:
+    st.session_state.dados['nome'] = st.text_input("Nome do Cliente / Razão Social", st.session_state.dados['nome'])
+    st.session_state.dados['cpf_cnpj'] = st.text_input("CNPJ ou CPF", st.session_state.dados['cpf_cnpj'])
+    st.session_state.dados['whatsapp'] = st.text_input("WhatsApp (Ex: 11999999999)", st.session_state.dados['whatsapp'])
     
-    c_cep, b_cep = st.columns([2, 1])
+    c_cep, b_cep = st.columns([3, 1])
     st.session_state.dados['cep'] = c_cep.text_input("CEP", st.session_state.dados['cep'])
-    b_cep.button("🔍 Validar CEP", on_click=buscar_cep)
+    b_cep.button("🔍 Buscar CEP", on_click=buscar_cep)
     
-    st.session_state.dados['endereco'] = st.text_input("Endereço Completo", st.session_state.dados['endereco'])
+    st.session_state.dados['endereco'] = st.text_input("Endereço", st.session_state.dados['endereco'])
     
     st.divider()
-    c1, c2 = st.columns(2)
-    st.session_state.dados['fabricante'] = c1.selectbox("Fabricante", ["Carrier", "Daikin", "LG", "Samsung", "Trane", "York"])
+    col1, col2 = st.columns(2)
+    st.session_state.dados['fabricante'] = col1.selectbox("Fabricante", ["Carrier", "Daikin", "LG", "Samsung", "Trane", "York"])
     
-    # LISTA DE CAPACIDADES (FIX)
-    btus = ["9.000 BTU", "12.000 BTU", "18.000 BTU", "24.000 BTU", "30.000 BTU", "36.000 BTU", "48.000 BTU", "60.000 BTU", "5 TR", "10 TR"]
-    st.session_state.dados['capacidade'] = c2.selectbox("Capacidade", btus)
+    lista_btus = ["9.000 BTU", "12.000 BTU", "18.000 BTU", "24.000 BTU", "30.000 BTU", "36.000 BTU", "48.000 BTU", "60.000 BTU", "5 TR", "10 TR"]
+    st.session_state.dados['capacidade'] = col2.selectbox("Capacidade", lista_btus)
 
-with aba2:
-    st.subheader("Parecer Técnico Final")
-    # FIX: Uso de chave única para evitar erro de atribuição circular na linha 123
+with aba_diag:
+    st.subheader("Laudo e Parecer Técnico")
+    # AQUI ESTAVA O ERRO: Agora a chave está protegida pela inicialização no topo
     st.session_state.dados['laudo_final'] = st.text_area(
-        "Descreva detalhadamente o diagnóstico:", 
+        "Relatório Técnico Final", 
         value=st.session_state.dados['laudo_final'],
-        height=250,
-        key="campo_laudo" 
+        height=300,
+        placeholder="Descreva aqui o estado do equipamento e o serviço realizado..."
     )
-    st.info("💡 Este texto aparecerá exatamente assim no PDF do cliente.")
+    st.info("O texto acima será incluído automaticamente no PDF para o cliente.")
+
 
 # ==============================================================================
 # 1.2 FUNÇÃO DA ABA 1: Identificação e Equipamento (LIMPEZA DEFINITIVA)
