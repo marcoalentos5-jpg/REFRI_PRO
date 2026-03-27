@@ -100,7 +100,8 @@ def renderizar_aba_1():
         d['cidade'] = ce6.text_input("Cidade:", value=d.get('cidade', ''), key="cli_cid_v3")
         d['uf'] = ce7.text_input("UF:", value=d.get('uf', ''), max_chars=2, key="cli_uf_v3")
 
-    # --- SEÇÃO EQUIPAMENTO ---
+    
+# --- SEÇÃO EQUIPAMENTO (VERSÃO V4 - COM ESPAÇOS PREENCHIDOS) ---
     st.markdown("### ⚙️ Especificações do Equipamento")
     with st.expander("Detalhes Técnicos do Ativo", expanded=True):
         e1, e2, e3 = st.columns(3)
@@ -108,26 +109,36 @@ def renderizar_aba_1():
         with e1:
             fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea", "Outro"])
             fab_idx = fab_list.index(d['fabricante']) if d['fabricante'] in fab_list else 0
-            d['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx, key="fab_v3")
-            d['modelo'] = st.text_input("Modelo:", value=d.get('modelo', ''), key="mod_v3")
+            d['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx, key="fab_v4")
+            d['modelo'] = st.text_input("Modelo:", value=d.get('modelo', ''), key="mod_v4")
+            
+            # CAMPO 1 (ESPAÇO EM BRANCO): TIPO DE ÓLEO
+            d['tipo_oleo'] = st.selectbox("Tipo de Óleo:", ["POE", "PVE", "Mineral", "PAG", "AB"], key="oleo_v4")
+            
             # STATUS PRESERVADO
-            d['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], key="stat_v3")
+            d['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], key="stat_v4")
 
         with e2:
-            d['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=d.get('serie_evap', ''), key="sevap_v3")
-            d['serie_cond'] = st.text_input("Nº Série (COND)", value=d.get('serie_cond', ''), key="scond_v3")
-            d['local_evap'] = st.text_input("Local Evaporadora:", value=d.get('local_evap', ''), key="levap_v3")
-            d['local_cond'] = st.text_input("Local Condensadora:", value=d.get('local_cond', ''), key="lcond_v3")
+            d['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=d.get('serie_evap', ''), key="sevap_v4")
+            d['serie_cond'] = st.text_input("Nº Série (COND)", value=d.get('serie_cond', ''), key="scond_v4")
+            d['local_evap'] = st.text_input("Local Evaporadora:", value=d.get('local_evap', ''), key="levap_v4")
+            d['local_cond'] = st.text_input("Local Condensadora:", value=d.get('local_cond', ''), key="lcond_v4")
+            
+            # CAMPO 2 (ESPAÇO EM BRANCO): CARGA DE FLUIDO NOMINAL
+            d['carga_gas'] = st.text_input("Carga de Fluido (kg/g):", value=d.get('carga_gas', ''), placeholder="Ex: 1.2 kg", key="carga_v4")
 
         with e3:
-            d['capacidade'] = st.text_input("Capacidade (BTU/TR):", value=d.get('capacidade', '12.000'), key="cap_v3")
-            # NOVO CAMPO: POTÊNCIA
-            d['potencia'] = st.text_input("Potência Nominal (W/kW):", value=d.get('potencia', ''), help="Ex: 2200W ou 2.2kW", key="pot_v3")
+            d['capacidade'] = st.text_input("Capacidade (BTU/TR):", value=d.get('capacidade', '12.000'), key="cap_v4")
+            d['potencia'] = st.text_input("Potência Nominal (W/kW):", value=d.get('potencia', ''), key="pot_v4")
             
             lista_fluidos = ["R410A", "R32", "R22", "R134a", "R290", "R404A"]
             f_idx = lista_fluidos.index(d['fluido']) if d['fluido'] in lista_fluidos else 0
-            d['fluido'] = st.selectbox("Fluido Refrigerante:", lista_fluidos, index=f_idx, key="fluid_v3")
+            d['fluido'] = st.selectbox("Fluido Refrigerante:", lista_fluidos, index=f_idx, key="fluid_v4")
             
+            d['ultima_maint'] = st.text_input("Última Manutenção:", value=d.get('ultima_maint', 'N/A'), key="maint_v4")
+            d['tag_id'] = st.text_input("TAG/Patrimônio:", value=d.get('tag_id', ''), key="tag_v4")
+
+        
             # SUGESTÃO: ÚLTIMA MANUTENÇÃO (FAVORECE A ANÁLISE)
             d['ultima_maint'] = st.text_input("Última Manutenção:", value=d.get('ultima_maint', 'N/A'), key="maint_v3")
             d['tag_id'] = st.text_input("TAG/Patrimônio:", value=d.get('tag_id', ''), key="tag_v3")
