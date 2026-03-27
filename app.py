@@ -1,3 +1,14 @@
+
+import streamlit as st
+from datetime import datetime
+import requests
+import urllib.parse
+import os # Biblioteca para verificar arquivos no sistema
+import numpy as np
+import urllib.parse
+from datetime import datetime
+
+
 # 1. CONFIGURAÇÃO INICIAL (DIRETRIZ: LAYOUT CONGELADO)
 st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
 
