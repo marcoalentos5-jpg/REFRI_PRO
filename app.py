@@ -7,19 +7,32 @@ from datetime import datetime
 import urllib.parse
 import os 
 
-import streamlit as st
-import numpy as np
-import requests
+def buscar_cep(cep):
+    """Consulta a API ViaCEP para automatizar o cadastro do cliente"""
+    try:
+        url = f"https://viacep.com.br/ws/{cep}/json/"
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            return response.json()
+    except Exception:
+        return None
+    return None
 
-# INICIALIZAÇÃO DO ESTADO
+# Verificação e Inicialização do Dicionário de Dados
 if 'dados' not in st.session_state:
     st.session_state.dados = {
         'tec_nome': '',
+        'cliente': '',
+        'modelo_evap': '',
         'fluido': 'R410A',
-        'pressao_baixa': 0.0,
-        'temp_evaporacao': 0.0,
-        'calor_latente': 0.0  # O "Superpoder" que discutimos!
+        'p_baixa': 118.0,
+        'p_alta': 380.0,
+        'temp_sucção': 12.0,
+        'temp_liquido': 38.0,
+        'temp_entrada_ar': 25.0,
+        'temp_saida_ar': 12.0
     }
+
 
 # ==============================================================================
 # 1. FUNÇÕES TÉCNICAS E DE UTILIDADE (FORA DAS ABAS)
@@ -53,12 +66,13 @@ def f_sat_precisao(p, g):
 def renderizar_aba_1():
     st.subheader("📋 Cadastro de Cliente e Ativo")
 
-    # --- SEÇÃO 1: CLIENTE E ENDEREÇO ---
+    # --- SEÇÃO 1: CLIENTE E ENDEREÇO (Sua Estrutura Original) ---
     with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
         def atualizar_endereco():
             cep = st.session_state.cli_cep_f.strip().replace("-", "").replace(".", "")
             if len(cep) == 8:
-                res = buscar_cep(cep)
+                # Certifique-se que a função buscar_cep(cep) existe no seu código
+                res = buscar_cep(cep) 
                 if res:
                     st.session_state.dados.update({
                         'endereco': res.get('logradouro', ''),
@@ -85,7 +99,7 @@ def renderizar_aba_1():
         st.session_state.dados['cidade'] = ce6.text_input("Cidade:", value=st.session_state.dados.get('cidade', ''), key="cli_cid_f")
         st.session_state.dados['uf'] = ce7.text_input("UF:", value=st.session_state.dados.get('uf', ''), max_chars=2, key="cli_uf_f")
 
-    # --- SEÇÃO 2: EQUIPAMENTO (LAYOUT FINAL REFINADO) ---
+    # --- SEÇÃO 2: EQUIPAMENTO (Sua Estrutura Original) ---
     st.markdown("### ⚙️ Especificações do Equipamento")
     with st.expander("Detalhes Técnicos do Ativo", expanded=True):
         e1, e2, e3 = st.columns(3) 
@@ -94,7 +108,9 @@ def renderizar_aba_1():
             fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea"])
             st.session_state.dados['fabricante'] = st.selectbox("Fabricante:", fab_list, key="fab_f")
             st.session_state.dados['modelo'] = st.text_input("Modelo:", value=st.session_state.dados.get('modelo', ''), key="mod_f")
-            st.session_state.dados['fluido'] = st.selectbox("Fluido Refr.:", ["R410A", "R134a", "R22", "R32", "R290"], key="fluid_f")
+            # Unificando o fluido para os cálculos
+            fluido_sel = st.selectbox("Fluido Refr.:", ["R410A", "R134a", "R22", "R32", "R290"], key="fluid_f")
+            st.session_state.dados['fluido'] = fluido_sel
             st.session_state.dados['potencia'] = st.text_input("Potência (CV/HP):", value=st.session_state.dados.get('potencia', ''), key="pot_f")
 
         with e2:
@@ -109,16 +125,137 @@ def renderizar_aba_1():
             st.session_state.dados['freq'] = st.selectbox("Frequência:", [60, 50], key="freq_f")
             st.session_state.dados['tag_id'] = st.text_input("TAG/ID:", value=st.session_state.dados.get('tag_id', ''), key="tag_f")
 
+    # --- SEÇÃO 3: MEDIÇÕES TÉCNICAS (Nova Seção de Calor Latente) ---
+    st.markdown("### 📊 Performance e Ciclo Frigorífico")
+    with st.expander("Dados de Pressão e Temperatura", expanded=True):
+        
+        # LINHA 1: BAIXA
+        st.subheader("❄️ Evaporação (Lado de Baixa)")
+        lb1, lb2, lb3 = st.columns(3)
+        with lb1:
+            p_baixa = st.number_input("Pressão Sucção (PSI)", value=float(st.session_state.dados.get('p_baixa', 118.0)), key="p_baixa_input")
+        with lb2:
+            t_suc = st.number_input("Temp. Tubo Sucção (°C)", value=float(st.session_state.dados.get('temp_sucção', 12.0)), key="t_suc_input")
+        with lb3:
+            # Cálculo de Saturação (A "Esponja")
+            t_sat_baixa = calcular_temp_saturacao(p_baixa, fluido_sel)
+            st.metric("T. Saturação (Orvalho)", f"{t_sat_baixa} °C")
+
+        st.markdown("---")
+
+        # LINHA 2: ALTA
+        st.subheader("🔥 Condensação (Lado de Alta)")
+        la1, la2, la3 = st.columns(3)
+        with la1:
+            p_alta = st.number_input("Pressão Descarga (PSI)", value=float(st.session_state.dados.get('p_alta', 380.0)), key="p_alta_input")
+        with la2:
+            t_liq = st.number_input("Temp. Linha Líquido (°C)", value=float(st.session_state.dados.get('temp_liquido', 38.0)), key="t_liq_input")
+        with la3:
+            t_sat_alta = round((p_alta / 11.5) + 12.0, 2) 
+            st.metric("T. Saturação (Bolha)", f"{t_sat_alta} °C")
+
+        st.markdown("---")
+
+        # LINHA 3: DIFERENCIAL DE AR (Calor Sensível do Quarto)
+        st.subheader("🌬️ Performance Térmica do Ar")
+        ar1, ar2, ar3 = st.columns(3)
+        with ar1:
+            t_in = st.number_input("Temp. Retorno Ar (°C)", value=float(st.session_state.dados.get('temp_entrada_ar', 25.0)), key="t_in_input")
+        with ar2:
+            t_out = st.number_input("Temp. Insuflamento Ar (°C)", value=float(st.session_state.dados.get('temp_saida_ar', 12.0)), key="t_out_input")
+        with ar3:
+            delta_t = round(t_in - t_out, 2)
+            st.metric("Delta T (Ar)", f"{delta_t} °C")
+
+        # ATUALIZAÇÃO FINAL DOS DADOS
+        st.session_state.dados.update({
+            'p_baixa': p_baixa, 'temp_sucção': t_suc,
+            'p_alta': p_alta, 'temp_liquido': t_liq,
+            't_sat_baixa': t_sat_baixa, 't_sat_alta': t_sat_alta,
+            'temp_entrada_ar': t_in, 'temp_saida_ar': t_out
+        })
+
+# ==============================================================================
+# 2.1 RENDERIZAÇÃO DA ABA 2 (DIAGNÓSTICO)
+# ==============================================================================
+def renderizar_aba_2():
+    st.header("🔍 Diagnóstico Térmico e de Performance")
+    
+    # Recuperando os dados salvos na Aba 1
+    d = st.session_state.dados
+    
+    # Cálculos de Ciclo
+    sh = round(d.get('temp_sucção', 0) - d.get('t_sat_baixa', 0), 2)
+    sc = round(d.get('t_sat_alta', 0) - d.get('temp_liquido', 0), 2)
+    dt_ar = round(d.get('temp_entrada_ar', 0) - d.get('temp_saida_ar', 0), 2)
+
+    # --- LINHA 1: MÉTRICAS PRINCIPAIS ---
+    col_sh, col_sc, col_dt = st.columns(3)
+    
+    with col_sh:
+        st.metric("Superaquecimento (SH)", f"{sh} °C")
+        if 5 <= sh <= 8:
+            st.success("✅ SH Ideal: Fluido evaporando totalmente.")
+        elif sh > 8:
+            st.warning("⚠️ SH Alto: Falta de fluido ou restrição.")
+        else:
+            st.error("🚨 SH Baixo: Risco de líquido no compressor!")
+
+    with col_sc:
+        st.metric("Sub-resfriamento (SC)", f"{sc} °C")
+        if 5 <= sc <= 12:
+            st.success("✅ SC Ideal: Condensação eficiente.")
+        else:
+            st.info("ℹ️ SC Fora do padrão: Verifique carga/limpeza.")
+
+    with col_dt:
+        st.metric("Delta T do Ar", f"{dt_ar} °C")
+        if 8 <= dt_ar <= 12:
+            st.success("✅ Troca de Calor OK.")
+        else:
+            st.warning("⚠️ Diferencial fora da faixa ideal.")
+
+    st.markdown("---")
+
+    # --- LINHA 2: ANÁLISE DO CALOR LATENTE (A "ESPONJA") ---
+    st.subheader("🔋 Capacidade de Absorção de Calor")
+    
+    c1, c2 = st.columns([2, 1])
+    
+    with c1:
+        # Lógica visual do poder da "esponja"
+        # Quanto menor o SH (dentro da margem), mais líquido ocupa a serpentina = mais calor latente absorvido.
+        poder_latente = max(0, min(100, int((1 - (sh/20)) * 100)))
+        st.write("**Disponibilidade de Calor Latente (Líquido na Serpentina):**")
+        st.progress(poder_latente)
+        
+        if poder_latente > 70:
+            st.info("💡 O fluido está agindo como uma esponja seca, pronto para sugar a umidade e o calor do quarto.")
+        else:
+            st.warning("💡 A 'esponja' está saturada ou insuficiente. A remoção de umidade será lenta.")
+
+    with c2:
+        st.write("**Resumo do Ativo:**")
+        st.write(f"🏷️ **TAG:** {d.get('tag_id', 'N/A')}")
+        st.write(f"❄️ **Fluido:** {d.get('fluido', 'N/A')}")
+        st.write(f"🏢 **Cliente:** {d.get('nome', 'Não Informado')}")
+
+    st.divider()
+    st.caption("Nota: Cálculos baseados em aproximações de saturação para fluidos padrão.")
+
 # ==============================================================================
 # 3. SIDEBAR E NAVEGAÇÃO (NÍVEL PRINCIPAL)
 # ==============================================================================
+
 with st.sidebar:
     st.title("🚀 Painel de Controle")
-    aba_selecionada = st.radio("Selecione a Aba:", ["Home", "1. Cadastro", "2. Diagnóstico"], key="main_nav")
+    aba_selecionada = st.radio("Navegação:", ["Home", "1. Cadastro", "2. Diagnóstico"], key="main_nav")
     
     st.markdown("---")
-    st.subheader("👤 Técnico Responsável")
-    st.session_state.dados['tec_nome'] = st.text_input("Nome:", value=st.session_state.dados.get('tec_nome', ''), key="t_n")
+    st.subheader("👤 Identificação")
+    # Salvando Técnico e Cliente no dicionário 'dados'
+    st.session_state.dados['tec_nome'] = st.text_input("Técnico:", value=st.session_state.dados.get('tec_nome', ''), key="t_n")
+    st.session_state.dados['cliente'] = st.text_input("Cliente/Unidade:", value=st.session_state.dados.get('cliente', ''), key="c_n")
     st.session_state.dados['tec_reg'] = st.text_input("Registro (CFT/CREA):", value=st.session_state.dados.get('tec_reg', ''), key="t_r")
 
 # LÓGICA DE EXIBIÇÃO
@@ -126,15 +263,27 @@ if aba_selecionada == "1. Cadastro":
     renderizar_aba_1()
 elif aba_selecionada == "2. Diagnóstico":
     st.info("Aba de Diagnóstico pronta para receber cálculos de Superaquecimento.")
+# LÓGICA DE EXIBIÇÃO FINAL
+if aba_selecionada == "Home":
+    st.title("🏠 Bem-vindo ao Refri-Pro")
+    st.write("Selecione uma aba no menu lateral para começar.")
+    
+elif aba_selecionada == "1. Cadastro":
+    renderizar_aba_1()
+    
+elif aba_selecionada == "2. Diagnóstico":
+    renderizar_aba_2() # Chama a versão suprema que acabamos de criar
+
 # ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO SUPREMA - INTEGRADA E BLINDADA)
 # ==============================================================================
 
-def renderizar_aba_diagnosticos():
+def renderizar_aba_2():
     st.header("🔍 Central de Diagnóstico Técnico")
     
-    # 1. Recuperação Segura de Dados da Aba 1
-    fluido = st.session_state.dados.get('fluido', 'R410A')
+    # 1. Recuperação Segura de Dados
+    d = st.session_state.dados
+    fluido = d.get('fluido', 'R410A')
     st.info(f"❄️ Fluido em Análise: **{fluido}**")
 
     # --- 1. MEDIÇÕES DE CAMPO (PERSISTÊNCIA TOTAL) ---
@@ -143,56 +292,44 @@ def renderizar_aba_diagnosticos():
 
     with c1:
         st.markdown("**🔵 BAIXA / AR**")
-        p_suc = st.number_input("P. Sucção (PSI)", value=st.session_state.dados.get('p_suc', 0.0), format="%.1f", key="ps_vfinal_1")
-        st.session_state.dados['p_suc'] = p_suc
-        t_suc = st.number_input("T. Tubo Suc. (°C)", value=st.session_state.dados.get('t_suc', 0.0), format="%.1f", key="ts_vfinal_1")
-        st.session_state.dados['t_suc'] = t_suc
-        t_ret = st.number_input("1. T. Retorno (°C)", value=st.session_state.dados.get('t_ret', 0.0), format="%.1f", key="tr_vfinal_1")
-        st.session_state.dados['t_ret'] = t_ret
-        t_ins = st.number_input("2. T. Insuflação (°C)", value=st.session_state.dados.get('t_ins', 0.0), format="%.1f", key="ti_vfinal_1")
-        st.session_state.dados['t_ins'] = t_ins
+        p_suc = st.number_input("P. Sucção (PSI)", value=float(d.get('p_baixa', 0.0)), format="%.1f", key="ps_vfinal")
+        t_suc = st.number_input("T. Tubo Suc. (°C)", value=float(d.get('temp_sucção', 0.0)), format="%.1f", key="ts_vfinal")
+        t_ret = st.number_input("1. T. Retorno (°C)", value=float(d.get('temp_entrada_ar', 0.0)), format="%.1f", key="tr_vfinal")
+        t_ins = st.number_input("2. T. Insuflação (°C)", value=float(d.get('temp_saida_ar', 0.0)), format="%.1f", key="ti_vfinal")
 
     with c2:
         st.markdown("**🔴 ALTA / TENSÃO**")
-        p_des = st.number_input("P. Descarga (PSI)", value=st.session_state.dados.get('p_des', 0.0), format="%.1f", key="pd_vfinal_1")
-        st.session_state.dados['p_des'] = p_des
-        t_liq = st.number_input("T. Tubo Líq. (°C)", value=st.session_state.dados.get('t_liq', 0.0), format="%.1f", key="tl_vfinal_1")
-        st.session_state.dados['t_liq'] = t_liq
-        v_lin = st.number_input("Tens. Linha (V)", value=st.session_state.dados.get('v_lin', 220.0), key="vl_vfinal_1")
-        st.session_state.dados['v_lin'] = v_lin
-        v_med = st.number_input("Tens. Medida (V)", value=st.session_state.dados.get('v_med', 220.0), key="vm_vfinal_1")
-        st.session_state.dados['v_med'] = v_med
+        p_des = st.number_input("P. Descarga (PSI)", value=float(d.get('p_alta', 0.0)), format="%.1f", key="pd_vfinal")
+        t_liq = st.number_input("T. Tubo Líq. (°C)", value=float(d.get('temp_liquido', 0.0)), format="%.1f", key="tl_vfinal")
+        v_lin = st.number_input("Tens. Linha (V)", value=float(d.get('v_lin', 220.0)), key="vl_vfinal")
+        v_med = st.number_input("Tens. Medida (V)", value=float(d.get('v_med', 220.0)), key="vm_vfinal")
 
     with c3:
         st.markdown("**⚡ CORRENTE / CARGA**")
-        rla = st.number_input("RLA (A)", value=st.session_state.dados.get('rla', 0.0), key="rla_vfinal_1")
-        st.session_state.dados['rla'] = rla
-        i_med = st.number_input("Corr. Medida (A)", value=st.session_state.dados.get('i_med', 0.0), key="im_vfinal_1")
-        st.session_state.dados['i_med'] = i_med
+        rla = st.number_input("RLA (A)", value=float(d.get('rla', 0.0)), key="rla_vfinal")
+        i_med = st.number_input("Corr. Medida (A)", value=float(d.get('i_med', 0.0)), key="im_vfinal")
         
-        perc_calc = (i_med / rla * 100) if (rla and rla > 0) else 0.0
-        st.number_input("Carga do Comp. (%)", value=perc_calc, format="%.1f", disabled=True, key="pc_vfinal_1")
-        if perc_calc >= 110.0: st.error(f"🚨 SOBRECARGA: {perc_calc:.1f}%")
+        perc_calc = (i_med / rla * 100) if (rla > 0) else 0.0
+        st.metric("Carga do Comp. (%)", f"{perc_calc:.1f}%")
+        if perc_calc >= 110.0: st.error(f"🚨 SOBRECARGA")
 
     with c4:
         st.markdown("**🔋 CAPACITORES (µF)**")
-        cn_c = st.number_input("C. Nom. Comp", value=st.session_state.dados.get('cn_c', 0.0), key="cnc_vf_1")
-        st.session_state.dados['cn_c'] = cn_c
-        cm_c = st.number_input("C. Lido Comp", value=st.session_state.dados.get('cm_c', 0.0), key="cmc_vf_1")
-        st.session_state.dados['cm_c'] = cm_c
+        cn_c = st.number_input("C. Nom. Comp", value=float(d.get('cn_c', 0.0)), key="cnc_vf")
+        cm_c = st.number_input("C. Lido Comp", value=float(d.get('cm_c', 0.0)), key="cmc_vf")
 
-    # --- 2. MOTOR DE CÁLCULO (BLINDAGEM CONTRA ERRO LINHA 302) ---
-    t_sat_s = f_sat_precisao(p_suc, fluido) if p_suc > 0 else 0.0
-    t_sat_d = f_sat_precisao(p_des, fluido) if p_des > 0 else 0.0
+    # --- 2. MOTOR DE CÁLCULO (Sincronizado com a Aba 1) ---
+    # Nota: f_sat_precisao deve estar definida no seu código global
+    t_sat_s = calcular_temp_saturacao(p_suc, fluido) if p_suc > 0 else 0.0
+    t_sat_d = round((p_des / 11.5) + 12.0, 2) if p_des > 0 else 0.0
     
     sh_total = (t_suc - t_sat_s) if p_suc > 0 else 0.0
     sc_final = (t_sat_d - t_liq) if p_des > 0 else 0.0
-    dt_ar = t_ret - t_ins if (t_ret and t_ins) else 0.0
+    dt_ar = t_ret - t_ins
     dif_v = v_lin - v_med
-    dif_i = i_med - rla
     d_cap_c = cm_c - cn_c
 
-    # --- 3. RESULTADOS CALCULADOS (PENTA-COLUMN LAYOUT RESTAURADO) ---
+    # --- 3. RESULTADOS CALCULADOS (PENTA-COLUMN LAYOUT) ---
     st.markdown("---")
     st.subheader("2. Resultados Calculados")
     res = st.columns(5)
@@ -204,7 +341,7 @@ def renderizar_aba_diagnosticos():
         st.metric("SAT. SUCÇÃO", f"{t_sat_s:.1f} °C")
         st.metric("SAT. LÍQUIDO", f"{t_sat_d:.1f} °C")
     with res[2]:
-        st.metric("Δ CORRENTE", f"{dif_i:.1f} A")
+        st.metric("Δ CORRENTE", f"{i_med - rla:.1f} A")
         st.metric("Δ TENSÃO", f"{dif_v:.1f} V")
     with res[3]:
         st.metric("SC FINAL", f"{sc_final:.1f} K")
@@ -212,76 +349,35 @@ def renderizar_aba_diagnosticos():
     with res[4]:
         st.metric("Δ CAP. COMP.", f"{d_cap_c:.1f} µF")
 
-    # --- 4. PARECER TÉCNICO (UNIFICADO) ---
+    # --- 4. PARECER TÉCNICO (LIMPO E ÚNICO) ---
     st.markdown("---")
     st.subheader("3. Parecer Técnico Final")
     
-    # Lógica de diagnóstico automático sugerido
-    diag_sugestao = ""
-    if sh_total > 12 and p_suc > 0: diag_sugestao = "Superaquecimento alto: Possível falta de fluido."
-    elif dt_ar < 8 and t_ret > 0: diag_sugestao = "Baixo Delta T: Verificar filtros e serpentina."
-
-    st.session_state.dados['laudo_diag'] = st.text_area(
-        "Diagnóstico Final:", 
-        value=diag_sugestao if not st.session_state.dados.get('laudo_diag') else st.session_state.dados['laudo_diag'],
-        height=150, key="laudo_final_v101"
-    )
-
-    # Gerar sugestão automática apenas se o laudo estiver vazio
-    if not st.session_state.dados.get('laudo_diag'):
-        if sh > 12: sug = "Superaquecimento alto: Possível falta de fluido."
-        elif dt_ar < 8 and p_suc > 0: sug = "Baixo Delta T: Verificar filtros e serpentina."
-        else: sug = ""
-        st.session_state.dados['laudo_diag'] = sug
-
-    st.session_state.dados['laudo_diag'] = st.text_area(
-        "Diagnóstico e Observações:", 
-        value=st.session_state.dados.get('laudo_diag', ''), 
-        height=150, 
-        key="laudo_final_v100"
-    )
-
-    
-    st.markdown("---")
-    st.subheader("3. Parecer Técnico Final")
-    
-    st.session_state.dados['laudo_diag'] = st.text_area(
-        "Diagnóstico e Observações:", 
-        value=st.session_state.dados.get('laudo_diag', ''), 
-        height=150, 
-        key="laudo_final_v_perfeito"
-    )
-    
-    # Lógica de diagnóstico automático baseada em simulações de falhas comuns
+    # Lógica de diagnóstico automático
     diag_previsto = ""
     if sh_total > 12 and p_suc > 0:
-        diag_previsto = "Análise: Superaquecimento Elevado. Sugere falta de fluido ou restrição na expansão."
+        diag_previsto = "Análise: Superaquecimento Elevado. Sugere falta de fluido ou restrição."
     elif dt_ar < 8 and t_ret > 0:
         diag_previsto = "Análise: Baixo Diferencial de Temperatura. Verificar limpeza de filtros e serpentina."
     elif perc_calc > 110:
         diag_previsto = "Análise: Compressor sobrecarregado. Verificar condensação ou mecânica."
+    else:
+        diag_previsto = "Análise: Sistema operando dentro dos parâmetros normais."
 
-    st.text_area(
-        "Relatório de Diagnóstico:", 
-        value=diag_previsto if not st.session_state.dados.get('laudo_diag') else st.session_state.dados['laudo_diag'], 
+    # Campo de texto único para o laudo
+    d['laudo_diag'] = st.text_area(
+        "Diagnóstico e Observações:", 
+        value=d.get('laudo_diag', diag_previsto), 
         height=150, 
-        key="laudo_v100"
-    )
-    
-    # Lógica de diagnóstico automático preservada
-    diag_sugestao = ""
-    if sh_total > 12: diag_sugestao = "Superaquecimento alto: Possível falta de fluido."
-    elif dt_ar < 8 and t_ret > 0: diag_sugestao = "Baixo Delta T no ar: Verificar filtros e serpentina."
-    
-    st.session_state.dados['laudo_diag'] = st.text_area(
-        "Relatório de Diagnóstico:", 
-        value=diag_sugestao if not st.session_state.dados.get('laudo_diag') else st.session_state.dados['laudo_diag'], 
-        height=150, 
-        key="txt_laudo_vfinal"
+        key="txt_laudo_final"
     )
 
-
-# --- Fim da função renderizar_aba_1 (Certifique-se que o código abaixo está FORA dela) ---
+    # Sincroniza de volta para o session_state global
+    st.session_state.dados.update({
+        'p_baixa': p_suc, 'temp_sucção': t_suc, 'p_alta': p_des, 'temp_liquido': t_liq,
+        'temp_entrada_ar': t_ret, 'temp_saida_ar': t_ins, 'rla': rla, 'i_med': i_med,
+        'v_lin': v_lin, 'v_med': v_med, 'cn_c': cn_c, 'cm_c': cm_c
+    })
 
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (NÍVEL PRINCIPAL)
