@@ -15,22 +15,25 @@ from fpdf import FPDF
 import io
 
 
+# ==============================================================================
+# 0. CONFIGURAÇÕES E IMPORTS (ESTABILIDADE TOTAL)
+# ==============================================================================
+import streamlit as st
+from datetime import datetime
+import requests
+import urllib.parse
+import os
+import pandas as pd
+from fpdf import FPDF
+import io
 
-# 1. CONFIGURAÇÃO DA PÁGINA (CONGELADO)
-st.set_page_config(page_title="HV Pro - MPN Soluções", layout="wide", page_icon="⚙️")
+# 1. CONFIGURAÇÃO DA PÁGINA
+st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
 
 # ==============================================================================
-# 1. MOTORES TÉCNICOS E PDF (FIX: CORREÇÃO DE ARQUIVO DANIFICADO)
+# 1. MOTOR DE PDF (FIX: CORREÇÃO DE ARQUIVO DANIFICADO)
 # ==============================================================================
-BD_DEFEITOS = [
-    {"nome": "Falta de Gás", "cond": lambda sh, sc: sh > 12 and sc < 3, "causa": "Vazamento ou carga incompleta.", "solucao": "Localizar vazamento e completar carga."},
-    {"nome": "Condensadora Suja", "cond": lambda sh, sc: sh < 5 and sc > 10, "causa": "Obstrução de ar na unidade externa.", "solucao": "Limpeza química das aletas."},
-    {"nome": "Capilar Obstruído", "cond": lambda sh, sc: sh > 15 and sc > 8, "causa": "Sujeira ou umidade no sistema.", "solucao": "Troca do filtro e dispositivo de expansão."},
-    {"nome": "Compressor Cansado", "cond": lambda sh, sc: sh < 4 and sc < 3, "causa": "Perda de eficiência mecânica.", "solucao": "Substituição do compressor."}
-]
-
 def gerar_pdf_perfeito(d):
-    """Gera o PDF de forma segura para não corromper"""
     pdf = FPDF()
     pdf.add_page()
     pdf.set_fill_color(0, 51, 102)
@@ -42,38 +45,40 @@ def gerar_pdf_perfeito(d):
     pdf.ln(20); pdf.set_text_color(0, 0, 0)
     pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, "1. DADOS DO ATENDIMENTO", ln=True)
     pdf.set_font("Arial", size=10)
-    pdf.cell(100, 8, f" CLIENTE: {d.get('nome').upper()}", border=1)
-    pdf.cell(90, 8, f" CNPJ/CPF: {d.get('cpf_cnpj')}", border=1, ln=True)
-    pdf.cell(100, 8, f" EQUIPAMENTO: {d.get('fabricante')} / {d.get('capacidade')}", border=1)
-    pdf.cell(90, 8, f" TAG: {d.get('tag_id')}", border=1, ln=True)
+    
+    # Grid de dados limpando caracteres especiais para o PDF
+    nome_cli = str(d.get('nome', 'CLIENTE')).upper()
+    pdf.cell(100, 8, f" CLIENTE: {nome_cli}", border=1)
+    pdf.cell(90, 8, f" CNPJ/CPF: {d.get('cpf_cnpj', '')}", border=1, ln=True)
+    pdf.cell(100, 8, f" EQUIPAMENTO: {d.get('fabricante', '')} / {d.get('capacidade', '')}", border=1)
+    pdf.cell(90, 8, f" TAG: {d.get('tag_id', '')}", border=1, ln=True)
 
     pdf.ln(5); pdf.set_font("Arial", 'B', 11); pdf.cell(0, 10, "2. PARECER TECNICO FINAL", ln=True)
     pdf.set_font("Arial", size=10)
-    pdf.multi_cell(0, 8, d.get('laudo_final', 'Laudo nao preenchido.'), border=1)
+    laudo = d.get('laudo_final', 'Laudo nao preenchido.')
+    pdf.multi_cell(0, 8, laudo.encode('latin-1', 'ignore').decode('latin-1'), border=1)
     
-    # Retorno seguro em bytes
     return pdf.output(dest='S').encode('latin-1')
 
 # ==============================================================================
-# 2. FUNÇÕES DE DADOS (CEP AUTOMÁTICO)
+# 2. FUNÇÃO DE CEP (MECANISMO DE SINCRONIZAÇÃO)
 # ==============================================================================
 def buscar_cep():
     cep = st.session_state.dados['cep'].replace("-", "").strip()
     if len(cep) == 8:
         try:
-            r = requests.get(f"https://viacep.com.br/ws/{cep}/json/")
+            r = requests.get(f"https://viacep.com.br/ws/{cep}/json/", timeout=5)
             if r.status_code == 200 and "erro" not in r.json():
                 res = r.json()
                 st.session_state.dados['endereco'] = res.get('logradouro', '')
                 st.session_state.dados['bairro'] = res.get('bairro', '')
                 st.session_state.dados['cidade'] = res.get('localidade', '')
                 st.session_state.dados['uf'] = res.get('uf', '')
-                st.toast("Endereço localizado!")
             else: st.error("CEP não encontrado.")
-        except: st.error("Erro ao buscar CEP.")
+        except: st.error("Erro na conexão.")
 
 # ==============================================================================
-# 3. MOTOR DE SESSÃO E INTERFACE
+# 3. INICIALIZAÇÃO DA SESSÃO (FIX: ERRO LINHA 123)
 # ==============================================================================
 if 'dados' not in st.session_state:
     st.session_state.dados = {
@@ -83,45 +88,59 @@ if 'dados' not in st.session_state:
         'tecnico_nome': 'Marcos Alexandre', 'laudo_final': ''
     }
 
-# SIDEBAR COM PDF BLINDADO
+# ==============================================================================
+# 4. SIDEBAR E AÇÕES
+# ==============================================================================
 with st.sidebar:
-    st.header("📲 Saída")
-    # Gerar o PDF só quando clicar no botão
+    st.header("📲 Painel MPN")
     if st.session_state.dados['nome']:
         pdf_out = gerar_pdf_perfeito(st.session_state.dados)
         st.download_button(
-            label="📄 Baixar PDF (PJ)",
+            label="📄 BAIXAR RELATÓRIO PDF",
             data=pdf_out,
             file_name=f"Relatorio_{st.session_state.dados['nome'].replace(' ', '_')}.pdf",
-            mime="application/pdf"
+            mime="application/pdf",
+            use_container_width=True
         )
-    else: st.warning("Preencha o nome do cliente.")
+    
+    st.divider()
+    tel = st.session_state.dados.get('whatsapp', '')
+    if st.button("🟢 ENVIAR WHATSAPP", use_container_width=True):
+        msg = urllib.parse.quote(f"Olá, segue o laudo técnico da MPN Soluções.")
+        st.markdown(f"[Confirmar Envio](https://wa.me/{tel}?text={msg})")
 
-# ABAS DO SISTEMA
-aba1, aba2 = st.tabs(["📝 Cadastro", "🔍 Diagnóstico"])
+# ==============================================================================
+# 5. INTERFACE (ABAS)
+# ==============================================================================
+aba1, aba2 = st.tabs(["📝 Cadastro P.J.", "🔍 Diagnóstico Técnico"])
 
 with aba1:
-    st.session_state.dados['nome'] = st.text_input("Nome/Razão Social", st.session_state.dados['nome'])
+    st.session_state.dados['nome'] = st.text_input("Razão Social / Nome", st.session_state.dados['nome'])
     
-    col_cep1, col_cep2 = st.columns([1, 1])
-    st.session_state.dados['cep'] = col_cep1.text_input("CEP", st.session_state.dados['cep'])
-    col_cep2.button("🔍 Validar CEP", on_click=buscar_cep)
+    c_cep, b_cep = st.columns([2, 1])
+    st.session_state.dados['cep'] = c_cep.text_input("CEP", st.session_state.dados['cep'])
+    b_cep.button("🔍 Validar CEP", on_click=buscar_cep)
     
-    st.session_state.dados['endereco'] = st.text_input("Endereço", st.session_state.dados['endereco'])
+    st.session_state.dados['endereco'] = st.text_input("Endereço Completo", st.session_state.dados['endereco'])
     
-    # LISTA DE CAPACIDADES (FIX)
     st.divider()
     c1, c2 = st.columns(2)
     st.session_state.dados['fabricante'] = c1.selectbox("Fabricante", ["Carrier", "Daikin", "LG", "Samsung", "Trane", "York"])
     
-    lista_btus = ["9.000 BTU", "12.000 BTU", "18.000 BTU", "24.000 BTU", "30.000 BTU", "36.000 BTU", "48.000 BTU", "60.000 BTU", "5 TR", "10 TR"]
-    st.session_state.dados['capacidade'] = c2.selectbox("Capacidade (BTU/TR)", lista_btus)
+    # LISTA DE CAPACIDADES (FIX)
+    btus = ["9.000 BTU", "12.000 BTU", "18.000 BTU", "24.000 BTU", "30.000 BTU", "36.000 BTU", "48.000 BTU", "60.000 BTU", "5 TR", "10 TR"]
+    st.session_state.dados['capacidade'] = c2.selectbox("Capacidade", btus)
 
 with aba2:
-    st.subheader("Diagnóstico IA")
-    # O laudo final que vai para o PDF
-    st.session_state.dados['laudo_final'] = st.text_area("Relatório Técnico Final", st.session_state.dados['laudo_final'], height=200)
-
+    st.subheader("Parecer Técnico Final")
+    # FIX: Uso de chave única para evitar erro de atribuição circular na linha 123
+    st.session_state.dados['laudo_final'] = st.text_area(
+        "Descreva detalhadamente o diagnóstico:", 
+        value=st.session_state.dados['laudo_final'],
+        height=250,
+        key="campo_laudo" 
+    )
+    st.info("💡 Este texto aparecerá exatamente assim no PDF do cliente.")
 
 # ==============================================================================
 # 1.2 FUNÇÃO DA ABA 1: Identificação e Equipamento (LIMPEZA DEFINITIVA)
