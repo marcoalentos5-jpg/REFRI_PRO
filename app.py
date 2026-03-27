@@ -301,26 +301,10 @@ with st.sidebar:
     else:
         st.success("📋 STATUS: PRONTO PARA ENVIO")
         
-    # MENSAGEM WHATSAPP - ENVIO DE TODOS OS DADOS SEM EXCEÇÃO
-    msg_zap = (
-        f"*LAUDO TÉCNICO HVAC*\n\n"
-        f"👤 *CLIENTE:* {st.session_state.dados['nome']}\n"
-        f"🆔 CPF/CNPJ: {st.session_state.dados['cpf_cnpj']}\n"
-        f"📍 END: {st.session_state.dados['endereco']}, {st.session_state.dados['numero']} - {st.session_state.dados['bairro']}\n"
-        f"🏙️ {st.session_state.dados['cidade']}/{st.session_state.dados['uf']} | CEP: {st.session_state.dados['cep']}\n"
-        f"📞 Contato: {st.session_state.dados['whatsapp']} | Email: {st.session_state.dados['email']}\n\n"
-        f"⚙️ *EQUIPAMENTO:*\n"
-        f"📌 TAG: {st.session_state.dados['tag_id']} | Linha: {st.session_state.dados['linha']}\n"
-        f"🏭 Fab: {st.session_state.dados['fabricante']} | Mod: {st.session_state.dados['modelo']}\n"
-        f"❄️ Cap: {st.session_state.dados['capacidade']} BTU | Fluido: {st.session_state.dados['fluido']}\n"
-        f"🔢 S.Evap: {st.session_state.dados['serie_evap']} | S.Cond: {st.session_state.dados['serie_cond']}\n"
-        f"📍 Loc.Evap: {st.session_state.dados['local_evap']} | Loc.Cond: {st.session_state.dados['local_cond']}\n"
-        f"🛠️ Serviço: {st.session_state.dados['tipo_servico']}\n"
-        f"🩺 Status: {st.session_state.dados['status_maquina']}\n\n"
-        f"👨‍🔧 *TÉCNICO:* {st.session_state.dados['tecnico_nome']}\n"
-        f"📜 Registro: {st.session_state.dados['tecnico_registro']}\n"
-        f"📅 Data: {st.session_state.dados['data']}"
-    )
+File "/mount/src/refri_pro/app.py", line 310, in <module>
+    f"🏙️ {st.session_state.dados['cidade']}/{st.session_state.dados['uf']} | CEP: {st.session_state.dados['cep']}\n"
+                      
+    
     
     link_final = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_zap)}"
     st.link_button("📲 Enviar Laudo via WhatsApp", link_final, use_container_width=True)
