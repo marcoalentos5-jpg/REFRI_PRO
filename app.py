@@ -18,7 +18,6 @@ def f_sat_precisao(p, g):
     return temp
 
 # 2. Depois as funções das abas
-# Linha 21
 def f_sat_precisao(p, g):
     if p <= 5: return -50.0  # <-- Esta linha PRECISA de 4 espaços na frente
     
@@ -34,14 +33,8 @@ def renderizar_aba_diagnosticos():
     d = st.session_state.dados
     # ... resto do código da aba
     # ... código da identificação ...
-
-def renderizar_aba_diagnosticos():
-
-    
-    # ... código dos diagnósticos que arrumamos ...
-
+ 
 # 3. POR ÚLTIMO, a lógica de navegação (O "Cérebro" do App)
-# ESTA PARTE DEVE FICAR NO FINAL DO ARQUIVO, SEM ESPAÇOS NA ESQUERDA
 aba_selecionada = st.sidebar.radio(
     "📍 Selecione a Etapa:",
     ["1. Identificação", "2. Diagnósticos", "3. Relatório"],
