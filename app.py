@@ -173,80 +173,60 @@ def f_sat_precisao(p, g):
 
 
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO 5X2 - FINAL HOMOLOGADA)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO 20 CAMPOS - 4 LINHAS X 5 COLUNAS)
 # ==============================================================================
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
     d = st.session_state.dados
     fluido = d.get('fluido', 'R410A')
 
-
-# --- 1. MEDIÇÕES DE CAMPO (ORGANIZADAS EM LINHAS DE 5 COLUNAS) ---
+    # --- 1. MEDIÇÕES DE CAMPO (20 CAMPOS EM 4 LINHAS DE 5 COLUNAS) ---
     st.subheader("1. Medições de Campo")
     
-    # LINHA 1: Ciclo Frigorífico Principal
+    # LINHA 1: Ciclo Frigorífico (Baixa e Alta)
     l1 = st.columns(5)
-    p_suc = l1[0].number_input("P. Sucção (PSI)", value=float(d.get('p_baixa', 0.0)), format="%.1f", key="ps_v1")
-    t_suc = l1[1].number_input("T. Tubo Suc. (°C)", value=float(d.get('temp_sucção', 0.0)), format="%.1f", key="ts_v1")
-    p_des = l1[2].number_input("P. Descarga (PSI)", value=float(d.get('p_alta', 0.0)), format="%.1f", key="pd_v1")
-    t_liq = l1[3].number_input("T. Tubo Líq. (°C)", value=float(d.get('temp_liquido', 0.0)), format="%.1f", key="tl_v1")
-    v_lin = l1[4].number_input("Tens. Nom. (V)", value=220.0, key="vn_v1")
+    p_suc = l1[0].number_input("P. Sucção (PSI)", value=float(d.get('p_baixa', 0.0)), format="%.1f", key="ps_m")
+    t_suc = l1[1].number_input("T. Tubo Suc. (°C)", value=float(d.get('temp_sucção', 0.0)), format="%.1f", key="ts_m")
+    p_des = l1[2].number_input("P. Descarga (PSI)", value=float(d.get('p_alta', 0.0)), format="%.1f", key="pd_m")
+    t_liq = l1[3].number_input("T. Tubo Líq. (°C)", value=float(d.get('temp_liquido', 0.0)), format="%.1f", key="tl_m")
+    v_lin = l1[4].number_input("Tens. Nom. (V)", value=float(d.get('v_nominal', 220.0)), key="vn_m")
 
-    # LINHA 2: Performance de Ar e Elétrica
+    # LINHA 2: Ar e Elétrica Medida
     l2 = st.columns(5)
-    t_ret = l2[0].number_input("T. Retorno Ar (°C)", value=float(d.get('temp_entrada_ar', 0.0)), format="%.1f", key="tr_v1")
-    t_ins = l2[1].number_input("T. Insuflação (°C)", value=float(d.get('temp_saida_ar', 0.0)), format="%.1f", key="ti_v1")
-    v_med = l2[2].number_input("Tens. Medida (V)", value=220.0, key="vm_v1")
-    i_med = l2[3].number_input("Corr. Medida (A)", value=float(d.get('i_medida', 0.0)), key="im_v1")
-    rla_ref = l2[4].number_input("RLA (A)", value=float(d.get('rla', 0.0)), key="rla_v1")
+    t_ret = l2[0].number_input("T. Retorno Ar (°C)", value=float(d.get('temp_entrada_ar', 0.0)), format="%.1f", key="tr_m")
+    t_ins = l2[1].number_input("T. Insuflação (°C)", value=float(d.get('temp_saida_ar', 0.0)), format="%.1f", key="ti_m")
+    v_med = l2[2].number_input("Tens. Medida (V)", value=float(d.get('v_medida', 220.0)), key="vm_m")
+    i_med = l2[3].number_input("Corr. Medida (A)", value=float(d.get('i_medida', 0.0)), key="im_m")
+    rla   = l2[4].number_input("RLA (A)", value=float(d.get('rla', 0.0)), key="rla_m")
 
-    # LINHA 3: Capacitores (Fica alinhado à esquerda, sem esticar)
-    
+    # LINHA 3: Capacitores e Correntes de Partida
     l3 = st.columns(5)
-    cm_c = l3[0].number_input("Cap. Lido Comp (µF)", value=float(d.get('cm_c', 0.0)), key="cmc_v1")
-    cm_f = l3[1].number_input("Cap. Lido Fan (µF)", value=float(d.get('cm_f', 0.0)), key="cmf_v1")
-    # As outras 3 colunas da l3 ficam vazias para manter o tamanho dos campos igual aos de cima
+    cm_c  = l3[0].number_input("Cap. Lido Comp (µF)", value=float(d.get('cm_c', 0.0)), key="cmc_m")
+    cn_c  = l3[1].number_input("Cap. Nom. Comp (µF)", value=float(d.get('cn_c', 0.0)), key="cnc_m")
+    cm_f  = l3[2].number_input("Cap. Lido Fan (µF)", value=float(d.get('cm_f', 0.0)), key="cmf_m")
+    cn_f  = l3[3].number_input("Cap. Nom. Fan (µF)", value=float(d.get('cn_f', 0.0)), key="cnf_m")
+    lra   = l3[4].number_input("LRA (A)", value=float(d.get('lra', 0.0)), key="lra_m")
 
-    
-    # --- 2. PROCESSAMENTO TÉCNICO (PROTEÇÃO CONTRA ERROS DE VARIÁVEL) ---
-    
-    # 1. Busca valores nominais do cadastro (Aba 1) ou define como 0.0 se não existirem
-    cn_c = float(d.get('cn_c', 0.0)) # Capacitor Nominal Compressor
-    cn_f = float(d.get('cn_f', 0.0)) # Capacitor Nominal Fan
-    rla  = float(d.get('rla', 1.0))  # RLA (evita divisão por zero se vazio)
+    # LINHA 4: Ambiente e Outros (Fechando os 20 campos)
+    l4 = st.columns(5)
+    t_amb = l4[0].number_input("T. Amb. Ext. (°C)", value=float(d.get('temp_amb_ext', 35.0)), key="ta_m")
+    u_rel = l4[1].number_input("Umid. Rel. (%)", value=float(d.get('umidade', 50.0)), key="ur_m")
+    p_oil = l4[2].number_input("Pressão Óleo (PSI)", value=0.0, key="po_m")
+    t_com = l4[3].number_input("T. Desc. Comp (°C)", value=0.0, key="tc_m")
+    i_fan = l4[4].number_input("Corr. Fan (A)", value=0.0, key="if_m")
 
-    # 2. Cálculos de Saturação e Performance
+    # --- 2. PROCESSAMENTO TÉCNICO (CÁLCULOS) ---
     t_sat_s = f_sat_precisao(p_suc, fluido) if p_suc > 5 else 0.0
     t_sat_d = f_sat_precisao(p_des, fluido) if p_des > 5 else 0.0
     
-    sh = round(t_suc - t_sat_s, 2) if t_sat_s != 0 else 0.0
-    sc = round(t_sat_d - t_liq, 2) if t_sat_d != 0 else 0.0
-    
-    # 3. Cálculos dos 5 Novos Deltas (Resolvendo o NameError)
+    sh          = round(t_suc - t_sat_s, 2) if t_sat_s != 0 else 0.0
+    sc          = round(t_sat_d - t_liq, 2) if t_sat_d != 0 else 0.0
     dt_ar       = round(t_ret - t_ins, 2)
     d_tensao    = round(v_med - v_lin, 2)
-    d_corrente  = round(i_med - rla, 2)
+    d_corrente  = round(i_med - rla, 2) if rla > 0 else 0.0
     sh_util     = round(sh * 0.8, 2) 
-    d_cap_f     = round(cm_f - cn_f, 2) # Agora cn_f existe!
+    d_cap_f     = round(cm_f - cn_f, 2)
     d_cap_c     = round(cm_c - cn_c, 2)
-
-    # --- 3. RESULTADOS CALCULADOS (5 COLUNAS X 2 LINHAS) ---
-    st.markdown("---")
-    st.subheader("2. Resultados Calculados")
-    
-    r1 = st.columns(5)
-    r1[0].metric("SH TOTAL", f"{sh:.1f} K")
-    r1[1].metric("SAT. SUCÇÃO", f"{t_sat_s:.1f} °C")
-    r1[2].metric("Δ T (AR)", f"{dt_ar:.1f} K")
-    r1[3].metric("SC FINAL", f"{sc:.1f} K")
-    r1[4].metric("SH ÚTIL", f"{sh_util:.1f} K")
-
-    r2 = st.columns(5)
-    r2[0].metric("Δ TENSÃO", f"{d_tensao:.1f} V")
-    r2[1].metric("Δ CORRENTE", f"{d_corrente:.1f} A")
-    r2[2].metric("Δ CAP. COMP.", f"{d_cap_c:.1f} µF")
-    r2[3].metric("Δ CAP. FAN", f"{d_cap_f:.1f} µF")
-    r2[4].metric("STATUS", "OK" if 5 <= sh <= 8 else "ALERTA")
 
     # --- 3. RESULTADOS CALCULADOS (5 COLUNAS X 2 LINHAS) ---
     st.markdown("---")
@@ -270,27 +250,20 @@ def renderizar_aba_diagnosticos():
     st.markdown("---")
     st.subheader("3. Parecer Técnico Final")
     
-    diag_previsto = ""
-    # Agora 'sh' e 'p_suc' estão definidos corretamente acima
+    diag_previsto = "Análise: Sistema operando dentro dos parâmetros."
     if sh > 12 and p_suc > 5:
-        diag_previsto = "Análise: Superaquecimento Elevado. Possível falta de fluido ou restrição."
+        diag_previsto = "Análise: Superaquecimento Elevado. Sugere falta de fluido ou restrição."
     elif dt_ar < 8 and t_ret > 0:
-        diag_previsto = "Análise: Baixo Diferencial de Temperatura. Verificar limpeza ou carga."
-    else:
-        diag_previsto = "Análise: Sistema operando dentro dos parâmetros."
+        diag_previsto = "Análise: Baixo Diferencial de Temperatura (Delta T do Ar)."
 
-    d['laudo_diag'] = st.text_area("Diagnóstico:", value=d.get('laudo_diag', diag_previsto), key="laudo_final_v1")
+    d['laudo_diag'] = st.text_area("Diagnóstico e Observações:", value=d.get('laudo_diag', diag_previsto), key="txt_laudo_final")
 
-    # Atualiza o estado global
-    d.update({'p_baixa': p_suc, 'temp_sucção': t_suc, 'p_alta': p_des, 'temp_liquido': t_liq, 'laudo_diag': d['laudo_diag']})
-
-    # Sincroniza dados de medição de volta para o estado global
+    # Atualização Global dos Dados
     d.update({
-        'p_baixa': p_suc, 'temp_sucção': t_suc,
-        'p_alta': p_des, 'temp_liquido': t_liq,
-        'temp_entrada_ar': t_ret, 'temp_saida_ar': t_ins
+        'p_baixa': p_suc, 'temp_sucção': t_suc, 'p_alta': p_des, 'temp_liquido': t_liq,
+        'temp_entrada_ar': t_ret, 'temp_saida_ar': t_ins, 'i_medida': i_med, 
+        'cm_c': cm_c, 'cm_f': cm_f, 'lra': lra, 'rla': rla
     })
-
 
 # ==============================================================================
 # 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
