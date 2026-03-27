@@ -3,6 +3,23 @@
 import streamlit as st
 import numpy as np
 import requests
+from datetime import datetime
+import urllib.parse
+import os 
+
+import streamlit as st
+import numpy as np
+import requests
+
+# INICIALIZAÇÃO DO ESTADO
+if 'dados' not in st.session_state:
+    st.session_state.dados = {
+        'tec_nome': '',
+        'fluido': 'R410A',
+        'pressao_baixa': 0.0,
+        'temp_evaporacao': 0.0,
+        'calor_latente': 0.0  # O "Superpoder" que discutimos!
+    }
 
 # ==============================================================================
 # 1. FUNÇÕES TÉCNICAS E DE UTILIDADE (FORA DAS ABAS)
