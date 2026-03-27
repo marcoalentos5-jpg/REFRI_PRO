@@ -208,23 +208,45 @@ def renderizar_aba_diagnosticos():
     # As outras 3 colunas da l3 ficam vazias para manter o tamanho dos campos igual aos de cima
 
     
-    # --- 2. PROCESSAMENTO TÉCNICO (CÁLCULOS) ---
+    # --- 2. PROCESSAMENTO TÉCNICO (PROTEÇÃO CONTRA ERROS DE VARIÁVEL) ---
+    
+    # 1. Busca valores nominais do cadastro (Aba 1) ou define como 0.0 se não existirem
+    cn_c = float(d.get('cn_c', 0.0)) # Capacitor Nominal Compressor
+    cn_f = float(d.get('cn_f', 0.0)) # Capacitor Nominal Fan
+    rla  = float(d.get('rla', 1.0))  # RLA (evita divisão por zero se vazio)
+
+    # 2. Cálculos de Saturação e Performance
     t_sat_s = f_sat_precisao(p_suc, fluido) if p_suc > 5 else 0.0
     t_sat_d = f_sat_precisao(p_des, fluido) if p_des > 5 else 0.0
     
-    # IMPORTANTE: Definindo 'sh' e 'sc' claramente para evitar o NameError
     sh = round(t_suc - t_sat_s, 2) if t_sat_s != 0 else 0.0
     sc = round(t_sat_d - t_liq, 2) if t_sat_d != 0 else 0.0
     
-    # Novos Deltas
-    dt_ar = round(t_ret - t_ins, 2)
-    d_tensao = round(v_med - v_lin, 2)
-    # RLA deve vir do cadastro ou ser 1.0 para evitar divisão por zero
-    rla = d.get('rla', 1.0) 
-    d_corrente = round(i_med - rla, 2)
-    sh_util = round(sh * 0.8, 2) # Exemplo de cálculo útil
-    d_cap_f = round(cm_f - cn_f, 2)
-    d_cap_c = round(cm_c - cn_c, 2)
+    # 3. Cálculos dos 5 Novos Deltas (Resolvendo o NameError)
+    dt_ar       = round(t_ret - t_ins, 2)
+    d_tensao    = round(v_med - v_lin, 2)
+    d_corrente  = round(i_med - rla, 2)
+    sh_util     = round(sh * 0.8, 2) 
+    d_cap_f     = round(cm_f - cn_f, 2) # Agora cn_f existe!
+    d_cap_c     = round(cm_c - cn_c, 2)
+
+    # --- 3. RESULTADOS CALCULADOS (5 COLUNAS X 2 LINHAS) ---
+    st.markdown("---")
+    st.subheader("2. Resultados Calculados")
+    
+    r1 = st.columns(5)
+    r1[0].metric("SH TOTAL", f"{sh:.1f} K")
+    r1[1].metric("SAT. SUCÇÃO", f"{t_sat_s:.1f} °C")
+    r1[2].metric("Δ T (AR)", f"{dt_ar:.1f} K")
+    r1[3].metric("SC FINAL", f"{sc:.1f} K")
+    r1[4].metric("SH ÚTIL", f"{sh_util:.1f} K")
+
+    r2 = st.columns(5)
+    r2[0].metric("Δ TENSÃO", f"{d_tensao:.1f} V")
+    r2[1].metric("Δ CORRENTE", f"{d_corrente:.1f} A")
+    r2[2].metric("Δ CAP. COMP.", f"{d_cap_c:.1f} µF")
+    r2[3].metric("Δ CAP. FAN", f"{d_cap_f:.1f} µF")
+    r2[4].metric("STATUS", "OK" if 5 <= sh <= 8 else "ALERTA")
 
     # --- 3. RESULTADOS CALCULADOS (5 COLUNAS X 2 LINHAS) ---
     st.markdown("---")
