@@ -172,15 +172,38 @@ def f_sat_precisao(p, g):
     return float(np.interp(p, tabelas[g]["xp"], tabelas[g]["fp"]))
 
 
-# ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO FINAL CONSOLIDADA)
+
+
+    # ==============================================================================
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO MASTER - COMPLETA E ORGANIZADA)
 # ==============================================================================
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
     d = st.session_state.dados
     fluido = d.get('fluido', 'R410A')
 
-    # --- 1. MEDIÇÕES DE CAMPO (20 CAMPOS ORGANIZADOS EM 4 SEÇÕES) ---
+    # --- 1. PAINEL DE REFERÊNCIA IDEAL (DINÂMICO POR GÁS) ---
+    referencias = {
+        'R410A': {"p_suc": "110 a 130 PSI", "t_sat": "2°C a 6°C", "sh": "5K a 9K", "sc": "5K a 8K"},
+        'R22':   {"p_suc": "60 a 75 PSI", "t_sat": "1°C a 5°C", "sh": "7K a 11K", "sc": "3K a 6K"},
+        'R134a': {"p_suc": "25 a 40 PSI", "t_sat": "-1°C a 4°C", "sh": "5K a 10K", "sc": "4K a 8K"},
+        'R404A': {"p_suc": "80 a 95 PSI", "t_sat": "-5°C a 0°C", "sh": "4K a 8K", "sc": "2K a 5K"}
+    }
+    ref = referencias.get(fluido, referencias['R410A'])
+
+    st.markdown(f"""
+        <div style="background-color: #1E1E1E; border-left: 5px solid #00CCFF; padding: 15px; border-radius: 10px; margin-bottom: 25px;">
+            <h4 style="margin-top:0; color: #00CCFF;">🎯 Referência Ideal para {fluido}</h4>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                <div><small>SUCÇÃO ALVO</small><br><b>{ref['p_suc']}</b></div>
+                <div><small>SATURAÇÃO ALVO</small><br><b>{ref['t_sat']}</b></div>
+                <div><small>SH (SUPERAQUEC.)</small><br><b>{ref['sh']}</b></div>
+                <div><small>SC (SUB-RESFR.)</small><br><b>{ref['sc']}</b></div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # --- 2. MEDIÇÕES DE CAMPO (20 CAMPOS - NOMES POR EXTENSO) ---
     st.subheader("1. Medições de Campo")
     
     # SEÇÃO A: 🔵 CICLO FRIGORÍFICO
@@ -190,7 +213,7 @@ def renderizar_aba_diagnosticos():
     t_suc = a2.number_input("TUB. SUCÇÃO (°C)", value=float(d.get('temp_sucção', 0.0)), format="%.1f", key="ts_m")
     p_des = a3.number_input("DESCARGA (PSI)", value=float(d.get('p_alta', 0.0)), format="%.1f", key="pd_m")
     t_liq = a4.number_input("TUB. LÍQUIDO (°C)", value=float(d.get('temp_liquido', 0.0)), format="%.1f", key="tl_m")
-    t_com = a5.number_input("TUB. Desc. Comp. (°C)", value=0.0, format="%.1f", key="tc_m")
+    t_com = a5.number_input("TUB. Desc. Comp. (°C)", value=float(d.get('temp_descarga', 0.0)), format="%.1f", key="tc_m")
 
     # SEÇÃO B: 🔴 AR E AMBIENTE
     st.markdown("##### 🔴 Ar e Ambiente")
@@ -219,58 +242,62 @@ def renderizar_aba_diagnosticos():
     cm_f  = d4.number_input("CAPACITÂNCIA Lido Fan", value=float(d.get('cm_f', 0.0)), format="%.1f", key="cmf_m")
     i_fan = d5.number_input("CORRENTE Fan (A)", value=0.0, format="%.2f", key="if_m")
 
-    # --- 2. PROCESSAMENTO TÉCNICO (CÁLCULOS) ---
+    # --- 3. PROCESSAMENTO TÉCNICO (CÁLCULOS) ---
     t_sat_s = f_sat_precisao(p_suc, fluido) if p_suc > 5 else 0.0
     t_sat_d = f_sat_precisao(p_des, fluido) if p_des > 5 else 0.0
-    
-    sh          = round(t_suc - t_sat_s, 2) if t_sat_s != 0 else 0.0
-    sc          = round(t_sat_d - t_liq, 2) if t_sat_d != 0 else 0.0
-    dt_ar       = round(t_ret - t_ins, 2)
-    d_tensao    = round(v_med - v_lin, 2)
-    d_corrente  = round(i_med - rla, 2) if rla > 0 else 0.0
-    sh_util     = round(sh * 0.8, 2) 
-    d_cap_f     = round(cm_f - cn_f, 2)
-    d_cap_c     = round(cm_c - cn_c, 2)
+    sh = round(t_suc - t_sat_s, 2) if t_sat_s != 0 else 0.0
+    sc = round(t_sat_d - t_liq, 2) if t_sat_d != 0 else 0.0
+    dt_ar = round(t_ret - t_ins, 2)
+    d_tensao = round(v_med - v_lin, 2)
+    d_corrente = round(i_med - rla, 2) if rla > 0 else 0.0
+    sh_util = round(sh * 0.8, 2) 
+    d_cap_f = round(cm_f - cn_f, 2)
+    d_cap_c = round(cm_c - cn_c, 2)
 
-    # --- 3. RESULTADOS CALCULADOS (10 RESULTADOS EM 5 COLUNAS) ---
+    # --- 4. RESULTADOS CALCULADOS (10 MÉTRICAS COM ALERTAS) ---
     st.markdown("---")
     st.subheader("2. Resultados Calculados")
+
+    # Lógica de Cores para Alertas
+    cls_sh = "metric-alerta" if not (5 <= sh <= 9) else "metric-ok"
+    cls_sc = "metric-alerta" if not (5 <= sc <= 8) else "metric-ok"
+    cls_dt = "metric-critico" if (dt_ar < 8 and t_ret > 0) else "metric-ok"
+    cls_status = "metric-critico" if (sh > 12 or dt_ar < 5) else ("metric-alerta" if (5 > sh or sh > 9) else "metric-ok")
+
+    r1 = st.columns(5)
+    r1[0].metric("SH TOTAL", f"{sh:.1f} K", delta=None if 5<=sh<=9 else "FORA", delta_color="inverse")
+    r1[1].metric("SAT. SUCÇÃO", f"{t_sat_s:.1f} °C")
+    r1[2].metric("Δ T (AR)", f"{dt_ar:.1f} K")
+    r1[3].metric("SC FINAL", f"{sc:.1f} K")
+    r1[4].metric("SH ÚTIL", f"{sh_util:.1f} K")
+
+    r2 = st.columns(5)
+    r2[0].metric("Δ TENSÃO", f"{d_tensao:.1f} V")
+    r2[1].metric("Δ CORRENTE", f"{d_corrente:.1f} A")
+    r2[2].metric("Δ CAP. COMP.", f"{d_cap_c:.1f} µF")
+    r2[3].metric("Δ CAP. FAN", f"{d_cap_f:.1f} µF")
+    r2[4].metric("STATUS", "CRÍTICO" if sh > 12 else ("ALERTA" if "alerta" in cls_sh else "OK"))
+
+    # --- 5. DIAGNÓSTICO INTELIGENTE (IA) ---
+    st.markdown("---")
+    st.subheader("🤖 Diagnóstico Inteligente (IA)")
     
-    res1 = st.columns(5)
-    res1[0].metric("SH TOTAL", f"{sh:.1f} K")
-    res1[1].metric("SAT. SUCÇÃO", f"{t_sat_s:.1f} °C")
-    res1[2].metric("Δ T (AR)", f"{dt_ar:.1f} K")
-    res1[3].metric("SC FINAL", f"{sc:.1f} K")
-    res1[4].metric("SH ÚTIL", f"{sh_util:.1f} K")
+    alertas_ia = []
+    if sh < 5: alertas_ia.append("⚠️ **SH Baixo:** Risco de golpe de líquido.")
+    if sh > 12: alertas_ia.append("⚠️ **SH Alto:** Compressor aquecendo demais.")
+    if dt_ar < 8 and t_ret > 0: alertas_ia.append("❄️ **Delta T Baixo:** Verifique filtros ou carga.")
+    if t_com > 100: alertas_ia.append("🔥 **Descarga Crítica:** Risco de queima do óleo lubrificante.")
+    
+    texto_ia = "\n".join(alertas_ia) if alertas_ia else "✅ Sistema operando conforme lógica nominal."
+    st.info(texto_ia)
 
-    res2 = st.columns(5)
-    res2[0].metric("Δ TENSÃO", f"{d_tensao:.1f} V")
-    res2[1].metric("Δ CORRENTE", f"{d_corrente:.1f} A")
-    res2[2].metric("Δ CAP. COMP.", f"{d_cap_c:.1f} µF")
-    res2[3].metric("Δ CAP. FAN", f"{d_cap_f:.1f} µF")
-    res2[4].metric("STATUS", "OK" if 5 <= sh <= 8 else "ALERTA")
-
-    # --- 4. PARECER TÉCNICO FINAL ---
+    # --- 6. PARECER TÉCNICO FINAL ---
     st.markdown("---")
     st.subheader("3. Parecer Técnico Final")
-    
-    diag_previsto = "Análise: Sistema operando dentro dos parâmetros."
-    if sh > 12 and p_suc > 5:
-        diag_previsto = "Análise: Superaquecimento Elevado. Sugere falta de fluido ou restrição."
-    elif dt_ar < 8 and t_ret > 0:
-        diag_previsto = "Análise: Baixo Diferencial de Temperatura (Delta T do Ar)."
-    elif t_com > 100:
-        diag_previsto = "ALERTA: Temperatura de Descarga crítica! Risco de carbonização do óleo."
+    d['laudo_diag'] = st.text_area("Diagnóstico e Observações:", value=d.get('laudo_diag', "Análise: Estável."), height=150)
 
-    d['laudo_diag'] = st.text_area("Diagnóstico e Observações:", value=d.get('laudo_diag', diag_previsto), height=150, key="txt_final_v1")
-
-    # Sincronização Final dos Dados
-    d.update({
-        'p_baixa': p_suc, 'temp_sucção': t_suc, 'p_alta': p_des, 'temp_liquido': t_liq,
-        'temp_entrada_ar': t_ret, 'temp_saida_ar': t_ins, 'i_medida': i_med, 
-        'rla': rla, 'cm_c': cm_c, 'cm_f': cm_f, 'v_nominal': v_lin, 'v_medida': v_med,
-        'cn_c': cn_c, 'cn_f': cn_f, 'lra': lra
-    })
+    # Sincronização Final
+    d.update({'p_baixa': p_suc, 'temp_sucção': t_suc, 'p_alta': p_des, 'temp_liquido': t_liq, 'rla': rla, 'cm_c': cm_c, 'cm_f': cm_f})
 
     
     # Atualização Global dos Dados
