@@ -18,10 +18,26 @@ def f_sat_precisao(p, g):
     return temp
 
 # 2. Depois as funções das abas
-def renderizar_aba_1():
+# Linha 21
+def f_sat_precisao(p, g):
+    if p <= 5: return -50.0  # <-- Esta linha PRECISA de 4 espaços na frente
+    
+    tabelas = {
+        "R410A": {"xp": [5, 550], "fp": [-50, 64.5]},
+        "R22":   {"xp": [5, 320], "fp": [-50, 58.5]}
+    }
+    if g not in tabelas: return 0.0
+    return float(np.interp(p, tabelas[g]["xp"], tabelas[g]["fp"]))
+
+# Linha 24 (Agora o Python aceita ela porque a de cima foi preenchida)
+def renderizar_aba_diagnosticos():
+    d = st.session_state.dados
+    # ... resto do código da aba
     # ... código da identificação ...
 
 def renderizar_aba_diagnosticos():
+
+    
     # ... código dos diagnósticos que arrumamos ...
 
 # 3. POR ÚLTIMO, a lógica de navegação (O "Cérebro" do App)
