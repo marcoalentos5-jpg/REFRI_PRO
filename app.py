@@ -101,48 +101,59 @@ def renderizar_aba_1():
         d['uf'] = ce7.text_input("UF:", value=d.get('uf', ''), max_chars=2, key="cli_uf_v3")
 
     
-# --- SEÇÃO EQUIPAMENTO (VERSÃO V4 - COM ESPAÇOS PREENCHIDOS) ---
+# --- SEÇÃO EQUIPAMENTO (VERSÃO V5 - ALINHAMENTO CORRIGIDO SIMÉTRICO) ---
     st.markdown("### ⚙️ Especificações do Equipamento")
     with st.expander("Detalhes Técnicos do Ativo", expanded=True):
-        e1, e2, e3 = st.columns(3)
         
-        with e1:
+        # LINHA 1: Fabricante, Número de Série e Capacidade
+        c1_l1, c2_l1, c3_l1 = st.columns(3)
+        with c1_l1:
             fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea", "Outro"])
             fab_idx = fab_list.index(d['fabricante']) if d['fabricante'] in fab_list else 0
-            d['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx, key="fab_v4")
-            d['modelo'] = st.text_input("Modelo:", value=d.get('modelo', ''), key="mod_v4")
-            
-            # CAMPO 1 (ESPAÇO EM BRANCO): TIPO DE ÓLEO
-            d['tipo_oleo'] = st.selectbox("Tipo de Óleo:", ["POE", "PVE", "Mineral", "PAG", "AB"], key="oleo_v4")
-            
-            # STATUS PRESERVADO
-            d['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], key="stat_v4")
+            d['fabricante'] = st.selectbox("Fabricante:", fab_list, index=fab_idx, key="fab_v5")
+        with c2_l1:
+            d['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=d.get('serie_evap', ''), key="sevap_v5")
+        with c3_l1:
+            d['capacidade'] = st.text_input("Capacidade (BTU/TR):", value=d.get('capacidade', '12.000'), key="cap_v5")
 
-        with e2:
-            d['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=d.get('serie_evap', ''), key="sevap_v4")
-            d['serie_cond'] = st.text_input("Nº Série (COND)", value=d.get('serie_cond', ''), key="scond_v4")
-            d['local_evap'] = st.text_input("Local Evaporadora:", value=d.get('local_evap', ''), key="levap_v4")
-            d['local_cond'] = st.text_input("Local Condensadora:", value=d.get('local_cond', ''), key="lcond_v4")
-            
-            # CAMPO 2 (ESPAÇO EM BRANCO): CARGA DE FLUIDO NOMINAL
-            d['carga_gas'] = st.text_input("Carga de Fluido (kg/g):", value=d.get('carga_gas', ''), placeholder="Ex: 1.2 kg", key="carga_v4")
+        # LINHA 2: Modelo, Série Condensadora e Potência
+        c1_l2, c2_l2, c3_l2 = st.columns(3)
+        with c1_l2:
+            d['modelo'] = st.text_input("Modelo:", value=d.get('modelo', ''), key="mod_v5")
+        with c2_l2:
+            d['serie_cond'] = st.text_input("Nº Série (COND)", value=d.get('serie_cond', ''), key="scond_v5")
+        with c3_l2:
+            d['potencia'] = st.text_input("Potência Nominal (W/kW):", value=d.get('potencia', ''), key="pot_v5")
 
-        with e3:
-            d['capacidade'] = st.text_input("Capacidade (BTU/TR):", value=d.get('capacidade', '12.000'), key="cap_v4")
-            d['potencia'] = st.text_input("Potência Nominal (W/kW):", value=d.get('potencia', ''), key="pot_v4")
-            
+        # LINHA 3: Local Evap, Local Cond e Fluido
+        c1_l3, c2_l3, c3_l3 = st.columns(3)
+        with c1_l3:
+            d['local_evap'] = st.text_input("Local Evaporadora:", value=d.get('local_evap', ''), key="levap_v5")
+        with c2_l3:
+            d['local_cond'] = st.text_input("Local Condensadora:", value=d.get('local_cond', ''), key="lcond_v5")
+        with c3_l3:
             lista_fluidos = ["R410A", "R32", "R22", "R134a", "R290", "R404A"]
             f_idx = lista_fluidos.index(d['fluido']) if d['fluido'] in lista_fluidos else 0
-            d['fluido'] = st.selectbox("Fluido Refrigerante:", lista_fluidos, index=f_idx, key="fluid_v4")
-            
-            d['ultima_maint'] = st.text_input("Última Manutenção:", value=d.get('ultima_maint', 'N/A'), key="maint_v4")
-            d['tag_id'] = st.text_input("TAG/Patrimônio:", value=d.get('tag_id', ''), key="tag_v4")
+            d['fluido'] = st.selectbox("Fluido Refrigerante:", lista_fluidos, index=f_idx, key="fluid_v5")
 
+        # LINHA 4: A LINHA DO ALINHAMENTO CRÍTICO (TUDO NA MESMA HORIZONTAL)
+        c1_l4, c2_l4, c3_l4 = st.columns(3)
         
-            # SUGESTÃO: ÚLTIMA MANUTENÇÃO (FAVORECE A ANÁLISE)
-            d['ultima_maint'] = st.text_input("Última Manutenção:", value=d.get('ultima_maint', 'N/A'), key="maint_v3")
-            d['tag_id'] = st.text_input("TAG/Patrimônio:", value=d.get('tag_id', ''), key="tag_v3")
+        with c1_l4:
+            # CAMPO SOLICITADO 1: TIPO DE ÓLEO
+            d['tipo_oleo'] = st.selectbox("Tipo de Óleo:", ["POE", "Mineral", "PVE", "PAG", "AB"], key="oleo_v5")
+            
+            # STATUS PRESERVADO E ALINHADO
+            d['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], key="stat_v5")
 
+        with c2_l4:
+            # CAMPO SOLICITADO 2: CARGA DE FLUIDO NOMINAL
+            d['carga_gas'] = st.text_input("Carga de Fluido (kg/g):", value=d.get('carga_gas', ''), placeholder="Ex: 1.2 kg", key="carga_v5")
+
+        with c3_l4:
+            # MANUTENÇÃO E TAG
+            d['ultima_maint'] = st.text_input("Última Manutenção:", value=d.get('ultima_maint', 'N/A'), key="maint_v5")
+            d['tag_id'] = st.text_input("TAG/Patrimônio:", value=d.get('tag_id', ''), key="tag_v5")
 
 # --- MOTOR DE CÁLCULO PT (DIRETRIZ: PRECISÃO INDUSTRIAL) ---
 def f_sat_precisao(p, g):
