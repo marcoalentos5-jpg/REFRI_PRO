@@ -83,100 +83,104 @@ if 'dados' not in st.session_state:
     }
 
 
+
 # ==============================================================================
-# 4. FUNÇÃO DA ABA 2: DIAGNÓSTICOS (LAYOUT FORÇADO 5x2 COM MOLDURAS)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO UNIFICADA E CORRIGIDA 5x2)
 # ==============================================================================
-def renderizar_aba_2():
+def renderizar_aba_diagnosticos():
+    # Referência ao estado global
     d = st.session_state.dados
-    fluido_sel = d.get('fluido', 'R410A')
+    fluido = d.get('fluido', 'R410A')
 
     st.markdown(f"### 🔍 Central de Diagnóstico Técnico")
+    st.info(f"❄️ Fluido Refrigerante em Análise: **{fluido}**")
     
     # --- 1. MEDIÇÕES DE CAMPO ---
     st.markdown("#### 1. Medições de Campo")
     c1, c2, c3, c4 = st.columns(4)
-    
+
     with c1:
         st.caption("🔵 BAIXA / AR")
-        d['p_suc_psi'] = st.number_input("P. Sucção (PSI)", value=float(d.get('p_suc_psi', 0.0)), key='psuc_v2')
-        d['t_tubo_suc'] = st.number_input("T. Tubo Suc. (°C)", value=float(d.get('t_tubo_suc', 0.0)), key='tsuc_v2')
-        d['t_retorno'] = st.number_input("1. T. Retorno (°C)", value=float(d.get('t_retorno', 0.0)), key='tret_v2')
-        d['t_insufla'] = st.number_input("2. T. Insuflação (°C)", value=float(d.get('t_insufla', 0.0)), key='tins_v2')
+        # Sincronizando com as chaves corretas do session_state
+        d['p_baixa'] = st.number_input("P. Sucção (PSI)", value=float(d.get('p_baixa', 0.0)), format="%.1f", key="ps_final")
+        d['temp_sucção'] = st.number_input("T. Tubo Suc. (°C)", value=float(d.get('temp_sucção', 0.0)), format="%.1f", key="ts_final")
+        d['temp_entrada_ar'] = st.number_input("1. T. Retorno (°C)", value=float(d.get('temp_entrada_ar', 0.0)), format="%.1f", key="tr_final")
+        d['temp_saida_ar'] = st.number_input("2. T. Insuflação (°C)", value=float(d.get('temp_saida_ar', 0.0)), format="%.1f", key="ti_final")
 
     with c2:
         st.caption("🔴 ALTA / TENSÃO")
-        d['p_desc_psi'] = st.number_input("P. Descarga (PSI)", value=float(d.get('p_desc_psi', 0.0)), key='pdesc_v2')
-        d['t_tubo_liq'] = st.number_input("T. Tubo Líq. (°C)", value=float(d.get('t_tubo_liq', 0.0)), key='tliq_v2')
-        d['v_linha'] = st.number_input("Tens. Linha (V)", value=float(d.get('v_linha', 220.0)), key='vlin_v2')
-        d['v_medida'] = st.number_input("Tens. Medida (V)", value=float(d.get('v_medida', 220.0)), key='vmed_v2')
+        d['p_alta'] = st.number_input("P. Descarga (PSI)", value=float(d.get('p_alta', 0.0)), format="%.1f", key="pd_final")
+        d['temp_liquido'] = st.number_input("T. Tubo Líq. (°C)", value=float(d.get('temp_liquido', 0.0)), format="%.1f", key="tl_final")
+        d['v_linha'] = st.number_input("Tens. Linha (V)", value=float(d.get('v_linha', 220.0)), key="vl_final")
+        d['v_medida'] = st.number_input("Tens. Medida (V)", value=float(d.get('v_medida', 220.0)), key="vm_final")
 
     with c3:
         st.caption("⚡ CORRENTE / CARGA")
-        d['lra'] = st.number_input("LRA (A)", value=float(d.get('lra', 0.0)), key='lra_v2')
-        d['rla'] = st.number_input("RLA (A)", value=float(d.get('rla', 0.0)), key='rla_v2')
-        d['i_medida'] = st.number_input("Corr. Medida (A)", value=float(d.get('i_medida', 0.0)), key='imed_v2')
-        carga = (d['i_medida'] / d['rla'] * 100) if d['rla'] > 0 else 0.0
-        st.write(f"Carga do Comp.: **{carga:.1f}%**")
+        d['lra'] = st.number_input("LRA (A)", value=float(d.get('lra', 0.0)), key="lra_final")
+        d['rla'] = st.number_input("RLA (A)", value=float(d.get('rla', 0.0)), key="rla_final")
+        d['i_medida'] = st.number_input("Corr. Medida (A)", value=float(d.get('i_medida', 0.0)), key="im_final")
+        perc_calc = (d['i_medida'] / d['rla'] * 100) if d['rla'] > 0 else 0.0
+        st.write(f"Carga do Comp.: **{perc_calc:.1f}%**")
 
     with c4:
         st.caption("🔋 CAPACITORES (µF)")
-        d['c_nom_comp'] = st.number_input("C. Nom. Comp", value=float(d.get('c_nom_comp', 0.0)), key='cnomc_v2')
-        d['c_lido_comp'] = st.number_input("C. Lido Comp", value=float(d.get('c_lido_comp', 0.0)), key='clidc_v2')
-        d['c_nom_fan'] = st.number_input("C. Nom. Fan", value=float(d.get('c_nom_fan', 0.0)), key='cnomf_v2')
-        d['c_lido_fan'] = st.number_input("C. Lido Fan", value=float(d.get('c_lido_fan', 0.0)), key='clidf_v2')
+        d['c_nom_comp'] = st.number_input("C. Nom. Comp", value=float(d.get('c_nom_comp', 0.0)), key="cnc_final")
+        d['c_lido_comp'] = st.number_input("C. Lido Comp", value=float(d.get('c_lido_comp', 0.0)), key="cmc_final")
+        d['c_nom_fan'] = st.number_input("C. Nom. Fan", value=float(d.get('c_nom_fan', 0.0)), key="cnf_final")
+        d['c_lido_fan'] = st.number_input("C. Lido Fan", value=float(d.get('c_lido_fan', 0.0)), key="cmf_final")
 
-    # --- CÁLCULOS ---
-    sat_suc = calcular_saturacao(d['p_suc_psi'], fluido_sel)
-    sat_liq = calcular_saturacao(d['p_desc_psi'], fluido_sel)
-    sh_total = d['t_tubo_suc'] - sat_suc
-    sh_util = sh_total * 0.8
-    sc_final = sat_liq - d['t_tubo_liq']
-    delta_i = d['i_medida'] - d['rla']
-    delta_v = d['v_linha'] - d['v_medida']
-    delta_t_ar = d['t_retorno'] - d['t_insufla']
-    delta_cap_c = d['c_nom_comp'] - d['c_lido_comp']
-    delta_cap_f = d['c_nom_fan'] - d['c_lido_fan']
+    # --- 2. PROCESSAMENTO TÉCNICO (CÁLCULOS REAIS) ---
+    t_sat_s = f_sat_precisao(d['p_baixa'], fluido) if d['p_baixa'] > 5 else 0.0
+    t_sat_d = f_sat_precisao(d['p_alta'], fluido) if d['p_alta'] > 5 else 0.0
+    
+    sh = d['temp_sucção'] - t_sat_s if t_sat_s != 0 else 0.0
+    sh_util = sh * 0.8
+    sc = t_sat_d - d['temp_liquido'] if t_sat_d != 0 else 0.0
+    dt_ar = d['temp_entrada_ar'] - d['temp_saida_ar']
 
-    # --- 2. RESULTADOS CALCULADOS (AQUI ESTÁ O AJUSTE VISUAL) ---
+    # --- 3. RESULTADOS CALCULADOS (LAYOUT 5x2 COM MOLDURAS) ---
     st.markdown("---")
     st.markdown("#### 2. Resultados Calculados")
 
-    # CSS PARA FORÇAR AS MOLDURAS (COMO NA IMAGEM D7BCD9)
     st.markdown("""
         <style>
             .moldura-resultado {
                 border: 2px solid #ffffff !important;
-                border-radius: 15px !important;
-                padding: 20px !important;
+                border-radius: 12px !important;
+                padding: 15px !important;
                 text-align: center !important;
-                background-color: transparent !important;
-                margin-bottom: 15px !important;
+                background-color: #0e1117 !important;
+                margin-bottom: 10px !important;
+                min-height: 100px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
             }
-            .moldura-resultado p { color: #aaaaaa !important; margin: 0 !important; font-size: 12px !important; font-weight: bold; }
-            .moldura-resultado h2 { color: #ffffff !important; margin: 5px 0 0 0 !important; font-size: 28px !important; }
+            .moldura-resultado p { color: #aaaaaa !important; margin: 0 !important; font-size: 10px !important; font-weight: bold; text-transform: uppercase; }
+            .moldura-resultado h2 { color: #ffffff !important; margin: 5px 0 0 0 !important; font-size: 22px !important; }
         </style>
     """, unsafe_allow_html=True)
 
-    # CRIANDO 5 COLUNAS PARA A GRADE
     r1, r2, r3, r4, r5 = st.columns(5)
-
-    # LINHA 1
-    with r1: st.markdown(f'<div class="moldura-resultado"><p>SH TOTAL</p><h2>{sh_total:.1f} K</h2></div>', unsafe_allow_html=True)
+    
+    # Linha 1
+    with r1: st.markdown(f'<div class="moldura-resultado"><p>SH TOTAL</p><h2>{sh:.1f} K</h2></div>', unsafe_allow_html=True)
     with r2: st.markdown(f'<div class="moldura-resultado"><p>SH ÚTIL</p><h2>{sh_util:.1f} K</h2></div>', unsafe_allow_html=True)
-    with r3: st.markdown(f'<div class="moldura-resultado"><p>SAT. SUCÇÃO</p><h2>{sat_suc:.1f} °C</h2></div>', unsafe_allow_html=True)
-    with r4: st.markdown(f'<div class="moldura-resultado"><p>Δ CORRENTE</p><h2>{delta_i:.1f} A</h2></div>', unsafe_allow_html=True)
-    with r5: st.markdown(f'<div class="moldura-resultado"><p>Δ T (AR)</p><h2>{delta_t_ar:.1f} K</h2></div>', unsafe_allow_html=True)
+    with r3: st.markdown(f'<div class="moldura-resultado"><p>SAT. SUCÇÃO</p><h2>{t_sat_s:.1f} °C</h2></div>', unsafe_allow_html=True)
+    with r4: st.markdown(f'<div class="moldura-resultado"><p>Δ CORRENTE</p><h2>{d["i_medida"] - d["rla"]:.1f} A</h2></div>', unsafe_allow_html=True)
+    with r5: st.markdown(f'<div class="moldura-resultado"><p>Δ T (AR)</p><h2>{dt_ar:.1f} K</h2></div>', unsafe_allow_html=True)
 
-    # LINHA 2 (Abaixo dos mesmos 'with' para alinhar)
-    with r1: st.markdown(f'<div class="moldura-resultado"><p>SC FINAL</p><h2>{sc_final:.1f} K</h2></div>', unsafe_allow_html=True)
-    with r2: st.markdown(f'<div class="moldura-resultado"><p>SAT. LÍQUIDO</p><h2>{sat_liq:.1f} °C</h2></div>', unsafe_allow_html=True)
-    with r3: st.markdown(f'<div class="moldura-resultado"><p>Δ TENSÃO</p><h2>{delta_v:.1f} V</h2></div>', unsafe_allow_html=True)
-    with r4: st.markdown(f'<div class="moldura-resultado"><p>Δ CAP. COMP.</p><h2>{delta_cap_c:.1f} µF</h2></div>', unsafe_allow_html=True)
-    with r5: st.markdown(f'<div class="moldura-resultado"><p>Δ CAP. FAN</p><h2>{delta_cap_f:.1f} µF</h2></div>', unsafe_allow_html=True)
+    # Linha 2
+    with r1: st.markdown(f'<div class="moldura-resultado"><p>SC FINAL</p><h2>{sc:.1f} K</h2></div>', unsafe_allow_html=True)
+    with r2: st.markdown(f'<div class="moldura-resultado"><p>SAT. LÍQUIDO</p><h2>{t_sat_d:.1f} °C</h2></div>', unsafe_allow_html=True)
+    with r3: st.markdown(f'<div class="moldura-resultado"><p>Δ TENSÃO</p><h2>{d["v_linha"] - d["v_medida"]:.1f} V</h2></div>', unsafe_allow_html=True)
+    with r4: st.markdown(f'<div class="moldura-resultado"><p>Δ CAP. COMP.</p><h2>{d["c_lido_comp"] - d["c_nom_comp"]:.1f} µF</h2></div>', unsafe_allow_html=True)
+    with r5: st.markdown(f'<div class="moldura-resultado"><p>Δ CAP. FAN</p><h2>{d["c_lido_fan"] - d["c_nom_fan"]:.1f} µF</h2></div>', unsafe_allow_html=True)
 
-    # --- 3. PARECER DO TÉCNICO ---
+    # --- 4. PARECER TÉCNICO FINAL ---
+    st.markdown("---")
     st.markdown("#### 3. Parecer Técnico Final")
-    d['parecer'] = st.text_area("Diagnóstico e Observações:", value=d.get('parecer', ''), height=100)
+    d['laudo_diag'] = st.text_area("Diagnóstico e Observações:", value=d.get('laudo_diag', ''), height=120, key="area_laudo_final")
 
 # ==============================================================================
 # 1.2 FUNÇÃO DA ABA 1: Identificação e Equipamento (LIMPEZA DEFINITIVA)
