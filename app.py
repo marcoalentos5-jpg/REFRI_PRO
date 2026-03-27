@@ -295,29 +295,50 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # VALIDAÇÃO DE CAMPOS OBRIGATÓRIOS
-    if not st.session_state.dados['nome'] or not st.session_state.dados['whatsapp']:
-        st.error("📋 STATUS: PENDENTE (Preencha Cliente e WhatsApp)")
+
+# --- FINAL DO APP: VALIDAÇÃO, ENVIO E LIMPEZA ---
+    st.markdown("---")
+    d = st.session_state.dados
+
+    # 1. VALIDAÇÃO DE CAMPOS OBRIGATÓRIOS (Usando .get para não travar)
+    if not d.get('nome') or not d.get('whatsapp'):
+        st.error("📋 STATUS: PENDENTE (Preencha Cliente e WhatsApp na Aba Cadastro)")
     else:
         st.success("📋 STATUS: PRONTO PARA ENVIO")
         
-File "/mount/src/refri_pro/app.py", line 310, in <module>
-    f"🏙️ {st.session_state.dados['cidade']}/{st.session_state.dados['uf']} | CEP: {st.session_state.dados['cep']}\n"
-                      
-    
-    
-    link_final = f"https://wa.me/55{st.session_state.dados['whatsapp']}?text={urllib.parse.quote(msg_zap)}"
-    st.link_button("📲 Enviar Laudo via WhatsApp", link_final, use_container_width=True)
+        # 2. MONTAGEM DA MENSAGEM (Protegida contra SyntaxError e KeyError)
+        msg_zap = (
+            f"*LAUDO TÉCNICO HVAC*\n\n"
+            f"👤 *CLIENTE:* {d.get('nome', '')}\n"
+            f"📍 END: {d.get('endereco', '')}, {d.get('numero', '')}\n"
+            f"🏙️ {d.get('cidade', '')}/{d.get('uf', '')} | CEP: {d.get('cep', '')}\n"
+            f"📞 Contato: {d.get('whatsapp', '')}\n\n"
+            f"⚙️ *EQUIPAMENTO:*\n"
+            f"📌 TAG: {d.get('tag_id', '')} | Mod: {d.get('modelo', '')}\n"
+            f"❄️ Fluido: {d.get('fluido', '')}\n\n"
+            f"🩺 *DIAGNÓSTICO:*\n"
+            f"{d.get('laudo_diag', 'Sem observações.')}\n\n"
+            f"👨‍🔧 *TÉCNICO:* {d.get('tecnico_nome', '')}\n"
+            f"📅 Data: {d.get('data', '')}"
+        )
+
+        # 3. GERAÇÃO DO LINK E BOTÃO DE ENVIO
+        texto_url = urllib.parse.quote(msg_zap)
+        link_final = f"https://wa.me/55{d.get('whatsapp', '')}?text={texto_url}"
+        st.link_button("📲 Enviar Laudo via WhatsApp", link_final, use_container_width=True)
 
     st.markdown("---")
-    # LIMPAR FORMULÁRIO (PROTEGENDO DADOS DO TÉCNICO)
-    if st.button("🗑️ Limpar Formulário", use_container_width=True):
-        chaves_tecnico = ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']
-        for key in st.session_state.dados.keys():
-            if key not in chaves_tecnico:
-                st.session_state.dados[key] = ""
-        st.rerun()
 
+    # 4. LIMPAR FORMULÁRIO (DIRETRIZ: PROTEGENDO DADOS DO TÉCNICO)
+    if st.button("🗑️ Limpar Formulário", use_container_width=True):
+        # Lista do que NÃO deve ser apagado
+        chaves_preservadas = ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']
+        
+        for chave in list(st.session_state.dados.keys()):
+            if chave not in chaves_preservadas:
+                st.session_state.dados[chave] = ""
+        
+        st.rerun()
 
 # ==============================================================================
 # 4. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
