@@ -255,14 +255,21 @@ def renderizar_aba_diagnosticos():
     rla   = c4.number_input("RLA - Nominal (A)", value=float(d.get('rla', 0.0)), key="rla_m")
     lra   = c5.number_input("LRA - Partida (A)", value=float(d.get('lra', 0.0)), key="lra_m")
 
-    # SEÇÃO D: 🔋 CAPACITÂNCIA E VENTILAÇÃO
+    
+    # SEÇÃO D: 🔋 CAPACITÂNCIA E VENTILAÇÃO (TRAVADA)
     st.markdown("##### 🔋 Capacitância e Ventilação")
     d1, d2, d3, d4, d5 = st.columns(5)
-    cn_c  = d1.number_input("CAPACITÂNCIA Nom. Comp", value=float(d.get('cn_c', 0.0)), format="%.1f", key="cnc_m")
-    cm_c  = d2.number_input("CAPACITÂNCIA Lido Comp", value=float(d.get('cm_c', 0.0)), format="%.1f", key="cmc_m")
-    cn_f  = d3.number_input("CAPACITÂNCIA Nom. Fan", value=float(d.get('cn_f', 0.0)), format="%.1f", key="cnf_m")
-    cm_f  = d4.number_input("CAPACITÂNCIA Lido Fan", value=float(d.get('cm_f', 0.0)), format="%.1f", key="cmf_m")
-    i_fan = d5.number_input("CORRENTE Fan (A)", value=0.0, format="%.2f", key="if_m")
+    
+    # Cada campo agora lê o valor de 'd' e salva de volta na hora
+    d['cn_c'] = d1.number_input("CAPACITÂNCIA Nom. Comp", value=float(d.get('cn_c', 0.0)), format="%.1f", key="cnc_m_fix")
+    d['cm_c'] = d2.number_input("CAPACITÂNCIA Lido Comp", value=float(d.get('cm_c', 0.0)), format="%.1f", key="cmc_m_fix")
+    d['cn_f'] = d3.number_input("CAPACITÂNCIA Nom. Fan", value=float(d.get('cn_f', 0.0)), format="%.1f", key="cnf_m_fix")
+    d['cm_f'] = d4.number_input("CAPACITÂNCIA Lido Fan", value=float(d.get('cm_f', 0.0)), format="%.1f", key="cmf_m_fix")
+    d['i_fan'] = d5.number_input("CORRENTE Fan (A)", value=float(d.get('i_fan', 0.0)), format="%.2f", key="if_m_fix")
+
+    # Cálculos automáticos de diferença (Δ) para o painel de resultados
+    d_cap_c = round(d['cm_c'] - d['cn_c'], 2)
+    d_cap_f = round(d['cm_f'] - d['cn_f'], 2)
 
     # --- 3. PROCESSAMENTO TÉCNICO (CÁLCULOS) ---
     t_sat_s = f_sat_precisao(p_suc, fluido) if p_suc > 5 else 0.0
