@@ -347,7 +347,8 @@ def renderizar_aba_diagnosticos():
     d.update({
         'p_baixa': p_suc, 'temp_sucção': t_suc, 'p_alta': p_des, 'temp_liquido': t_liq,
         'temp_entrada_ar': t_ret, 'temp_saida_ar': t_ins, 'i_medida': i_med, 
-      
+    }
+        
 dados_resumo = {
     'cm_c': d.get('cm_c', 0.0), 
     'cm_f': d.get('cm_f', 0.0), 
