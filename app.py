@@ -137,48 +137,23 @@ def renderizar_aba_1():
             fl_idx = fluidos.index(d['fluido']) if d['fluido'] in fluidos else 0
             d['fluido'] = st.selectbox("Fluido Refrigerante:", fluidos, index=fl_idx, key="eq_fl")
 
-        # ==============================================================================
-        # LINHA 4 - MESCLADA E TESTADA (CORRIGE O STATUS "PULANTE")
-        # ==============================================================================
+        # LINHA 4
         l4_c1, l4_c2, l4_c3 = st.columns(3)
         with l4_c1:
-            d['tipo_oleo'] = st.selectbox("Tipo de Óleo:", ["POE", "Mineral", "PVE", "PAG", "AB"], key="eq_ol_v3")
-            
-            # Trava de Status: Define as opções e busca o que já foi marcado
-            opcoes_status = ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"]
-            status_no_sistema = d.get('status_maquina', "🟢 Operacional")
-            
-            try:
-                idx_status = opcoes_status.index(status_no_sistema)
-            except ValueError:
-                idx_status = 0
-
-            # O segredo é o index=idx_status e a key única
-            d['status_maquina'] = st.radio(
-                "Status:", 
-                opcoes_status, 
-                index=idx_status, 
-                key="status_radio_operacional"
-            )
-
+            d['tipo_oleo'] = st.selectbox("Tipo de Óleo:", ["POE", "Mineral", "PVE", "PAG", "AB"], key="eq_ol")
+            d['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], key="eq_st")
         with l4_c2:
-            d['carga_gas'] = st.text_input("Carga de Fluido (kg/g):", value=d.get('carga_gas', ''), key="eq_cg_v3")
-            d['tensao'] = st.selectbox("Tensão Nominal (V):", ["220V/1F", "220V/3F", "380V/3F", "440V/3F", "127V"], key="eq_te_v3")
-
+            d['carga_gas'] = st.text_input("Carga de Fluido (kg/g):", value=d.get('carga_gas', ''), key="eq_cg")
+            d['tensao'] = st.selectbox("Tensão Nominal (V):", ["220V/1F", "220V/3F", "380V/3F", "440V/3F", "127V"], key="eq_te")
         with l4_c3:
             try:
-                # Tenta converter a data salva, se falhar usa a data de hoje
-                data_str = d.get('ultima_maint', datetime.now().strftime("%d/%m/%Y"))
-                dt = datetime.strptime(data_str, "%d/%m/%Y").date()
+                dt = datetime.strptime(d.get('ultima_maint', datetime.now().strftime("%d/%m/%Y")), "%d/%m/%Y").date()
             except:
                 dt = datetime.now().date()
-                
-            d['ultima_maint'] = st.date_input("Última Manutenção:", value=dt, format="DD/MM/YYYY", key="eq_dt_v3").strftime("%d/%m/%Y")
-            d['tag_id'] = st.text_input("TAG/Patrimônio:", value=d.get('tag_id', ''), key="eq_ta_v3")
+            d['ultima_maint'] = st.date_input("Última Manutenção:", value=dt, format="DD/MM/YYYY", key="eq_dt").strftime("%d/%m/%Y")
+            d['tag_id'] = st.text_input("TAG/Patrimônio:", value=d.get('tag_id', ''), key="eq_ta")
 
-# ==============================================================================
-# MOTOR DE CÁLCULO PT (DIRETRIZ: PRECISÃO INDUSTRIAL) - MANTIDO INTEGRALMENTE
-# ==============================================================================
+# --- MOTOR DE CÁLCULO PT (DIRETRIZ: PRECISÃO INDUSTRIAL) ---
 def f_sat_precisao(p, g):
     if p <= 5: return -50.0
     
@@ -195,6 +170,10 @@ def f_sat_precisao(p, g):
     
     # Interpolação linear para encontrar a temperatura exata baseada na pressão
     return float(np.interp(p, tabelas[g]["xp"], tabelas[g]["fp"]))
+
+
+
+
 
 # ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO MASTER ATUALIZADA)
@@ -255,35 +234,14 @@ def renderizar_aba_diagnosticos():
     rla   = c4.number_input("RLA - Nominal (A)", value=float(d.get('rla', 0.0)), key="rla_m")
     lra   = c5.number_input("LRA - Partida (A)", value=float(d.get('lra', 0.0)), key="lra_m")
 
-    
-
-# SEÇÃO D: 🔋 CAPACITÂNCIA E VENTILAÇÃO
+    # SEÇÃO D: 🔋 CAPACITÂNCIA E VENTILAÇÃO
     st.markdown("##### 🔋 Capacitância e Ventilação")
     d1, d2, d3, d4, d5 = st.columns(5)
-    
-    # Lendo e gravando direto no dicionário 'd'
-    d['cn_c'] = d1.number_input("CAPACITÂNCIA Nom. Comp", value=float(d.get('cn_c', 0.0)), format="%.1f", key="cnc_v6")
-    d['cm_c'] = d2.number_input("CAPACITÂNCIA Lido Comp", value=float(d.get('cm_c', 0.0)), format="%.1f", key="cmc_v6")
-    d['cn_f'] = d3.number_input("CAPACITÂNCIA Nom. Fan", value=float(d.get('cn_f', 0.0)), format="%.1f", key="cnf_v6")
-    d['cm_f'] = d4.number_input("CAPACITÂNCIA Lido Fan", value=float(d.get('cm_f', 0.0)), format="%.1f", key="cmf_v6")
-    d['i_fan'] = d5.number_input("CORRENTE Fan (A)", value=float(d.get('i_fan', 0.0)), format="%.2f", key="if_v6")
-    
-    # --- CÁLCULOS DOS DIFERENCIAIS (Δ) ---
-    d_cap_c = round(d['cm_c'] - d['cn_c'], 2)
-    d_cap_f = round(d['cm_f'] - d['cn_f'], 2)
-
-    # --- ATUALIZAÇÃO DOS RESULTADOS (Para as Métricas) ---
-    st.markdown("---")
-    res = st.columns(5)
-    # ... (outras métricas de SH/SC aqui) ...
-    
-    with res[4]:
-        st.metric("Δ CAP. COMP.", f"{d_cap_c:.1f} µF")
-        st.metric("Δ CAP. FAN", f"{d_cap_f:.1f} µF")
-    
-    # Cálculos automáticos de diferença (Δ) para o painel de resultados
-    d_cap_c = round(d['cm_c'] - d['cn_c'], 2)
-    d_cap_f = round(d['cm_f'] - d['cn_f'], 2)
+    cn_c  = d1.number_input("CAPACITÂNCIA Nom. Comp", value=float(d.get('cn_c', 0.0)), format="%.1f", key="cnc_m")
+    cm_c  = d2.number_input("CAPACITÂNCIA Lido Comp", value=float(d.get('cm_c', 0.0)), format="%.1f", key="cmc_m")
+    cn_f  = d3.number_input("CAPACITÂNCIA Nom. Fan", value=float(d.get('cn_f', 0.0)), format="%.1f", key="cnf_m")
+    cm_f  = d4.number_input("CAPACITÂNCIA Lido Fan", value=float(d.get('cm_f', 0.0)), format="%.1f", key="cmf_m")
+    i_fan = d5.number_input("CORRENTE Fan (A)", value=0.0, format="%.2f", key="if_m")
 
     # --- 3. PROCESSAMENTO TÉCNICO (CÁLCULOS) ---
     t_sat_s = f_sat_precisao(p_suc, fluido) if p_suc > 5 else 0.0
@@ -294,8 +252,8 @@ def renderizar_aba_diagnosticos():
     d_tensao = round(v_med - v_lin, 2)
     d_corrente = round(i_med - rla, 2) if rla > 0 else 0.0
     sh_util = round(sh * 0.8, 2) 
-    d_cap_c = round(d['cm_c'] - d['cn_c'], 2)
-    d_cap_f = round(d['cm_f'] - d['cn_f'], 2)
+    d_cap_f = round(cm_f - cn_f, 2)
+    d_cap_c = round(cm_c - cn_c, 2)
 
 
 # --- 3. RESULTADOS CALCULADOS (FONTE REDUZIDA E COR PERSONALIZADA) ---
