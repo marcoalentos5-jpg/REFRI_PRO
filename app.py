@@ -344,10 +344,14 @@ def renderizar_aba_diagnosticos():
     d['laudo_diag'] = st.text_area("Diagnóstico e Observações:", value=d.get('laudo_diag', "Análise: Estável."), height=150)
 
     # Sincronização e Atualização Global Final
-    d.update({
-        'p_baixa': p_suc, 'temp_sucção': t_suc, 'p_alta': p_des, 'temp_liquido': t_liq,
-        'temp_entrada_ar': t_ret, 'temp_saida_ar': t_ins, 'i_medida': i_med, 
-    }
+  # --- ATUALIZAÇÃO DOS DADOS (LINHA 347 CORRIGIDA) ---
+        d.update({
+            'cm_c': d.get('cm_c', 0.0), 
+            'cm_f': d.get('cm_f', 0.0), 
+            'lra': d.get('lra', 0.0), 
+            'rla': d.get('rla', 0.0), 
+            'temp_descarga': d.get('temp_descarga', 0.0)
+        }) # <--- O PARÊNTESE QUE FALTAVA ESTÁ AQUI
         
 dados_resumo = {
     'cm_c': d.get('cm_c', 0.0), 
