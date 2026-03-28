@@ -261,17 +261,23 @@ def renderizar_aba_diagnosticos():
     st.markdown("##### 🔋 Capacitância e Ventilação")
     d1, d2, d3, d4, d5 = st.columns(5)
     
-    # Lendo e gravando direto no dicionário 'd' para não zerar
-    d['cn_c'] = d1.number_input("CAPACITÂNCIA Nom. Comp", value=float(d.get('cn_c', 0.0)), format="%.1f", key="cnc_m_v4")
-    d['cm_c'] = d2.number_input("CAPACITÂNCIA Lido Comp", value=float(d.get('cm_c', 0.0)), format="%.1f", key="cmc_m_v4")
-    d['cn_f'] = d3.number_input("CAPACITÂNCIA Nom. Fan", value=float(d.get('cn_f', 0.0)), format="%.1f", key="cnf_m_v4")
-    d['cm_f'] = d4.number_input("CAPACITÂNCIA Lido Fan", value=float(d.get('cm_f', 0.0)), format="%.1f", key="cmf_m_v4")
-    d['i_fan'] = d5.number_input("CORRENTE Fan (A)", value=float(d.get('i_fan', 0.0)), format="%.2f", key="if_m_v4")
-
+    # Lendo e gravando direto no dicionário 'd' para não zerar e não dar erro de variável
+    d['cn_c'] = d1.number_input("CAPACITÂNCIA Nom. Comp", value=float(d.get('cn_c', 0.0)), format="%.1f", key="cnc_v5")
+    d['cm_c'] = d2.number_input("CAPACITÂNCIA Lido Comp", value=float(d.get('cm_c', 0.0)), format="%.1f", key="cmc_v5")
+    d['cn_f'] = d3.number_input("CAPACITÂNCIA Nom. Fan", value=float(d.get('cn_f', 0.0)), format="%.1f", key="cnf_v5")
+    d['cm_f'] = d4.number_input("CAPACITÂNCIA Lido Fan", value=float(d.get('cm_f', 0.0)), format="%.1f", key="cmf_v5")
+    d['i_fan'] = d5.number_input("CORRENTE Fan (A)", value=float(d.get('i_fan', 0.0)), format="%.2f", key="if_v5")
+       
     # --- CORREÇÃO DO ERRO DA LINHA 283 ---
     # Agora usamos d['campo'] para o Python encontrar os valores
     d_cap_c = round(d['cm_c'] - d['cn_c'], 2)
     d_cap_f = round(d['cm_f'] - d['cn_f'], 2)
+
+     # --- AQUI ESTAVA O ERRO (LINHA 289) ---
+    # Mudamos de 'cm_f - cn_f' para 'd['cm_f'] - d['cn_f']'
+    d_cap_c = round(d['cm_c'] - d['cn_c'], 2)
+    d_cap_f = round(d['cm_f'] - d['cn_f'], 2)
+
     
     # Cálculos automáticos de diferença (Δ) para o painel de resultados
     d_cap_c = round(d['cm_c'] - d['cn_c'], 2)
