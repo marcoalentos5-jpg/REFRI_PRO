@@ -294,8 +294,8 @@ def renderizar_aba_diagnosticos():
     d_tensao = round(v_med - v_lin, 2)
     d_corrente = round(i_med - rla, 2) if rla > 0 else 0.0
     sh_util = round(sh * 0.8, 2) 
-    d_cap_f = round(cm_f - cn_f, 2)
-    d_cap_c = round(cm_c - cn_c, 2)
+    d_cap_c = round(d['cm_c'] - d['cn_c'], 2)
+    d_cap_f = round(d['cm_f'] - d['cn_f'], 2)
 
 
 # --- 3. RESULTADOS CALCULADOS (FONTE REDUZIDA E COR PERSONALIZADA) ---
