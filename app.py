@@ -234,19 +234,20 @@ def renderizar_aba_diagnosticos():
     rla   = c4.number_input("RLA - Nominal (A)", value=float(d.get('rla', 0.0)), key="rla_m")
     lra   = c5.number_input("LRA - Partida (A)", value=float(d.get('lra', 0.0)), key="lra_m")
 
-   # SEÇÃO D: 🔋 CAPACITÂNCIA E VENTILAÇÃO
+# ==============================================================================
+    # SEÇÃO D: 🔋 CAPACITÂNCIA E VENTILAÇÃO (VERSÃO FINAL BLINDADA)
+    # ==============================================================================
     st.markdown("##### 🔋 Capacitância e Ventilação")
     d1, d2, d3, d4, d5 = st.columns(5)
     
-    # Usamos .get(chave, 0.0) para garantir que NUNCA venha vazio
+    # Gravando no dicionário 'd' com proteção .get() para não zerar
     d['cn_c'] = d1.number_input("CAPACITÂNCIA Nom. Comp", value=float(d.get('cn_c', 0.0)), format="%.1f", key="cnc_v_final")
     d['cm_c'] = d2.number_input("CAPACITÂNCIA Lido Comp", value=float(d.get('cm_c', 0.0)), format="%.1f", key="cmc_v_final")
     d['cn_f'] = d3.number_input("CAPACITÂNCIA Nom. Fan", value=float(d.get('cn_f', 0.0)), format="%.1f", key="cnf_v_final")
     d['cm_f'] = d4.number_input("CAPACITÂNCIA Lido Fan", value=float(d.get('cm_f', 0.0)), format="%.1f", key="cmf_v_final")
     d['i_fan'] = d5.number_input("CORRENTE Fan (A)", value=float(d.get('i_fan', 0.0)), format="%.2f", key="if_v_final")
 
-    # --- CÁLCULOS COM PROTEÇÃO (LINHA 255 CORRIGIDA) ---
-    # O .get() evita o erro caso a chave ainda não tenha sido criada no sistema
+    # --- CÁLCULOS DOS DIFERENCIAIS (Δ) ---
     val_cm_c = d.get('cm_c', 0.0)
     val_cn_c = d.get('cn_c', 0.0)
     val_cm_f = d.get('cm_f', 0.0)
@@ -255,6 +256,23 @@ def renderizar_aba_diagnosticos():
     d_cap_c = round(val_cm_c - val_cn_c, 2)
     d_cap_f = round(val_cm_f - val_cn_f, 2)
 
+    # --- SALVAMENTO NA MEMÓRIA (UPDATE) ---
+    # Isso garante que ao trocar de aba, o Status e os valores continuem lá
+    d.update({
+        'cm_c': val_cm_c,
+        'cm_f': val_cm_f,
+        'd_cap_c': d_cap_c,
+        'd_cap_f': d_cap_f
+    })
+
+    # --- EXIBIÇÃO DAS MÉTRICAS NO PAINEL ---
+    st.markdown("---")
+    res_cols = st.columns(5)
+    # (As colunas 0, 1, 2, 3 seriam para SH, SC, etc.)
+    with res_cols[4]:
+        st.metric("Δ CAP. COMP.", f"{d_cap_c:.1f} µF", delta_color="inverse")
+        st.metric("Δ CAP. FAN", f"{d_cap_f:.1f} µF", delta_color="inverse")
+    
     # --- 3. PROCESSAMENTO TÉCNICO (CÁLCULOS) ---
     t_sat_s = f_sat_precisao(p_suc, fluido) if p_suc > 5 else 0.0
     t_sat_d = f_sat_precisao(p_des, fluido) if p_des > 5 else 0.0
