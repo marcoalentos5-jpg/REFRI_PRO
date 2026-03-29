@@ -524,15 +524,16 @@ with st.sidebar:
             pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " TAG/PATRIMÔNIO:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('tag_id', '---').upper()}", border=1, ln=True)
             pdf.ln(2)
 
-            # --- 4. SEÇÃO 3: MEDIÇÕES DE CAMPO (20 CAMPOS / 4 BLOCOS) ---
+           # --- 4. SEÇÃO 3: MEDIÇÕES DE CAMPO (20 CAMPOS / 4 BLOCOS) ---
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
             pdf.cell(190, 7, " 3. MEDIÇÕES DE CAMPO E PERFORMANCE", ln=True, fill=True)
             
+            # Substituídos os emojis por texto para evitar erro de Unicode
             blocos_med = [
-                ["🔵 Ciclo", "SUCÇÃO (PSI)", "TUB. SUCÇÃO", "DESCARGA (PSI)", "TUB. DESCAR.", "T. DESC. COMP"],
-                ["🔴 Ar", "RETORNO (°C)", "INSUFLAÇÃO", "AMB. EXT.", "U.R. (%)", "P. ÓLEO (PSI)"],
-                ["⚡ Elétrica", "TENSÃO NOM.", "TENSÃO MED.", "CORRENTE MED.", "RLA (A)", "LRA (A)"],
-                ["🔋 Vent.", "CAP. NOM. CP", "CAP. LIDO CP", "CAP. NOM. FN", "CAP. LIDO FN", "CORRENTE FAN"]
+                ["CICLO FRIGOR.", "SUCÇÃO (PSI)", "TUB. SUCÇÃO", "DESCARGA (PSI)", "TUB. DESCAR.", "T. DESC. COMP"],
+                ["AR E AMBIENTE", "RETORNO (°C)", "INSUFLAÇÃO", "AMB. EXT.", "U.R. (%)", "P. ÓLEO (PSI)"],
+                ["PARÂMET. ELETR.", "TENSÃO NOM.", "TENSÃO MED.", "CORRENTE MED.", "RLA (A)", "LRA (A)"],
+                ["CAPACIT./VENT.", "CAP. NOM. CP", "CAP. LIDO CP", "CAP. NOM. FN", "CAP. LIDO FN", "CORRENTE FAN"]
             ]
             chaves_med = [
                 ['p_baixa', 'temp_suc_tubo', 'p_alta', 'temp_desc_tubo', 'temp_desc_comp'],
@@ -543,22 +544,29 @@ with st.sidebar:
 
             for i in range(4):
                 pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 7); pdf.set_fill_color(235, 245, 255)
-                pdf.cell(30, 5, blocos_med[i][0], border=1, fill=True)
-                for tit in blocos_med[i][1:]: pdf.cell(32, 5, tit, border=1, align='C', fill=True)
+                # O título do bloco agora é apenas texto
+                pdf.cell(30, 5, blocos_med[i][0], border=1, fill=True) 
+                for tit in blocos_med[i][1:]: 
+                    pdf.cell(32, 5, tit, border=1, align='C', fill=True)
                 pdf.ln()
+                
                 pdf.set_font("Arial", "", 8)
                 pdf.cell(30, 6, "VALOR:", border=1, align='C')
-                for val in chaves_med[i]: pdf.cell(32, 6, f" {d.get(val, '---')}", border=1, align='C')
+                for val in chaves_med[i]: 
+                    # d.get() garante que se o campo estiver vazio, não quebra o código
+                    valor_campo = str(d.get(val, '---'))
+                    pdf.cell(32, 6, f" {valor_campo}", border=1, align='C')
                 pdf.ln()
             pdf.ln(2)
 
-            # --- 5. SEÇÃO 4: DIAGNÓSTICO (12 CAMPOS / TITULOS EXATOS) ---
+            # --- 5. SEÇÃO 4: DIAGNÓSTICO (RETIRADA DO SÍMBOLO DELTA "Δ" PARA EVITAR ERRO) ---
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
             pdf.cell(190, 7, " 4. DIAGNÓSTICO DE PERFORMANCE E INTEGRIDADE", ln=True, fill=True)
             
+            # Títulos ajustados de "Δ" para "D." ou "DIFF" para compatibilidade total
             titulos_diag = [
-                ['SH TOTAL', 'SH ÚTIL', 'SAT. SUCÇÃO', 'SAT. DESCAR.', 'Δ T (AR)', 'SC FINAL'],
-                ['Δ CORRENTE', 'Δ TENSÃO', 'RAZÃO COMPR.', 'COP ESTIM.', 'Δ CAP. COMP.', 'Δ CAP. FAN.']
+                ['SH TOTAL', 'SH ÚTIL', 'SAT. SUCÇÃO', 'SAT. DESCAR.', 'D. T (AR)', 'SC FINAL'],
+                ['D. CORRENTE', 'D. TENSÃO', 'RAZÃO COMPR.', 'COP ESTIM.', 'D. CAP. COMP.', 'D. CAP. FAN.']
             ]
             chaves_diag = [
                 ['sh_total', 'sh_util', 'sat_suc', 'sat_desc', 'delta_t_ar', 'sc_final'],
