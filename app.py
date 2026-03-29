@@ -172,14 +172,13 @@ def f_sat_precisao(p, g):
 
 
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO MASTER - 6 COLUNAS & EFICIÊNCIA)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO MASTER - ALARMES & CENTRALIZAÇÃO)
 # ==============================================================================
 def renderizar_aba_2():
     st.header("🔍 Central de Diagnóstico Técnico")
     d = st.session_state.dados
     fluido = d.get('fluido', 'R410A')
 
-    # Função auxiliar para evitar erros de conversão e manter estabilidade
     def safe_float(key, default=0.0):
         val = d.get(key)
         try:
@@ -189,126 +188,127 @@ def renderizar_aba_2():
         except:
             return default
 
-    # --- 1. PAINEL DE REFERÊNCIA IDEAL (DINÂMICO) ---
+    # --- 1. REFERÊNCIAS E LÓGICA DE ALARME ---
     referencias = {
-        'R410A': {"p_suc": "110 a 130 PSI", "t_sat": "2°C a 6°C", "sh": "5K a 9K", "sc": "5K a 8K"},
-        'R32':   {"p_suc": "115 a 135 PSI", "t_sat": "1°C a 5°C", "sh": "5K a 9K", "sc": "5K a 9K"},
-        'R22':   {"p_suc": "60 a 75 PSI", "t_sat": "1°C a 5°C", "sh": "7K a 11K", "sc": "3K a 6K"},
-        'R134a': {"p_suc": "25 a 40 PSI", "t_sat": "-1°C a 4°C", "sh": "5K a 10K", "sc": "4K a 8K"},
-        'R404A': {"p_suc": "80 a 95 PSI", "t_sat": "-5°C a 0°C", "sh": "4K a 8K", "sc": "2K a 5K"}
+        'R410A': {"p_suc": [110, 130], "sh": [5, 9], "sc": [5, 8]},
+        'R32':   {"p_suc": [115, 135], "sh": [5, 9], "sc": [5, 9]},
+        'R22':   {"p_suc": [60, 75], "sh": [7, 11], "sc": [3, 6]},
+        'R134a': {"p_suc": [25, 40], "sh": [5, 10], "sc": [4, 8]},
+        'R404A': {"p_suc": [80, 95], "sh": [4, 8], "sc": [2, 5]}
     }
     ref = referencias.get(fluido, referencias['R410A'])
 
-    # Lógica de Cor e Balança Virtual
-    p_atual = safe_float('p_baixa')
-    limites = ref['p_suc'].replace(' PSI', '').split(' a ')
-    p_alvo_centro = (float(limites[0]) + float(limites[1])) / 2
-    carga_total_placa = safe_float('carga_gas') 
-    
-    cor_alerta, msg_status, sugestao_massa = "#00CCFF", "", 0.0
-    if p_atual > 0 and carga_total_placa > 0:
-        sugestao_massa = ((p_alvo_centro - p_atual) / p_alvo_centro) * carga_total_placa * 0.7
-        if float(limites[0]) <= p_atual <= float(limites[1]):
-            cor_alerta, msg_status = "#00FF7F", " - ✅ DENTRO DO ALVO"
-        else:
-            cor_alerta, msg_status = "#FF4B4B", " - ⚠️ FORA DO ALVO"
-
-    txt_bal_card = "ESTÁVEL" if abs(sugestao_massa) < 15 or carga_total_placa == 0 else f"{'+' if sugestao_massa > 0 else '-'}{abs(sugestao_massa):.0f}g"
-
-    st.markdown(f"""
-        <div style="background-color: #1E1E1E; border-left: 5px solid {cor_alerta}; padding: 15px; border-radius: 10px; margin-bottom: 25px; border: 1px solid #333;">
-            <h4 style="margin-top:0; color: {cor_alerta};">🎯 Referência Ideal para {fluido}{msg_status}</h4>
-            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;">
-                <div style="color: #FFFFFF;"><small style="color: #888;">SUCÇÃO ALVO</small><br><b>{ref['p_suc']}</b></div>
-                <div style="color: #FFFFFF;"><small style="color: #888;">SATURAÇÃO ALVO</small><br><b>{ref['t_sat']}</b></div>
-                <div style="color: #FFFFFF;"><small style="color: #888;">SH (SUPERAQUEC.)</small><br><b>{ref['sh']}</b></div>
-                <div style="color: #FFFFFF;"><small style="color: #888;">SR (SUB-RESFR.)</small><br><b>{ref['sc']}</b></div>
-                <div style="background-color: rgba(255,255,255,0.05); padding: 5px; border-radius: 5px; text-align: center; border: 1px dashed {cor_alerta};">
-                    <small style="color: {cor_alerta}; font-weight: bold;">⚖️ BALANÇA</small><br><b style="color: #FFF; font-size: 1.1rem;">{txt_bal_card}</b>
-                </div>
-            </div>
-        </div>
+    # CSS para Centralização e Estilização de Metrics
+    st.markdown("""
+        <style>
+            div[data-testid="stMetric"] {
+                background-color: #1A1C23;
+                border: 1px solid #333;
+                padding: 10px;
+                border-radius: 8px;
+                text-align: center;
+            }
+            div[data-testid="stMetricLabel"] > div {
+                display: flex;
+                justify-content: center;
+                font-weight: bold;
+                color: #888;
+            }
+        </style>
     """, unsafe_allow_html=True)
 
-    # --- 2. MEDIÇÕES DE CAMPO (INTEGRIDADE TOTAL) ---
+    # --- 2. ENTRADA DE DADOS ---
     st.subheader("1. Medições de Campo")
-    
-    st.markdown("##### 🔵 Ciclo Frigorífico")
     a1, a2, a3, a4, a5 = st.columns(5)
-    p_suc = a1.number_input("SUCÇÃO (PSI)", value=p_atual, format="%.1f", key="ps_m")
-    t_suc = a2.number_input("TUB. SUCÇÃO (°C)", value=safe_float('temp_sucção'), format="%.1f", key="ts_m")
-    p_des = a3.number_input("DESCARGA (PSI)", value=safe_float('p_alta'), format="%.1f", key="pd_m")
-    t_liq = a4.number_input("TUB. LÍQUIDO (°C)", value=safe_float('temp_liquido'), format="%.1f", key="tl_m")
-    t_com = a5.number_input("TUB. Desc. Comp. (°C)", value=safe_float('temp_descarga'), format="%.1f", key="tc_m")
+    p_suc = a1.number_input("SUCÇÃO (PSI)", value=safe_float('p_baixa'), format="%.1f")
+    t_suc = a2.number_input("TUB. SUCÇÃO (°C)", value=safe_float('temp_sucção'), format="%.1f")
+    p_des = a3.number_input("DESCARGA (PSI)", value=safe_float('p_alta'), format="%.1f")
+    t_liq = a4.number_input("TUB. LÍQUIDO (°C)", value=safe_float('temp_liquido'), format="%.1f")
+    t_com = a5.number_input("TUB. Desc. Comp. (°C)", value=safe_float('temp_descarga'), format="%.1f")
 
-    st.markdown("##### 🔴 Ar e Ambiente")
-    b1, b2, b3, b4, b5 = st.columns(5)
-    t_ret = b1.number_input("Retorno Ar (°C)", value=safe_float('temp_entrada_ar'), format="%.1f", key="tr_m")
-    t_ins = b2.number_input("Insuflação (°C)", value=safe_float('temp_saida_ar'), format="%.1f", key="ti_m")
-    t_amb = b3.number_input("TEMP. Amb. Ext. (°C)", value=safe_float('temp_amb_ext', 35.0), format="%.1f", key="ta_m")
-    u_rel = b4.number_input("Umid. Rel. DO AR (%)", value=safe_float('umidade', 50.0), format="%.1f", key="ur_m")
-    p_oil = b5.number_input("Pressão Óleo (PSI)", value=safe_float('p_oleo', 0.0), format="%.1f", key="po_m")
-
-    st.markdown("##### ⚡ Parâmetros Elétricos e Capacitância")
     c1, c2, c3, c4, c5 = st.columns(5)
-    v_lin = c1.number_input("Tensão Nominal (V)", value=safe_float('v_nominal', 220.0), key="vn_m")
-    v_med = c2.number_input("Tensão Medida (V)", value=safe_float('v_medida', 220.0), key="vm_m")
-    i_med = c3.number_input("Corrente Medida (A)", value=safe_float('i_medida'), key="im_m")
-    rla   = c4.number_input("RLA - Nominal (A)", value=safe_float('rla'), key="rla_m")
-    lra   = c5.number_input("LRA - Partida (A)", value=safe_float('lra'), key="lra_m")
+    v_lin = c1.number_input("Tensão Nom. (V)", value=safe_float('v_nominal', 220.0))
+    v_med = c2.number_input("Tensão Med. (V)", value=safe_float('v_medida', 220.0))
+    i_med = c3.number_input("Corr. Medida (A)", value=safe_float('i_medida'))
+    rla   = c4.number_input("RLA Nom. (A)", value=safe_float('rla'))
+    i_fan = c5.number_input("Corr. Fan (A)", value=safe_float('i_fan'))
 
     d1, d2, d3, d4, d5 = st.columns(5)
-    cn_c  = d1.number_input("CAP. Nom. Comp (µF)", value=safe_float('cn_c'), format="%.1f")
-    cm_c  = d2.number_input("CAP. Lido Comp (µF)", value=safe_float('cm_c'), format="%.1f")
-    cn_f  = d3.number_input("CAP. Nom. Fan (µF)", value=safe_float('cn_f'), format="%.1f")
-    cm_f  = d4.number_input("CAP. Lido Fan (µF)", value=safe_float('cm_f'), format="%.1f")
-    i_fan = d5.number_input("CORRENTE Fan (A)", value=safe_float('i_fan'), key="if_m")
+    cn_c, cm_c = d1.number_input("CAP. Nom. C", value=safe_float('cn_c')), d2.number_input("CAP. Lido C", value=safe_float('cm_c'))
+    cn_f, cm_f = d3.number_input("CAP. Nom. F", value=safe_float('cn_f')), d4.number_input("CAP. Lido F", value=safe_float('cm_f'))
+    t_ret, t_ins = d5.number_input("Retorno (°C)", value=safe_float('temp_entrada_ar')), d5.number_input("Insuflação (°C)", value=safe_float('temp_saida_ar'))
 
-    # --- 3. PROCESSAMENTO TÉCNICO (CÁLCULOS) ---
+    # --- 3. CÁLCULOS TÉCNICOS ---
     t_sat_s = f_sat_precisao(p_suc, fluido) if p_suc > 5 else 0.0
     t_sat_d = f_sat_precisao(p_des, fluido) if p_des > 5 else 0.0
-    sh, sr = round(t_suc - t_sat_s, 2) if t_sat_s != 0 else 0.0, round(t_sat_d - t_liq, 2) if t_sat_d != 0 else 0.0
-    dt_ar, d_tensao = round(t_ret - t_ins, 2), round(v_med - v_lin, 2)
-    d_corrente = round(i_med - rla, 2) if rla > 0 else 0.0
-    d_cap_c, d_cap_f = round(cm_c - cn_c, 2), round(cm_f - cn_f, 2)
-    
-    # Cálculos de Eficiência e Razão
+    sh, sr = round(t_suc - t_sat_s, 2), round(t_sat_d - t_liq, 2)
+    dt_ar = round(t_ret - t_ins, 2)
+    d_corrente = round(i_med - rla, 2)
+    d_cap_c = round(cm_c - cn_c, 2)
+    d_cap_f = round(cm_f - cn_f, 2)
     razão_c = round((p_des + 14.7) / (p_suc + 14.7), 2) if p_suc > 0 else 0.0
     cop_est = round((abs(dt_ar) * 1.2 * 1000) / (v_med * i_med + 0.1), 2) if i_med > 0 else 0.0
 
-    # --- 4. RESULTADOS (NOVO GRID 6 COLUNAS) ---
+    # --- 4. FUNÇÃO DE ALARME VISUAL (THRESHOLD 35%) ---
+    def get_alarm_style(valor, nominal, desvio_permitido=0.35):
+        if nominal == 0: return "border-left: 4px solid #00CCFF;" # Azul Normal
+        desvio = abs(valor - nominal) / nominal
+        if desvio > desvio_permitido:
+            return "border-left: 4px solid #FF4B4B; background-color: #2D1B1B;" # Vermelho Alerta
+        return "border-left: 4px solid #00CCFF;"
+
+    # --- 5. GRID DE RESULTADOS (6 COLUNAS) ---
     st.markdown("---")
     st.subheader("2. Diagnóstico de Performance e Integridade")
-    st.markdown("""<style> div[data-testid="stMetric"] { background-color: #1A1C23; border: 1px solid #333; padding: 8px; border-radius: 8px; border-left: 4px solid #00CCFF; } </style>""", unsafe_allow_html=True)
     
     res = st.columns(6)
-    res[0].metric("SH TOTAL", f"{sh:.1f} K"); res[0].metric("SH ÚTIL", f"{sh * 0.8:.1f} K")
-    res[1].metric("SAT. SUCÇÃO", f"{t_sat_s:.1f} °C"); res[1].metric("SAT. DESCARGA", f"{t_sat_d:.1f} °C")
-    res[2].metric("Δ T (AR)", f"{dt_ar:.1f} K"); res[2].metric("SR - SUB RESF.", f"{sr:.1f} K")
-    res[3].metric("Δ CORRENTE", f"{d_corrente:.1f} A"); res[3].metric("Δ TENSÃO", f"{d_tensao:.1f} V")
-    res[4].metric("COP (Est.)", f"{cop_est}"); res[4].metric("Razão Compr.", f"{razão_c}")
-    res[5].metric("Δ CAP. COMP.", f"{d_cap_c:.1f} µF"); res[5].metric("Δ CAP. FAN", f"{d_cap_f:.1f} µF")
     
-    st.markdown("---")
-    st.subheader("🤖 Diagnóstico Inteligente (IA)")
-    alertas_ia = []
-    if sh < 5 and p_suc > 0: alertas_ia.append("⚠️ **SH Baixo:** Risco de golpe de líquido.")
-    if razão_c > 4: alertas_ia.append("🔥 **Razão de Compressão Alta:** Estresse térmico severo.")
-    if t_com > 100: alertas_ia.append("🔥 **Descarga Crítica:** Risco de carbonização do óleo.")
-    st.info("\n".join(alertas_ia) if alertas_ia else "✅ Sistema operando em regime de eficiência nominal.")
+    # SH e SH Útil (Base: Centro da faixa SH ref)
+    sh_nom = (ref['sh'][0] + ref['sh'][1]) / 2
+    res[0].markdown(f'<div style="{get_alarm_style(sh, sh_nom)}">', unsafe_allow_html=True)
+    res[0].metric("SH TOTAL", f"{sh:.1f} K")
+    res[0].metric("SH ÚTIL", f"{sh * 0.8:.1f} K")
+    res[0].markdown('</div>', unsafe_allow_html=True)
+
+    # Pressões de Saturação
+    res[1].metric("SAT. SUCÇÃO", f"{t_sat_s:.1f} °C")
+    res[1].metric("SAT. DESCARGA", f"{t_sat_d:.1f} °C")
+
+    # Delta T e SR (Base: Centro da faixa SC ref)
+    sr_nom = (ref['sc'][0] + ref['sc'][1]) / 2
+    res[2].markdown(f'<div style="{get_alarm_style(sr, sr_nom)}">', unsafe_allow_html=True)
+    res[2].metric("Δ T (AR)", f"{dt_ar:.1f} K")
+    res[2].metric("SR - SUB RESF.", f"{sr:.1f} K")
+    res[2].markdown('</div>', unsafe_allow_html=True)
+
+    # Delta Corrente e Tensão (Base: RLA e V_nominal)
+    res[3].markdown(f'<div style="{get_alarm_style(i_med, rla)}">', unsafe_allow_html=True)
+    res[3].metric("Δ CORRENTE", f"{d_corrente:.1f} A")
+    res[3].metric("Δ TENSÃO", f"{round(v_med-v_lin,1)} V")
+    res[3].markdown('</div>', unsafe_allow_html=True)
+
+    # Eficiência e Razão (Base: Razão ideal < 4.0)
+    res[4].markdown(f'<div style="{get_alarm_style(razão_c, 3.0)}">', unsafe_allow_html=True)
+    res[4].metric("COP (Est.)", f"{cop_est}")
+    res[4].metric("Razão Compr.", f"{razão_c}")
+    res[4].markdown('</div>', unsafe_allow_html=True)
+
+    # Capacitância (Alarme se perda > 35% do Nominal)
+    res[5].markdown(f'<div style="{get_alarm_style(cm_c, cn_c)}">', unsafe_allow_html=True)
+    res[5].metric("Δ CAP. COMP.", f"{d_cap_c:.1f} µF")
+    res[5].metric("Δ CAP. FAN", f"{d_cap_f:.1f} µF")
+    res[5].markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("---")
     st.subheader("3. Parecer Técnico Final")
-    d['laudo_diag'] = st.text_area("Diagnóstico e Observações:", value=d.get('laudo_diag', "Análise: Estável."), height=150)
+    d['laudo_diag'] = st.text_area("Diagnóstico e Observações:", value=d.get('laudo_diag', "Análise: Estável."), height=120)
 
-    # PERSISTÊNCIA TOTAL DE DADOS
+    # PERSISTÊNCIA TOTAL
     st.session_state.dados.update({
         'p_baixa': p_suc, 'temp_sucção': t_suc, 'p_alta': p_des, 'temp_liquido': t_liq,
-        'temp_entrada_ar': t_ret, 'temp_saida_ar': t_ins, 'temp_amb_ext': t_amb,
-        'umidade': u_rel, 'p_oleo': p_oil, 'v_nominal': v_lin, 'v_medida': v_med,
-        'i_medida': i_med, 'cn_c': cn_c, 'cm_c': cm_c, 'cn_f': cn_f, 'cm_f': cm_f, 
-        'i_fan': i_fan, 'lra': lra, 'rla': rla, 'temp_descarga': t_com,
-        'sh_calculado': sh, 'sc_calculado': sr
+        'temp_entrada_ar': t_ret, 'temp_saida_ar': t_ins, 'v_nominal': v_lin, 
+        'v_medida': v_med, 'i_medida': i_med, 'rla': rla, 'i_fan': i_fan,
+        'cn_c': cn_c, 'cm_c': cm_c, 'cn_f': cn_f, 'cm_f': cm_f, 'temp_descarga': t_com
     })
 # FINAL DO BLOCO 2 (LINHA 384)   
 
