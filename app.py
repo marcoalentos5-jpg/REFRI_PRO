@@ -425,13 +425,20 @@ with st.sidebar:
     # A. LOGO AMPLIADA NA SIDEBAR
     col_l1, col_l2, col_l3 = st.columns([0.5, 9, 0.5])
     with col_l2:
-        try: st.image("logo.png", use_container_width=True)
-        except: st.subheader("MPN SOLUÇÕES")
+        try: 
+            st.image("logo.png", use_container_width=True)
+        except: 
+            st.subheader("MPN SOLUÇÕES")
     
     st.markdown("---")
-    aba_selecionada = st.radio("Navegar para:", ["Home", "1. Cadastro", "2. Diagnósticos", "Relatórios"], key="nav_v3_full")
+    
+    # B. NAVEGAÇÃO OPERACIONAL (CORRIGIDO: "1. Cadastro de Equipamentos")
+    opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
+    aba_selecionada = st.radio("Navegar para:", opcoes_abas, key="nav_v3_full_final")
     
     st.markdown("---")
+    
+    # C. IDENTIFICAÇÃO DO TÉCNICO
     st.subheader("👨‍🔧 Identificação do Técnico")
     st.session_state.dados['tecnico_nome'] = st.text_input("Nome Completo:", value=st.session_state.dados.get('tecnico_nome', ''), key="f_tec_n")
     st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ do Técnico:", value=st.session_state.dados.get('tecnico_documento', ''), key="f_tec_d")
@@ -439,7 +446,7 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # D. STATUS E MOTOR DE GERAÇÃO (VARREDURA TOTAL)
+    # D. STATUS E MOTOR DE GERAÇÃO (VARREDURA TOTAL ABA 1 E 2)
     d = st.session_state.dados
     
     # Validação Robusta (Correção do Erro len/strip)
@@ -458,7 +465,7 @@ with st.sidebar:
             pdf.add_page()
             C_PRI = (13, 71, 161) # Azul MPN Profissional
             
-            # --- 1. CABEÇALHO ---
+            # --- 1. CABEÇALHO (LOGO AMPLIADA) ---
             try: pdf.image('logo.png', x=10, y=10, w=45)
             except: pass
             
@@ -471,7 +478,7 @@ with st.sidebar:
             # --- 2. SEÇÃO 1: CLIENTE E ENDEREÇO (DATA NA FAIXA AZUL) ---
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 10)
             
-            # Layout da Faixa Azul com Data (Conforme Print)
+            # Data da Visita na mesma linha do título da seção
             data_v = datetime.now().strftime('%d/%m/%Y')
             pdf.cell(130, 8, " 1. IDENTIFICAÇÃO DO CLIENTE E ENDEREÇO", fill=True)
             pdf.cell(60, 8, f"DATA DA VISITA: {data_v} ", fill=True, ln=True, align='R')
@@ -480,7 +487,7 @@ with st.sidebar:
             pdf.cell(35, 7, " CLIENTE:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(155, 7, f" {n_val.upper()}", border=1, ln=True)
             pdf.set_font("Arial", "B", 8); pdf.cell(35, 7, " CPF/CNPJ:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(155, 7, f" {d_val}", border=1, ln=True)
             
-            # Endereço Completo
+            # Endereço Completo (Varredura Aba 1)
             end = f"{d.get('logradouro', '')}, {d.get('numero', '')} - {d.get('bairro', '')} | {d.get('cidade', '')}-{d.get('uf', '')} | CEP: {d.get('cep', '')}"
             pdf.set_font("Arial", "B", 8); pdf.cell(35, 7, " LOCALIZAÇÃO:", border=1); pdf.set_font("Arial", "", 7); pdf.cell(155, 7, f" {end}", border=1, ln=True)
             pdf.ln(4)
@@ -525,31 +532,31 @@ with st.sidebar:
             pdf.cell(190, 8, " 4. PARECER TÉCNICO FINAL", ln=True, fill=True)
             pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "", 9)
             
-            parecer = d.get('parecer_final', 'Nenhuma observação adicional registrada pelo técnico.')
+            parecer = d.get('parecer_final', 'Nenhuma observação técnica adicional registrada.')
             pdf.multi_cell(190, 7, parecer, border=1)
 
-            # --- 6. ASSINATURAS (REGRAS DE CENTRALIZAÇÃO E LÓGICA DE DOC) ---
+            # --- 6. ASSINATURAS CENTRALIZADAS (REGRAS 3, 4 E 5) ---
             pdf.ln(30)
             y_sig = pdf.get_y()
             pdf.set_draw_color(0,0,0); pdf.set_line_width(0.3)
             pdf.line(20, y_sig, 90, y_sig); pdf.line(120, y_sig, 190, y_sig)
             
-            # Lado do Técnico (Centralizado)
+            # Técnico
             pdf.set_xy(20, y_sig + 2); pdf.set_font("Arial", "B", 9)
             pdf.cell(70, 5, d.get('tecnico_nome', '').upper(), ln=True, align='C')
-            reg_t = d.get('tecnico_registro', '').strip()
+            reg_t = str(d.get('tecnico_registro', '')).strip()
             id_tecnico = reg_t if reg_t else d.get('tecnico_documento', '')
             pdf.set_x(20); pdf.set_font("Arial", "", 8); pdf.cell(70, 5, id_tecnico, align='C')
 
-            # Lado do Cliente (Centralizado)
+            # Cliente
             pdf.set_xy(120, y_sig + 2); pdf.set_font("Arial", "B", 9)
             pdf.cell(70, 5, n_val.upper(), ln=True, align='C')
             pdf.set_x(120); pdf.set_font("Arial", "", 8); pdf.cell(70, 5, d_val, align='C')
 
-            # --- GERAÇÃO DO ARQUIVO ---
+            # --- GERAÇÃO E DOWNLOAD ---
             pdf_bytes = pdf.output(dest='S').encode('latin-1', 'replace')
             st.download_button(
-                label="📄 BAIXAR LAUDO TÉCNICO COMPLETO",
+                label="📄 GERAR RELATÓRIO TÉCNICO",
                 data=pdf_bytes,
                 file_name=f"Laudo_MPN_{d.get('tag_id','INS').upper()}.pdf",
                 mime="application/pdf",
@@ -560,7 +567,7 @@ with st.sidebar:
             st.error(f"Erro ao gerar PDF: {e}")
     else:
         st.error("❌ Dados do Cliente Ausentes")
-        st.caption("Preencha Nome e Documento na Aba 1.")
+        st.caption("Verifique o preenchimento na Aba 1.")
 
     st.markdown("---")
     if st.button("🗑️ Nova Inspeção (Limpar)", use_container_width=True):
