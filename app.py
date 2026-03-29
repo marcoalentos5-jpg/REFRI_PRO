@@ -508,12 +508,12 @@ with st.sidebar:
             pdf.set_font("Arial", "B", 8); pdf.cell(25, 6, " CEP:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(40, 6, f" {d.get('cep', '---')}", border=1, ln=True)
             pdf.ln(2)
 
-          # --- 3. SEÇÃO 2: DETALHES TÉCNICOS DO ATIVO (AJUSTE DE LARGURA E SOBREPOSIÇÃO) ---
+          # --- 3. SEÇÃO 2: DETALHES TÉCNICOS DO ATIVO (CORREÇÃO DE SOBREPOSIÇÃO) ---
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
             pdf.cell(190, 7, " 2. DETALHES TÉCNICOS DO ATIVO", ln=True, fill=True)
             pdf.set_text_color(0, 0, 0)
             
-            # Lista dos 19 campos
+            # Lista exata dos 19 campos para bater com o seu formulário
             campos_ativo = [
                 (" FABRICANTE:", d.get('fabricante', '---')),           (" MODELO:", d.get('modelo', '---')),
                 (" N° SÉRIE (EVAP):", d.get('serie_evap', '---')),     (" N° SÉRIE (COND):", d.get('serie_cond', '---')),
@@ -527,29 +527,29 @@ with st.sidebar:
                 (" ÚLTIMA MANUT.:", d.get('ultima_manut', '---'))
             ]
 
-            # Ajuste de larguras para evitar atropelo de texto (42mm para labels longas)
-            w_label = 42 
-            w_valor = 53
+            # NOVAS LARGURAS: 45mm para o título (label) resolve o problema do "LOCAL CONDENSADORA"
+            w_lbl = 45 
+            w_val = 50
 
             for i in range(0, len(campos_ativo)):
-                # Título em Negrito
-                pdf.set_font("Arial", "B", 7.5) # Fonte levemente menor para caber nomes longos
-                pdf.cell(w_label, 6, campos_ativo[i][0], border=1)
+                # Rótulo em Negrito (Fonte 7.5 para garantir que não estoure a célula)
+                pdf.set_font("Arial", "B", 7.5)
+                pdf.cell(w_lbl, 6, campos_ativo[i][0], border=1)
                 
-                # Valor em Normal
+                # Valor em Fonte Normal
                 pdf.set_font("Arial", "", 8)
-                val = str(campos_ativo[i][1])
+                txt_valor = str(campos_ativo[i][1])
                 
-                # Lógica de quebra de linha: a cada 2 itens ou se for o último item (o 19º)
-                if i % 2 != 0:
-                    # Segundo item da linha
-                    pdf.cell(w_valor, 6, f" {val}", border=1, ln=True)
-                elif i == len(campos_ativo) - 1:
-                    # Se for o último item e for ímpar, ele preenche a linha toda para fechar a borda
-                    pdf.cell(148, 6, f" {val}", border=1, ln=True)
+                # Lógica de fechamento de linha
+                if i == len(campos_ativo) - 1:
+                    # O 19º campo (Última Manut) expande para fechar a linha toda
+                    pdf.cell(145, 6, f" {txt_valor}", border=1, ln=True)
+                elif i % 2 != 0:
+                    # Segundo campo da linha (fecha a linha)
+                    pdf.cell(w_val, 6, f" {txt_valor}", border=1, ln=True)
                 else:
-                    # Primeiro item da linha
-                    pdf.cell(w_valor, 6, f" {val}", border=1)
+                    # Primeiro campo da linha (continua na mesma linha)
+                    pdf.cell(w_val, 6, f" {txt_valor}", border=1)
             
             pdf.ln(2)
 
