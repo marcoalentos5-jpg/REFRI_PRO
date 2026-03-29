@@ -419,87 +419,87 @@ def renderizar_aba_2():
 
 
 # ==============================================================================
-# 3. SIDEBAR - DADOS DO TÉCNICO E NAVEGAÇÃO (ATIVADA ANTES DA EXIBIÇÃO)
+# 3. SIDEBAR - IDENTIFICAÇÃO PROFISSIONAL E MOTOR DE FECHAMENTO
 # ==============================================================================
-# Mudamos esta seção para antes da Lógica de Exibição das Abas para definir aba_selecionada
 with st.sidebar:
-    st.title("🚀 Painel de Controle")
-
-    # A. NAVEGAÇÃO E EXIBIÇÃO DAS ABAS (ATIVADA AQUI)
-    opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
-    # Use st.sidebar.radio para criar os botões de seleção de aba e DEFINIR a variável
-    aba_selecionada = st.sidebar.radio("Selecione a Aba:", opcoes_abas)
+    # A. LOGO E TÍTULO (IDENTIDADE VISUAL)
+    try:
+        # Tenta carregar a logo.png da pasta raiz
+        st.image("logo.png", use_container_width=True)
+    except:
+        st.subheader("❄️ MPN SOLUÇÕES")
     
     st.markdown("---")
+
+    # B. NAVEGAÇÃO OPERACIONAL
+    st.title("🚀 Painel de Controle")
+    opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
+    aba_selecionada = st.radio("Navegar para:", opcoes_abas, key="nav_v3")
     
-   # B. DADOS DO TÉCNICO RESPONSÁVEL
-    st.subheader("👤 Técnico Responsável")
+    st.markdown("---")
+
+    # C. DADOS DO RESPONSÁVEL TÉCNICO (ESSENCIAL PARA O RODAPÉ DO PDF)
+    st.subheader("👨‍🔧 Identificação do Técnico")
     
-    # Correção: Uso de .get() para evitar erro de chave inexistente e inclusão de 'key' única
+    # Armazenamento persistente no session_state
     st.session_state.dados['tecnico_nome'] = st.text_input(
-        "Nome:", 
+        "Nome Completo:", 
         value=st.session_state.dados.get('tecnico_nome', ''), 
-        key="tec_nome_sidebar_v1"
+        key="f_tec_nome"
     )
     
     st.session_state.dados['tecnico_documento'] = st.text_input(
-        "CPF/CNPJ Técnico:", 
+        "CPF/CNPJ do Técnico:", 
         value=st.session_state.dados.get('tecnico_documento', ''), 
-        key="tec_doc_sidebar_v1"
+        key="f_tec_doc"
     )
     
     st.session_state.dados['tecnico_registro'] = st.text_input(
-        "Inscrição (CFT/CREA):", 
+        "Registro Profissional (CRA/CFT):", 
         value=st.session_state.dados.get('tecnico_registro', ''), 
-        key="tec_reg_sidebar_v1"
+        key="f_tec_reg"
     )
-    
-    st.markdown("---")
-    
 
-# --- FINAL DO APP: VALIDAÇÃO, ENVIO E LIMPEZA ---
     st.markdown("---")
+
+    # D. CHECKLIST DE INTEGRIDADE (O BLOCO 3 "VARRE" AS OUTRAS ABAS)
     d = st.session_state.dados
+    st.subheader("📋 Status do Laudo")
+    
+    # Critérios técnicos de validação
+    tem_cliente = bool(d.get('nome') and d.get('cliente_documento'))
+    tem_maquina = bool(d.get('tag_id') and d.get('modelo'))
+    tem_medicao = bool(d.get('p_baixa') and d.get('p_alta'))
 
-    # 1. VALIDAÇÃO DE CAMPOS OBRIGATÓRIOS (Usando .get para não travar)
-    if not d.get('nome') or not d.get('whatsapp'):
-        st.error("📋 STATUS: PENDENTE (Preencha Cliente e WhatsApp na Aba Cadastro)")
+    if not tem_cliente:
+        st.error("❌ Dados do Cliente Ausentes")
+    elif not tem_maquina:
+        st.warning("⚠️ Dados do Ativo Pendentes")
+    elif not tem_medicao:
+        st.info("🔄 Aguardando Medições de Campo")
     else:
-        st.success("📋 STATUS: PRONTO PARA ENVIO")
+        st.success("✅ Relatório Pronto para PDF")
         
-        # 2. MONTAGEM DA MENSAGEM (Protegida contra SyntaxError e KeyError)
-        msg_zap = (
-            f"*LAUDO TÉCNICO HVAC*\n\n"
-            f"👤 *CLIENTE:* {d.get('nome', '')}\n"
-            f"📍 END: {d.get('endereco', '')}, {d.get('numero', '')}\n"
-            f"🏙️ {d.get('cidade', '')}/{d.get('uf', '')} | CEP: {d.get('cep', '')}\n"
-            f"📞 Contato: {d.get('whatsapp', '')}\n\n"
-            f"⚙️ *EQUIPAMENTO:*\n"
-            f"📌 TAG: {d.get('tag_id', '')} | Mod: {d.get('modelo', '')}\n"
-            f"❄️ Fluido: {d.get('fluido', '')}\n\n"
-            f"🩺 *DIAGNÓSTICO:*\n"
-            f"{d.get('laudo_diag', 'Sem observações.')}\n\n"
-            f"👨‍🔧 *TÉCNICO:* {d.get('tecnico_nome', '')}\n"
-            f"📅 Data: {d.get('data', '')}"
-        )
-
-        # 3. GERAÇÃO DO LINK E BOTÃO DE ENVIO
-        texto_url = urllib.parse.quote(msg_zap)
-        link_final = f"https://wa.me/55{d.get('whatsapp', '')}?text={texto_url}"
-        st.link_button("📲 Enviar Laudo via WhatsApp", link_final, use_container_width=True)
+        # BOTÃO MESTRE: GERAÇÃO DO PDF PROFISSIONAL
+        # Nota: A função gerar_pdf(d) será chamada aqui
+        if st.button("📄 GERAR RELATÓRIO TÉCNICO", use_container_width=True):
+            # Lógica de processamento de cores da logo e colunas
+            st.write("Processando tabelas e assinaturas...")
 
     st.markdown("---")
 
-    # 4. LIMPAR FORMULÁRIO (DIRETRIZ: PROTEGENDO DADOS DO TÉCNICO)
-    if st.button("🗑️ Limpar Formulário", use_container_width=True):
-        # Lista do que NÃO deve ser apagado
-        chaves_preservadas = ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']
-        
+    # E. MANUTENÇÃO DE DADOS (LIMPEZA INTELIGENTE)
+    if st.button("🗑️ Nova Inspeção (Limpar)", use_container_width=True):
+        # Preserva os seus dados de técnico para não precisar redigitar
+        preservar = ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']
         for chave in list(st.session_state.dados.keys()):
-            if chave not in chaves_preservadas:
+            if chave not in preservar:
                 st.session_state.dados[chave] = ""
-        
         st.rerun()
+
+# ==============================================================================
+# FIM DO BLOCO 3 (CONGELADO E MAPEADO)
+# ==============================================================================
 
 # ==============================================================================
 # 4. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
