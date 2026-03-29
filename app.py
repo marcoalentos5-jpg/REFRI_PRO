@@ -590,62 +590,8 @@ if aba_selecionada == "Home":
 # ==============================================================================
 # 4. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
 # ==============================================================================
-if aba_selecionada == "Home":
-    # ... resto do seu código da Home
-    
-    # --- NOVA APRESENTAÇÃO DA ABA HOME (COM LOGO MPN SOLUÇÕES ) ---
-    st.markdown("<br>", unsafe_allow_html=True) # Espaçamento superior
 
-    # 1. CENTRALIZAÇÃO E EXIBIÇÃO DA LOGOMARCA
-    col1, col2, col3 = st.columns([1, 2, 1]) 
-    with col2: 
-        # NOME DO ARQUIVO DE IMAGEM QUE ESTÁ SENDO USADO
-        NOME_ARQUIVO_LOGO = "logo.png"
-        
-        # VERIFICAÇÃO ADICIONAL DO ARQUIVO NO DISCO (PARA AJUDAR NO DIAGNÓSTICO)
-        if os.path.exists(NOME_ARQUIVO_LOGO):
-            try:
-                # SE O ARQUIVO EXISTE, TENTA EXIBIR
-                st.image(NOME_ARQUIVO_LOGO, use_container_width=True) 
-            except Exception as e:
-                st.error(f"⚠️ Erro ao tentar abrir a imagem '{NOME_ARQUIVO_LOGO}'. Verifique se o arquivo está corrompido.")
-                st.write(f"Detalhes do erro do sistema: {e}")
-        else:
-            st.error(f"⚠️ Erro: Arquivo '{NOME_ARQUIVO_LOGO}' não encontrado na pasta raiz.")
-            st.info("Verifique se o nome do arquivo salvo no computador é EXATAMENTE 'logo.png' (maiúsculas/minúsculas importam).")
-
-    st.markdown("<br><br>", unsafe_allow_html=True) 
-
-    # 2. TÍTULO E BOAS-VINDAS CENTRALIZADOS E ESTILIZADOS
-    st.markdown("""
-        <div style="text-align: center;">
-            <h1 style="color: #0d47a1; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-                MPN Soluções
-            </h1>
-            <p style="color: #1976d2; font-size: 1.3em;">
-                Soluções em Refrigeração e Climatização
-            </p>
-            <hr style="border: 1px solid #90caf9; width: 60%; margin: 20px auto;">
-            <p style="color: #455a64; font-size: 1.1em; font-weight: bold;">
-                Bem-vindo ao Sistema HVAC Pro de Gestão Inteligente.
-            </p>
-            <p style="color: #546e7a; font-size: 1.0em;">
-                Selecione uma opção no Painel de Controle lateral para iniciar sua inspeção ou diagnóstico.
-            </p>
-        </div>
-    """, unsafe_allow_html=True)
-    # ------------------------------------------------
-
-elif aba_selecionada == "1. Cadastro de Equipamentos":
-    renderizar_aba_1() # Chama a função que contém todo o código da Aba 1
-
-elif aba_selecionada == "2. Diagnósticos":
-    renderizar_aba_2() # Chama a função que contém o esqueleto da Aba 2
-
-elif aba_selecionada == "Relatórios":
-    st.header("Página de Relatórios (Em desenvolvimento)")
-    st.write("Em breve: Visualização e exportação de relatórios.")
-# [COLE AQUI - Logo após o fim da renderizar_aba_1]
+# --- DEFINIÇÃO DA FUNÇÃO DE DIAGNÓSTICOS (DEVE FICAR DISPONÍVEL PARA O MENU) ---
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
     d = st.session_state.dados 
@@ -660,7 +606,6 @@ def renderizar_aba_diagnosticos():
     
     with col1:
         st.markdown("### 🔵 Baixa")
-        # Salvando em chaves que o sistema reconhece para cálculo
         p_suc = st.number_input("Pressão Sucção (PSI):", min_value=0.0, value=float(d.get('p_suc', 0.0)), key="p_suc_input")
         t_suc = st.number_input("Temp. Tubulação (°C):", value=float(d.get('t_suc', 0.0)), key="t_suc_input")
         d['p_suc'] = p_suc
@@ -675,20 +620,18 @@ def renderizar_aba_diagnosticos():
 
     with col3:
         st.markdown("### 🌡️ Ambiente")
-        # Estas são as chaves exatas que o seu PDF busca na Seção 3
+        # Chaves que alimentam a Seção 3 do PDF
         d['temp_insuflacao'] = st.number_input("Insuflação (°C):", value=float(d.get('temp_insuflacao', 0.0)))
         d['temp_retorno'] = st.number_input("Retorno (°C):", value=float(d.get('temp_retorno', 0.0)))
 
     # --- BLOCO 2: PROCESSAMENTO (CÁLCULOS PT AUTOMÁTICOS) ---
-    # Chama a função de pressão saturada que você já tem
     t_sat_suc = f_sat_precisao(p_suc, fluido)
     t_sat_des = f_sat_precisao(p_des, fluido)
     
-    # Cálculos de SH e SC
     sh = t_suc - t_sat_suc
     sc = t_sat_des - t_liq
 
-    # Envia os resultados para as gavetas do PDF (sh_total e sc_final)
+    # Envia resultados para o PDF
     d['sh_total'] = round(sh, 1)
     d['sc_final'] = round(sc, 1)
 
@@ -702,9 +645,46 @@ def renderizar_aba_diagnosticos():
 
     # --- BLOCO 4: CONCLUSÃO E LAUDO ---
     st.subheader("3. Parecer Técnico Final")
-    # O PDF busca 'diagnostico_texto' para preencher a Seção 4
     d['diagnostico_texto'] = st.text_area(
         "Descreva o diagnóstico ou recomendações:",
         value=d.get('diagnostico_texto', 'Nenhuma observação registrada.'),
         key="area_diagnostico"
     )
+
+# ==============================================================================
+# SELETOR DE ABAS (FLUXO PRINCIPAL)
+# ==============================================================================
+
+if aba_selecionada == "Home":
+    st.markdown("<br>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 2, 1]) 
+    with col2: 
+        NOME_ARQUIVO_LOGO = "logo.png"
+        if os.path.exists(NOME_ARQUIVO_LOGO):
+            try:
+                st.image(NOME_ARQUIVO_LOGO, use_container_width=True) 
+            except Exception as e:
+                st.error(f"⚠️ Erro ao abrir a imagem '{NOME_ARQUIVO_LOGO}'.")
+        else:
+            st.error(f"⚠️ Arquivo '{NOME_ARQUIVO_LOGO}' não encontrado.")
+
+    st.markdown("""
+        <div style="text-align: center;">
+            <h1 style="color: #0d47a1;">MPN Soluções</h1>
+            <p style="color: #1976d2; font-size: 1.3em;">Soluções em Refrigeração e Climatização</p>
+            <hr style="border: 1px solid #90caf9; width: 60%; margin: 20px auto;">
+            <p style="color: #455a64; font-size: 1.1em; font-weight: bold;">
+                Bem-vindo ao Sistema HVAC Pro de Gestão Inteligente.
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
+
+elif aba_selecionada == "1. Cadastro de Equipamentos":
+    renderizar_aba_1()
+
+elif aba_selecionada == "2. Diagnósticos":
+    renderizar_aba_diagnosticos()
+
+elif aba_selecionada == "Relatórios":
+    st.header("📋 Página de Relatórios")
+    st.write("Visualização e exportação de laudos finalizados.")
