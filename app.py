@@ -172,7 +172,7 @@ def f_sat_precisao(p, g):
     return float(np.interp(p, tabelas[g]["xp"], tabelas[g]["fp"]))
 
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO MASTER - CORREÇÃO DE PERSISTÊNCIA D)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO MASTER - CORREÇÃO DE PERSISTÊNCIA TOTAL)
 # ==============================================================================
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
@@ -220,25 +220,28 @@ def renderizar_aba_diagnosticos():
     t_liq = a4.number_input("TUB. LÍQUIDO (°C)", value=safe_float('temp_liquido'), format="%.1f", key="tl_m")
     t_com = a5.number_input("TUB. Desc. Comp. (°C)", value=safe_float('temp_descarga'), format="%.1f", key="tc_m")
 
-    # SEÇÃO B: 🔴 AR E AMBIENTE
+    # SEÇÃO B: 🔴 AR E AMBIENTE (CORREÇÃO DE PERSISTÊNCIA: UMIDADE E ÓLEO)
     st.markdown("##### 🔴 Ar e Ambiente")
     b1, b2, b3, b4, b5 = st.columns(5)
     t_ret = b1.number_input("Retorno Ar (°C)", value=safe_float('temp_entrada_ar'), format="%.1f", key="tr_m")
     t_ins = b2.number_input("Insuflação (°C)", value=safe_float('temp_saida_ar'), format="%.1f", key="ti_m")
     t_amb = b3.number_input("TEMP. Amb. Ext. (°C)", value=safe_float('temp_amb_ext', 35.0), format="%.1f", key="ta_m")
+    # CORRIGIDO: Agora lê 'umidade' e salvará em 'umidade'
     u_rel = b4.number_input("Umid. Rel. DO AR (%)", value=safe_float('umidade', 50.0), format="%.1f", key="ur_m")
+    # CORRIGIDO: Agora lê 'p_oleo' e salvará em 'p_oleo'
     p_oil = b5.number_input("Pressão Óleo (PSI)", value=safe_float('p_oleo', 0.0), format="%.1f", key="po_m")
 
-    # SEÇÃO C: ⚡ PARÂMETROS ELÉTRICOS
+    # SEÇÃO C: ⚡ PARÂMETROS ELÉTRICOS (CORREÇÃO DE PERSISTÊNCIA: TENSÃO MEDIDA)
     st.markdown("##### ⚡ Parâmetros Elétricos")
     c1, c2, c3, c4, c5 = st.columns(5)
     v_lin = c1.number_input("Tensão Nominal (V)", value=safe_float('v_nominal', 220.0), key="vn_m")
+    # CORRIGIDO: Agora lê 'v_medida' e salvará em 'v_medida'
     v_med = c2.number_input("Tensão Medida (V)", value=safe_float('v_medida', 220.0), key="vm_m")
     i_med = c3.number_input("Corrente Medida (A)", value=safe_float('i_medida'), key="im_m")
     rla   = c4.number_input("RLA - Nominal (A)", value=safe_float('rla'), key="rla_m")
     lra   = c5.number_input("LRA - Partida (A)", value=safe_float('lra'), key="lra_m")
 
-    # SEÇÃO D: 🔋 CAPACITÂNCIA E VENTILAÇÃO (CORREÇÃO DE PERSISTÊNCIA AQUI)
+    # SEÇÃO D: 🔋 CAPACITÂNCIA E VENTILAÇÃO
     st.markdown("##### 🔋 Capacitância e Ventilação")
     d1, d2, d3, d4, d5 = st.columns(5)
     cn_c  = d1.number_input("CAPACITÂNCIA Nom. Comp", value=safe_float('cn_c'), format="%.1f", key="cnc_m")
@@ -308,12 +311,13 @@ def renderizar_aba_diagnosticos():
     st.subheader("3. Parecer Técnico Final")
     d['laudo_diag'] = st.text_area("Diagnóstico e Observações:", value=d.get('laudo_diag', "Análise: Estável."), height=150)
 
-    # SINCRONIZAÇÃO FINAL (CORRIGIDA: ADICIONADO CAMPOS FALTANTES DA SEÇÃO D)
+    # SINCRONIZAÇÃO FINAL (CORRIGIDA: MAPEAMENTO TOTAL DE CHAVES)
     st.session_state.dados.update({
         'p_baixa': p_suc, 'temp_sucção': t_suc, 'p_alta': p_des, 'temp_liquido': t_liq,
-        'temp_entrada_ar': t_ret, 'temp_saida_ar': t_ins, 'i_medida': i_med, 
-        'cn_c': cn_c, 'cm_c': cm_c, 'cn_f': cn_f, 'cm_f': cm_f, 'i_fan': i_fan,
-        'lra': lra, 'rla': rla, 'temp_descarga': t_com, 'p_oleo': p_oil,
+        'temp_entrada_ar': t_ret, 'temp_saida_ar': t_ins, 'temp_amb_ext': t_amb,
+        'umidade': u_rel, 'p_oleo': p_oil, 'v_nominal': v_lin, 'v_medida': v_med,
+        'i_medida': i_med, 'cn_c': cn_c, 'cm_c': cm_c, 'cn_f': cn_f, 'cm_f': cm_f, 
+        'i_fan': i_fan, 'lra': lra, 'rla': rla, 'temp_descarga': t_com,
         'sh_calculado': sh, 'sc_calculado': sc
     })
 
