@@ -471,7 +471,7 @@ elif aba_selecionada == "1. Cadastro de Equipamentos":
     renderizar_aba_1() # Chama a função que contém todo o código da Aba 1
 
 elif aba_selecionada == "2. Diagnósticos":
-    renderizar_aba_diagnosticos() # Chama a função que contém o esqueleto da Aba 2
+    renderizar_aba_2() # Chama a função que contém o esqueleto da Aba 2
 
 elif aba_selecionada == "Relatórios":
     st.header("Página de Relatórios (Em desenvolvimento)")
