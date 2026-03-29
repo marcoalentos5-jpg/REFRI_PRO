@@ -1,112 +1,173 @@
+
 import streamlit as st
-import pandas as pd
-from datetime import date
+from datetime import datetime
+import requests
+import urllib.parse
+import os # Biblioteca para verificar arquivos no sistema
+import numpy as np
+import urllib.parse
+from datetime import datetime
 
-# ==============================================================================
-# 1. CONFIGURAÇÕES INICIAIS E ESTADO DO SISTEMA (LINHAS 1-40)
-# ==============================================================================
-st.set_page_config(page_title="Expert HVAC-R Diagnostic", layout="wide", page_icon="❄️")
 
-# Inicialização Robusta do Session State (Mantendo seus padrões Dark)
-if 'dados' not in st.session_state:
-    st.session_state.dados = {
-        'cliente': '', 'cpf_cnpj': '', 'contato': '', 'email': '',
-        'cep': '', 'logradouro': '', 'numero': '',
-        'fabricante': 'Midea', 'modelo': '', 'capacidade': '12.000 BTU',
-        'fluido': 'R410A', 'tipo_oleo': 'POE', 'carga_gas': '',
-        'tensao_nominal': '220V', 'status_eq': 'Operacional',
-        'laudo_diag': 'Análise: Estável.'
-    }
+# 1. CONFIGURAÇÃO INICIAL (DIRETRIZ: LAYOUT CONGELADO)
+st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
 
-d = st.session_state.dados
-
-# CSS Compacto Original (Sem espaçamentos extras)
+# CSS: Estilização (CONGELADO E PROTEGIDO)
 st.markdown("""
     <style>
-    .main { background-color: #0E1117; }
-    div[data-testid="stMetric"] { background-color: #1A1C23; border-radius: 10px; padding: 10px; border: 1px solid #333; }
-    div[data-testid="stVerticalBlock"] { gap: 0rem; } /* Compactação agressiva */
+    .stTextInput>div>div>input[aria-label="Data da Visita:"] {
+        background-color: #e0f2f1 !important;
+        color: #004d40 !important;
+        font-weight: bold;
+        border: 1px solid #b2dfdb !important;
+    }
+    div.stLinkButton > a {
+        background-color: #25D366 !important;
+        color: white !important;
+        font-weight: bold;
+        border-radius: 8px !important;
+    }
     </style>
-    """, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
+
+# 1.1. MOTOR DE SESSÃO (DIRETRIZ: SINCRONIZAÇÃO TOTAL)
+if 'dados' not in st.session_state:
+    st.session_state.dados = {
+        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
+        'data': datetime.now().strftime("%d/%m/%Y"),
+        'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '', 'complemento': '',
+        'fabricante': 'Carrier', 'modelo': '', 'capacidade': '12.000', 'linha': 'Residencial',
+        'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '',
+        'tipo_servico': 'Manutenção Preventiva', 'tag_id': 'TAG-01',
+        'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
+        'status_maquina': '🟢 Operacional', 'tipo_oleo': 'POE', 'frequencia': 'Inverter'
+    }
+
+def buscar_cep(cep):
+    cep_limpo = "".join(filter(str.isdigit, cep))
+    if len(cep_limpo) == 8:
+        try:
+            r = requests.get(f"https://viacep.com.br/ws/{cep_limpo}/json/", timeout=5)
+            if r.status_code == 200:
+                d_api = r.json()
+                if "erro" not in d_api:
+                    st.session_state.dados['endereco'] = d_api.get('logradouro', '')
+                    st.session_state.dados['bairro'] = d_api.get('bairro', '')
+                    st.session_state.dados['cidade'] = d_api.get('localidade', '')
+                    st.session_state.dados['uf'] = d_api.get('uf', '')
+                    return True
+        except: pass
+    return False
+
 
 # ==============================================================================
-# 2. ABA 1: CADASTRO - FUNÇÃO CORRIGIDA PARA 'renderizar_aba_1' (LINHAS 41-172)
+# 1.2 FUNÇÃO DA ABA 1: Identificação e Equipamento (LIMPEZA DEFINITIVA)
 # ==============================================================================
-def renderizar_aba_1(): # Mantendo o nome correto para evitar o NameError
-    st.header("📋 Cadastro de Cliente e Equipamento")
-    # Removido st.markdown("---") que quebrava o layout compacto
+def renderizar_aba_1():
+    st.subheader("📋 Cadastro de Cliente e Ativo")
+    d = st.session_state.dados
 
-    # --- 2.1 DADOS DO CLIENTE (LAYOUT COMPACTO ORIGINAL) ---
-    st.subheader("1. Informações do Cliente")
-    col1, col2 = st.columns(2)
-    with col1:
-        d['cliente'] = st.text_input("Nome do Cliente/Empresa:", value=d.get('cliente', ''), key="cli_persist")
-        d['cpf_cnpj'] = st.text_input("CPF ou CNPJ:", value=d.get('cpf_cnpj', ''), key="cpf_persist")
-    with col2:
-        d['contato'] = st.text_input("Telefone/WhatsApp:", value=d.get('contato', ''), key="cont_persist")
-        d['email'] = st.text_input("E-mail para Laudo:", value=d.get('email', ''), key="mail_persist")
+    # --- SEÇÃO CLIENTE E ENDEREÇO ---
+    with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
+        c1, c2, c3 = st.columns([2, 1, 1])
+        d['nome'] = c1.text_input("Nome / Razão Social *", value=d.get('nome', ''), key="cli_n")
+        d['cpf_cnpj'] = c2.text_input("CPF/CNPJ", value=d.get('cpf_cnpj', ''), key="cli_d")
+        d['whatsapp'] = c3.text_input("WhatsApp *", value=d.get('whatsapp', ''), key="cli_w")
 
-    # GRID DE LOCALIZAÇÃO (RESTAURADO ALINHAMENTO ORIGINAL [2, 5, 1])
-    # Títulos removidos para compactar, mantendo apenas labels dos inputs
-    l1, l2, l3 = st.columns([2, 5, 1])
-    d['cep'] = l1.text_input("CEP:", value=str(d.get('cep', '')), key="cep_persist")
-    d['logradouro'] = l2.text_input("Logradouro (Endereço):", value=d.get('logradouro', ''), key="log_persist")
-    d['numero'] = l3.text_input("Nº:", value=d.get('numero', ''), key="num_persist")
+        cx1, cx2, cx3 = st.columns([1, 1, 2])
+        d['celular'] = cx1.text_input("Celular:", value=d.get('celular', ''), key="cli_c")
+        d['tel_fixo'] = cx2.text_input("Fixo:", value=d.get('tel_fixo', ''), key="cli_f")
+        d['email'] = cx3.text_input("E-mail:", value=d.get('email', ''), key="cli_e")
 
-    # --- 2.2 DADOS DO EQUIPAMENTO (CATÁLOGO ATUALIZADO NO LAYOUT ORIGINAL) ---
-    st.subheader("2. Especificações do Equipamento")
-    
-    # LISTA DE FABRICANTES (HITACHI + ORDEM A-Z + OUTROS FIM)
-    fabs_raw = sorted(["Carrier", "Daikin", "Fujitsu", "Gree", "Hitachi", "LG", "Midea", "Panasonic", "Samsung", "Trane", "York", "Elgin", "Springer"])
-    lista_fabricantes = fabs_raw + ["OUTROS"]
-    
-    # LISTA DE CAPACIDADES EXPANDIDA (BTU E TR)
-    lista_capacidades = [
-        "7.000 BTU", "9.000 BTU", "12.000 BTU", "18.000 BTU", "22.000 BTU", "24.000 BTU", 
-        "30.000 BTU", "36.000 BTU", "48.000 BTU", "60.000 BTU", "80.000 BTU",
-        "5 TR", "10 TR", "15 TR", "20 TR", "30 TR", "40 TR", "50 TR", "Outra"
-    ]
-
-    # Função de Índice Dinâmico (Sincronização sem quebrar layout)
-    def find_idx(lista, chave):
-        val = d.get(chave)
-        return lista.index(val) if val in lista else 0
-
-    # TRÊS COLUNAS TÉCNICAS INFERIORES (RESTAURADO ALINHAMENTO ORIGINAL [1, 1, 1])
-    e1, e2, e3 = st.columns(3)
-    
-    with e1:
-        # Removido st.markdown("##### 🏷️ Identificação")
-        d['fabricante'] = st.selectbox("Fabricante:", lista_fabricantes, index=find_idx(lista_fabricantes, 'fabricante'))
-        d['modelo'] = st.text_input("Modelo/Tag:", value=d.get('modelo', ''), key="mod_persist")
-        d['capacidade'] = st.selectbox("Capacidade (BTU/TR):", lista_capacidades, index=find_idx(lista_capacidades, 'capacidade'))
-
-    with e2:
-        # Removido st.markdown("##### 🧪 Fluido e Óleo")
-        lista_fluidos = ["R410A", "R22", "R134a", "R404A", "R32", "R290"]
-        d['fluido'] = st.selectbox("Fluido:", lista_fluidos, index=find_idx(lista_fluidos, 'fluido'))
+        st.markdown("---")
+        ce1, ce2, ce3 = st.columns([1, 2, 1])
+        cep_input = ce1.text_input("CEP *", value=d.get('cep', ''), key="cli_cep")
         
-        # TIPO DE ÓLEO PERSISTENTE
-        lista_oleos = ["POE", "PVE", "MINERAL", "AB"]
-        d['tipo_oleo'] = st.selectbox("Tipo Óleo:", lista_oleos, index=find_idx(lista_oleos, 'tipo_oleo'))
-        d['carga_gas'] = st.text_input("Carga Gás (kg):", value=d.get('carga_gas', ''), key="gas_persist")
+        # LOGICA CEP
+        if len("".join(filter(str.isdigit, cep_input))) == 8 and cep_input != d.get('last_cep', ''):
+            if buscar_cep(cep_input):
+                d['cep'] = cep_input
+                d['last_cep'] = cep_input
+                st.rerun()
 
-    with e3:
-        # Removido st.markdown("##### ⚡ Elétrica e Status")
-        # TENSÃO NOMINAL PERSISTENTE
-        lista_tensoes = ["110V", "220V", "380V", "440V"]
-        d['tensao_nominal'] = st.selectbox("Tensão Nominal:", lista_tensoes, index=find_idx(lista_tensoes, 'tensao_nominal'))
+        d['endereco'] = ce2.text_input("Logradouro:", value=d.get('endereco', ''), key="cli_end")
+        d['numero'] = ce3.text_input("Nº/Apto:", value=d.get('numero', ''), key="cli_num")
+
+        ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.4])
+        d['complemento'] = ce4.text_input("Complemento:", value=d.get('complemento', ''), key="cli_cm")
+        d['bairro'] = ce5.text_input("Bairro:", value=d.get('bairro', ''), key="cli_ba")
+        d['cidade'] = ce6.text_input("Cidade:", value=d.get('cidade', ''), key="cli_ci")
+        d['uf'] = ce7.text_input("UF:", value=d.get('uf', ''), key="cli_uf")
+
+    # --- SEÇÃO EQUIPAMENTO (ESTRUTURA ÚNICA) ---
+    st.markdown("### ⚙️ Especificações do Equipamento")
+    with st.expander("Detalhes Técnicos do Ativo", expanded=True):
         
-        # STATUS PERSISTENTE
-        lista_status = ["Operacional", "Parado (Defeito)", "Manutenção Preventiva", "Avaliação Técnica"]
-        d['status_eq'] = st.selectbox("Status:", lista_status, index=find_idx(lista_status, 'status_eq'))
-        d['data_visita'] = st.date_input("Data Visita:", value=date.today())
+        # LINHA 1
+        l1_c1, l1_c2, l1_c3 = st.columns(3)
+        with l1_c1:
+            fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea", "Outro"])
+            f_idx = fab_list.index(d['fabricante']) if d['fabricante'] in fab_list else 0
+            d['fabricante'] = st.selectbox("Fabricante:", fab_list, index=f_idx, key="eq_f")
+        with l1_c2:
+            d['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=d.get('serie_evap', ''), key="eq_se")
+        with l1_c3:
+            d['capacidade'] = st.text_input("Capacidade (BTU/TR):", value=d.get('capacidade', '12.000'), key="eq_ca")
 
-    # Removido st.markdown("<br>") e st.info() que empurravam o layout
+        # LINHA 2
+        l2_c1, l2_c2, l2_c3 = st.columns(3)
+        with l2_c1:
+            d['modelo'] = st.text_input("Modelo:", value=d.get('modelo', ''), key="eq_mo")
+        with l2_c2:
+            d['serie_cond'] = st.text_input("Nº Série (COND)", value=d.get('serie_cond', ''), key="eq_sc")
+        with l2_c3:
+            d['potencia'] = st.text_input("Potência Nominal (W/kW):", value=d.get('potencia', ''), key="eq_po")
 
-    # SINCRONIZAÇÃO FINAL DO ESTADO
-    st.session_state.dados.update(d)
-# FINAL DO BLOCO 1 - LAYOUT RESTAURADO - LINHA 172
+        # LINHA 3
+        l3_c1, l3_c2, l3_c3 = st.columns(3)
+        with l3_c1:
+            d['local_evap'] = st.text_input("Local Evaporadora:", value=d.get('local_evap', ''), key="eq_le")
+        with l3_c2:
+            d['local_cond'] = st.text_input("Local Condensadora:", value=d.get('local_cond', ''), key="eq_lc")
+        with l3_c3:
+            fluidos = ["R410A", "R32", "R22", "R134a", "R290", "R404A"]
+            fl_idx = fluidos.index(d['fluido']) if d['fluido'] in fluidos else 0
+            d['fluido'] = st.selectbox("Fluido Refrigerante:", fluidos, index=fl_idx, key="eq_fl")
+
+        # LINHA 4
+        l4_c1, l4_c2, l4_c3 = st.columns(3)
+        with l4_c1:
+            d['tipo_oleo'] = st.selectbox("Tipo de Óleo:", ["POE", "Mineral", "PVE", "PAG", "AB"], key="eq_ol")
+            d['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], key="eq_st")
+        with l4_c2:
+            d['carga_gas'] = st.text_input("Carga de Fluido (kg/g):", value=d.get('carga_gas', ''), key="eq_cg")
+            d['tensao'] = st.selectbox("Tensão Nominal (V):", ["220V/1F", "220V/3F", "380V/3F", "440V/3F", "127V"], key="eq_te")
+        with l4_c3:
+            try:
+                dt = datetime.strptime(d.get('ultima_maint', datetime.now().strftime("%d/%m/%Y")), "%d/%m/%Y").date()
+            except:
+                dt = datetime.now().date()
+            d['ultima_maint'] = st.date_input("Última Manutenção:", value=dt, format="DD/MM/YYYY", key="eq_dt").strftime("%d/%m/%Y")
+            d['tag_id'] = st.text_input("TAG/Patrimônio:", value=d.get('tag_id', ''), key="eq_ta")
+
+# --- MOTOR DE CÁLCULO PT (DIRETRIZ: PRECISÃO INDUSTRIAL) ---
+def f_sat_precisao(p, g):
+    if p <= 5: return -50.0
+    
+    # Tabelas otimizadas para R410A, R32, R22, R134a e R290
+    tabelas = {
+        "R410A": {"xp": [5, 50, 90, 122, 150, 350, 550], "fp": [-50, -18, -3.5, 5.5, 11.5, 41.5, 64.5]},
+        "R32": {"xp": [5, 50, 90, 140, 200, 480, 580], "fp": [-50, -19.5, -3.6, 8.5, 19.8, 56.5, 66.8]},
+        "R22": {"xp": [5, 30, 60, 100, 200, 320], "fp": [-50, -15.2, 1.5, 16.5, 38.5, 58.5]},
+        "R134a": {"xp": [5, 15, 30, 70, 150, 250], "fp": [-50, -15.5, 1.5, 27.5, 53, 76.2]},
+        "R290": {"xp": [5, 20, 65, 100, 150, 250], "fp": [-50, -25.5, 3.5, 17.5, 32.5, 55.2]}
+    }
+
+    if g not in tabelas: return 0.0
+    
+    # Interpolação linear para encontrar a temperatura exata baseada na pressão
+    return float(np.interp(p, tabelas[g]["xp"], tabelas[g]["fp"]))
+
 # FINAL DO BLOCO 1 - INTEGRIDADE MANTIDA - LINHA 172
     
 
