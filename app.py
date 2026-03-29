@@ -171,101 +171,170 @@ def f_sat_precisao(p, g):
     # Interpolação linear para encontrar a temperatura exata baseada na pressão
     return float(np.interp(p, tabelas[g]["xp"], tabelas[g]["fp"]))
 
-
 # ==============================================================================
-# 2. RENDERIZAÇÃO DA ABA DE DIAGNÓSTICOS (LINHAS 175 - 289)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO MASTER ATUALIZADA)
 # ==============================================================================
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
-    
-    # 2.1 REFERÊNCIA DE ESTADO E FLUIDO
     d = st.session_state.dados
-    fluido_selecionado = d.get('fluido', 'R410A')
-    
-    st.info(f"❄️ Fluido Refrigerante em Análise: **{fluido_selecionado}**")
-    st.markdown("---")
+    fluido = d.get('fluido', 'R410A')
 
-    # 2.2 PAINEL DE METAS DE REFERÊNCIA
-    alvos_tecnicos = {
-        "R410A": {"psuc": "110-130", "pdes": "350-450", "sh": "5-7K", "sc": "4-7K"},
-        "R22":   {"psuc": "60-75",   "pdes": "250-300", "sh": "5-7K", "sc": "4-7K"},
-        "R134a": {"psuc": "20-35",   "pdes": "150-200", "sh": "5-7K", "sc": "4-7K"},
-        "R404A": {"psuc": "65-85",   "pdes": "280-350", "sh": "5-7K", "sc": "4-7K"}
+    # --- 1. PAINEL DE REFERÊNCIA IDEAL (DINÂMICO POR GÁS) ---
+    referencias = {
+        'R410A': {"p_suc": "110 a 130 PSI", "t_sat": "2°C a 6°C", "sh": "5K a 9K", "sc": "5K a 8K"},
+        'R22':   {"p_suc": "60 a 75 PSI", "t_sat": "1°C a 5°C", "sh": "7K a 11K", "sc": "3K a 6K"},
+        'R134a': {"p_suc": "25 a 40 PSI", "t_sat": "-1°C a 4°C", "sh": "5K a 10K", "sc": "4K a 8K"},
+        'R404A': {"p_suc": "80 a 95 PSI", "t_sat": "-5°C a 0°C", "sh": "4K a 8K", "sc": "2K a 5K"}
     }
-    ref = alvos_tecnicos.get(fluido_selecionado, alvos_tecnicos["R410A"])
+    ref = referencias.get(fluido, referencias['R410A'])
 
     st.markdown(f"""
-        <div style="background-color: #f0f7ff; padding: 15px; border-radius: 8px; border-left: 5px solid #007bff;">
-            <strong style="color: #0056b3;">🎯 Referência Esperada:</strong><br>
-            P. Sucção: {ref['psuc']} PSI | P. Descarga: {ref['pdes']} PSI | SH: {ref['sh']} | SC: {ref['sc']}
+        <div style="background-color: #1E1E1E; border-left: 5px solid #00CCFF; padding: 15px; border-radius: 10px; margin-bottom: 25px;">
+            <h4 style="margin-top:0; color: #00CCFF;">🎯 Referência Ideal para {fluido}</h4>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                <div><small>SUCÇÃO ALVO</small><br><b>{ref['p_suc']}</b></div>
+                <div><small>SATURAÇÃO ALVO</small><br><b>{ref['t_sat']}</b></div>
+                <div><small>SH (SUPERAQUEC.)</small><br><b>{ref['sh']}</b></div>
+                <div><small>SC (SUB-RESFR.)</small><br><b>{ref['sc']}</b></div>
+            </div>
         </div>
     """, unsafe_allow_html=True)
-    st.markdown("<br>", unsafe_allow_html=True)
 
-    # 2.3 MEDIÇÕES DO CICLO FRIGORÍFICO
-    st.subheader("1. Medições do Ciclo")
-    col_suc, col_des = st.columns(2)
+    # --- 2. MEDIÇÕES DE CAMPO (20 CAMPOS - NOMES POR EXTENSO) ---
+    st.subheader("1. Medições de Campo")
+    
+    # SEÇÃO A: 🔵 CICLO FRIGORÍFICO
+    st.markdown("##### 🔵 Ciclo Frigorífico")
+    a1, a2, a3, a4, a5 = st.columns(5)
+    p_suc = a1.number_input("SUCÇÃO (PSI)", value=float(d.get('p_baixa', 0.0)), format="%.1f", key="ps_m")
+    t_suc = a2.number_input("TUB. SUCÇÃO (°C)", value=float(d.get('temp_sucção', 0.0)), format="%.1f", key="ts_m")
+    p_des = a3.number_input("DESCARGA (PSI)", value=float(d.get('p_alta', 0.0)), format="%.1f", key="pd_m")
+    t_liq = a4.number_input("TUB. LÍQUIDO (°C)", value=float(d.get('temp_liquido', 0.0)), format="%.1f", key="tl_m")
+    t_com = a5.number_input("TUB. Desc. Comp. (°C)", value=float(d.get('temp_descarga', 0.0)), format="%.1f", key="tc_m")
 
-    with col_suc:
-        st.markdown("#### 🔵 Lado de Baixa")
-        d['p_suc'] = st.number_input("Pressão de Sucção (PSI):", value=float(d.get('p_suc', 0.0)), step=1.0, key="psuc_diag")
-        d['t_suc'] = st.number_input("Temp. Tubo Sucção (°C):", value=float(d.get('t_suc', 0.0)), step=0.1, key="tsuc_diag")
+    # SEÇÃO B: 🔴 AR E AMBIENTE
+    st.markdown("##### 🔴 Ar e Ambiente")
+    b1, b2, b3, b4, b5 = st.columns(5)
+    t_ret = b1.number_input("Retorno Ar (°C)", value=float(d.get('temp_entrada_ar', 0.0)), format="%.1f", key="tr_m")
+    t_ins = b2.number_input("Insuflação (°C)", value=float(d.get('temp_saida_ar', 0.0)), format="%.1f", key="ti_m")
+    t_amb = b3.number_input("TEMP. Amb. Ext. (°C)", value=float(d.get('temp_amb_ext', 35.0)), format="%.1f", key="ta_m")
+    u_rel = b4.number_input("Umid. Rel. DO AR (%)", value=float(d.get('umidade', 50.0)), format="%.1f", key="ur_m")
+    p_oil = b5.number_input("Pressão Óleo (PSI)", value=0.0, format="%.1f", key="po_m")
 
-    with col_des:
-        st.markdown("#### 🔴 Lado de Alta")
-        d['p_des'] = st.number_input("Pressão de Descarga (PSI):", value=float(d.get('p_des', 0.0)), step=1.0, key="pdes_diag")
-        d['t_liq'] = st.number_input("Temp. Tubo Líquido (°C):", value=float(d.get('t_liq', 0.0)), step=0.1, key="tliq_diag")
+    # SEÇÃO C: ⚡ PARÂMETROS ELÉTRICOS
+    st.markdown("##### ⚡ Parâmetros Elétricos")
+    c1, c2, c3, c4, c5 = st.columns(5)
+    v_lin = c1.number_input("Tensão Nominal (V)", value=float(d.get('v_nominal', 220.0)), key="vn_m")
+    v_med = c2.number_input("Tensão Medida (V)", value=float(d.get('v_medida', 220.0)), key="vm_m")
+    i_med = c3.number_input("Corrente Medida (A)", value=float(d.get('i_medida', 0.0)), key="im_m")
+    rla   = c4.number_input("RLA - Nominal (A)", value=float(d.get('rla', 0.0)), key="rla_m")
+    lra   = c5.number_input("LRA - Partida (A)", value=float(d.get('lra', 0.0)), key="lra_m")
 
-    # 2.4 AMBIENTE E ELÉTRICA (CORREÇÃO DA LINHA 230 INTEGRADA)
+    # SEÇÃO D: 🔋 CAPACITÂNCIA E VENTILAÇÃO
+    st.markdown("##### 🔋 Capacitância e Ventilação")
+    d1, d2, d3, d4, d5 = st.columns(5)
+    cn_c  = d1.number_input("CAPACITÂNCIA Nom. Comp", value=float(d.get('cn_c', 0.0)), format="%.1f", key="cnc_m")
+    cm_c  = d2.number_input("CAPACITÂNCIA Lido Comp", value=float(d.get('cm_c', 0.0)), format="%.1f", key="cmc_m")
+    cn_f  = d3.number_input("CAPACITÂNCIA Nom. Fan", value=float(d.get('cn_f', 0.0)), format="%.1f", key="cnf_m")
+    cm_f  = d4.number_input("CAPACITÂNCIA Lido Fan", value=float(d.get('cm_f', 0.0)), format="%.1f", key="cmf_m")
+    i_fan = d5.number_input("CORRENTE Fan (A)", value=0.0, format="%.2f", key="if_m")
+
+    # --- 3. PROCESSAMENTO TÉCNICO (CÁLCULOS) ---
+    t_sat_s = f_sat_precisao(p_suc, fluido) if p_suc > 5 else 0.0
+    t_sat_d = f_sat_precisao(p_des, fluido) if p_des > 5 else 0.0
+    sh = round(t_suc - t_sat_s, 2) if t_sat_s != 0 else 0.0
+    sc = round(t_sat_d - t_liq, 2) if t_sat_d != 0 else 0.0
+    dt_ar = round(t_ret - t_ins, 2)
+    d_tensao = round(v_med - v_lin, 2)
+    d_corrente = round(i_med - rla, 2) if rla > 0 else 0.0
+    sh_util = round(sh * 0.8, 2) 
+    d_cap_f = round(cm_f - cn_f, 2)
+    d_cap_c = round(cm_c - cn_c, 2)
+
+
+# --- 3. RESULTADOS CALCULADOS (FONTE REDUZIDA E COR PERSONALIZADA) ---
     st.markdown("---")
-    st.subheader("2. Ambiente e Elétrica")
-    col_amb, col_ele = st.columns(2)
+    st.subheader("2. Resultados Calculados")
 
-    with col_amb:
-        d['t_ar_ent'] = st.number_input("Temp. Ar Entrada Evap. (°C):", value=float(d.get('t_ar_ent', 0.0)), key="tar_ent")
-        d['t_ar_sai'] = st.number_input("Temp. Ar Saída Evap. (°C):", value=float(d.get('t_ar_sai', 0.0)), key="tar_sai")
+    # CSS para diminuir a fonte e mudar a cor do texto das métricas
+    st.markdown("""
+        <style>
+        /* Estilo do Card */
+        div[data-testid="stMetric"] {
+            background-color: #1A1C23;
+            border: 1px solid #333;
+            padding: 8px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            border-left: 4px solid #00CCFF;
+        }
+        /* Ajuste do Label (Título do campo) */
+        div[data-testid="stMetricLabel"] p {
+            font-size: 0.85rem !important;
+            color: #888 !important; /* Cinza para o título */
+        }
+        /* Ajuste do Valor (O número calculado) */
+        div[data-testid="stMetricValue"] div {
+            font-size: 1.1rem !important;
+            color: #B0C4DE !important; /* Cor LightSteelBlue para o resultado */
+            font-weight: 600;
+        }
+        </style>
+    """, unsafe_allow_html=True)
 
-    with col_ele:
-        # Sanitização para evitar TypeError/ValueError na conversão
-        def fix_val(val, default):
-            try: return float(val) if val not in [None, ""] else default
-            except: return default
+    res = st.columns(5)
 
-        d['corrente'] = st.number_input("Corrente (A):", value=fix_val(d.get('corrente'), 0.0), step=0.1, key="curr_diag")
-        # LINHA 230: Blindagem contra valores nulos/vazios
-        d['tensao'] = st.number_input("Tensão (V):", value=fix_val(d.get('tensao'), 220.0), step=1.0, key="tens_diag")
+    # COLUNA 1: Superaquecimentos
+    with res[0]:
+        st.metric("SH TOTAL", f"{sh:.1f} K")
+        st.metric("SH ÚTIL", f"{sh_util:.1f} K")
 
-    # 2.5 CÁLCULOS TERMODINÂMICOS
-    def get_t_sat(p, f):
-        if p <= 0: return 0.0
-        coefs = {"R410A": (0.209, -18.2), "R22": (0.381, -25.4), "R134a": (0.522, -32.1)}
-        c1, c2 = coefs.get(f, (0.2, -15.0))
-        return (p * c1) + c2
+    # COLUNA 2: Temperaturas de Troca
+    with res[1]:
+        st.metric("SAT. SUCÇÃO", f"{t_sat_s:.1f} °C")
+        st.metric("Δ T (AR)", f"{dt_ar:.1f} K")
 
-    tsat_s = get_t_sat(d['p_suc'], fluido_selecionado)
-    tsat_d = get_t_sat(d['p_des'], fluido_selecionado)
-    sh_calc = d['t_suc'] - tsat_s
-    sc_calc = tsat_d - d['t_liq']
+    # COLUNA 3: Sub-resfriamento e Alvo
+    with res[2]:
+        st.metric("SC FINAL", f"{sc:.1f} K")
+        st.metric("SUCÇÃO ALVO", f"{ref['p_suc']}")
 
-    # 2.6 RESULTADOS E MÉTRICAS VISUAIS
+    # COLUNA 4: Diferenciais Elétricos
+    with res[3]:
+        st.metric("Δ TENSÃO", f"{d_tensao:.1f} V")
+        st.metric("Δ CORRENTE", f"{d_corrente:.1f} A")
+
+    # COLUNA 5: Diferenciais de Capacitância
+    with res[4]:
+        st.metric("Δ CAP. COMP.", f"{d_cap_c:.1f} µF")
+        st.metric("Δ CAP. FAN", f"{d_cap_f:.1f} µF")
+    
+    # --- 5. DIAGNÓSTICO INTELIGENTE (IA) ---
     st.markdown("---")
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("T. Sat. Sucção", f"{tsat_s:.1f}°C")
-    m2.metric("T. Sat. Descarga", f"{tsat_d:.1f}°C")
-    m3.metric("SH (Superaq.)", f"{sh_calc:.1f} K", delta_color="normal" if 5<=sh_calc<=8 else "inverse")
-    m4.metric("SC (Subresf.)", f"{sc_calc:.1f} K", delta_color="normal" if 4<=sc_calc<=9 else "inverse")
+    st.subheader("🤖 Diagnóstico Inteligente (IA)")
+    
+    alertas_ia = []
+    if sh < 5: alertas_ia.append("⚠️ **SH Baixo:** Risco de golpe de líquido.")
+    if sh > 12: alertas_ia.append("⚠️ **SH Alto:** Compressor aquecendo demais.")
+    if dt_ar < 8 and t_ret > 0: alertas_ia.append("❄️ **Delta T Baixo:** Verifique filtros ou carga.")
+    if t_com > 100: alertas_ia.append("🔥 **Descarga Crítica:** Risco de queima do óleo lubrificante.")
+    
+    texto_ia = "\n".join(alertas_ia) if alertas_ia else "✅ Sistema operando conforme lógica nominal."
+    st.info(texto_ia)
 
-    # 2.7 PARECER E SINCRONIZAÇÃO (LINHA 289 / ANTIGA 379)
+    # --- 6. PARECER TÉCNICO FINAL ---
     st.markdown("---")
-    d['laudo_diag'] = st.text_area("Parecer Técnico:", value=d.get('laudo_diag', ''), height=100)
+    st.subheader("3. Parecer Técnico Final")
+    d['laudo_diag'] = st.text_area("Diagnóstico e Observações:", value=d.get('laudo_diag', "Análise: Estável."), height=150)
 
-    # Sincronização Final Protegida
-    st.session_state.dados.update({
-        'sh_calculado': round(sh_calc, 2),
-        'sc_calculado': round(sc_calc, 2),
-        'delta_ar': round(d['t_ar_ent'] - d['t_ar_sai'], 2),
-        'status_operacional': "Normal" if 5<=sh_calc<=8 else "Revisão Necessária"
+    # Sincronização e Atualização Global Final
+    d.update({
+        'p_baixa': p_suc, 'temp_sucção': t_suc, 'p_alta': p_des, 'temp_liquido': t_liq,
+        'temp_entrada_ar': t_ret, 'temp_saida_ar': t_ins, 'i_medida': i_med, 
+        'cm_c': cm_c, 'cm_f': cm_f, 'lra': lra, 'rla': rla, 'temp_descarga': t_com
     })
+
+
 # FIM DO BLOCO 2 (LINHA 289)
 # FINAL DO BLOCO 2 (LINHA 384)   
 
