@@ -380,6 +380,57 @@ def renderizar_aba_2():
     else:
         st.success("✅ Sistema operando dentro dos parâmetros de estabilidade termodinâmica.")
 
+# --- PONTE DE SINCRONIZAÇÃO: TELA -> PDF ---
+    # Esta seção traduz os nomes técnicos da tela para os nomes que o seu motor de PDF busca.
+    st.session_state.dados.update({
+        # Dados de Identificação e Endereço (Sincronia com Seção 1 do PDF)
+        'cliente_documento': d.get('cpf_cnpj'),
+        'cliente_whatsapp': d.get('whatsapp'),
+        'cliente_email': d.get('email'),
+        'logradouro': d.get('endereco'),
+        
+        # Dados do Equipamento (Sincronia com Seção 2 do PDF)
+        'n_serie_evap': d.get('serie_evap'),
+        'n_serie_cond': d.get('serie_cond'),
+        'capacidade_btus': d.get('capacidade'),
+        'carga_fluido': d.get('carga_gas'),
+        
+        # Dados de Medição (Sincronia com Seção 3 do PDF)
+        'temp_suc_tubo': t_suc_val,
+        'temp_desc_tubo': t_com_val, # Mapeado para Tubulação de Descarga
+        'temp_desc_comp': t_com_val, # Mapeado para Descarga do Compressor
+        'temp_retorno': t_ret_val,
+        'temp_insuflacao': t_ins_val,
+        'umidade_rel': u_rel_val,
+        'pressao_oleo': p_oil_val,
+        'tensao_nom': v_lin_val,
+        'tensao_med': v_med_val,
+        'corrente_med': i_med_val,
+        'rla_nom': rla_val,
+        'lra_partida': lra_val,
+        'cap_nom_comp': cn_c_val,
+        'cap_lido_comp': cm_c_val,
+        'cap_nom_fan': cn_f_val,
+        'cap_lido_fan': cm_f_val,
+        
+        # Dados de Performance (Sincronia com Seção 4 do PDF)
+        'sh_total': f"{sh_calc:.1f}",
+        'sh_util': f"{sh_util_calc:.1f}",
+        'sat_suc': f"{t_sat_s:.1f}",
+        'sat_desc': f"{t_sat_d:.1f}",
+        'delta_t_ar': f"{dt_ar_calc:.1f}",
+        'sc_final': f"{sc_calc:.1f}",
+        'delta_corr': f"{d_corrente_calc:.1f}",
+        'delta_tens': f"{d_tensao_calc:.1f}",
+        'cop_estim': f"{cop_estimado:.2f}",
+        'delta_cap_cp': f"{d_cap_c_calc:.1f}",
+        'delta_cap_fn': f"{d_cap_f_calc:.1f}",
+        
+        # Parecer Final (Sincronia com Seção 5 do PDF)
+        'parecer_final': d.get('laudo_diag', 'Análise: Sistema estável.')
+    })
+    
+
     # --- 6. PARECER TÉCNICO E PERSISTÊNCIA ---
     st.markdown("---")
     st.subheader("3. Parecer Técnico Final")
@@ -415,7 +466,7 @@ def renderizar_aba_2():
         'cop_estimado': cop_estimado,
         'balanca_sugestao': sugestao_massa
     })
-# FINAL DO BLOCO 2 (LINHA 384)   
+# FINAL DO BLOCO 2 (LINHA 489)   
 
 
 # ==============================================================================
