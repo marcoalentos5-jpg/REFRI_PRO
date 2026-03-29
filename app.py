@@ -498,18 +498,25 @@ with st.sidebar:
             pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(15, 8, " E-Mail:", border='LBT')
             pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(45, 8, f" {d.get('email', '---').lower()}", border='RBT', ln=True)
 
-            # --- GERAÇÃO DOS BYTES E BOTÃO (O QUE FALTAVA) ---
-            pdf_bytes = pdf.output(dest='S')
+            # --- GERAÇÃO DO ARQUIVO FINAL (CORREÇÃO BYTEARRAY) ---
+            pdf_output = pdf.output(dest='S')
             
+            # Converte bytearray ou string para bytes puros
+            if isinstance(pdf_output, bytearray):
+                pdf_bytes = bytes(pdf_output)
+            elif isinstance(pdf_output, str):
+                pdf_bytes = pdf_output.encode('latin1')
+            else:
+                pdf_bytes = pdf_output
+
             st.download_button(
                 label="📄 GERAR RELATÓRIO TÉCNICO FINAL",
-                data=bytes(pdf_bytes) if isinstance(pdf_bytes, str) else pdf_bytes,
-                file_name=f"Laudo_MPN_{d.get('tag_id','INS')}.pdf",
+                data=pdf_bytes, # Agora os dados estão no formato correto
+                file_name=f"Laudo_MPN_{d.get('tag_id','INS').upper()}.pdf",
                 mime="application/pdf",
-                key="btn_final_v1",
+                key="btn_gerar_v2",
                 use_container_width=True
             )
-
         except Exception as e:
             st.error(f"Erro ao construir o PDF: {e}")
 
@@ -518,9 +525,6 @@ if aba_selecionada == "Home":
     # Aqui continua seu código da Home...
     pass
 
-# ==============================================================================
-# FIM DO BLOCO 3 MESCLADO
-# ==============================================================================
 
 
 # ==============================================================================
