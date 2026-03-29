@@ -507,7 +507,14 @@ with st.sidebar:
             pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(50, 8, f" {d.get('tel_fixo', '---')}", border='RBT', ln=True)
 
             # Linha 3
-            pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(18, 8
+            pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(18, 8, " Endereço:", border='LBT')
+            pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(82, 8, f" {fmt(d.get('endereco'))}", border='RBT')
+            
+            pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(18, 8, " Nº/Apto::", border='LBT')
+            pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(22, 8, f" {d.get('numero', '---')}", border='RBT')
+            
+            pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(15, 8, " Comp:", border='LBT')
+            pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(35, 8, f" {fmt(d.get('complemento'))}", border='RBT', ln=True)
 
 # ==============================================================================
 # FIM DO BLOCO 3 MESCLADO
