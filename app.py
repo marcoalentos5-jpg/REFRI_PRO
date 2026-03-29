@@ -465,9 +465,11 @@ with st.sidebar:
             pdf.add_page()
             C_PRI = (13, 71, 161) # Azul MPN Profissional
             
-            # --- 1. CABEÇALHO ---
-            try: pdf.image('logo.png', x=10, y=10, w=45)
-            except: pass
+           # --- 1. CABEÇALHO ---
+            try: 
+                pdf.image('logo.png', x=10, y=10, w=45)
+            except: 
+                pass
             
             pdf.set_xy(10, 32)
             pdf.set_font("Arial", "B", 18)
@@ -476,32 +478,31 @@ with st.sidebar:
             pdf.ln(2)
 
             # --- 2. SEÇÃO 1: IDENTIFICAÇÃO (SINCRONIA TOTAL COM ABA 1) ---
-pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
-data_v = datetime.now().strftime('%d/%m/%Y')
-pdf.cell(130, 7, " 1. IDENTIFICAÇÃO DO CLIENTE E ENDEREÇO", fill=True)
-pdf.cell(60, 7, f"DATA DA VISITA: {data_v} ", fill=True, ln=True, align='R')
+            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
+            data_v = datetime.now().strftime('%d/%m/%Y')
+            pdf.cell(130, 7, " 1. IDENTIFICAÇÃO DO CLIENTE E ENDEREÇO", fill=True)
+            pdf.cell(60, 7, f"DATA DA VISITA: {data_v} ", fill=True, ln=True, align='R')
 
-pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 8)
-# Nota: n_val e d_val já pegam 'nome' e 'cpf_cnpj' conforme sua lógica anterior
-pdf.cell(30, 6, " CLIENTE:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(160, 6, f" {n_val.upper()}", border=1, ln=True)
-pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " CPF/CNPJ:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(65, 6, f" {d_val}", border=1)
-pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " E-MAIL:", border=1); pdf.set_font("Arial", "", 7); pdf.cell(65, 6, f" {d.get('email', '---').lower()}", border=1, ln=True)
+            pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 8)
+            pdf.cell(30, 6, " CLIENTE:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(160, 6, f" {d.get('nome', '').upper()}", border=1, ln=True)
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " CPF/CNPJ:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(65, 6, f" {d.get('cpf_cnpj', '---')}", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " E-MAIL:", border=1); pdf.set_font("Arial", "", 7); pdf.cell(65, 6, f" {d.get('email', '---').lower()}", border=1, ln=True)
 
-# CORREÇÃO DOS CONTATOS (Usando suas chaves da Aba 1)
-pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " WHATSAPP*:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(35, 6, f" {d.get('whatsapp', '---')}", border=1)
-pdf.cell(30, 6, " CELULAR:", border=1); pdf.cell(35, 6, f" {d.get('celular', '---')}", border=1)
-pdf.cell(30, 6, " FIXO:", border=1); pdf.cell(30, 6, f" {d.get('tel_fixo', '---')}", border=1, ln=True)
+            # CONTATOS SINCRONIZADOS
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " WHATSAPP*:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(35, 6, f" {d.get('whatsapp', '---')}", border=1)
+            pdf.cell(30, 6, " CELULAR:", border=1); pdf.cell(35, 6, f" {d.get('celular', '---')}", border=1)
+            pdf.cell(30, 6, " FIXO:", border=1); pdf.cell(30, 6, f" {d.get('tel_fixo', '---')}", border=1, ln=True)
 
-# CORREÇÃO DO ENDEREÇO (Usando suas chaves da Aba 1)
-pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " ENDEREÇO:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(110, 6, f" {d.get('endereco', '---')}", border=1)
-pdf.set_font("Arial", "B", 8); pdf.cell(20, 6, " Nº:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(30, 6, f" {d.get('numero', '---')}", border=1, ln=True)
-pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " COMPL.:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(65, 6, f" {d.get('complemento', '---')}", border=1)
-pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " BAIRRO:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(65, 6, f" {d.get('bairro', '---')}", border=1, ln=True)
-pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " CIDADE/UF:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(95, 6, f" {d.get('cidade', '---')}/{d.get('uf', '---')}", border=1)
-pdf.set_font("Arial", "B", 8); pdf.cell(25, 6, " CEP:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(40, 6, f" {d.get('cep', '---')}", border=1, ln=True)
-pdf.ln(2)
+            # ENDEREÇO SINCRONIZADO
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " ENDEREÇO:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(110, 6, f" {d.get('endereco', '---')}", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(20, 6, " Nº:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(30, 6, f" {d.get('numero', '---')}", border=1, ln=True)
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " COMPL.:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(65, 6, f" {d.get('complemento', '---')}", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " BAIRRO:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(65, 6, f" {d.get('bairro', '---')}", border=1, ln=True)
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " CIDADE/UF:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(95, 6, f" {d.get('cidade', '---')}/{d.get('uf', '---')}", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(25, 6, " CEP:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(40, 6, f" {d.get('cep', '---')}", border=1, ln=True)
+            pdf.ln(2)
 
-            # --- 3. SEÇÃO 2: DETALHES TÉCNICOS DO ATIVO (TAG POR ÚLTIMO) ---
+            # --- 3. SEÇÃO 2: DETALHES TÉCNICOS DO ATIVO (CHAVES CORRIGIDAS) ---
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
             pdf.cell(190, 7, " 2. DETALHES TÉCNICOS DO ATIVO", ln=True, fill=True)
             pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 8)
@@ -509,8 +510,8 @@ pdf.ln(2)
             pdf.cell(35, 6, " FABRICANTE:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('fabricante', '---')}", border=1)
             pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " MODELO:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('modelo', '---')}", border=1, ln=True)
             
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " N° SÉRIE (EVAP):", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('n_serie_evap', '---')}", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " N° SÉRIE (COND):", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('n_serie_cond', '---')}", border=1, ln=True)
+            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " N° SÉRIE (EVAP):", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('serie_evap', '---')}", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " N° SÉRIE (COND):", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('serie_cond', '---')}", border=1, ln=True)
             
             pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " POTÊNCIA (W):", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('potencia', '---')}", border=1)
             pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " LOCAL EVAP.:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('local_evap', '---')}", border=1, ln=True)
@@ -518,10 +519,10 @@ pdf.ln(2)
             pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " LOCAL COND.:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('local_cond', '---')}", border=1)
             pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " FLUIDO REF.:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('fluido', '---')}", border=1, ln=True)
             
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " CARGA FLUIDO:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('carga_fluido', '---')}", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " CARGA FLUIDO:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('carga_gas', '---')}", border=1)
             pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " TIPO DE ÓLEO:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('tipo_oleo', '---')}", border=1, ln=True)
 
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " CAPACIDADE (BTU's):", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('capacidade_btus', '---')}", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " CAPACIDADE:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('capacidade', '---')}", border=1)
             pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " TAG/PATRIMÔNIO:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('tag_id', '---').upper()}", border=1, ln=True)
             pdf.ln(2)
 
