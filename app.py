@@ -508,47 +508,39 @@ with st.sidebar:
             pdf.set_font("Arial", "B", 8); pdf.cell(25, 6, " CEP:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(40, 6, f" {d.get('cep', '---')}", border=1, ln=True)
             pdf.ln(2)
 
-          # --- 3. SEÇÃO 2: DETALHES TÉCNICOS DO ATIVO (CORREÇÃO DE SOBREPOSIÇÃO) ---
+          # --- 3. SEÇÃO 2: DETALHES TÉCNICOS DO ATIVO (ORDEM EXATA DO USUÁRIO) ---
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
             pdf.cell(190, 7, " 2. DETALHES TÉCNICOS DO ATIVO", ln=True, fill=True)
             pdf.set_text_color(0, 0, 0)
             
-            # Lista exata dos 19 campos para bater com o seu formulário
+            # Lista corrigida com as vírgulas necessárias para o Python não travar
             campos_ativo = [
                 (" FABRICANTE:", d.get('fabricante', '---')),           (" MODELO:", d.get('modelo', '---')),
                 (" N° SÉRIE (EVAP):", d.get('serie_evap', '---')),     (" N° SÉRIE (COND):", d.get('serie_cond', '---')),
-                (" TAG/PATRIMÔNIO:", d.get('tag_id', '---').upper()),  (" CAPACIDADE (BTU/TR):", d.get('capacidade', '---')),
-                (" TIPO DE ATIVO:", d.get('tipo_ativo', '---')),       (" POTÊNCIA (W):", d.get('potencia', '---')),
+                (" CAPACIDADE (BTU/TR):", d.get('capacidade', '---')), (" POTÊNCIA (W):", d.get('potencia', '---')),
                 (" LOCAL EVAPORADORA:", d.get('local_evap', '---')),   (" LOCAL CONDENSADORA:", d.get('local_cond', '---')),
                 (" FLUIDO REFRIG.:", d.get('fluido', '---')),          (" CARGA FLUIDO (kg/g):", d.get('carga_gas', '---')),
-                (" TIPO DE ÓLEO:", d.get('tipo_oleo', '---')),         (" TENSÃO NOMINAL (V):", d.get('tensao_nom', '---')),
-                (" CORRENTE NOM.(A):", d.get('rla_nom', '---')),       (" DATA FABRICAÇÃO:", d.get('data_fab', '---')),
-                (" REGIME TRABALHO:", d.get('regime', '---')),         (" SETPOINT (°C):", d.get('setpoint', '---')),
-                (" ÚLTIMA MANUT.:", d.get('ultima_manut', '---'))
+                (" TENSÃO NOMINAL (V):", d.get('tensao_nom', '---')),  (" CORRENTE NOM.(A):", d.get('rla_nom', '---')),
+                (" TIPO DE ÓLEO:", d.get('tipo_oleo', '---')),         (" TAG/PATRIMÔNIO:", d.get('tag_id', '---').upper())
             ]
 
-            # NOVAS LARGURAS: 45mm para o título (label) resolve o problema do "LOCAL CONDENSADORA"
+            # w_lbl=45 garante que "LOCAL CONDENSADORA" caiba sem atropelar o valor
             w_lbl = 45 
             w_val = 50
 
             for i in range(0, len(campos_ativo)):
-                # Rótulo em Negrito (Fonte 7.5 para garantir que não estoure a célula)
+                # Título do campo em Negrito
                 pdf.set_font("Arial", "B", 7.5)
                 pdf.cell(w_lbl, 6, campos_ativo[i][0], border=1)
                 
-                # Valor em Fonte Normal
+                # Valor do campo em Fonte Normal
                 pdf.set_font("Arial", "", 8)
                 txt_valor = str(campos_ativo[i][1])
                 
-                # Lógica de fechamento de linha
-                if i == len(campos_ativo) - 1:
-                    # O 19º campo (Última Manut) expande para fechar a linha toda
-                    pdf.cell(145, 6, f" {txt_valor}", border=1, ln=True)
-                elif i % 2 != 0:
-                    # Segundo campo da linha (fecha a linha)
+                # Lógica para fechar a linha a cada 2 campos
+                if i % 2 != 0:
                     pdf.cell(w_val, 6, f" {txt_valor}", border=1, ln=True)
                 else:
-                    # Primeiro campo da linha (continua na mesma linha)
                     pdf.cell(w_val, 6, f" {txt_valor}", border=1)
             
             pdf.ln(2)
