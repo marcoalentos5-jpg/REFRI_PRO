@@ -9,99 +9,127 @@ import urllib.parse
 import os # Biblioteca para verificar arquivos no sistema
 import numpy as np
 import urllib.parse
-from datetime import datetime
-
-
-import streamlit as st
 import pandas as pd
+from datetime import date
 
 # ==============================================================================
-# 1. CONFIGURAÇÕES INICIAIS E ESTADO DO SISTEMA (LINHAS 1-172)
+# 1. CONFIGURAÇÕES INICIAIS E INICIALIZAÇÃO DO ESTADO (LINHAS 1 - 50)
 # ==============================================================================
-def inicializar_sistema():
-    if 'dados' not in st.session_state:
-        st.session_state.dados = {
-            'fluido': 'R410A', 'tipo_oleo': 'POE', 'tensao_nominal': '220V',
-            'status_eq': 'Operacional', 'fabricante': 'Midea', 'capacidade': '12.000 BTU'
-        }
+st.set_page_config(page_title="Expert HVAC-R Diagnostic", layout="wide", page_icon="❄️")
 
+# Inicialização do Dicionário Global de Dados (Proteção contra Reset)
+if 'dados' not in st.session_state:
+    st.session_state.dados = {
+        'cliente': '', 'cpf_cnpj': '', 'contato': '', 'email': '',
+        'cep': '', 'logradouro': '', 'numero': '',
+        'fabricante': 'Midea', 'modelo': '', 'capacidade': '12.000 BTU',
+        'fluido': 'R410A', 'tipo_oleo': 'POE', 'carga_gas': '',
+        'tensao_nominal': '220V', 'status_eq': 'Operacional',
+        'laudo_diag': 'Análise: Estável.'
+    }
+
+d = st.session_state.dados
+
+# Estilização CSS para manter o padrão Dark/Professional
+st.markdown("""
+    <style>
+    .main { background-color: #0E1117; }
+    div[data-testid="stVerticalBlock"] > div:has(div.stMetric) {
+        background-color: #1A1C23; border-radius: 10px; padding: 10px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# ==============================================================================
+# 2. ABA 1: CADASTRO DE CLIENTE E EQUIPAMENTO (LINHAS 51 - 172)
+# ==============================================================================
 def renderizar_aba_cadastro():
     st.header("📋 Cadastro de Cliente e Equipamento")
-    d = st.session_state.dados
+    st.markdown("---")
 
-    # --- SEÇÃO 1.1: DADOS DO CLIENTE ---
+    # --- 1.1 INFORMAÇÕES DO CLIENTE ---
     st.subheader("1. Informações do Cliente")
-    c1, c2 = st.columns(2)
     
-    with c1:
-        d['cliente'] = st.text_input("Nome do Cliente/Empresa:", value=d.get('cliente', ''))
-        d['cpf_cnpj'] = st.text_input("CPF/CNPJ:", value=d.get('cpf_cnpj', ''))
+    col1, col2 = st.columns(2)
     
-    with c2:
-        d['contato'] = st.text_input("Telefone/WhatsApp:", value=d.get('contato', ''))
-        d['email'] = st.text_input("E-mail:", value=d.get('email', ''))
+    with col1:
+        d['cliente'] = st.text_input("Nome do Cliente ou Empresa:", value=d.get('cliente', ''), placeholder="Ex: João Silva / RefriTech Ltda")
+        d['cpf_cnpj'] = st.text_input("CPF ou CNPJ:", value=d.get('cpf_cnpj', ''), placeholder="000.000.000-00")
+    
+    with col2:
+        d['contato'] = st.text_input("Telefone / WhatsApp:", value=d.get('contato', ''), placeholder="(00) 00000-0000")
+        d['email'] = st.text_input("E-mail para Relatório:", value=d.get('email', ''), placeholder="exemplo@email.com")
 
-    # CORREÇÃO LOGRADOURO: Sincronização direta via Key
-    st.markdown("##### 📍 Localização")
-    l1, l2, l3 = st.columns([2, 4, 2])
-    d['cep'] = l1.text_input("CEP:", value=d.get('cep', ''), key="cep_input")
-    # O uso da key garante que o Logradouro salve sem precisar trocar de aba
-    d['logradouro'] = l2.text_input("Logradouro/Endereço:", value=d.get('logradouro', ''), key="log_input")
-    d['numero'] = l3.text_input("Nº:", value=d.get('numero', ''))
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("##### 📍 Localização do Atendimento")
+    
+    # Grid de Localização (Correção: Logradouro com Key para atualização instantânea)
+    l1, l2, l3 = st.columns([2, 5, 1])
+    d['cep'] = l1.text_input("CEP:", value=d.get('cep', ''), key="cep_sync")
+    d['logradouro'] = l2.text_input("Logradouro (Endereço Completo):", value=d.get('logradouro', ''), key="log_sync")
+    d['numero'] = l3.text_input("Nº:", value=d.get('numero', ''), key="num_sync")
 
     st.markdown("---")
 
-    # --- SEÇÃO 1.2: DADOS DO EQUIPAMENTO ---
-    st.subheader("2. Especificações do Equipamento")
+    # --- 1.2 ESPECIFICAÇÕES DO EQUIPAMENTO ---
+    st.subheader("2. Detalhes Técnicos da Máquina")
     
-    # LISTA DE FABRICANTES (CORREÇÃO: HITACHI + ORDEM ALFABÉTICA + OUTROS NO FIM)
-    lista_fab = ["Carrier", "Daikin", "Fujitsu", "Gree", "Hitachi", "LG", "Midea", "Panasonic", "Samsung", "Trane", "York"]
-    lista_fab = sorted(lista_fab) + ["OUTROS"]
+    # LÓGICA DE FABRICANTES: HITACHI + ORDEM ALFABÉTICA + OUTROS NO FIM
+    fabs_base = sorted(["Carrier", "Daikin", "Fujitsu", "Gree", "Hitachi", "LG", "Midea", "Panasonic", "Samsung", "Trane", "York", "Elgin", "Springer"])
+    lista_fabricantes = fabs_base + ["OUTROS"]
     
-    # LISTA DE CAPACIDADES EXPANDIDA (CORREÇÃO: MAIS OPÇÕES BTU/TR)
-    lista_cap = [
-        "7.000 BTU", "9.000 BTU", "12.000 BTU", "18.000 BTU", "22.000 BTU", 
-        "24.000 BTU", "30.000 BTU", "36.000 BTU", "48.000 BTU", "60.000 BTU", 
-        "80.000 BTU", "5 TR", "10 TR", "15 TR", "20 TR", "30 TR", "Outra"
+    # LÓGICA DE CAPACIDADES: EXPANSÃO COMPLETA BTU/TR
+    lista_capacidades = [
+        "7.000 BTU", "9.000 BTU", "12.000 BTU", "18.000 BTU", "22.000 BTU", "24.000 BTU", 
+        "30.000 BTU", "31.000 BTU", "36.000 BTU", "48.000 BTU", "60.000 BTU", "80.000 BTU",
+        "5 TR", "7.5 TR", "10 TR", "15 TR", "20 TR", "30 TR", "40 TR", "50 TR", "Outra"
     ]
+
+    # Função Auxiliar de Persistência (Encontra o índice salvo para não resetar a escolha)
+    def find_idx(lista, chave_dados):
+        valor_salvo = d.get(chave_dados)
+        return lista.index(valor_salvo) if valor_salvo in lista else 0
 
     e1, e2, e3 = st.columns(3)
     
     with e1:
-        # Função para achar o índice e segurar a escolha do técnico
-        def get_idx(lista, chave):
-            val = d.get(chave)
-            return lista.index(val) if val in lista else 0
-
-        d['fabricante'] = st.selectbox("Fabricante:", lista_fab, index=get_idx(lista_fab, 'fabricante'))
-        d['modelo'] = st.text_input("Modelo/Tag:", value=d.get('modelo', ''))
-        d['capacidade'] = st.selectbox("Capacidade (BTU/TR):", lista_cap, index=get_idx(lista_cap, 'capacidade'))
+        st.markdown("##### 🏷️ Identificação")
+        d['fabricante'] = st.selectbox("Fabricante:", lista_fabricantes, index=find_idx(lista_fabricantes, 'fabricante'))
+        d['modelo'] = st.text_input("Modelo / Tag:", value=d.get('modelo', ''), placeholder="Ex: 42AV... / EV-01")
+        d['capacidade'] = st.selectbox("Capacidade (BTU/TR):", lista_capacidades, index=find_idx(lista_capacidades, 'capacidade'))
 
     with e2:
-        lista_fluidos = ["R410A", "R22", "R134a", "R404A", "R32", "R290"]
-        d['fluido'] = st.selectbox("Fluido Refrigerante:", lista_fluidos, index=get_idx(lista_fluidos, 'fluido'))
+        st.markdown("##### 🧪 Fluido e Lubrificante")
+        lista_fluidos = ["R410A", "R22", "R134a", "R404A", "R32", "R290", "R407C", "R417A"]
+        d['fluido'] = st.selectbox("Fluido Refrigerante:", lista_fluidos, index=find_idx(lista_fluidos, 'fluido'))
         
-        # CORREÇÃO: TIPO DE ÓLEO SEGURANDO A ESCOLA
-        lista_oleo = ["POE", "PVE", "MINERAL", "AB"]
-        d['tipo_oleo'] = st.selectbox("Tipo de Óleo:", lista_oleo, index=get_idx(lista_oleo, 'tipo_oleo'))
-        
+        # CORREÇÃO: TIPO DE ÓLEO SEGURANDO A ESCOLHA
+        lista_oleos = ["POE", "PVE", "MINERAL", "AB", "PAG"]
+        d['tipo_oleo'] = st.selectbox("Tipo de Óleo:", lista_oleos, index=find_idx(lista_oleos, 'tipo_oleo'))
         d['carga_gas'] = st.text_input("Carga de Gás (kg):", value=d.get('carga_gas', ''))
 
     with e3:
+        st.markdown("##### ⚡ Elétrica e Status")
         # CORREÇÃO: TENSÃO NOMINAL SEGURANDO A ESCOLHA
-        lista_tensao = ["110V", "220V", "380V", "440V"]
-        d['tensao_nominal'] = st.selectbox("Tensão Nominal (V):", lista_tensao, index=get_idx(lista_tensao, 'tensao_nominal'))
+        lista_tensoes = ["110V", "220V", "380V", "440V"]
+        d['tensao_nominal'] = st.selectbox("Tensão Nominal (V):", lista_tensoes, index=find_idx(lista_tensoes, 'tensao_nominal'))
         
         # CORREÇÃO: STATUS SEGURANDO A ESCOLHA
-        lista_status = ["Operacional", "Parado (Defeito)", "Manutenção Preventiva", "Avaliação"]
-        d['status_eq'] = st.selectbox("Status:", lista_status, index=get_idx(lista_status, 'status_eq'))
-        
-        d['data_visita'] = st.date_input("Data da Visita:")
+        lista_status = ["Operacional", "Parado (Defeito)", "Manutenção Preventiva", "Avaliação", "Instalação"]
+        d['status_eq'] = st.selectbox("Status Atual:", lista_status, index=find_idx(lista_status, 'status_eq'))
+        d['data_visita'] = st.date_input("Data do Atendimento:", value=date.today())
 
-    # SINCRONIZAÇÃO FINAL DO BLOCO 1
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.info("💡 **Dica:** Os dados acima serão utilizados para o cálculo automático de Superaquecimento e Sub-resfriamento na aba de Diagnóstico.")
+
+    # Sincronização Final Obrigatória
     st.session_state.dados.update(d)
-    
+
+# EXECUÇÃO DA ABA (Simulação de chamada no Main)
+if __name__ == "__main__":
+    renderizar_aba_cadastro()
 # FIM DO BLOCO 1 (LINHA 172)
+    
 
 # ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO MASTER - CORREÇÃO DE PERSISTÊNCIA TOTAL)
