@@ -526,17 +526,17 @@ with st.sidebar:
             pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " TAG/PATRIMÔNIO:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('tag_id', '---').upper()}", border=1, ln=True)
             pdf.ln(2)
 
-           # --- 4. SEÇÃO 3: MEDIÇÕES DE CAMPO (20 CAMPOS / 4 BLOCOS) ---
-            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
+          # --- 4. SEÇÃO 3: MEDIÇÕES DE CAMPO (NOMES POR EXTENSO E FONTES AJUSTADAS) ---
+            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 8.5)
             pdf.cell(190, 7, " 3. MEDIÇÕES DE CAMPO E PERFORMANCE", ln=True, fill=True)
             
-            # Substituídos os emojis por texto para evitar erro de Unicode
             blocos_med = [
                 ["CICLO FRIGOR.", "SUCÇÃO (PSI)", "TUB. SUCÇÃO", "DESCARGA (PSI)", "TUB. DESCAR.", "T. DESC. COMP"],
-                ["AR E AMBIENTE", "RETORNO (°C)", "INSUFLAÇÃO", "AMB. EXT.", "U.R. (%)", "P. ÓLEO (PSI)"],
-                ["PARÂMET. ELETR.", "TENSÃO NOM.", "TENSÃO MED.", "CORRENTE MED.", "RLA (A)", "LRA (A)"],
-                ["CAPACIT./VENT.", "CAP. NOM. CP", "CAP. LIDO CP", "CAP. NOM. FN", "CAP. LIDO FN", "CORRENTE FAN"]
+                ["AR E AMBIENTE", "RETORNO (°C)", "INSUFLAÇÃO", "AMBIENTE EXTERNO", "UMID. RELAT. DO AR (%)", "PRESSÃO DO ÓLEO"],
+                ["ELÉTRICA", "TENSÃO NOM.", "TENSÃO MED.", "CORRENTE MED.", "RLA (A)", "LRA (A)"],
+                ["CAPACITÂNCIA", "NOMINAL COMPRESSOR", "MEDIDA no COMPRESSOR", "NOMINAL FAN", "MEDIDA no FAN", "CORRENTE FAN"]
             ]
+            
             chaves_med = [
                 ['p_baixa', 'temp_suc_tubo', 'p_alta', 'temp_desc_tubo', 'temp_desc_comp'],
                 ['temp_retorno', 'temp_insuflacao', 'temp_amb_ext', 'umidade_rel', 'pressao_oleo'],
@@ -545,8 +545,7 @@ with st.sidebar:
             ]
 
             for i in range(4):
-                pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 7); pdf.set_fill_color(235, 245, 255)
-                # O título do bloco agora é apenas texto
+                pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 5.8); pdf.set_fill_color(235, 245, 255)
                 pdf.cell(30, 5, blocos_med[i][0], border=1, fill=True) 
                 for tit in blocos_med[i][1:]: 
                     pdf.cell(32, 5, tit, border=1, align='C', fill=True)
@@ -555,61 +554,66 @@ with st.sidebar:
                 pdf.set_font("Arial", "", 8)
                 pdf.cell(30, 6, "VALOR:", border=1, align='C')
                 for val in chaves_med[i]: 
-                    # d.get() garante que se o campo estiver vazio, não quebra o código
-                    valor_campo = str(d.get(val, '---'))
-                    pdf.cell(32, 6, f" {valor_campo}", border=1, align='C')
+                    pdf.cell(32, 6, f" {d.get(val, '---')}", border=1, align='C')
                 pdf.ln()
             pdf.ln(2)
 
-            # --- 5. SEÇÃO 4: DIAGNÓSTICO (RETIRADA DO SÍMBOLO DELTA "Δ" PARA EVITAR ERRO) ---
-            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
+            # --- 5. SEÇÃO 4: DIAGNÓSTICO (SUBSTITUIÇÃO DE "D." POR "DELTA") ---
+            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 8.5)
             pdf.cell(190, 7, " 4. DIAGNÓSTICO DE PERFORMANCE E INTEGRIDADE", ln=True, fill=True)
             
-            # Títulos ajustados de "Δ" para "D." ou "DIFF" para compatibilidade total
             titulos_diag = [
-                ['SH TOTAL', 'SH ÚTIL', 'SAT. SUCÇÃO', 'SAT. DESCAR.', 'D. T (AR)', 'SC FINAL'],
-                ['D. CORRENTE', 'D. TENSÃO', 'RAZÃO COMPR.', 'COP ESTIM.', 'D. CAP. COMP.', 'D. CAP. FAN.']
+                ['SH TOTAL', 'SH ÚTIL', 'SAT. SUCÇÃO', 'SAT. DESCAR.', 'DELTA T (AR)', 'SC FINAL'],
+                ['DELTA CORRENTE', 'DELTA TENSÃO', 'RAZÃO COMPR.', 'COP ESTIM.', 'DELTA CAP. COMP.', 'DELTA CAP. FAN.']
             ]
+            
             chaves_diag = [
-                ['sh_total', 'sh_util', 'sat_suc', 'sat_desc', 'delta_t_ar', 'sc_final'],
-                ['delta_corr', 'delta_tens', 'razao_compr', 'cop_estim', 'delta_cap_cp', 'delta_cap_fn']
+                ['sh_total', 'sh_util', 't_sat_baixa', 't_sat_alta', 'delta_t_ar', 'sc_total'],
+                ['dif_corrente', 'dif_tensao', 'razao_compressao', 'cop_estimado', 'dif_cap_comp', 'dif_cap_fan']
             ]
 
             for i in range(2):
-                pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 6.5); pdf.set_fill_color(245, 245, 245)
-                for tit in titulos_diag[i]: pdf.cell(31.6, 5, tit, border=1, align='C', fill=True)
+                pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 6); pdf.set_fill_color(245, 245, 245)
+                for tit in titulos_diag[i]:
+                    pdf.cell(31.6, 5, tit, border=1, align='C', fill=True)
                 pdf.ln()
+                
                 pdf.set_font("Arial", "", 8)
-                for val in chaves_diag[i]: pdf.cell(31.6, 6, f" {d.get(val, '---')}", border=1, align='C')
+                for val in chaves_diag[i]:
+                    res = d.get(val, '---')
+                    if isinstance(res, (int, float)): res = f"{res:.1f}"
+                    pdf.cell(31.6, 6, f" {res}", border=1, align='C')
                 pdf.ln()
             pdf.ln(2)
 
-            # --- 6. SEÇÃO 5: PARECER TÉCNICO FINAL (CORREÇÃO DE CONTEÚDO) ---
-            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
+            # --- 6. SEÇÃO 5: PARECER TÉCNICO FINAL (LINKADO COM ABA 3) ---
+            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 8.5)
             pdf.cell(190, 7, " 5. PARECER TÉCNICO FINAL", ln=True, fill=True)
-            pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "", 8.5)
-            # Captura o texto real do session_state
+            
+            pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "", 8)
             texto_parecer = d.get('parecer_final', 'Nenhuma observação técnica registrada.')
-            pdf.multi_cell(190, 5, texto_parecer, border=1)
+            pdf.multi_cell(190, 5, f" {texto_parecer}", border=1, align='L')
+            pdf.ln(4)
 
-            # --- 7. ASSINATURAS (SINCRONIZAÇÃO DE DOCUMENTO) ---
-            pdf.ln(20)
+            # --- 7. ASSINATURAS E BOTÃO DE DOWNLOAD ---
+            pdf.ln(10)
             y_sig = pdf.get_y()
-            pdf.set_draw_color(0,0,0); pdf.set_line_width(0.3)
+            if y_sig > 250: pdf.add_page(); y_sig = 20
+            
             pdf.line(20, y_sig, 90, y_sig); pdf.line(110, y_sig, 180, y_sig)
             
-            # Técnico
+            # Responsável Técnico
             pdf.set_xy(20, y_sig + 1); pdf.set_font("Arial", "B", 8)
             pdf.cell(70, 4, d.get('tecnico_nome', '').upper(), ln=True, align='C')
-            id_tecnico = f"CFT/REG: {d.get('tecnico_registro', '')}" if d.get('tecnico_registro') else f"DOC: {d.get('tecnico_documento', '')}"
-            pdf.set_x(20); pdf.set_font("Arial", "", 7); pdf.cell(70, 4, id_tecnico, align='C')
+            id_tec = f"CFT/REG: {d.get('tecnico_registro', '')}" if d.get('tecnico_registro') else f"DOC: {d.get('tecnico_documento', '')}"
+            pdf.set_x(20); pdf.set_font("Arial", "", 7); pdf.cell(70, 4, id_tec, align='C')
 
             # Cliente
             pdf.set_xy(110, y_sig + 1); pdf.set_font("Arial", "B", 8)
             pdf.cell(70, 4, n_val.upper(), ln=True, align='C')
             pdf.set_x(110); pdf.set_font("Arial", "", 7); pdf.cell(70, 4, f"CPF/CNPJ: {d_val}", align='C')
 
-            # GERAÇÃO E DOWNLOAD
+            # GERAR OUTPUT
             pdf_bytes = pdf.output(dest='S')
             st.download_button(
                 label="📄 GERAR RELATÓRIO TÉCNICO FINAL",
@@ -621,17 +625,6 @@ with st.sidebar:
 
         except Exception as e:
             st.error(f"Erro ao gerar PDF: {e}")
-    else:
-        st.error("❌ Dados do Cliente Ausentes")
-        st.caption("Preencha Nome e CPF/CNPJ na Aba 1 para liberar o relatório.")
-
-    st.markdown("---")
-    if st.button("🗑️ Nova Inspeção (Limpar)", use_container_width=True):
-        preservar = ['tecnico_nome', 'tecnico_documento', 'tecnico_registro']
-        for k in list(st.session_state.dados.keys()):
-            if k not in preservar: st.session_state.dados[k] = ""
-        st.rerun()
-
 # ==============================================================================
 # FIM DO BLOCO 3 MESCLADO
 # ==============================================================================
