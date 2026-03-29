@@ -433,29 +433,57 @@ def renderizar_aba_2():
 # 3. SIDEBAR - MOTOR DE RELATÓRIO TÉCNICO MASTER (VERSÃO FINAL BLINDADA)
 # ==============================================================================
 with st.sidebar:
-    # A. LOGO AMPLIADA NA SIDEBAR
-    col_l1, col_l2, col_l3 = st.columns([0.5, 9, 0.5])
-    with col_l2:
-        try: 
-            st.image("logo.png", use_container_width=True)
-        except: 
-            st.subheader("MPN SOLUÇÕES")
+    # 1. LOGO (Sempre no topo)
+    try: 
+        st.image("logo.png", use_container_width=True)
+    except: 
+        st.subheader("MPN SOLUÇÕES")
     
     st.markdown("---")
     
-    # B. NAVEGAÇÃO OPERACIONAL
+    # 2. NAVEGAÇÃO
     opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
     aba_selecionada = st.radio("Navegar para:", opcoes_abas, key="nav_master_vfinal")
     
     st.markdown("---")
     
-    # C. IDENTIFICAÇÃO DO TÉCNICO
-    st.subheader("👨‍🔧 Identificação do Técnico")
-    st.session_state.dados['tecnico_nome'] = st.text_input("Nome Completo:", value=st.session_state.dados.get('tecnico_nome', ''), key="f_tec_n")
-    st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ do Técnico:", value=st.session_state.dados.get('tecnico_documento', ''), key="f_tec_d")
-    st.session_state.dados['tecnico_registro'] = st.text_input("Registro (CREA/CFT):", value=st.session_state.dados.get('tecnico_registro', ''), key="f_tec_r")
+    # 3. IDENTIFICAÇÃO DO TÉCNICO
+    st.subheader("👨‍🔧 Técnico")
+    st.session_state.dados['tecnico_nome'] = st.text_input("Nome:", value=st.session_state.dados.get('tecnico_nome', ''), key="f_tec_n")
+    # ... (outros campos do técnico se quiser manter)
 
     st.markdown("---")
+
+    # 4. MOTOR DO PDF (O botão de gerar deve ficar por ÚLTIMO na barra lateral)
+    d = st.session_state.dados
+    n_val = str(d.get('nome', '')).strip()
+    d_val = str(d.get('cpf_cnpj', '')).strip()
+
+    if len(n_val) > 3 and len(d_val) > 5:
+        try:
+            # --- Lógica do PDF (FPDF) que já ajustamos antes ---
+            # ... (seu código de geração aqui) ...
+            
+            # O botão de download deve estar aqui dentro
+            st.download_button(
+                label="📄 GERAR RELATÓRIO FINAL",
+                data=bytes(pdf_bytes),
+                file_name=f"Laudo_MPN_{d.get('tag_id','INS')}.pdf",
+                mime="application/pdf",
+                use_container_width=True
+            )
+        except Exception as e:
+            st.error(f"Erro no PDF: {e}")
+    else:
+        st.warning("⚠️ Aguardando dados do cliente (Aba 1)")
+
+    # 5. BOTÃO DE LIMPEZA (No rodapé da sidebar)
+    st.markdown("---")
+    if st.button("🗑️ Limpar Tudo", use_container_width=True):
+        preservar = ['tecnico_nome', 'tecnico_documento', 'tecnico_registro']
+        for k in list(st.session_state.dados.keys()):
+            if k not in preservar: st.session_state.dados[k] = ""
+        st.rerun()
 
     # --- D. MOTOR DE GERAÇÃO PDF (VARREDURA TOTAL E SINCRONIZADA) ---
 d = st.session_state.dados
