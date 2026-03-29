@@ -171,18 +171,18 @@ def f_sat_precisao(p, g):
     
 
 
-# ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO MASTER - EXPANSÃO 160+ LINHAS)
+## ==============================================================================
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO MASTER CONSOLIDADA - 160+ LINHAS)
 # ==============================================================================
 def renderizar_aba_2():
     """
     Renderiza a Central de Diagnóstico Técnico.
     Mantém o layout original de medições (5 colunas) e resultados (6 colunas).
-    Integra lógica de balança virtual e alertas térmicos.
+    Integra lógica de balança virtual, alertas térmicos e Razão de Compressão.
     """
     st.header("🔍 Central de Diagnóstico Técnico")
     
-    # Recuperação do estado de sessão
+    # Recuperação do estado de sessão para persistência de dados
     if 'dados' not in st.session_state:
         st.session_state.dados = {}
         
@@ -195,7 +195,7 @@ def renderizar_aba_2():
         val = d.get(key)
         try:
             if isinstance(val, str):
-                # Limpeza de unidades e formatação regional
+                # Limpeza de unidades e formatação regional (vírgula por ponto)
                 val = val.lower().replace('kg', '').replace('g', '').replace(',', '.')
             return float(val) if val not in [None, ""] else default
         except (ValueError, TypeError):
@@ -219,11 +219,11 @@ def renderizar_aba_2():
     
     cor_alerta, msg_status, sugestao_massa = "#00CCFF", "", 0.0
     
-    # Cálculo da sugestão de carga via Balança Virtual
+    # Cálculo da sugestão de carga via Balança Virtual Proporcional
     if p_atual > 0:
         if carga_total_placa > 0:
             diff_p = p_alvo_centro - p_atual
-            # Lógica proporcional estimada para ajuste de massa
+            # Lógica estimada: desvio de pressão reflete ~70% da massa proporcional
             sugestao_massa = (diff_p / p_alvo_centro) * carga_total_placa * 0.7
 
         if float(limites_p[0]) <= p_atual <= float(limites_p[1]):
@@ -233,7 +233,7 @@ def renderizar_aba_2():
 
     txt_bal_card = "ESTÁVEL" if abs(sugestao_massa) < 15 or carga_total_placa == 0 else f"{'+' if sugestao_massa > 0 else '-'}{abs(sugestao_massa):.0f}g"
 
-    # --- ESTILIZAÇÃO DO PAINEL DE REFERÊNCIA ---
+    # --- ESTILIZAÇÃO DO PAINEL DE REFERÊNCIA (CARD SUPERIOR) ---
     st.markdown(f"""
         <div style="background-color: #1E1E1E; border-left: 5px solid {cor_alerta}; padding: 15px; border-radius: 10px; margin-bottom: 25px; border: 1px solid #333;">
             <h4 style="margin-top:0; color: {cor_alerta};">🎯 Referência Ideal para {fluido}{msg_status}</h4>
@@ -253,7 +253,7 @@ def renderizar_aba_2():
     # --- 2. MEDIÇÕES DE CAMPO (INTEGRIDADE TOTAL DO LAYOUT) ---
     st.subheader("1. Medições de Campo")
     
-    # Bloco 1: Ciclo Frigorífico
+    # Bloco 1: Ciclo Frigorífico (5 Colunas)
     st.markdown("##### 🔵 Ciclo Frigorífico")
     a1, a2, a3, a4, a5 = st.columns(5)
     p_suc_val = a1.number_input("SUCÇÃO (PSI)", value=p_atual, format="%.1f", key="ps_m_aba2")
@@ -262,7 +262,7 @@ def renderizar_aba_2():
     t_liq_val = a4.number_input("TUB. LÍQUIDO (°C)", value=safe_float('temp_liquido'), format="%.1f", key="tl_m_aba2")
     t_com_val = a5.number_input("TUB. Desc. Comp. (°C)", value=safe_float('temp_descarga'), format="%.1f", key="tc_m_aba2")
 
-    # Bloco 2: Ar e Ambiente
+    # Bloco 2: Ar e Ambiente (5 Colunas)
     st.markdown("##### 🔴 Ar e Ambiente")
     b1, b2, b3, b4, b5 = st.columns(5)
     t_ret_val = b1.number_input("Retorno Ar (°C)", value=safe_float('temp_entrada_ar'), format="%.1f", key="tr_m_aba2")
@@ -271,7 +271,7 @@ def renderizar_aba_2():
     u_rel_val = b4.number_input("Umid. Rel. DO AR (%)", value=safe_float('umidade', 50.0), format="%.1f", key="ur_m_aba2")
     p_oil_val = b5.number_input("Pressão Óleo (PSI)", value=safe_float('p_oleo', 0.0), format="%.1f", key="po_m_aba2")
 
-    # Bloco 3: Parâmetros Elétricos
+    # Bloco 3: Parâmetros Elétricos (5 Colunas)
     st.markdown("##### ⚡ Parâmetros Elétricos")
     c1, c2, c3, c4, c5 = st.columns(5)
     v_lin_val = c1.number_input("Tensão Nominal (V)", value=safe_float('v_nominal', 220.0), key="vn_m_aba2")
@@ -280,7 +280,7 @@ def renderizar_aba_2():
     rla_val   = c4.number_input("RLA - Nominal (A)", value=safe_float('rla'), key="rla_m_aba2")
     lra_val   = c5.number_input("LRA - Partida (A)", value=safe_float('lra'), key="lra_m_aba2")
 
-    # Bloco 4: Capacitância e Ventilação
+    # Bloco 4: Capacitância e Ventilação (5 Colunas)
     st.markdown("##### 🔋 Capacitância e Ventilação")
     d1, d2, d3, d4, d5 = st.columns(5)
     cn_c_val  = d1.number_input("CAPACITÂNCIA Nom. Comp", value=safe_float('cn_c'), format="%.1f", key="cnc_m_aba2")
@@ -290,7 +290,7 @@ def renderizar_aba_2():
     i_fan_val = d5.number_input("CORRENTE Fan (A)", value=safe_float('i_fan'), format="%.2f", key="if_m_aba2")
 
     # --- 3. PROCESSAMENTO TÉCNICO E CÁLCULOS TERMODINÂMICOS ---
-    # Cálculo de Saturação utilizando a função externa de precisão
+    # Cálculo de Saturação utilizando a função externa f_sat_precisao
     t_sat_s = f_sat_precisao(p_suc_val, fluido) if p_suc_val > 5 else 0.0
     t_sat_d = f_sat_precisao(p_des_val, fluido) if p_des_val > 5 else 0.0
     
@@ -298,7 +298,7 @@ def renderizar_aba_2():
     sh_calc = round(t_suc_val - t_sat_s, 2) if t_sat_s != 0 else 0.0
     sc_calc = round(t_sat_d - t_liq_val, 2) if t_sat_d != 0 else 0.0
     
-    # Diferenciais de Ar e Elétrica
+    # Diferenciais Térmicos e Elétricos
     dt_ar_calc = round(t_ret_val - t_ins_val, 2)
     d_tensao_calc = round(v_med_val - v_lin_val, 2)
     d_corrente_calc = round(i_med_val - rla_val, 2) if rla_val > 0 else 0.0
@@ -308,15 +308,16 @@ def renderizar_aba_2():
     d_cap_f_calc = round(cm_f_val - cn_f_val, 2)
     d_cap_c_calc = round(cm_c_val - cn_c_val, 2)
     
-    # COP Estimado e Razão de Compressão
+    # Razão de Compressão (P. Absoluta Descarga / P. Absoluta Sucção)
     razao_compr = round((p_des_val + 14.7) / (p_suc_val + 14.7), 2) if p_suc_val > 0 else 0.0
+    # COP Estimado baseado na entalpia do ar simplificada
     cop_estimado = round((abs(dt_ar_calc) * 1.2 * 1000) / (v_med_val * i_med_val + 0.1), 2) if i_med_val > 0 else 0.0
 
     # --- 4. EXIBIÇÃO DE RESULTADOS (GRID DE PERFORMANCE - 6 COLUNAS) ---
     st.markdown("---")
     st.subheader("2. Diagnóstico de Performance e Integridade")
     
-    # CSS Customizado para os Cards de Métricas
+    # CSS para os Cards de Métricas (Mantendo identidade visual)
     st.markdown("""
         <style> 
             div[data-testid="stMetric"] { 
@@ -329,7 +330,7 @@ def renderizar_aba_2():
         </style>
     """, unsafe_allow_html=True)
     
-    # Renderização do Grid de 6 Colunas (Expandido)
+    # Renderização do Grid Master de 6 Colunas
     res_cols = st.columns(6)
     
     with res_cols[0]:
@@ -349,7 +350,8 @@ def renderizar_aba_2():
         st.metric("Δ TENSÃO", f"{d_tensao_calc:.1f} V")
         
     with res_cols[4]:
-        st.metric("I COMP (A)", f"{i_med_val:.1f} A")
+        # SUBSTITUIÇÃO REALIZADA: Linha 1 = Razão de Compressão | Linha 2 = COP
+        st.metric("Razão Compr.", f"{razao_compr}", "⚠️ Crítico" if razao_compr > 4.5 else None)
         st.metric("COP ESTIMADO", f"{cop_estimado:.2f}")
         
     with res_cols[5]:
@@ -361,25 +363,17 @@ def renderizar_aba_2():
     st.subheader("🤖 Diagnóstico Inteligente (Motor de Regras)")
     
     alertas_lista = []
-    # Verificações de SH
     if sh_calc < 5 and p_suc_val > 0:
-        alertas_lista.append("⚠️ **Superaquecimento Crítico (Baixo):** Risco iminente de golpe de líquido no compressor.")
+        alertas_lista.append("⚠️ **Superaquecimento Baixo:** Risco de retorno de líquido ao compressor.")
     if sh_calc > 12:
-        alertas_lista.append("⚠️ **Superaquecimento Crítico (Alto):** Falta de fluido ou restrição; compressor pode superaquecer.")
-        
-    # Verificações de Temperatura de Descarga
+        alertas_lista.append("⚠️ **Superaquecimento Alto:** Possível falta de fluido ou restrição na expansão.")
     if t_com_val > 105:
-        alertas_lista.append("🔥 **Temperatura de Descarga Excessiva:** Risco de degradação térmica do óleo lubrificante.")
-    
-    # Verificações de Sub-resfriamento
+        alertas_lista.append("🔥 **Descarga Crítica:** Temperatura acima do limite de segurança do óleo.")
     if sc_calc < 3 and p_des_val > 0:
-        alertas_lista.append("📉 **Sub-resfriamento Baixo:** Carga de fluido insuficiente ou condensador ineficiente.")
-    
-    # Verificações Elétricas
+        alertas_lista.append("📉 **Sub-resfriamento Baixo:** Ineficiência na condensação ou carga incompleta.")
     if abs(d_tensao_calc) > (v_lin_val * 0.1):
-        alertas_lista.append("⚡ **Desvio de Tensão:** Flutuação maior que 10% detectada na rede elétrica.")
+        alertas_lista.append("⚡ **Alerta Elétrico:** Tensão fora da margem de 10% de tolerância.")
 
-    # Exibição do Status
     if alertas_lista:
         for alerta in alertas_lista:
             st.error(alerta)
@@ -391,7 +385,7 @@ def renderizar_aba_2():
     st.subheader("3. Parecer Técnico Final")
     d['laudo_diag'] = st.text_area("Diagnóstico e Observações Detalhadas:", value=d.get('laudo_diag', "Análise: Sistema estável."), height=150)
 
-    # ATUALIZAÇÃO DO DICIONÁRIO DE DADOS (PERSISTÊNCIA COMPLETA)
+    # ATUALIZAÇÃO DO DICIONÁRIO DE DADOS (GARANTINDO PERSISTÊNCIA DE TODAS AS CHAVES)
     st.session_state.dados.update({
         'p_baixa': p_suc_val,
         'temp_sucção': t_suc_val,
