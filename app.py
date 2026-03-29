@@ -172,14 +172,14 @@ def f_sat_precisao(p, g):
 
 
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO MASTER - CORREÇÃO DE PERSISTÊNCIA TOTAL)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO MASTER - EXPANSÃO COMPLETA)
 # ==============================================================================
 def renderizar_aba_2():
     st.header("🔍 Central de Diagnóstico Técnico")
     d = st.session_state.dados
     fluido = d.get('fluido', 'R410A')
 
-    # Função auxiliar interna para evitar crash de conversão
+    # Função auxiliar para evitar erros de conversão e manter estabilidade
     def safe_float(key, default=0.0):
         val = d.get(key)
         try:
@@ -189,7 +189,7 @@ def renderizar_aba_2():
         except:
             return default
 
-    # --- 1. PAINEL DE REFERÊNCIA IDEAL (DINÂMICO POR GÁS) ---
+    # --- 1. PAINEL DE REFERÊNCIA IDEAL (DINÂMICO) ---
     referencias = {
         'R410A': {"p_suc": "110 a 130 PSI", "t_sat": "2°C a 6°C", "sh": "5K a 9K", "sc": "5K a 8K"},
         'R32':   {"p_suc": "115 a 135 PSI", "t_sat": "1°C a 5°C", "sh": "5K a 9K", "sc": "5K a 9K"},
@@ -199,29 +199,23 @@ def renderizar_aba_2():
     }
     ref = referencias.get(fluido, referencias['R410A'])
 
-    # Lógica de Cor e Balança Virtual
+    # Lógica de Cor e Balança Virtual (Processamento Superior)
     p_atual = safe_float('p_baixa')
     limites = ref['p_suc'].replace(' PSI', '').split(' a ')
     p_alvo_centro = (float(limites[0]) + float(limites[1])) / 2
     carga_total_placa = safe_float('carga_gas') 
     
-    cor_alerta = "#00CCFF" 
-    msg_status = ""
-    sugestao_massa = 0.0
-    
+    cor_alerta, msg_status, sugestao_massa = "#00CCFF", "", 0.0
     if p_atual > 0:
         if carga_total_placa > 0:
             diff_p = p_alvo_centro - p_atual
             sugestao_massa = (diff_p / p_alvo_centro) * carga_total_placa * 0.7
 
         if float(limites[0]) <= p_atual <= float(limites[1]):
-            cor_alerta = "#00FF7F" # Verde
-            msg_status = " - ✅ DENTRO DO ALVO"
+            cor_alerta, msg_status = "#00FF7F", " - ✅ DENTRO DO ALVO"
         else:
-            cor_alerta = "#FF4B4B" # Vermelho
-            msg_status = " - ⚠️ FORA DO ALVO"
+            cor_alerta, msg_status = "#FF4B4B", " - ⚠️ FORA DO ALVO"
 
-    # Texto da Balança para o Card Superior
     txt_bal_card = "ESTÁVEL" if abs(sugestao_massa) < 15 or carga_total_placa == 0 else f"{'+' if sugestao_massa > 0 else '-'}{abs(sugestao_massa):.0f}g"
 
     st.markdown(f"""
@@ -240,8 +234,9 @@ def renderizar_aba_2():
         </div>
     """, unsafe_allow_html=True)
 
-    # --- 2. MEDIÇÕES DE CAMPO ---
+    # --- 2. MEDIÇÕES DE CAMPO (INTEGRIDADE ABSOLUTA) ---
     st.subheader("1. Medições de Campo")
+    
     st.markdown("##### 🔵 Ciclo Frigorífico")
     a1, a2, a3, a4, a5 = st.columns(5)
     p_suc = a1.number_input("SUCÇÃO (PSI)", value=p_atual, format="%.1f", key="ps_m")
@@ -277,32 +272,28 @@ def renderizar_aba_2():
     # --- 3. PROCESSAMENTO TÉCNICO (CÁLCULOS) ---
     t_sat_s = f_sat_precisao(p_suc, fluido) if p_suc > 5 else 0.0
     t_sat_d = f_sat_precisao(p_des, fluido) if p_des > 5 else 0.0
-    sh = round(t_suc - t_sat_s, 2) if t_sat_s != 0 else 0.0
-    sc = round(t_sat_d - t_liq, 2) if t_sat_d != 0 else 0.0
-    dt_ar, d_tensao, d_corrente = round(t_ret - t_ins, 2), round(v_med - v_lin, 2), round(i_med - rla, 2) if rla > 0 else 0.0
+    sh, sc = round(t_suc - t_sat_s, 2) if t_sat_s != 0 else 0.0, round(t_sat_d - t_liq, 2) if t_sat_d != 0 else 0.0
+    dt_ar, d_tensao = round(t_ret - t_ins, 2), round(v_med - v_lin, 2)
+    d_corrente = round(i_med - rla, 2) if rla > 0 else 0.0
     sh_util, d_cap_f, d_cap_c = round(sh * 0.8, 2), round(cm_f - cn_f, 2), round(cm_c - cn_c, 2)
 
-    # --- 4. RESULTADOS CALCULADOS ---
+    # --- 4. RESULTADOS (NOVO LAYOUT DE PERFORMANCE E INTEGRIDADE) ---
     st.markdown("---")
-    st.subheader("2. Resultados e Balança Virtual")
+    st.subheader("2. Diagnóstico de Performance e Integridade")
     st.markdown("""<style> div[data-testid="stMetric"] { background-color: #1A1C23; border: 1px solid #333; padding: 8px; border-radius: 8px; border-left: 4px solid #00CCFF; } </style>""", unsafe_allow_html=True)
+    
     res = st.columns(5)
     res[0].metric("SH TOTAL", f"{sh:.1f} K"); res[0].metric("SH ÚTIL", f"{sh_util:.1f} K")
     res[1].metric("SAT. SUCÇÃO", f"{t_sat_s:.1f} °C"); res[1].metric("SAT. DESCARGA", f"{t_sat_d:.1f} °C")
-    with res[2]:
-        if abs(sugestao_massa) < 15 or carga_total_placa == 0: st.metric("BALANÇA VIRTUAL", "ESTÁVEL", delta="Pressão OK")
-        else:
-            label_m = "ADICIONAR" if sugestao_massa > 0 else "RETIRAR"
-            st.metric("BALANÇA VIRTUAL", f"{abs(sugestao_massa):.0f}g", delta=label_m, delta_color="inverse" if sugestao_massa > 0 else "normal")
-        st.metric("SC FINAL", f"{sc:.1f} K")
-    res[3].metric("Δ T (AR)", f"{dt_ar:.1f} K"); res[3].metric("Δ TENSÃO", f"{d_tensao:.1f} V")
-    res[4].metric("Δ CORRENTE", f"{d_corrente:.1f} A"); res[4].metric("Δ CAP. COMP.", f"{d_cap_c:.1f} µF")
+    res[2].metric("Δ T (AR)", f"{dt_ar:.1f} K"); res[2].metric("SC FINAL", f"{sc:.1f} K")
+    res[3].metric("Δ CORRENTE", f"{d_corrente:.1f} A"); res[3].metric("Δ TENSÃO", f"{d_tensao:.1f} V")
+    res[4].metric("Δ CAP. FAN", f"{d_cap_f:.1f} µF"); res[4].metric("I FAN", f"{i_fan:.1f} A")
     
     st.markdown("---")
     st.subheader("🤖 Diagnóstico Inteligente (IA)")
     alertas_ia = []
     if sh < 5 and p_suc > 0: alertas_ia.append("⚠️ **SH Baixo:** Risco de golpe de líquido.")
-    if sh > 12: alertas_ia.append("⚠️ **SH Alto:** Compressor aquecendo demais / Falta de fluido.")
+    if sh > 12: alertas_ia.append("⚠️ **SH Alto:** Compressor aquecendo demais.")
     if t_com > 100: alertas_ia.append("🔥 **Descarga Crítica:** Risco de carbonização do óleo.")
     st.info("\n".join(alertas_ia) if alertas_ia else "✅ Sistema operando conforme lógica nominal.")
 
@@ -310,6 +301,7 @@ def renderizar_aba_2():
     st.subheader("3. Parecer Técnico Final")
     d['laudo_diag'] = st.text_area("Diagnóstico e Observações:", value=d.get('laudo_diag', "Análise: Estável."), height=150)
 
+    # PERSISTÊNCIA TOTAL DE DADOS (TODAS AS CHAVES ORIGINAIS MANTIDAS)
     st.session_state.dados.update({
         'p_baixa': p_suc, 'temp_sucção': t_suc, 'p_alta': p_des, 'temp_liquido': t_liq,
         'temp_entrada_ar': t_ret, 'temp_saida_ar': t_ins, 'temp_amb_ext': t_amb,
