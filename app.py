@@ -172,7 +172,7 @@ def f_sat_precisao(p, g):
 
 
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO MASTER - EXPANSÃO 6 COLUNAS)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO MASTER - 6 COLUNAS & EFICIÊNCIA)
 # ==============================================================================
 def renderizar_aba_2():
     st.header("🔍 Central de Diagnóstico Técnico")
@@ -199,18 +199,15 @@ def renderizar_aba_2():
     }
     ref = referencias.get(fluido, referencias['R410A'])
 
-    # Lógica de Cor e Balança Virtual (Processamento Superior)
+    # Lógica de Cor e Balança Virtual
     p_atual = safe_float('p_baixa')
     limites = ref['p_suc'].replace(' PSI', '').split(' a ')
     p_alvo_centro = (float(limites[0]) + float(limites[1])) / 2
     carga_total_placa = safe_float('carga_gas') 
     
     cor_alerta, msg_status, sugestao_massa = "#00CCFF", "", 0.0
-    if p_atual > 0:
-        if carga_total_placa > 0:
-            diff_p = p_alvo_centro - p_atual
-            sugestao_massa = (diff_p / p_alvo_centro) * carga_total_placa * 0.7
-
+    if p_atual > 0 and carga_total_placa > 0:
+        sugestao_massa = ((p_alvo_centro - p_atual) / p_alvo_centro) * carga_total_placa * 0.7
         if float(limites[0]) <= p_atual <= float(limites[1]):
             cor_alerta, msg_status = "#00FF7F", " - ✅ DENTRO DO ALVO"
         else:
@@ -225,17 +222,17 @@ def renderizar_aba_2():
                 <div style="color: #FFFFFF;"><small style="color: #888;">SUCÇÃO ALVO</small><br><b>{ref['p_suc']}</b></div>
                 <div style="color: #FFFFFF;"><small style="color: #888;">SATURAÇÃO ALVO</small><br><b>{ref['t_sat']}</b></div>
                 <div style="color: #FFFFFF;"><small style="color: #888;">SH (SUPERAQUEC.)</small><br><b>{ref['sh']}</b></div>
-                <div style="color: #FFFFFF;"><small style="color: #888;">SC (SUB-RESFR.)</small><br><b>{ref['sc']}</b></div>
+                <div style="color: #FFFFFF;"><small style="color: #888;">SR (SUB-RESFR.)</small><br><b>{ref['sc']}</b></div>
                 <div style="background-color: rgba(255,255,255,0.05); padding: 5px; border-radius: 5px; text-align: center; border: 1px dashed {cor_alerta};">
                     <small style="color: {cor_alerta}; font-weight: bold;">⚖️ BALANÇA</small><br><b style="color: #FFF; font-size: 1.1rem;">{txt_bal_card}</b>
                 </div>
             </div>
-            <div style="margin-top: 10px; color: {cor_alerta}; font-size: 14px; font-weight: bold;">PRESSÃO ATUAL: {p_atual:.1f} PSI</div>
         </div>
     """, unsafe_allow_html=True)
 
     # --- 2. MEDIÇÕES DE CAMPO (INTEGRIDADE TOTAL) ---
     st.subheader("1. Medições de Campo")
+    
     st.markdown("##### 🔵 Ciclo Frigorífico")
     a1, a2, a3, a4, a5 = st.columns(5)
     p_suc = a1.number_input("SUCÇÃO (PSI)", value=p_atual, format="%.1f", key="ps_m")
@@ -252,7 +249,7 @@ def renderizar_aba_2():
     u_rel = b4.number_input("Umid. Rel. DO AR (%)", value=safe_float('umidade', 50.0), format="%.1f", key="ur_m")
     p_oil = b5.number_input("Pressão Óleo (PSI)", value=safe_float('p_oleo', 0.0), format="%.1f", key="po_m")
 
-    st.markdown("##### ⚡ Parâmetros Elétricos")
+    st.markdown("##### ⚡ Parâmetros Elétricos e Capacitância")
     c1, c2, c3, c4, c5 = st.columns(5)
     v_lin = c1.number_input("Tensão Nominal (V)", value=safe_float('v_nominal', 220.0), key="vn_m")
     v_med = c2.number_input("Tensão Medida (V)", value=safe_float('v_medida', 220.0), key="vm_m")
@@ -260,55 +257,58 @@ def renderizar_aba_2():
     rla   = c4.number_input("RLA - Nominal (A)", value=safe_float('rla'), key="rla_m")
     lra   = c5.number_input("LRA - Partida (A)", value=safe_float('lra'), key="lra_m")
 
-    st.markdown("##### 🔋 Capacitância e Ventilação")
     d1, d2, d3, d4, d5 = st.columns(5)
-    cn_c  = d1.number_input("CAPACITÂNCIA Nom. Comp", value=safe_float('cn_c'), format="%.1f", key="cnc_m")
-    cm_c  = d2.number_input("CAPACITÂNCIA Lido Comp", value=safe_float('cm_c'), format="%.1f", key="cmc_m")
-    cn_f  = d3.number_input("CAPACITÂNCIA Nom. Fan", value=safe_float('cn_f'), format="%.1f", key="cnf_m")
-    cm_f  = d4.number_input("CAPACITÂNCIA Lido Fan", value=safe_float('cm_f'), format="%.1f", key="cmf_m")
-    i_fan = d5.number_input("CORRENTE Fan (A)", value=safe_float('i_fan'), format="%.2f", key="if_m")
+    cn_c  = d1.number_input("CAP. Nom. Comp (µF)", value=safe_float('cn_c'), format="%.1f")
+    cm_c  = d2.number_input("CAP. Lido Comp (µF)", value=safe_float('cm_c'), format="%.1f")
+    cn_f  = d3.number_input("CAP. Nom. Fan (µF)", value=safe_float('cn_f'), format="%.1f")
+    cm_f  = d4.number_input("CAP. Lido Fan (µF)", value=safe_float('cm_f'), format="%.1f")
+    i_fan = d5.number_input("CORRENTE Fan (A)", value=safe_float('i_fan'), key="if_m")
 
     # --- 3. PROCESSAMENTO TÉCNICO (CÁLCULOS) ---
     t_sat_s = f_sat_precisao(p_suc, fluido) if p_suc > 5 else 0.0
     t_sat_d = f_sat_precisao(p_des, fluido) if p_des > 5 else 0.0
-    sh, sc = round(t_suc - t_sat_s, 2) if t_sat_s != 0 else 0.0, round(t_sat_d - t_liq, 2) if t_sat_d != 0 else 0.0
+    sh, sr = round(t_suc - t_sat_s, 2) if t_sat_s != 0 else 0.0, round(t_sat_d - t_liq, 2) if t_sat_d != 0 else 0.0
     dt_ar, d_tensao = round(t_ret - t_ins, 2), round(v_med - v_lin, 2)
     d_corrente = round(i_med - rla, 2) if rla > 0 else 0.0
-    sh_util, d_cap_f, d_cap_c = round(sh * 0.8, 2), round(cm_f - cn_f, 2), round(cm_c - cn_c, 2)
+    d_cap_c, d_cap_f = round(cm_c - cn_c, 2), round(cm_f - cn_f, 2)
+    
+    # Cálculos de Eficiência e Razão
+    razão_c = round((p_des + 14.7) / (p_suc + 14.7), 2) if p_suc > 0 else 0.0
+    cop_est = round((abs(dt_ar) * 1.2 * 1000) / (v_med * i_med + 0.1), 2) if i_med > 0 else 0.0
 
-    # --- 4. RESULTADOS (LAYOUT DE PERFORMANCE E INTEGRIDADE - 6 COLUNAS) ---
+    # --- 4. RESULTADOS (NOVO GRID 6 COLUNAS) ---
     st.markdown("---")
     st.subheader("2. Diagnóstico de Performance e Integridade")
     st.markdown("""<style> div[data-testid="stMetric"] { background-color: #1A1C23; border: 1px solid #333; padding: 8px; border-radius: 8px; border-left: 4px solid #00CCFF; } </style>""", unsafe_allow_html=True)
     
     res = st.columns(6)
-    res[0].metric("SH TOTAL", f"{sh:.1f} K"); res[0].metric("SH ÚTIL", f"{sh_util:.1f} K")
+    res[0].metric("SH TOTAL", f"{sh:.1f} K"); res[0].metric("SH ÚTIL", f"{sh * 0.8:.1f} K")
     res[1].metric("SAT. SUCÇÃO", f"{t_sat_s:.1f} °C"); res[1].metric("SAT. DESCARGA", f"{t_sat_d:.1f} °C")
-    res[2].metric("Δ T (AR)", f"{dt_ar:.1f} K"); res[2].metric("SC FINAL", f"{sc:.1f} K")
+    res[2].metric("Δ T (AR)", f"{dt_ar:.1f} K"); res[2].metric("SR - SUB RESF.", f"{sr:.1f} K")
     res[3].metric("Δ CORRENTE", f"{d_corrente:.1f} A"); res[3].metric("Δ TENSÃO", f"{d_tensao:.1f} V")
-    res[4].metric("I COMP (A)", f"{i_med:.1f} A"); res[4].metric("I FAN (A)", f"{i_fan:.1f} A")
-    res[5].metric("Δ CAP. COMP.", f"{d_cap_c:.1f} µF"); res[5].metric("Δ CAP. FAN.", f"{d_cap_f:.1f} µF")
+    res[4].metric("COP (Est.)", f"{cop_est}"); res[4].metric("Razão Compr.", f"{razão_c}")
+    res[5].metric("Δ CAP. COMP.", f"{d_cap_c:.1f} µF"); res[5].metric("Δ CAP. FAN", f"{d_cap_f:.1f} µF")
     
     st.markdown("---")
     st.subheader("🤖 Diagnóstico Inteligente (IA)")
     alertas_ia = []
     if sh < 5 and p_suc > 0: alertas_ia.append("⚠️ **SH Baixo:** Risco de golpe de líquido.")
-    if sh > 12: alertas_ia.append("⚠️ **SH Alto:** Compressor aquecendo demais.")
+    if razão_c > 4: alertas_ia.append("🔥 **Razão de Compressão Alta:** Estresse térmico severo.")
     if t_com > 100: alertas_ia.append("🔥 **Descarga Crítica:** Risco de carbonização do óleo.")
-    st.info("\n".join(alertas_ia) if alertas_ia else "✅ Sistema operando conforme lógica nominal.")
+    st.info("\n".join(alertas_ia) if alertas_ia else "✅ Sistema operando em regime de eficiência nominal.")
 
     st.markdown("---")
     st.subheader("3. Parecer Técnico Final")
     d['laudo_diag'] = st.text_area("Diagnóstico e Observações:", value=d.get('laudo_diag', "Análise: Estável."), height=150)
 
-    # PERSISTÊNCIA TOTAL DE DADOS (TODAS AS CHAVES ORIGINAIS MANTIDAS)
+    # PERSISTÊNCIA TOTAL DE DADOS
     st.session_state.dados.update({
         'p_baixa': p_suc, 'temp_sucção': t_suc, 'p_alta': p_des, 'temp_liquido': t_liq,
         'temp_entrada_ar': t_ret, 'temp_saida_ar': t_ins, 'temp_amb_ext': t_amb,
         'umidade': u_rel, 'p_oleo': p_oil, 'v_nominal': v_lin, 'v_medida': v_med,
         'i_medida': i_med, 'cn_c': cn_c, 'cm_c': cm_c, 'cn_f': cn_f, 'cm_f': cm_f, 
         'i_fan': i_fan, 'lra': lra, 'rla': rla, 'temp_descarga': t_com,
-        'sh_calculado': sh, 'sc_calculado': sc
+        'sh_calculado': sh, 'sc_calculado': sr
     })
 # FINAL DO BLOCO 2 (LINHA 384)   
 
