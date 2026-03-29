@@ -478,7 +478,7 @@ with st.sidebar:
             pdf.cell(190, 10, "LAUDO TÉCNICO DE INSPEÇÃO HVAC-R", ln=True, align='C')
             pdf.ln(2)
 
-           # --- 2. SEÇÃO 1: IDENTIFICAÇÃO (FIDELIDADE ABSOLUTA À PLANILHA) ---
+         # --- 2. SEÇÃO 1: IDENTIFICAÇÃO (MOLDURAS INDIVIDUAIS POR CAMPO) ---
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
             data_v = datetime.now().strftime('%d/%m/%Y')
             pdf.cell(130, 7, " 1. IDENTIFICAÇÃO DO CLIENTE E ENDEREÇO", fill=True)
@@ -486,43 +486,52 @@ with st.sidebar:
 
             pdf.set_text_color(0, 0, 0)
             
-            # Linha 1: Cliente | CPF/CNPJ | e-mail (conforme print)
-            pdf.set_font("Arial", "B", 8); pdf.cell(15, 8, " Cliente:", border='LTB')
-            pdf.set_font("Arial", "", 8); pdf.cell(65, 8, f" {n_val}", border='TB') # Mantém case original
-            pdf.set_font("Arial", "B", 8); pdf.cell(22, 8, " CPF/CNPJ:", border='TB')
-            pdf.set_font("Arial", "", 8); pdf.cell(35, 8, f" {d_val}", border='TB')
-            pdf.set_font("Arial", "B", 8); pdf.cell(15, 8, " e-mail:", border='TB')
-            pdf.set_font("Arial", "", 8); pdf.cell(38, 8, f" {d.get('email', '---')}", border='RTB', ln=True)
+            # Linha 1: Cliente | CPF/CNPJ | e-mail
+            # Bloco Cliente
+            pdf.set_font("Arial", "B", 8); pdf.cell(15, 8, " Cliente:", border='LBT')
+            pdf.set_font("Arial", "", 8); pdf.cell(65, 8, f" {n_val}", border='RBT')
+            # Bloco CPF/CNPJ
+            pdf.set_font("Arial", "B", 8); pdf.cell(20, 8, " CPF/CNPJ:", border='LBT')
+            pdf.set_font("Arial", "", 8); pdf.cell(30, 8, f" {d_val}", border='RBT')
+            # Bloco e-mail
+            pdf.set_font("Arial", "B", 8); pdf.cell(15, 8, " e-mail:", border='LBT')
+            pdf.set_font("Arial", "", 8); pdf.cell(45, 8, f" {d.get('email', '---')}", border='RBT', ln=True)
 
-            # Linha 2: Watssap* | Celular | Fixo (conforme print)
-            pdf.set_font("Arial", "B", 8); pdf.cell(20, 8, " Watssap*:", border='LTB')
-            pdf.set_font("Arial", "", 8); pdf.cell(45, 8, f" {d.get('whatsapp', '---')}", border='TB')
-            pdf.set_font("Arial", "B", 8); pdf.cell(18, 8, " Celular:", border='TB')
-            pdf.set_font("Arial", "", 8); pdf.cell(45, 8, f" {d.get('celular', '---')}", border='TB')
-            pdf.set_font("Arial", "B", 8); pdf.cell(12, 8, " Fixo:", border='TB')
-            pdf.set_font("Arial", "", 8); pdf.cell(50, 8, f" {d.get('tel_fixo', '---')}", border='RTB', ln=True)
+            # Linha 2: Watssap* | Celular | Fixo
+            # Bloco Watssap*
+            pdf.set_font("Arial", "B", 8); pdf.cell(20, 8, " Watssap*:", border='LBT')
+            pdf.set_font("Arial", "", 8); pdf.cell(45, 8, f" {d.get('whatsapp', '---')}", border='RBT')
+            # Bloco Celular
+            pdf.set_font("Arial", "B", 8); pdf.cell(18, 8, " Celular:", border='LBT')
+            pdf.set_font("Arial", "", 8); pdf.cell(45, 8, f" {d.get('celular', '---')}", border='RBT')
+            # Bloco Fixo
+            pdf.set_font("Arial", "B", 8); pdf.cell(12, 8, " Fixo:", border='LBT')
+            pdf.set_font("Arial", "", 8); pdf.cell(50, 8, f" {d.get('tel_fixo', '---')}", border='RBT', ln=True)
 
-            # Linha 3: Endereço | Nº/Apto:: | Comp: | Bairro: | Cidade: | UF: | CEP: (Tudo junto)
-            # Como são muitos itens, dividi em duas células longas para manter o alinhamento do print
-            pdf.set_font("Arial", "B", 8); pdf.cell(18, 8, " Endereço:", border='LTB')
-            pdf.set_font("Arial", "", 8); pdf.cell(57, 8, f" {d.get('endereco', '---')}", border='TB')
-            
-            pdf.set_font("Arial", "B", 8); pdf.cell(18, 8, " Nº/Apto::", border='TB')
-            pdf.set_font("Arial", "", 8); pdf.cell(15, 8, f" {d.get('numero', '---')}", border='TB')
-            
-            pdf.set_font("Arial", "B", 8); pdf.cell(12, 8, " Comp:", border='TB')
-            pdf.set_font("Arial", "", 8); pdf.cell(25, 8, f" {d.get('complemento', '---')}", border='TB')
-            
-            pdf.set_font("Arial", "B", 8); pdf.cell(15, 8, " Bairro:", border='TB')
-            pdf.set_font("Arial", "", 8); pdf.cell(30, 8, f" {d.get('bairro', '---')}", border='RTB', ln=True)
+            # Linha 3: Endereço | Nº/Apto:: | Comp:
+            # Bloco Endereço
+            pdf.set_font("Arial", "B", 8); pdf.cell(18, 8, " Endereço:", border='LBT')
+            pdf.set_font("Arial", "", 8); pdf.cell(82, 8, f" {d.get('endereco', '---')}", border='RBT')
+            # Bloco Nº/Apto::
+            pdf.set_font("Arial", "B", 8); pdf.cell(18, 8, " Nº/Apto::", border='LBT')
+            pdf.set_font("Arial", "", 8); pdf.cell(22, 8, f" {d.get('numero', '---')}", border='RBT')
+            # Bloco Comp:
+            pdf.set_font("Arial", "B", 8); pdf.cell(15, 8, " Comp:", border='LBT')
+            pdf.set_font("Arial", "", 8); pdf.cell(35, 8, f" {d.get('complemento', '---')}", border='RBT', ln=True)
 
-            # Linha 4 Final: Cidade, UF e CEP (seguindo o final da linha 7/8 da planilha)
-            pdf.set_font("Arial", "B", 8); pdf.cell(15, 8, " Cidade:", border='LTB')
-            pdf.set_font("Arial", "", 8); pdf.cell(50, 8, f" {d.get('cidade', '---')}", border='TB')
-            pdf.set_font("Arial", "B", 8); pdf.cell(10, 8, " UF:", border='TB')
-            pdf.set_font("Arial", "", 8); pdf.cell(10, 8, f" {d.get('uf', '---')}", border='TB')
-            pdf.set_font("Arial", "B", 8); pdf.cell(12, 8, " CEP:", border='TB')
-            pdf.set_font("Arial", "", 8); pdf.cell(93, 8, f" {d.get('cep', '---')}", border='RTB', ln=True)
+            # Linha 4: Bairro: | Cidade: | UF: | CEP:
+            # Bloco Bairro:
+            pdf.set_font("Arial", "B", 8); pdf.cell(15, 8, " Bairro:", border='LBT')
+            pdf.set_font("Arial", "", 8); pdf.cell(45, 8, f" {d.get('bairro', '---')}", border='RBT')
+            # Bloco Cidade:
+            pdf.set_font("Arial", "B", 8); pdf.cell(15, 8, " Cidade:", border='LBT')
+            pdf.set_font("Arial", "", 8); pdf.cell(45, 8, f" {d.get('cidade', '---')}", border='RBT')
+            # Bloco UF:
+            pdf.set_font("Arial", "B", 8); pdf.cell(10, 8, " UF:", border='LBT')
+            pdf.set_font("Arial", "", 8); pdf.cell(10, 8, f" {d.get('uf', '---')}", border='RBT')
+            # Bloco CEP:
+            pdf.set_font("Arial", "B", 8); pdf.cell(12, 8, " CEP:", border='LBT')
+            pdf.set_font("Arial", "", 8); pdf.cell(38, 8, f" {d.get('cep', '---')}", border='RBT', ln=True)
             
             pdf.ln(2)
 
