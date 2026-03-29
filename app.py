@@ -497,22 +497,24 @@ with st.sidebar:
             pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(15, 8, " E-Mail:", border='LBT')
             pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(45, 8, f" {d.get('email', '---').lower()}", border='RBT', ln=True)
 
-            # Linha 2: Contatos
+           # Linha 2: Contatos (Corrigido largura e bordas)
             pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(20, 8, " Whatsapp:", border='LBT')
             pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(45, 8, f" {d.get('whatsapp', '---')}", border='RBT')
             pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(18, 8, " Celular:", border='LBT')
             pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(45, 8, f" {d.get('celular', '---')}", border='RBT')
             pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(12, 8, " Fixo:", border='LBT')
+            # Aqui garantimos a borda RBT e o salto de linha
             pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(50, 8, f" {d.get('tel_fixo', '---')}", border='RBT', ln=True)
 
-            # Linha 3: Endereço
-            pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(18, 8, " Endereço:", border='LBT')
-            pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(82, 8, f" {fmt(d.get('endereco'))}", border='RBT')
+            # Linha 3: Endereço (Ajustado para não encavalar)
+            pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(20, 8, " Endereço:", border='LBT')
+            pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(80, 8, f" {fmt(d.get('endereco'))}", border='RBT')
+            
             pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(18, 8, " Nº/Apto:", border='LBT')
             pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(22, 8, f" {d.get('numero', '---')}", border='RBT')
+            
             pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(15, 8, " Comp:", border='LBT')
             pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(35, 8, f" {fmt(d.get('complemento'))}", border='RBT', ln=True)
-
             # --- GERAÇÃO DO ARQUIVO FINAL (CONVERSÃO DE BYTES) ---
             pdf_output = pdf.output(dest='S')
             
