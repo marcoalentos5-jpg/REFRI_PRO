@@ -172,7 +172,7 @@ def f_sat_precisao(p, g):
 
 
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO MASTER - EXPANSÃO COMPLETA)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO MASTER - EXPANSÃO 6 COLUNAS)
 # ==============================================================================
 def renderizar_aba_2():
     st.header("🔍 Central de Diagnóstico Técnico")
@@ -234,9 +234,8 @@ def renderizar_aba_2():
         </div>
     """, unsafe_allow_html=True)
 
-    # --- 2. MEDIÇÕES DE CAMPO (INTEGRIDADE ABSOLUTA) ---
+    # --- 2. MEDIÇÕES DE CAMPO (INTEGRIDADE TOTAL) ---
     st.subheader("1. Medições de Campo")
-    
     st.markdown("##### 🔵 Ciclo Frigorífico")
     a1, a2, a3, a4, a5 = st.columns(5)
     p_suc = a1.number_input("SUCÇÃO (PSI)", value=p_atual, format="%.1f", key="ps_m")
@@ -277,17 +276,18 @@ def renderizar_aba_2():
     d_corrente = round(i_med - rla, 2) if rla > 0 else 0.0
     sh_util, d_cap_f, d_cap_c = round(sh * 0.8, 2), round(cm_f - cn_f, 2), round(cm_c - cn_c, 2)
 
-    # --- 4. RESULTADOS (NOVO LAYOUT DE PERFORMANCE E INTEGRIDADE) ---
+    # --- 4. RESULTADOS (LAYOUT DE PERFORMANCE E INTEGRIDADE - 6 COLUNAS) ---
     st.markdown("---")
     st.subheader("2. Diagnóstico de Performance e Integridade")
     st.markdown("""<style> div[data-testid="stMetric"] { background-color: #1A1C23; border: 1px solid #333; padding: 8px; border-radius: 8px; border-left: 4px solid #00CCFF; } </style>""", unsafe_allow_html=True)
     
-    res = st.columns(5)
+    res = st.columns(6)
     res[0].metric("SH TOTAL", f"{sh:.1f} K"); res[0].metric("SH ÚTIL", f"{sh_util:.1f} K")
     res[1].metric("SAT. SUCÇÃO", f"{t_sat_s:.1f} °C"); res[1].metric("SAT. DESCARGA", f"{t_sat_d:.1f} °C")
     res[2].metric("Δ T (AR)", f"{dt_ar:.1f} K"); res[2].metric("SC FINAL", f"{sc:.1f} K")
     res[3].metric("Δ CORRENTE", f"{d_corrente:.1f} A"); res[3].metric("Δ TENSÃO", f"{d_tensao:.1f} V")
-    res[4].metric("Δ CAP. FAN", f"{d_cap_f:.1f} µF"); res[4].metric("I FAN", f"{i_fan:.1f} A")
+    res[4].metric("I COMP (A)", f"{i_med:.1f} A"); res[4].metric("I FAN (A)", f"{i_fan:.1f} A")
+    res[5].metric("Δ CAP. COMP.", f"{d_cap_c:.1f} µF"); res[5].metric("Δ CAP. FAN.", f"{d_cap_f:.1f} µF")
     
     st.markdown("---")
     st.subheader("🤖 Diagnóstico Inteligente (IA)")
