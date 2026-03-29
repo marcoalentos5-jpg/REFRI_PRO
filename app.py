@@ -8,6 +8,7 @@ import numpy as np
 import urllib.parse
 from datetime import datetime
 
+
 # 1. CONFIGURAÇÃO INICIAL (DIRETRIZ: LAYOUT CONGELADO)
 st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
 
@@ -35,7 +36,7 @@ if 'dados' not in st.session_state:
         'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
         'data': datetime.now().strftime("%d/%m/%Y"),
         'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '', 'complemento': '',
-        'fabricante': 'Carrier', 'modelo': '', 'capacidade': '12.000 BTU', 'linha': 'Residencial',
+        'fabricante': 'Carrier', 'modelo': '', 'capacidade': '12.000', 'linha': 'Residencial',
         'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '',
         'tipo_servico': 'Manutenção Preventiva', 'tag_id': 'TAG-01',
         'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
@@ -59,7 +60,7 @@ def buscar_cep(cep):
     return False
 
 # ==============================================================================
-# 1.2 FUNÇÃO DA ABA 1: Identificação e Equipamento
+# 1.2 FUNÇÃO DA ABA 1: Identificação e Equipamento (LIMPEZA DEFINITIVA)
 # ==============================================================================
 def renderizar_aba_1():
     st.subheader("📋 Cadastro de Cliente e Ativo")
@@ -96,7 +97,7 @@ def renderizar_aba_1():
         d['cidade'] = ce6.text_input("Cidade:", value=d.get('cidade', ''), key="cli_ci")
         d['uf'] = ce7.text_input("UF:", value=d.get('uf', ''), key="cli_uf")
 
-    # --- SEÇÃO EQUIPAMENTO ---
+    # --- SEÇÃO EQUIPAMENTO (ESTRUTURA ÚNICA) ---
     st.markdown("### ⚙️ Especificações do Equipamento")
     with st.expander("Detalhes Técnicos do Ativo", expanded=True):
         l1_c1, l1_c2, l1_c3 = st.columns(3)
@@ -107,10 +108,8 @@ def renderizar_aba_1():
         with l1_c2:
             d['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=d.get('serie_evap', ''), key="eq_se")
         with l1_c3:
-            # CORREÇÃO: CAPACIDADE AGORA É SELECTBOX E PERSISTENTE
-            cap_list = ["7.000 BTU", "9.000 BTU", "12.000 BTU", "18.000 BTU", "22.000 BTU", "24.000 BTU", "30.000 BTU", "36.000 BTU", "48.000 BTU", "60.000 BTU", "80.000 BTU", "5 TR", "10 TR", "15 TR", "20 TR", "30 TR", "40 TR", "50 TR", "Outra"]
-            c_idx = cap_list.index(d['capacidade']) if d['capacidade'] in cap_list else 2
-            d['capacidade'] = st.selectbox("Capacidade (BTU/TR):", cap_list, index=c_idx, key="eq_ca")
+            # CAMPO CAPACIDADE ALTERADO PARA TEXTO LIVRE (BTU's) COM PERSISTÊNCIA
+            d['capacidade'] = st.text_input("Capacidade (BTU's):", value=d.get('capacidade', '12.000'), key="eq_ca")
 
         l2_c1, l2_c2, l2_c3 = st.columns(3)
         with l2_c1:
@@ -126,19 +125,20 @@ def renderizar_aba_1():
         with l3_c2:
             d['local_cond'] = st.text_input("Local Condensadora:", value=d.get('local_cond', ''), key="eq_lc")
         with l3_c3:
-            # CORREÇÃO: LISTA DE FLUIDOS COMPLETA E PERSISTENTE
-            fluidos = ["R410A", "R32", "R22", "R134a", "R290", "R404A", "R407C", "R417A"]
+            fluidos = ["R410A", "R32", "R22", "R134a", "R290", "R404A"]
             fl_idx = fluidos.index(d['fluido']) if d['fluido'] in fluidos else 0
             d['fluido'] = st.selectbox("Fluido Refrigerante:", fluidos, index=fl_idx, key="eq_fl")
 
         l4_c1, l4_c2, l4_c3 = st.columns(3)
         with l4_c1:
+            # CORREÇÃO: PERSISTÊNCIA DO TIPO DE ÓLEO
             lista_oleo = ["POE", "Mineral", "PVE", "PAG", "AB"]
             o_idx = lista_oleo.index(d['tipo_oleo']) if d['tipo_oleo'] in lista_oleo else 0
             d['tipo_oleo'] = st.selectbox("Tipo de Óleo:", lista_oleo, index=o_idx, key="eq_ol")
             d['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], key="eq_st")
         with l4_c2:
             d['carga_gas'] = st.text_input("Carga de Fluido (kg/g):", value=d.get('carga_gas', ''), key="eq_cg")
+            # CORREÇÃO: PERSISTÊNCIA DA TENSÃO NOMINAL
             lista_tensao = ["220V/1F", "220V/3F", "380V/3F", "440V/3F", "127V"]
             t_idx = lista_tensao.index(d['tensao']) if d['tensao'] in lista_tensao else 0
             d['tensao'] = st.selectbox("Tensão Nominal (V):", lista_tensao, index=t_idx, key="eq_te")
