@@ -170,10 +170,11 @@ def f_sat_precisao(p, g):
 # FINAL DO BLOCO 1 - INTEGRIDADE MANTIDA - LINHA 172
     
 
+
 # ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO MASTER - CORREÇÃO DE PERSISTÊNCIA TOTAL)
 # ==============================================================================
-def renderizar_aba_diagnosticos():
+def renderizar_aba_2():
     st.header("🔍 Central de Diagnóstico Técnico")
     d = st.session_state.dados
     fluido = d.get('fluido', 'R410A')
@@ -189,20 +190,38 @@ def renderizar_aba_diagnosticos():
     # --- 1. PAINEL DE REFERÊNCIA IDEAL (DINÂMICO POR GÁS) ---
     referencias = {
         'R410A': {"p_suc": "110 a 130 PSI", "t_sat": "2°C a 6°C", "sh": "5K a 9K", "sc": "5K a 8K"},
+        'R32':   {"p_suc": "115 a 135 PSI", "t_sat": "1°C a 5°C", "sh": "5K a 9K", "sc": "5K a 9K"},
         'R22':   {"p_suc": "60 a 75 PSI", "t_sat": "1°C a 5°C", "sh": "7K a 11K", "sc": "3K a 6K"},
         'R134a': {"p_suc": "25 a 40 PSI", "t_sat": "-1°C a 4°C", "sh": "5K a 10K", "sc": "4K a 8K"},
         'R404A': {"p_suc": "80 a 95 PSI", "t_sat": "-5°C a 0°C", "sh": "4K a 8K", "sc": "2K a 5K"}
     }
     ref = referencias.get(fluido, referencias['R410A'])
 
+    # Lógica de Cor para o Header Dinâmico
+    p_atual = safe_float('p_baixa')
+    limites = ref['p_suc'].replace(' PSI', '').split(' a ')
+    cor_alerta = "#00CCFF" # Azul padrão
+    msg_status = ""
+    
+    if p_atual > 0:
+        if float(limites[0]) <= p_atual <= float(limites[1]):
+            cor_alerta = "#00FF7F" # Verde (Ideal)
+            msg_status = " - ✅ DENTRO DO ALVO"
+        else:
+            cor_alerta = "#FF4B4B" # Vermelho (Ajustar)
+            msg_status = " - ⚠️ FORA DO ALVO"
+
     st.markdown(f"""
-        <div style="background-color: #1E1E1E; border-left: 5px solid #00CCFF; padding: 15px; border-radius: 10px; margin-bottom: 25px; border: 1px solid #333;">
-            <h4 style="margin-top:0; color: #00CCFF;">🎯 Referência Ideal para {fluido}</h4>
+        <div style="background-color: #1E1E1E; border-left: 5px solid {cor_alerta}; padding: 15px; border-radius: 10px; margin-bottom: 25px; border: 1px solid #333;">
+            <h4 style="margin-top:0; color: {cor_alerta};">🎯 Referência Ideal para {fluido}{msg_status}</h4>
             <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
                 <div style="color: #FFFFFF;"><small style="color: #888;">SUCÇÃO ALVO</small><br><b>{ref['p_suc']}</b></div>
                 <div style="color: #FFFFFF;"><small style="color: #888;">SATURAÇÃO ALVO</small><br><b>{ref['t_sat']}</b></div>
                 <div style="color: #FFFFFF;"><small style="color: #888;">SH (SUPERAQUEC.)</small><br><b>{ref['sh']}</b></div>
                 <div style="color: #FFFFFF;"><small style="color: #888;">SC (SUB-RESFR.)</small><br><b>{ref['sc']}</b></div>
+            </div>
+            <div style="margin-top: 10px; color: {cor_alerta}; font-size: 14px; font-weight: bold;">
+                PRESSÃO ATUAL: {p_atual} PSI
             </div>
         </div>
     """, unsafe_allow_html=True)
@@ -219,22 +238,19 @@ def renderizar_aba_diagnosticos():
     t_liq = a4.number_input("TUB. LÍQUIDO (°C)", value=safe_float('temp_liquido'), format="%.1f", key="tl_m")
     t_com = a5.number_input("TUB. Desc. Comp. (°C)", value=safe_float('temp_descarga'), format="%.1f", key="tc_m")
 
-    # SEÇÃO B: 🔴 AR E AMBIENTE (CORREÇÃO DE PERSISTÊNCIA: UMIDADE E ÓLEO)
+    # SEÇÃO B: 🔴 AR E AMBIENTE
     st.markdown("##### 🔴 Ar e Ambiente")
     b1, b2, b3, b4, b5 = st.columns(5)
     t_ret = b1.number_input("Retorno Ar (°C)", value=safe_float('temp_entrada_ar'), format="%.1f", key="tr_m")
     t_ins = b2.number_input("Insuflação (°C)", value=safe_float('temp_saida_ar'), format="%.1f", key="ti_m")
     t_amb = b3.number_input("TEMP. Amb. Ext. (°C)", value=safe_float('temp_amb_ext', 35.0), format="%.1f", key="ta_m")
-    # CORRIGIDO: Agora lê 'umidade' e salvará em 'umidade'
     u_rel = b4.number_input("Umid. Rel. DO AR (%)", value=safe_float('umidade', 50.0), format="%.1f", key="ur_m")
-    # CORRIGIDO: Agora lê 'p_oleo' e salvará em 'p_oleo'
     p_oil = b5.number_input("Pressão Óleo (PSI)", value=safe_float('p_oleo', 0.0), format="%.1f", key="po_m")
 
-    # SEÇÃO C: ⚡ PARÂMETROS ELÉTRICOS (CORREÇÃO DE PERSISTÊNCIA: TENSÃO MEDIDA)
+    # SEÇÃO C: ⚡ PARÂMETROS ELÉTRICOS
     st.markdown("##### ⚡ Parâmetros Elétricos")
     c1, c2, c3, c4, c5 = st.columns(5)
     v_lin = c1.number_input("Tensão Nominal (V)", value=safe_float('v_nominal', 220.0), key="vn_m")
-    # CORRIGIDO: Agora lê 'v_medida' e salvará em 'v_medida'
     v_med = c2.number_input("Tensão Medida (V)", value=safe_float('v_medida', 220.0), key="vm_m")
     i_med = c3.number_input("Corrente Medida (A)", value=safe_float('i_medida'), key="im_m")
     rla   = c4.number_input("RLA - Nominal (A)", value=safe_float('rla'), key="rla_m")
@@ -261,7 +277,7 @@ def renderizar_aba_diagnosticos():
     d_cap_f = round(cm_f - cn_f, 2)
     d_cap_c = round(cm_c - cn_c, 2)
 
-    # --- 4. RESULTADOS CALCULADOS (CSS PRESERVADO) ---
+    # --- 4. RESULTADOS CALCULADOS ---
     st.markdown("---")
     st.subheader("2. Resultados Calculados")
 
@@ -271,8 +287,6 @@ def renderizar_aba_diagnosticos():
             background-color: #1A1C23; border: 1px solid #333; padding: 8px;
             border-radius: 8px; margin-bottom: 5px; border-left: 4px solid #00CCFF;
         }
-        div[data-testid="stMetricLabel"] p { font-size: 0.85rem !important; color: #888 !important; }
-        div[data-testid="stMetricValue"] div { font-size: 1.1rem !important; color: #B0C4DE !important; font-weight: 600; }
         </style>
     """, unsafe_allow_html=True)
 
@@ -297,10 +311,10 @@ def renderizar_aba_diagnosticos():
     st.markdown("---")
     st.subheader("🤖 Diagnóstico Inteligente (IA)")
     alertas_ia = []
-    if sh < 5: alertas_ia.append("⚠️ **SH Baixo:** Risco de golpe de líquido.")
-    if sh > 12: alertas_ia.append("⚠️ **SH Alto:** Compressor aquecendo demais.")
-    if dt_ar < 8 and t_ret > 0: alertas_ia.append("❄️ **Delta T Baixo:** Verifique filtros ou carga.")
-    if t_com > 100: alertas_ia.append("🔥 **Descarga Crítica:** Risco de queima do óleo.")
+    if sh < 5 and p_suc > 0: alertas_ia.append("⚠️ **SH Baixo:** Risco de golpe de líquido.")
+    if sh > 12: alertas_ia.append("⚠️ **SH Alto:** Compressor aquecendo demais / Falta de fluido.")
+    if dt_ar < 8 and t_ret > 0: alertas_ia.append("❄️ **Delta T Baixo:** Verifique filtros, serpentina ou carga.")
+    if t_com > 100: alertas_ia.append("🔥 **Descarga Crítica:** Risco de carbonização do óleo.")
     
     texto_ia = "\n".join(alertas_ia) if alertas_ia else "✅ Sistema operando conforme lógica nominal."
     st.info(texto_ia)
@@ -310,7 +324,7 @@ def renderizar_aba_diagnosticos():
     st.subheader("3. Parecer Técnico Final")
     d['laudo_diag'] = st.text_area("Diagnóstico e Observações:", value=d.get('laudo_diag', "Análise: Estável."), height=150)
 
-    # SINCRONIZAÇÃO FINAL (CORRIGIDA: MAPEAMENTO TOTAL DE CHAVES)
+    # SINCRONIZAÇÃO FINAL
     st.session_state.dados.update({
         'p_baixa': p_suc, 'temp_sucção': t_suc, 'p_alta': p_des, 'temp_liquido': t_liq,
         'temp_entrada_ar': t_ret, 'temp_saida_ar': t_ins, 'temp_amb_ext': t_amb,
@@ -319,9 +333,6 @@ def renderizar_aba_diagnosticos():
         'i_fan': i_fan, 'lra': lra, 'rla': rla, 'temp_descarga': t_com,
         'sh_calculado': sh, 'sc_calculado': sc
     })
-
-
-# FIM DO BLOCO 2 (LINHA 289)
 # FINAL DO BLOCO 2 (LINHA 384)   
 
 
