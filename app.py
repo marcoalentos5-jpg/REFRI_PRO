@@ -553,11 +553,16 @@ with st.sidebar:
             pdf.cell(70, 5, n_val.upper(), ln=True, align='C')
             pdf.set_x(120); pdf.set_font("Arial", "", 8); pdf.cell(70, 5, d_val, align='C')
 
-            # --- GERAÇÃO E DOWNLOAD ---
-            pdf_bytes = pdf.output(dest='S').encode('latin-1', 'replace')
+           # --- GERAÇÃO E DOWNLOAD (CORREÇÃO BYTEARRAY) ---
+            # Removemos o .encode() pois o output dest='S' já entrega os bytes necessários
+            pdf_bytes = pdf.output(dest='S') 
+
+            # Caso o pdf_bytes retorne como bytearray, o Streamlit aceita normalmente, 
+            # mas se preferir garantir, pode usar: bytes(pdf_bytes)
+            
             st.download_button(
                 label="📄 GERAR RELATÓRIO TÉCNICO",
-                data=pdf_bytes,
+                data=bytes(pdf_bytes), 
                 file_name=f"Laudo_MPN_{d.get('tag_id','INS').upper()}.pdf",
                 mime="application/pdf",
                 use_container_width=True
