@@ -419,12 +419,11 @@ def renderizar_aba_2():
 
 
 # ==============================================================================
-# 3. SIDEBAR - CENTRAL DE CONTROLE, IDENTIFICAÇÃO E VALIDAÇÃO (CONSOLIDADO)
+# 3. SIDEBAR - CENTRAL DE CONTROLE, IDENTIFICAÇÃO E MOTOR DE PDF (MESCLADO)
 # ==============================================================================
 with st.sidebar:
     # A. IDENTIDADE VISUAL (LOGO MPN)
     try:
-        # Tenta carregar a logo oficial
         st.image("logo.png", use_container_width=True)
     except:
         st.subheader("❄️ MPN SOLUÇÕES")
@@ -438,10 +437,9 @@ with st.sidebar:
     
     st.markdown("---")
 
-    # C. IDENTIFICAÇÃO DO TÉCNICO (DADOS PARA O LAUDO)
+    # C. IDENTIFICAÇÃO DO TÉCNICO (DADOS PARA AS ASSINATURAS DO PDF)
     st.subheader("👨‍🔧 Identificação do Técnico")
     
-    # Captura Nome, CPF e Registro Profissional
     st.session_state.dados['tecnico_nome'] = st.text_input(
         "Nome Completo:", 
         value=st.session_state.dados.get('tecnico_nome', ''), 
@@ -462,42 +460,95 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # D. CHECKLIST DE INTEGRIDADE (RESOLVENDO O ERRO DE VALIDAÇÃO)
+    # D. CHECKLIST DE INTEGRIDADE E MOTOR DE GERAÇÃO
     d = st.session_state.dados
     st.subheader("📊 Status do Laudo")
     
-    # Validação Robusta: Verifica múltiplas chaves possíveis para o documento do cliente
+    # Lógica de Validação
     nome_preenchido = len(str(d.get('nome', '')).strip()) > 3
-    # Tenta ler 'cliente_documento' OU 'cpf_cnpj' (chave comum em cadastros)
     doc_preenchido = len(str(d.get('cliente_documento', d.get('cpf_cnpj', ''))).strip()) > 5
     
     tem_cliente = nome_preenchido and doc_preenchido
     tem_maquina = bool(d.get('tag_id') or d.get('modelo'))
-    # Verifica se as pressões foram inseridas (campos numéricos > 0)
     tem_medicao = float(d.get('p_baixa', 0)) > 0 and float(d.get('p_alta', 0)) > 0
 
-    # EXIBIÇÃO DINÂMICA DE STATUS
     if not tem_cliente:
         st.error("❌ Dados do Cliente Ausentes")
-        if not nome_preenchido: st.caption("👉 Falta Nome do Cliente")
-        if not doc_preenchido: st.caption("👉 Falta CPF/CNPJ do Cliente")
+        if not nome_preenchido: st.caption("👉 Nome não identificado")
+        if not doc_preenchido: st.caption("👉 CPF/CNPJ não identificado")
     elif not tem_maquina:
         st.warning("⚠️ Dados do Ativo Pendentes")
-        st.caption("👉 Verifique TAG ou Modelo na Aba 1")
     elif not tem_medicao:
-        st.info("🔄 Aguardando Medições")
-        st.caption("👉 Insira Pressões de Alta/Baixa na Aba 2")
+        st.info("🔄 Aguardando Medições (Aba 2)")
     else:
         st.success("✅ Relatório Pronto para PDF")
         
-        # BOTÃO MESTRE DE GERAÇÃO
-        if st.button("📄 GERAR RELATÓRIO TÉCNICO", use_container_width=True):
-            st.info("Processando PDF com Identidade Visual...")
-            # Aqui o motor do Bloco 3 chamará a função de desenho técnica
+        # --- INÍCIO DA MESCLAGEM DO MOTOR DE PDF ---
+        try:
+            from fpdf import FPDF
+            
+            # Criamos o PDF em memória
+            pdf = FPDF()
+            pdf.add_page()
+            
+            # Configuração de Cores (C_PRI = Cor da sua Logo)
+            C_PRI = (13, 71, 161) # Azul MPN
+            
+            # Cabeçalho do PDF
+            try: pdf.image('logo.png', x=10, y=8, w=35); pdf.ln(12)
+            except: pdf.ln(10)
+            
+            pdf.set_font("Arial", "B", 14)
+            pdf.set_text_color(*C_PRI)
+            pdf.cell(190, 10, "LAUDO TÉCNICO DE INSPEÇÃO HVAC-R", ln=True, align='C')
+            
+            # Linha de Identidade
+            pdf.set_draw_color(*C_PRI); pdf.set_line_width(0.5)
+            pdf.line(10, 35, 200, 35); pdf.ln(8)
+
+            # Tabela de Identificação (Dados da Aba 1)
+            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255)
+            pdf.set_font("Arial", "B", 9)
+            pdf.cell(190, 7, " 1. IDENTIFICAÇÃO DO CLIENTE E EQUIPAMENTO", ln=True, fill=True)
+            
+            pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 8)
+            pdf.cell(35, 7, " CLIENTE:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(155, 7, f" {str(d.get('nome', '')).upper()}", border=1, ln=True)
+            pdf.set_font("Arial", "B", 8); pdf.cell(35, 7, " CPF/CNPJ:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(155, 7, f" {d.get('cliente_documento', d.get('cpf_cnpj', ''))}", border=1, ln=True)
+            pdf.set_font("Arial", "B", 8); pdf.cell(35, 7, " EQUIPAMENTO:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 7, f" {d.get('modelo', '')}", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(35, 7, " TAG/SÉRIE:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 7, f" {d.get('tag_id', '')}", border=1, ln=True)
+            
+            # Rodapé de Assinaturas (Conforme solicitado)
+            pdf.ln(25)
+            y_assinatura = pdf.get_y()
+            pdf.line(15, y_assinatura, 90, y_assinatura) # Linha Técnico
+            pdf.line(115, y_assinatura, 190, y_assinatura) # Linha Cliente
+            
+            pdf.set_xy(15, y_assinatura + 2)
+            pdf.set_font("Arial", "B", 8); pdf.cell(75, 4, f"TÉCNICO: {d.get('tecnico_nome', '').upper()}", ln=True, align='L')
+            pdf.set_x(15); pdf.set_font("Arial", "", 7); pdf.cell(75, 4, f"DOC/REGISTRO: {d.get('tecnico_documento', '')} | {d.get('tecnico_registro', '')}", ln=True, align='L')
+            
+            pdf.set_xy(115, y_assinatura + 2)
+            pdf.set_font("Arial", "B", 8); pdf.cell(75, 4, f"CLIENTE: {d.get('nome', '').upper()}", ln=True, align='L')
+            pdf.set_x(115); pdf.set_font("Arial", "", 7); pdf.cell(75, 4, f"CPF/CNPJ: {d.get('cliente_documento', d.get('cpf_cnpj', ''))}", ln=True, align='L')
+
+            # Conversão para bytes
+            pdf_output = pdf.output(dest='S').encode('latin-1', 'replace')
+
+            # BOTÃO DE DOWNLOAD REAL
+            st.download_button(
+                label="📄 BAIXAR RELATÓRIO TÉCNICO",
+                data=pdf_output,
+                file_name=f"Laudo_{d.get('tag_id', 'MPN')}.pdf",
+                mime="application/pdf",
+                use_container_width=True
+            )
+        except Exception as e:
+            st.error("Erro ao processar o motor do PDF.")
+            st.caption(f"Detalhe: {e}")
 
     st.markdown("---")
 
-    # E. LIMPEZA INTELIGENTE (PRESERVA O TÉCNICO)
+    # E. LIMPEZA INTELIGENTE
     if st.button("🗑️ Nova Inspeção (Limpar)", use_container_width=True):
         chaves_preservadas = ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']
         for chave in list(st.session_state.dados.keys()):
@@ -506,7 +557,7 @@ with st.sidebar:
         st.rerun()
 
 # ==============================================================================
-# FIM DA MESCLAGEM DO BLOCO 3
+# FIM DO BLOCO 3 MESCLADO
 # ==============================================================================
 
 # ==============================================================================
