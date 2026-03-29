@@ -172,7 +172,7 @@ def f_sat_precisao(p, g):
 
 
 # ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO MASTER - INTEGRADA E RESTAURADA)
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO FINAL CONSOLIDADA - IMAGE_D30E40)
 # ==============================================================================
 def renderizar_aba_2():
     st.header("🔍 Central de Diagnóstico Técnico")
@@ -188,7 +188,7 @@ def renderizar_aba_2():
         except:
             return default
 
-    # --- 1. REFERÊNCIAS E ESTILO ---
+    # --- 1. REFERÊNCIAS TÉCNICAS ---
     referencias = {
         'R410A': {"p_suc": [110, 130], "sh": [5, 9], "sc": [5, 8]},
         'R32':   {"p_suc": [115, 135], "sh": [5, 9], "sc": [5, 9]},
@@ -198,24 +198,26 @@ def renderizar_aba_2():
     }
     ref = referencias.get(fluido, referencias['R410A'])
 
-    # CSS: Centralização dos títulos e borda lateral conforme layout original
+    # CSS: Estilização master conforme imagem_d30e40.png
     st.markdown("""
         <style>
             div[data-testid="stMetric"] {
                 background-color: #1A1C23;
                 border: 1px solid #333;
-                padding: 8px;
+                padding: 10px;
                 border-radius: 8px;
                 border-left: 4px solid #00CCFF;
-                text-align: center;
             }
             div[data-testid="stMetricLabel"] > div {
-                justify-content: center !important;
+                font-weight: bold;
+                color: #888;
+                text-transform: uppercase;
+                font-size: 0.8rem;
             }
         </style>
     """, unsafe_allow_html=True)
 
-    # --- 2. MEDIÇÕES DE CAMPO (RESPEITANDO O GRID DA IMAGEM) ---
+    # --- 2. MEDIÇÕES DE CAMPO ---
     st.subheader("1. Medições de Campo")
     
     st.markdown("##### 🔵 Ciclo Frigorífico")
@@ -237,10 +239,12 @@ def renderizar_aba_2():
     d1, d2, d3, d4, d5 = st.columns(5)
     cn_c, cm_c = d1.number_input("CAP. Nom. C", value=safe_float('cn_c')), d2.number_input("CAP. Lido C", value=safe_float('cm_c'))
     cn_f, cm_f = d3.number_input("CAP. Nom. F", value=safe_float('cn_f')), d4.number_input("CAP. Lido F", value=safe_float('cm_f'))
-    t_ret = d5.number_input("Retorno (°C)", value=safe_float('temp_entrada_ar'), key="tr_in")
-    t_ins = st.number_input("Insuflação (°C)", value=safe_float('temp_saida_ar'), key="ti_in")
+    t_ret = d5.number_input("Retorno (°C)", value=safe_float('temp_entrada_ar'))
+    
+    # Insuflação ocupando largura total ou conforme seu layout original
+    t_ins = st.number_input("Insuflação (°C)", value=safe_float('temp_saida_ar'))
 
-    # --- 3. PROCESSAMENTO E LÓGICA DE ALARME (THRESHOLD 35%) ---
+    # --- 3. PROCESSAMENTO TÉCNICO ---
     t_sat_s = f_sat_precisao(p_suc, fluido) if p_suc > 5 else 0.0
     t_sat_d = f_sat_precisao(p_des, fluido) if p_des > 5 else 0.0
     sh, sr = round(t_suc - t_sat_s, 2), round(t_sat_d - t_liq, 2)
@@ -251,50 +255,48 @@ def renderizar_aba_2():
     razão_c = round((p_des + 14.7) / (p_suc + 14.7), 2) if p_suc > 0 else 0.0
     cop_est = round((abs(dt_ar) * 1.2 * 1000) / (v_med * i_med + 0.1), 2) if i_med > 0 else 0.0
 
-    def check_alarm(valor, nominal):
-        if nominal == 0: return ""
-        return "⚠️" if (abs(valor - nominal) / abs(nominal if nominal != 0 else 1)) > 0.35 else ""
+    # Lógica de Alerta (35% Desvio)
+    def get_delta_label(valor, nominal):
+        if nominal == 0: return None
+        desvio = abs(valor - nominal) / abs(nominal)
+        return "⚠️ Alerta" if desvio > 0.35 else "Normal"
 
     # --- 4. RESULTADOS (GRID 6 COLUNAS) ---
     st.markdown("---")
     st.subheader("2. Diagnóstico de Performance e Integridade")
     
     res = st.columns(6)
-    # Coluna 1: Superaquecimento
-    res[0].metric("SH TOTAL", f"{sh:.1f} K", check_alarm(sh, (ref['sh'][0]+ref['sh'][1])/2))
+    # SH
+    res[0].metric("SH TOTAL", f"{sh:.1f} K", get_delta_label(sh, (ref['sh'][0]+ref['sh'][1])/2))
     res[0].metric("SH ÚTIL", f"{sh * 0.8:.1f} K")
-    
-    # Coluna 2: Saturações
+    # Saturações
     res[1].metric("SAT. SUCÇÃO", f"{t_sat_s:.1f} °C")
     res[1].metric("SAT. DESCARGA", f"{t_sat_d:.1f} °C")
-    
-    # Coluna 3: Ar e SR
+    # Ar e Sub-resf
     res[2].metric("Δ T (AR)", f"{dt_ar:.1f} K")
-    res[2].metric("SR - SUB RESF.", f"{sr:.1f} K", check_alarm(sr, (ref['sc'][0]+ref['sc'][1])/2))
-    
-    # Coluna 4: Elétrica
-    res[3].metric("Δ CORRENTE", f"{d_corrente:.1f} A", check_alarm(i_med, rla))
+    res[2].metric("SR - SUB RESF.", f"{sr:.1f} K", get_delta_label(sr, (ref['sc'][0]+ref['sc'][1])/2))
+    # Elétrica
+    res[3].metric("Δ CORRENTE", f"{d_corrente:.1f} A", get_delta_label(i_med, rla))
     res[3].metric("Δ TENSÃO", f"{round(v_med-v_lin,1)} V")
-    
-    # Coluna 5: Eficiência
+    # Eficiência
     res[4].metric("COP (Est.)", f"{cop_est}")
-    res[4].metric("Razão Compr.", f"{razão_c}", "⚠️" if razão_c > 4.5 else "")
-    
-    # Coluna 6: Capacitores
-    res[5].metric("Δ CAP. COMP.", f"{d_cap_c:.1f} µF", check_alarm(cm_c, cn_c))
-    res[5].metric("Δ CAP. FAN", f"{d_cap_f:.1f} µF", check_alarm(cm_f, cn_f))
+    res[4].metric("Razão Compr.", f"{razão_c}", "Crítico" if razão_c > 4.5 else None)
+    # Capacitância
+    res[5].metric("Δ CAP. COMP.", f"{d_cap_c:.1f} µF", get_delta_label(cm_c, cn_c))
+    res[5].metric("Δ CAP. FAN", f"{d_cap_f:.1f} µF", get_delta_label(cm_f, cn_f))
     
     st.markdown("---")
     st.subheader("3. Parecer Técnico Final")
     d['laudo_diag'] = st.text_area("Diagnóstico e Observações:", value=d.get('laudo_diag', "Análise: Estável."), height=120)
 
-    # PERSISTÊNCIA TOTAL DE DADOS (ABSOLUTAMENTE TODAS AS LINHAS)
+    # PERSISTÊNCIA TOTAL DE DADOS (NUNCA DELETAR)
     st.session_state.dados.update({
         'p_baixa': p_suc, 'temp_sucção': t_suc, 'p_alta': p_des, 'temp_liquido': t_liq,
         'temp_entrada_ar': t_ret, 'temp_saida_ar': t_ins, 'v_nominal': v_lin, 
         'v_medida': v_med, 'i_medida': i_med, 'rla': rla, 'i_fan': i_fan,
         'cn_c': cn_c, 'cm_c': cm_c, 'cn_f': cn_f, 'cm_f': cm_f, 'temp_descarga': t_com,
-        'sh_calculado': sh, 'sc_calculado': sr, 'cop_estimado': cop_est, 'razao_compressao': razão_c
+        'sh_calculado': sh, 'sc_calculado': sr, 'cop_estimado': cop_est, 
+        'razao_compressao': razão_c, 'dt_ar': dt_ar
     })
 # FINAL DO BLOCO 2 (LINHA 384)   
 
