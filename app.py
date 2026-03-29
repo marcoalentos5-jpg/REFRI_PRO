@@ -30,35 +30,39 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 1.1. MOTOR DE SESSÃO (DIRETRIZ: SINCRONIZAÇÃO TOTAL)
+# 1.1. MOTOR DE SESSÃO (VERSÃO CORRIGIDA PARA RELATÓRIO COMPLETO)
 if 'dados' not in st.session_state:
     st.session_state.dados = {
-        'nome': '', 'cpf_cnpj': '', 'whatsapp': '', 'celular': '', 'tel_fixo': '', 'email': '',
+        # Dados do Cliente
+        'nome': '', 'cpf_cnpj': '', 'cliente_documento': '', 'whatsapp': '', 
+        'celular': '', 'tel_fixo': '', 'email': '',
         'data': datetime.now().strftime("%d/%m/%Y"),
-        'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 'uf': '', 'numero': '', 'complemento': '',
-        'fabricante': 'Carrier', 'modelo': '', 'capacidade': '12.000 BTU', 'linha': 'Residencial',
-        'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '',
-        'tipo_servico': 'Manutenção Preventiva', 'tag_id': 'TAG-01',
-        'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
-        'status_maquina': '🟢 Operacional', 'tipo_oleo': 'POE', 'frequencia': 'Inverter', 'tensao': '220V/1F'
+        
+        # Endereço
+        'cep': '', 'endereco': '', 'bairro': '', 'cidade': '', 
+        'uf': '', 'numero': '', 'complemento': '',
+        
+        # Equipamento (Nomes exatos que o PDF procura)
+        'equipamento': 'Ar Condicionado', # O PDF busca 'equipamento'
+        'marca': 'Carrier',               # O PDF busca 'marca'
+        'modelo': '', 
+        'capacidade': '12.000 BTU', 
+        'linha': 'Residencial',
+        'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A',
+        'tag_id': 'TAG-01',
+        
+        # Parâmetros Técnicos (Para a Seção 3 não sair zerada)
+        'temp_insuflacao': 0.0, 
+        'temp_retorno': 0.0, 
+        'sh_total': 0.0, 
+        'sc_final': 0.0,
+        'diagnostico_texto': '',
+        
+        # Técnico
+        'tecnico_nome': 'Marcos Alexandre', 
+        'tecnico_documento': '', 
+        'tecnico_registro': ''
     }
-
-def buscar_cep(cep):
-    cep_limpo = "".join(filter(str.isdigit, cep))
-    if len(cep_limpo) == 8:
-        try:
-            r = requests.get(f"https://viacep.com.br/ws/{cep_limpo}/json/", timeout=5)
-            if r.status_code == 200:
-                d_api = r.json()
-                if "erro" not in d_api:
-                    st.session_state.dados['endereco'] = d_api.get('logradouro', '')
-                    st.session_state.dados['bairro'] = d_api.get('bairro', '')
-                    st.session_state.dados['cidade'] = d_api.get('localidade', '')
-                    st.session_state.dados['uf'] = d_api.get('uf', '')
-                    return True
-        except: pass
-    return False
-
 # ==============================================================================
 # 1.2 FUNÇÃO DA ABA 1: Identificação e Equipamento (LIMPEZA DEFINITIVA)
 # ==============================================================================
