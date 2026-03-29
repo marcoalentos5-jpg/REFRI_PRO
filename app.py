@@ -497,25 +497,63 @@ with st.sidebar:
             pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(15, 8, " E-Mail:", border='LBT')
             pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(45, 8, f" {d.get('email', '---').lower()}", border='RBT', ln=True)
 
-           # Linha 2: Contatos (Corrigido largura e bordas)
+            # Linha 2: Contatos
             pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(20, 8, " Whatsapp:", border='LBT')
             pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(45, 8, f" {d.get('whatsapp', '---')}", border='RBT')
             pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(18, 8, " Celular:", border='LBT')
             pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(45, 8, f" {d.get('celular', '---')}", border='RBT')
             pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(12, 8, " Fixo:", border='LBT')
-            # Aqui garantimos a borda RBT e o salto de linha
             pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(50, 8, f" {d.get('tel_fixo', '---')}", border='RBT', ln=True)
 
-            # Linha 3: Endereço (Ajustado para não encavalar)
+            # Linha 3: Endereço
             pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(20, 8, " Endereço:", border='LBT')
             pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(80, 8, f" {fmt(d.get('endereco'))}", border='RBT')
-            
             pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(18, 8, " Nº/Apto:", border='LBT')
             pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(22, 8, f" {d.get('numero', '---')}", border='RBT')
-            
             pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(15, 8, " Comp:", border='LBT')
             pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(35, 8, f" {fmt(d.get('complemento'))}", border='RBT', ln=True)
-            # --- GERAÇÃO DO ARQUIVO FINAL (CONVERSÃO DE BYTES) ---
+
+            # --- 3. SEÇÃO 2: ESPECIFICAÇÕES DO EQUIPAMENTO ---
+            pdf.ln(2)
+            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font(F_CORPO, "B", 9)
+            pdf.cell(190, 7, " 2. Especificações Técnicas Do Equipamento", fill=True, ln=True)
+            pdf.set_text_color(0, 0, 0); pdf.set_font(F_CORPO, "B", T_FONTE)
+            
+            pdf.cell(25, 8, " Equipamento:", border='LBT')
+            pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(70, 8, f" {fmt(d.get('equipamento'))}", border='RBT')
+            pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(20, 8, " Marca:", border='LBT')
+            pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(35, 8, f" {fmt(d.get('marca'))}", border='RBT')
+            pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(15, 8, " Tag:", border='LBT')
+            pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(25, 8, f" {str(d.get('tag_id','---')).upper()}", border='RBT', ln=True)
+
+            # --- 4. SEÇÃO 3: PARÂMETROS TÉCNICOS ---
+            pdf.ln(2)
+            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font(F_CORPO, "B", 9)
+            pdf.cell(190, 7, " 3. Parâmetros De Performance E Integridade", fill=True, ln=True)
+            pdf.set_text_color(0, 0, 0); pdf.set_font(F_CORPO, "B", T_FONTE)
+            
+            pdf.cell(47, 8, f" T. Insuflação: {d.get('temp_insuflacao', '0')} C", border=1)
+            pdf.cell(47, 8, f" T. Retorno: {d.get('temp_retorno', '0')} C", border=1)
+            pdf.cell(48, 8, f" Superaquecimento: {d.get('sh_total', '0')} K", border=1)
+            pdf.cell(48, 8, f" Sub-resfriamento: {d.get('sc_final', '0')} K", border=1, ln=True)
+
+            # --- 5. SEÇÃO 4: DIAGNÓSTICO ---
+            pdf.ln(2)
+            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font(F_CORPO, "B", 9)
+            pdf.cell(190, 7, " 4. Diagnóstico E Recomendações", fill=True, ln=True)
+            pdf.set_text_color(0, 0, 0); pdf.set_font(F_CORPO, "", T_FONTE)
+            
+            parecer = d.get('diagnostico_texto', 'Nenhuma observação registrada.')
+            pdf.multi_cell(190, 8, f" {parecer}", border=1)
+
+            # --- 6. SEÇÃO 5: ASSINATURA ---
+            pdf.ln(5)
+            pdf.set_font(F_CORPO, "B", 8)
+            pdf.cell(190, 5, "_______________________________________________________", ln=True, align='C')
+            pdf.cell(190, 5, f"Tec. Responsável: {d.get('tecnico_nome', '---')}", ln=True, align='C')
+            pdf.cell(190, 5, f"Registro: {d.get('tecnico_registro', '---')}", ln=True, align='C')
+
+            # --- GERAÇÃO DO ARQUIVO FINAL ---
             pdf_output = pdf.output(dest='S')
             
             if isinstance(pdf_output, bytearray):
