@@ -8,7 +8,6 @@ import numpy as np
 import urllib.parse
 from datetime import datetime
 
-
 # 1. CONFIGURAÇÃO INICIAL (DIRETRIZ: LAYOUT CONGELADO)
 st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
 
@@ -40,7 +39,7 @@ if 'dados' not in st.session_state:
         'serie_evap': '', 'serie_cond': '', 'fluido': 'R410A', 'local_cond': '', 'local_evap': '',
         'tipo_servico': 'Manutenção Preventiva', 'tag_id': 'TAG-01',
         'tecnico_nome': 'Marcos Alexandre', 'tecnico_documento': '', 'tecnico_registro': '',
-        'status_maquina': '🟢 Operacional', 'tipo_oleo': 'POE', 'frequencia': 'Inverter'
+        'status_maquina': '🟢 Operacional', 'tipo_oleo': 'POE', 'frequencia': 'Inverter', 'tensao': '220V/1F'
     }
 
 def buscar_cep(cep):
@@ -59,9 +58,8 @@ def buscar_cep(cep):
         except: pass
     return False
 
-
 # ==============================================================================
-# 1.2 FUNÇÃO DA ABA 1: Identificação e Equipamento (LIMPEZA DEFINITIVA)
+# 1.2 FUNÇÃO DA ABA 1: Identificação e Equipamento (CORREÇÃO DE PERSISTÊNCIA)
 # ==============================================================================
 def renderizar_aba_1():
     st.subheader("📋 Cadastro de Cliente e Ativo")
@@ -83,7 +81,6 @@ def renderizar_aba_1():
         ce1, ce2, ce3 = st.columns([1, 2, 1])
         cep_input = ce1.text_input("CEP *", value=d.get('cep', ''), key="cli_cep")
         
-        # LOGICA CEP
         if len("".join(filter(str.isdigit, cep_input))) == 8 and cep_input != d.get('last_cep', ''):
             if buscar_cep(cep_input):
                 d['cep'] = cep_input
@@ -102,19 +99,18 @@ def renderizar_aba_1():
     # --- SEÇÃO EQUIPAMENTO (ESTRUTURA ÚNICA) ---
     st.markdown("### ⚙️ Especificações do Equipamento")
     with st.expander("Detalhes Técnicos do Ativo", expanded=True):
-        
-        # LINHA 1
         l1_c1, l1_c2, l1_c3 = st.columns(3)
         with l1_c1:
-            fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea", "Outro"])
+            # CORREÇÃO: HITACHI INCLUÍDA E ORDEM ALFABÉTICA
+            fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea", "Hitachi"]) + ["Outro"]
             f_idx = fab_list.index(d['fabricante']) if d['fabricante'] in fab_list else 0
             d['fabricante'] = st.selectbox("Fabricante:", fab_list, index=f_idx, key="eq_f")
         with l1_c2:
             d['serie_evap'] = st.text_input("Nº Série (EVAP) *", value=d.get('serie_evap', ''), key="eq_se")
         with l1_c3:
+            # CAPACIDADE AMPLIADA
             d['capacidade'] = st.text_input("Capacidade (BTU/TR):", value=d.get('capacidade', '12.000'), key="eq_ca")
 
-        # LINHA 2
         l2_c1, l2_c2, l2_c3 = st.columns(3)
         with l2_c1:
             d['modelo'] = st.text_input("Modelo:", value=d.get('modelo', ''), key="eq_mo")
@@ -123,7 +119,6 @@ def renderizar_aba_1():
         with l2_c3:
             d['potencia'] = st.text_input("Potência Nominal (W/kW):", value=d.get('potencia', ''), key="eq_po")
 
-        # LINHA 3
         l3_c1, l3_c2, l3_c3 = st.columns(3)
         with l3_c1:
             d['local_evap'] = st.text_input("Local Evaporadora:", value=d.get('local_evap', ''), key="eq_le")
@@ -134,14 +129,19 @@ def renderizar_aba_1():
             fl_idx = fluidos.index(d['fluido']) if d['fluido'] in fluidos else 0
             d['fluido'] = st.selectbox("Fluido Refrigerante:", fluidos, index=fl_idx, key="eq_fl")
 
-        # LINHA 4
         l4_c1, l4_c2, l4_c3 = st.columns(3)
         with l4_c1:
-            d['tipo_oleo'] = st.selectbox("Tipo de Óleo:", ["POE", "Mineral", "PVE", "PAG", "AB"], key="eq_ol")
+            # CORREÇÃO: TIPO DE ÓLEO SEGURANDO A ESCOLHA (PERSISTÊNCIA)
+            lista_oleo = ["POE", "Mineral", "PVE", "PAG", "AB"]
+            o_idx = lista_oleo.index(d['tipo_oleo']) if d['tipo_oleo'] in lista_oleo else 0
+            d['tipo_oleo'] = st.selectbox("Tipo de Óleo:", lista_oleo, index=o_idx, key="eq_ol")
             d['status_maquina'] = st.radio("Status:", ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"], key="eq_st")
         with l4_c2:
             d['carga_gas'] = st.text_input("Carga de Fluido (kg/g):", value=d.get('carga_gas', ''), key="eq_cg")
-            d['tensao'] = st.selectbox("Tensão Nominal (V):", ["220V/1F", "220V/3F", "380V/3F", "440V/3F", "127V"], key="eq_te")
+            # CORREÇÃO: TENSÃO NOMINAL SEGURANDO A ESCOLHA (PERSISTÊNCIA)
+            lista_tensao = ["220V/1F", "220V/3F", "380V/3F", "440V/3F", "127V"]
+            t_idx = lista_tensao.index(d['tensao']) if d['tensao'] in lista_tensao else 0
+            d['tensao'] = st.selectbox("Tensão Nominal (V):", lista_tensao, index=t_idx, key="eq_te")
         with l4_c3:
             try:
                 dt = datetime.strptime(d.get('ultima_maint', datetime.now().strftime("%d/%m/%Y")), "%d/%m/%Y").date()
@@ -153,8 +153,6 @@ def renderizar_aba_1():
 # --- MOTOR DE CÁLCULO PT (DIRETRIZ: PRECISÃO INDUSTRIAL) ---
 def f_sat_precisao(p, g):
     if p <= 5: return -50.0
-    
-    # Tabelas otimizadas para R410A, R32, R22, R134a e R290
     tabelas = {
         "R410A": {"xp": [5, 50, 90, 122, 150, 350, 550], "fp": [-50, -18, -3.5, 5.5, 11.5, 41.5, 64.5]},
         "R32": {"xp": [5, 50, 90, 140, 200, 480, 580], "fp": [-50, -19.5, -3.6, 8.5, 19.8, 56.5, 66.8]},
@@ -162,12 +160,8 @@ def f_sat_precisao(p, g):
         "R134a": {"xp": [5, 15, 30, 70, 150, 250], "fp": [-50, -15.5, 1.5, 27.5, 53, 76.2]},
         "R290": {"xp": [5, 20, 65, 100, 150, 250], "fp": [-50, -25.5, 3.5, 17.5, 32.5, 55.2]}
     }
-
     if g not in tabelas: return 0.0
-    
-    # Interpolação linear para encontrar a temperatura exata baseada na pressão
     return float(np.interp(p, tabelas[g]["xp"], tabelas[g]["fp"]))
-
 # FINAL DO BLOCO 1 - INTEGRIDADE MANTIDA - LINHA 172
     
 
