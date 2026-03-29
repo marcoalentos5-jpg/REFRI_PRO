@@ -520,11 +520,18 @@ with st.sidebar:
 # FIM DO BLOCO 3 MESCLADO
 # ==============================================================================
 
+# ... (aqui termina o seu st.download_button do PDF)
+            )
+        # --- VOCÊ PRECISA INSERIR ESTAS DUAS LINHAS ABAIXO ---
+        except Exception as e:
+            st.error(f"Erro ao gerar o relatório: {e}")
+
 # ==============================================================================
 # 4. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
 # ==============================================================================
-# Use a seleção do sidebar para chamar a função correta
 if aba_selecionada == "Home":
+    # ... resto do seu código da Home
+    
     # --- NOVA APRESENTAÇÃO DA ABA HOME (COM LOGO MPN SOLUÇÕES ) ---
     st.markdown("<br>", unsafe_allow_html=True) # Espaçamento superior
 
