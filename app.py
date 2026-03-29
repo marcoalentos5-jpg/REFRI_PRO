@@ -579,24 +579,14 @@ with st.sidebar:
             st.error(f"Erro ao construir o PDF: {e}")
 
 # ==============================================================================
-# 4. LÓGICA DE EXIBIÇÃO DAS ABAS (FORA DA SIDEBAR)
-# ==============================================================================
-if aba_selecionada == "Home":
-    # Seu código da Home aqui...
-    st.info("Página inicial carregada.")
-
-
-
-# ==============================================================================
-# 4. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
+# 4. LÓGICA DE EXIBIÇÃO DAS ABAS (MAPEADO E CONGELADO)
 # ==============================================================================
 
-# --- DEFINIÇÃO DA FUNÇÃO DE DIAGNÓSTICOS (DEVE FICAR DISPONÍVEL PARA O MENU) ---
+# --- 1º: DEFINIMOS A FUNÇÃO DE DIAGNÓSTICOS ---
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
     d = st.session_state.dados 
     
-    # Busca o fluido selecionado na Aba 1
     fluido = d.get('fluido', 'R410A')
     st.info(f"❄️ Fluido Refrigerante em Análise: **{fluido}**")
 
@@ -620,22 +610,19 @@ def renderizar_aba_diagnosticos():
 
     with col3:
         st.markdown("### 🌡️ Ambiente")
-        # Chaves que alimentam a Seção 3 do PDF
         d['temp_insuflacao'] = st.number_input("Insuflação (°C):", value=float(d.get('temp_insuflacao', 0.0)))
         d['temp_retorno'] = st.number_input("Retorno (°C):", value=float(d.get('temp_retorno', 0.0)))
 
-    # --- BLOCO 2: PROCESSAMENTO (CÁLCULOS PT AUTOMÁTICOS) ---
+    # --- BLOCO 2: CÁLCULOS ---
     t_sat_suc = f_sat_precisao(p_suc, fluido)
     t_sat_des = f_sat_precisao(p_des, fluido)
-    
     sh = t_suc - t_sat_suc
     sc = t_sat_des - t_liq
 
-    # Envia resultados para o PDF
     d['sh_total'] = round(sh, 1)
     d['sc_final'] = round(sc, 1)
 
-    # --- BLOCO 3: EXIBIÇÃO DE RESULTADOS NA TELA ---
+    # --- BLOCO 3: EXIBIÇÃO ---
     st.markdown("---")
     res1, res2 = st.columns(2)
     with res1:
@@ -643,7 +630,6 @@ def renderizar_aba_diagnosticos():
     with res2:
         st.metric(label="Sub-resfriamento (SC)", value=f"{d['sc_final']} K")
 
-    # --- BLOCO 4: CONCLUSÃO E LAUDO ---
     st.subheader("3. Parecer Técnico Final")
     d['diagnostico_texto'] = st.text_area(
         "Descreva o diagnóstico ou recomendações:",
@@ -651,31 +637,23 @@ def renderizar_aba_diagnosticos():
         key="area_diagnostico"
     )
 
-# ==============================================================================
-# SELETOR DE ABAS (FLUXO PRINCIPAL)
-# ==============================================================================
-
+# --- 2º: SELETOR DE ABAS (FLUXO ÚNICO) ---
 if aba_selecionada == "Home":
     st.markdown("<br>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1]) 
     with col2: 
         NOME_ARQUIVO_LOGO = "logo.png"
         if os.path.exists(NOME_ARQUIVO_LOGO):
-            try:
-                st.image(NOME_ARQUIVO_LOGO, use_container_width=True) 
-            except Exception as e:
-                st.error(f"⚠️ Erro ao abrir a imagem '{NOME_ARQUIVO_LOGO}'.")
+            st.image(NOME_ARQUIVO_LOGO, use_container_width=True) 
         else:
-            st.error(f"⚠️ Arquivo '{NOME_ARQUIVO_LOGO}' não encontrado.")
+            st.error(f"⚠️ Logo '{NOME_ARQUIVO_LOGO}' não encontrada.")
 
     st.markdown("""
         <div style="text-align: center;">
             <h1 style="color: #0d47a1;">MPN Soluções</h1>
-            <p style="color: #1976d2; font-size: 1.3em;">Soluções em Refrigeração e Climatização</p>
+            <p style="color: #1976d2; font-size: 1.2em;">Soluções em Refrigeração e Climatização</p>
             <hr style="border: 1px solid #90caf9; width: 60%; margin: 20px auto;">
-            <p style="color: #455a64; font-size: 1.1em; font-weight: bold;">
-                Bem-vindo ao Sistema HVAC Pro de Gestão Inteligente.
-            </p>
+            <p>Bem-vindo ao Sistema HVAC Pro.</p>
         </div>
     """, unsafe_allow_html=True)
 
