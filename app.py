@@ -446,7 +446,7 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # D. MOTOR DE GERAÇÃO PDF (UNIFICAÇÃO DE FONTE E CASE)
+  # D. MOTOR DE GERAÇÃO PDF (UNIFICAÇÃO DE FONTE E CASE)
     d = st.session_state.dados
     n_val = str(d.get('nome', '')).strip()
     d_val = str(d.get('cliente_documento', d.get('cpf_cnpj', ''))).strip()
@@ -498,27 +498,25 @@ with st.sidebar:
             pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(15, 8, " E-Mail:", border='LBT')
             pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(45, 8, f" {d.get('email', '---').lower()}", border='RBT', ln=True)
 
-            # Linha 2
-            pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(20, 8, " Watssap*:", border='LBT')
-            pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(45, 8, f" {d.get('whatsapp', '---')}", border='RBT')
-            pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(18, 8, " Celular:", border='LBT')
-            pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(45, 8, f" {d.get('celular', '---')}", border='RBT')
-            pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(12, 8, " Fixo:", border='LBT')
-            pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(50, 8, f" {d.get('tel_fixo', '---')}", border='RBT', ln=True)
+            # --- GERAÇÃO DOS BYTES E BOTÃO (O QUE FALTAVA) ---
+            pdf_bytes = pdf.output(dest='S')
+            
+            st.download_button(
+                label="📄 GERAR RELATÓRIO TÉCNICO FINAL",
+                data=bytes(pdf_bytes) if isinstance(pdf_bytes, str) else pdf_bytes,
+                file_name=f"Laudo_MPN_{d.get('tag_id','INS')}.pdf",
+                mime="application/pdf",
+                key="btn_final_v1",
+                use_container_width=True
+            )
 
-            # Linha 3
-            pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(18, 8, " Endereço:", border='LBT')
-            pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(82, 8, f" {fmt(d.get('endereco'))}", border='RBT')
-            
-            pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(18, 8, " Nº/Apto::", border='LBT')
-            pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(22, 8, f" {d.get('numero', '---')}", border='RBT')
-            
-            pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(15, 8, " Comp:", border='LBT')
-            pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(35, 8, f" {fmt(d.get('complemento'))}", border='RBT', ln=True)
-                      
-        
         except Exception as e:
-            st.error(f"Erro ao gerar o relatório: {e}")
+            st.error(f"Erro ao construir o PDF: {e}")
+
+# --- FIM DA SIDEBAR E INÍCIO DAS ABAS ---
+if aba_selecionada == "Home":
+    # Aqui continua seu código da Home...
+    pass
 
 # ==============================================================================
 # FIM DO BLOCO 3 MESCLADO
