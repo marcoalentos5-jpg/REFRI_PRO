@@ -419,12 +419,12 @@ def renderizar_aba_2():
 
 
 # ==============================================================================
-# 3. SIDEBAR - IDENTIFICAÇÃO PROFISSIONAL E MOTOR DE FECHAMENTO
+# 3. SIDEBAR - CENTRAL DE CONTROLE, IDENTIFICAÇÃO E VALIDAÇÃO (CONSOLIDADO)
 # ==============================================================================
 with st.sidebar:
-    # A. LOGO E TÍTULO (IDENTIDADE VISUAL)
+    # A. IDENTIDADE VISUAL (LOGO MPN)
     try:
-        # Tenta carregar a logo.png da pasta raiz
+        # Tenta carregar a logo oficial
         st.image("logo.png", use_container_width=True)
     except:
         st.subheader("❄️ MPN SOLUÇÕES")
@@ -434,71 +434,79 @@ with st.sidebar:
     # B. NAVEGAÇÃO OPERACIONAL
     st.title("🚀 Painel de Controle")
     opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
-    aba_selecionada = st.radio("Navegar para:", opcoes_abas, key="nav_v3")
+    aba_selecionada = st.radio("Navegar para:", opcoes_abas, key="nav_master_v3")
     
     st.markdown("---")
 
-    # C. DADOS DO RESPONSÁVEL TÉCNICO (ESSENCIAL PARA O RODAPÉ DO PDF)
+    # C. IDENTIFICAÇÃO DO TÉCNICO (DADOS PARA O LAUDO)
     st.subheader("👨‍🔧 Identificação do Técnico")
     
-    # Armazenamento persistente no session_state
+    # Captura Nome, CPF e Registro Profissional
     st.session_state.dados['tecnico_nome'] = st.text_input(
         "Nome Completo:", 
         value=st.session_state.dados.get('tecnico_nome', ''), 
-        key="f_tec_nome"
+        key="f_tec_nome_v3"
     )
     
     st.session_state.dados['tecnico_documento'] = st.text_input(
         "CPF/CNPJ do Técnico:", 
         value=st.session_state.dados.get('tecnico_documento', ''), 
-        key="f_tec_doc"
+        key="f_tec_doc_v3"
     )
     
     st.session_state.dados['tecnico_registro'] = st.text_input(
         "Registro Profissional (CRA/CFT):", 
         value=st.session_state.dados.get('tecnico_registro', ''), 
-        key="f_tec_reg"
+        key="f_tec_reg_v3"
     )
 
     st.markdown("---")
 
-    # D. CHECKLIST DE INTEGRIDADE (O BLOCO 3 "VARRE" AS OUTRAS ABAS)
+    # D. CHECKLIST DE INTEGRIDADE (RESOLVENDO O ERRO DE VALIDAÇÃO)
     d = st.session_state.dados
-    st.subheader("📋 Status do Laudo")
+    st.subheader("📊 Status do Laudo")
     
-    # Critérios técnicos de validação
-    tem_cliente = bool(d.get('nome') and d.get('cliente_documento'))
-    tem_maquina = bool(d.get('tag_id') and d.get('modelo'))
-    tem_medicao = bool(d.get('p_baixa') and d.get('p_alta'))
+    # Validação Robusta: Verifica múltiplas chaves possíveis para o documento do cliente
+    nome_preenchido = len(str(d.get('nome', '')).strip()) > 3
+    # Tenta ler 'cliente_documento' OU 'cpf_cnpj' (chave comum em cadastros)
+    doc_preenchido = len(str(d.get('cliente_documento', d.get('cpf_cnpj', ''))).strip()) > 5
+    
+    tem_cliente = nome_preenchido and doc_preenchido
+    tem_maquina = bool(d.get('tag_id') or d.get('modelo'))
+    # Verifica se as pressões foram inseridas (campos numéricos > 0)
+    tem_medicao = float(d.get('p_baixa', 0)) > 0 and float(d.get('p_alta', 0)) > 0
 
+    # EXIBIÇÃO DINÂMICA DE STATUS
     if not tem_cliente:
         st.error("❌ Dados do Cliente Ausentes")
+        if not nome_preenchido: st.caption("👉 Falta Nome do Cliente")
+        if not doc_preenchido: st.caption("👉 Falta CPF/CNPJ do Cliente")
     elif not tem_maquina:
         st.warning("⚠️ Dados do Ativo Pendentes")
+        st.caption("👉 Verifique TAG ou Modelo na Aba 1")
     elif not tem_medicao:
-        st.info("🔄 Aguardando Medições de Campo")
+        st.info("🔄 Aguardando Medições")
+        st.caption("👉 Insira Pressões de Alta/Baixa na Aba 2")
     else:
         st.success("✅ Relatório Pronto para PDF")
         
-        # BOTÃO MESTRE: GERAÇÃO DO PDF PROFISSIONAL
-        # Nota: A função gerar_pdf(d) será chamada aqui
+        # BOTÃO MESTRE DE GERAÇÃO
         if st.button("📄 GERAR RELATÓRIO TÉCNICO", use_container_width=True):
-            # Lógica de processamento de cores da logo e colunas
-            st.write("Processando tabelas e assinaturas...")
+            st.info("Processando PDF com Identidade Visual...")
+            # Aqui o motor do Bloco 3 chamará a função de desenho técnica
 
     st.markdown("---")
 
-    # E. MANUTENÇÃO DE DADOS (LIMPEZA INTELIGENTE)
+    # E. LIMPEZA INTELIGENTE (PRESERVA O TÉCNICO)
     if st.button("🗑️ Nova Inspeção (Limpar)", use_container_width=True):
-        # Preserva os seus dados de técnico para não precisar redigitar
-        preservar = ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']
+        chaves_preservadas = ['tecnico_nome', 'tecnico_documento', 'tecnico_registro', 'data']
         for chave in list(st.session_state.dados.keys()):
-            if chave not in preservar:
+            if chave not in chaves_preservadas:
                 st.session_state.dados[chave] = ""
         st.rerun()
 
 # ==============================================================================
-# FIM DO BLOCO 3 (CONGELADO E MAPEADO)
+# FIM DA MESCLAGEM DO BLOCO 3
 # ==============================================================================
 
 # ==============================================================================
