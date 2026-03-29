@@ -572,72 +572,74 @@ with st.sidebar:
             
             pdf.ln(2)
 
-            # --- 4. SEÇÃO 3: MEDIÇÕES (MAPEAMENTO DINÂMICO DE CHAVES) ---
-            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 8.5)
+          # --- CONFIGURAÇÃO DE FONTE E ESTILO ---
+            FONTE_PRINCIPAL = "Helvetica" # Fonte mais moderna e limpa
+            
+            # --- 4. SEÇÃO 3: MEDIÇÕES DE CAMPO (COM FORMATAÇÃO TITLE) ---
+            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font(FONTE_PRINCIPAL, "B", 8.5)
             pdf.cell(190, 7, " 3. MEDIÇÕES DE CAMPO E PERFORMANCE", ln=True, fill=True)
             
             blocos_med = [
-                ["CICLO FRIGOR.", "SUCÇÃO (PSI)", "TUB. SUCÇÃO", "DESCARGA (PSI)", "TUB. DESCAR.", "T. DESC. COMP"],
-                ["AR E AMBIENTE", "RETORNO (°C)", "INSUFLAÇÃO", "AMBIENTE EXTERNO", "UMID. RELAT. (%)", "PRESSÃO ÓLEO"],
-                ["ELÉTRICA", "TENSÃO NOM.", "TENSÃO MED.", "CORRENTE MED.", "RLA (A)", "LRA (A)"],
-                ["CAPACITÂNCIA", "NOMINAL COMP.", "MEDIDA COMP.", "NOMINAL FAN", "MEDIDA FAN", "CORRENTE FAN"]
+                ["Ciclo Frigor.", "Sucção (Psi)", "Tub. Sucção", "Descarga (Psi)", "Tub. Descar.", "T. Desc. Comp"],
+                ["Ar E Ambiente", "Retorno (°C)", "Insuflação", "Ambiente Ext.", "Umid. Relat. (%)", "Pressão Óleo"],
+                ["Elétrica", "Tensão Nom.", "Tensão Med.", "Corrente Med.", "Rla (A)", "Lra (A)"],
+                ["Capacitância", "Nominal Comp.", "Medida Comp.", "Nominal Fan", "Medida Fan", "Corrente Fan"]
             ]
             
-            # Lógica de Captura Blindada: tenta o nome longo, depois o curto, depois o genérico
             val_blocos = [
                 [d.get('p_baixa'), d.get('temp_suc_tubo'), d.get('p_alta'), d.get('temp_desc_tubo'), d.get('temp_desc_comp')],
                 [d.get('temp_retorno'), d.get('temp_insuflacao'), d.get('temp_amb_ext'), d.get('umidade_rel'), d.get('pressao_oleo')],
-                [d.get('tensao_nom'), d.get('tensao_med'), d.get('corrente_med'), d.get('rla_nom', d.get('rla')), d.get('lra_partida', d.get('lra'))],
+                [d.get('tensao_nom'), d.get('tensao_med'), d.get('corrente_med'), d.get('rla_nom'), d.get('lra_partida')],
                 [d.get('cap_nom_comp'), d.get('cap_lido_comp'), d.get('cap_nom_fan'), d.get('cap_lido_fan'), d.get('corrente_fan')]
             ]
 
             for i in range(4):
-                pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 5.8); pdf.set_fill_color(235, 245, 255)
+                pdf.set_text_color(0, 0, 0); pdf.set_font(FONTE_PRINCIPAL, "B", 5.8); pdf.set_fill_color(235, 245, 255)
                 pdf.cell(30, 5, blocos_med[i][0], border=1, fill=True) 
                 for tit in blocos_med[i][1:]: pdf.cell(32, 5, tit, border=1, align='C', fill=True)
                 pdf.ln()
-                pdf.set_font("Arial", "", 8)
-                pdf.cell(30, 6, "VALOR:", border=1, align='C')
+                
+                pdf.set_font(FONTE_PRINCIPAL, "B", 7); pdf.cell(30, 6, "Valor:", border=1, align='C')
+                pdf.set_font(FONTE_PRINCIPAL, "", 8)
                 for v in val_blocos[i]:
-                    pdf.cell(32, 6, f" {v if v not in [None, ''] else '---'}", border=1, align='C')
+                    # Aplica .title() para Primeira Letra Maiúscula se for texto
+                    val_formatado = str(v).title() if v not in [None, ''] else '---'
+                    pdf.cell(32, 6, f" {val_formatado}", border=1, align='C')
                 pdf.ln()
             pdf.ln(2)
 
-            # --- 5. SEÇÃO 4: DIAGNÓSTICO (ESTÉTICA DELTA) ---
-            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 8.5)
+            # --- 5. SEÇÃO 4: DIAGNÓSTICO (FONTE HELVETICA) ---
+            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font(FONTE_PRINCIPAL, "B", 8.5)
             pdf.cell(190, 7, " 4. DIAGNÓSTICO DE PERFORMANCE E INTEGRIDADE", ln=True, fill=True)
             
-            tit_diag = [['SH TOTAL', 'SH ÚTIL', 'SAT. SUCÇÃO', 'SAT. DESCAR.', 'DELTA T (AR)', 'SC FINAL'],
-                        ['DELTA CORRENTE', 'DELTA TENSÃO', 'RAZÃO COMPR.', 'COP ESTIM.', 'DELTA CAP. COMP.', 'DELTA CAP. FAN.']]
+            tit_diag = [['Sh Total', 'Sh Útil', 'Sat. Sucção', 'Sat. Descar.', 'Delta T (Ar)', 'Sc Final'],
+                        ['Delta Corrente', 'Delta Tensão', 'Razão Compr.', 'Cop Estim.', 'Delta Cap. Comp.', 'Delta Cap. Fan.']]
             
             val_diag = [[d.get('sh_total'), d.get('sh_util'), d.get('t_sat_baixa'), d.get('t_sat_alta'), d.get('delta_t_ar'), d.get('sc_total')],
                         [d.get('dif_corrente'), d.get('dif_tensao'), d.get('razao_compressao'), d.get('cop_estimado'), d.get('dif_cap_comp'), d.get('dif_cap_fan')]]
 
             for i in range(2):
-                pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 6.2); pdf.set_fill_color(245, 245, 245)
+                pdf.set_text_color(0, 0, 0); pdf.set_font(FONTE_PRINCIPAL, "B", 6.2); pdf.set_fill_color(245, 245, 245)
                 for t in tit_diag[i]: pdf.cell(31.6, 5, t, border=1, align='C', fill=True)
                 pdf.ln()
-                pdf.set_font("Arial", "", 8)
+                pdf.set_font(FONTE_PRINCIPAL, "", 8)
                 for v in val_diag[i]:
-                    try:
-                        res = f"{float(v):.1f}" if v is not None and str(v).replace('.','',1).isdigit() else "---"
-                    except: res = "---"
+                    try: res = f"{float(v):.1f}" if v is not None else "---"
+                    except: res = str(v).title() if v else "---"
                     pdf.cell(31.6, 6, f" {res}", border=1, align='C')
                 pdf.ln()
             pdf.ln(2)
 
-            # --- 6. SEÇÃO 5: PARECER TÉCNICO (CAPTURA MULTI-ABA) ---
-            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 8.5)
+            # --- 6. SEÇÃO 5: PARECER TÉCNICO ---
+            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font(FONTE_PRINCIPAL, "B", 8.5)
             pdf.cell(190, 7, " 5. PARECER TÉCNICO FINAL", ln=True, fill=True)
+            pdf.set_text_color(0, 0, 0); pdf.set_font(FONTE_PRINCIPAL, "", 8.5)
             
-            pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "", 8.5)
-            # Tenta capturar de qualquer chave possível onde o parecer possa estar
-            txt_parecer = str(d.get('parecer_final', d.get('parecer_tecnico', d.get('parecer', '')))).strip()
-            if not txt_parecer or txt_parecer == "None":
-                txt_parecer = "Nenhuma observação técnica registrada."
+            txt_p = str(d.get('parecer_final', '---')).strip()
+            # Transforma o parecer em formato de sentença (Primeira letra da frase maiúscula)
+            txt_p = txt_p.capitalize() if txt_p != '---' else txt_p
             
-            pdf.multi_cell(190, 5, f" {txt_parecer}", border=1, align='L')
-            pdf.ln(10)
+            pdf.multi_cell(190, 5, f" {txt_p}", border=1, align='L')
 
             # --- 7. ASSINATURAS (SINCRONIA COM IDENTIFICAÇÃO DO TÉCNICO) ---
             y_sig = pdf.get_y()
