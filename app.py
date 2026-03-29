@@ -646,60 +646,60 @@ elif aba_selecionada == "Relatórios":
     st.header("Página de Relatórios (Em desenvolvimento)")
     st.write("Em breve: Visualização e exportação de relatórios.")
 # [COLE AQUI - Logo após o fim da renderizar_aba_1]
-
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
-    # Busca o fluido que você selecionou na Aba 1
-    fluido_selecionado = st.session_state.dados.get('fluido', 'R410A')
-    st.info(f"❄️ Fluido Refrigerante em Análise: **{fluido_selecionado}**")
-    st.markdown("---")
+    d = st.session_state.dados # Atalho para os dados
+    
+    # Busca o fluido selecionado na Aba 1
+    fluido = d.get('fluido', 'R410A')
+    st.info(f"❄️ Fluido Refrigerante em Análise: **{fluido}**")
 
     # --- BLOCO 1: ENTRADA DE MEDIÇÕES ---
     st.subheader("1. Medições de Campo")
-    col_suc, col_des = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     
-    with col_suc:
-        st.markdown("### 🔵 Baixa Pressão")
-        pres_suc = st.number_input("Pressão de Sucção (PSI):", min_value=0.0, step=1.0, key="p_suc_diag")
-        temp_suc = st.number_input("Temp. Tubulação Sucção (°C):", step=0.1, key="t_suc_diag")
+    with col1:
+        st.markdown("### 🔵 Baixa")
+        p_suc = st.number_input("Pressão Sucção (PSI):", min_value=0.0, value=float(d.get('p_suc', 0.0)), key="p_suc")
+        t_suc = st.number_input("Temp. Tubulação (°C):", value=float(d.get('t_suc', 0.0)), key="t_suc")
 
-    with col_des:
-        st.markdown("### 🔴 Alta Pressão")
-        pres_des = st.number_input("Pressão de Descarga (PSI):", min_value=0.0, step=1.0, key="p_des_diag")
-        temp_liq = st.number_input("Temp. Tubulação Líquido (°C):", step=0.1, key="t_liq_diag")
+    with col2:
+        st.markdown("### 🔴 Alta")
+        p_des = st.number_input("Pressão Descarga (PSI):", min_value=0.0, value=float(d.get('p_des', 0.0)), key="p_des")
+        t_liq = st.number_input("Temp. Líquido (°C):", value=float(d.get('t_liq', 0.0)), key="t_liq")
 
-    st.markdown("---")
-  
+    with col3:
+        st.markdown("### 🌡️ Ambiente")
+        # PONTE: Salvando direto nas chaves que o PDF busca
+        d['temp_insuflacao'] = st.number_input("Insuflação (°C):", value=float(d.get('temp_insuflacao', 0.0)))
+        d['temp_retorno'] = st.number_input("Retorno (°C):", value=float(d.get('temp_retorno', 0.0)))
 
-# --- BLOCO 2: PROCESSAMENTO (CÁLCULOS) ---
-    # Nota: No próximo passo, inseriremos a tabela PT aqui
-    t_sat_suc = 0.0  
-    t_sat_des = 0.0  
+    # --- BLOCO 2: PROCESSAMENTO (CÁLCULOS PT) ---
+    # Usando a função f_sat_precisao que você já tem no código
+    t_sat_suc = f_sat_precisao(p_suc, fluido)
+    t_sat_des = f_sat_precisao(p_des, fluido)
     
-    sh = temp_suc - t_sat_suc
-    sc = t_sat_des - temp_liq
+    sh = t_suc - t_sat_suc
+    sc = t_sat_des - t_liq
+
+    # Salva os cálculos para o PDF ler
+    d['sh_total'] = round(sh, 1)
+    d['sc_final'] = round(sc, 1)
 
     # --- BLOCO 3: EXIBIÇÃO DE RESULTADOS ---
-    st.subheader("2. Resultados Calculados")
-    res1, res2 = st.columns(2)
-    
-    with res1:
-        st.metric(label="Superaquecimento (SH)", value=f"{sh:.1f} K")
-        if 5 <= sh <= 7: st.success("✅ SH dentro do padrão (5K a 7K)")
-        elif sh < 5: st.error("⚠️ SH Baixo: Risco de retorno de líquido")
-        else: st.warning("⚠️ SH Alto: Possível falta de fluido ou restrição")
-
-    with res2:
-        st.metric(label="Sub-resfriamento (SC)", value=f"{sc:.1f} K")
-        if 4 <= sc <= 7: st.success("✅ SC dentro do padrão (4K a 7K)")
-        else: st.info("ℹ️ SC fora do padrão: Verifique condensação")
-
     st.markdown("---")
+    res1, res2 = st.columns(2)
+    with res1:
+        st.metric(label="Superaquecimento (SH)", value=f"{d['sh_total']} K")
+    with res2:
+        st.metric(label="Sub-resfriamento (SC)", value=f"{d['sc_final']} K")
 
     # --- BLOCO 4: CONCLUSÃO E LAUDO ---
     st.subheader("3. Parecer Técnico Final")
-    st.session_state.dados['laudo_diag'] = st.text_area(
-        "Descreva o diagnóstico ou anomalias encontradas:",
-        placeholder="Ex: Sistema operando com pressões estáveis, superaquecimento normal...",
-        key="laudo_area_diag"
+    # PONTE: O PDF busca 'diagnostico_texto'
+    d['diagnostico_texto'] = st.text_area(
+        "Descreva o diagnóstico:",
+        value=d.get('diagnostico_texto', ''),
+        placeholder="Ex: Sistema operando com pressões estáveis...",
+        key="area_diag"
     )
