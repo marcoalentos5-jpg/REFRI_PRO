@@ -210,7 +210,6 @@ def renderizar_aba_2():
     sugestao_massa = 0.0
     
     if p_atual > 0:
-        # Cálculo da Balança (Fator 0.7 para Blends)
         if carga_total_placa > 0:
             diff_p = p_alvo_centro - p_atual
             sugestao_massa = (diff_p / p_alvo_centro) * carga_total_placa * 0.7
@@ -222,24 +221,27 @@ def renderizar_aba_2():
             cor_alerta = "#FF4B4B" # Vermelho
             msg_status = " - ⚠️ FORA DO ALVO"
 
+    # Texto da Balança para o Card Superior
+    txt_bal_card = "ESTÁVEL" if abs(sugestao_massa) < 15 or carga_total_placa == 0 else f"{'+' if sugestao_massa > 0 else '-'}{abs(sugestao_massa):.0f}g"
+
     st.markdown(f"""
         <div style="background-color: #1E1E1E; border-left: 5px solid {cor_alerta}; padding: 15px; border-radius: 10px; margin-bottom: 25px; border: 1px solid #333;">
             <h4 style="margin-top:0; color: {cor_alerta};">🎯 Referência Ideal para {fluido}{msg_status}</h4>
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;">
                 <div style="color: #FFFFFF;"><small style="color: #888;">SUCÇÃO ALVO</small><br><b>{ref['p_suc']}</b></div>
                 <div style="color: #FFFFFF;"><small style="color: #888;">SATURAÇÃO ALVO</small><br><b>{ref['t_sat']}</b></div>
                 <div style="color: #FFFFFF;"><small style="color: #888;">SH (SUPERAQUEC.)</small><br><b>{ref['sh']}</b></div>
                 <div style="color: #FFFFFF;"><small style="color: #888;">SC (SUB-RESFR.)</small><br><b>{ref['sc']}</b></div>
+                <div style="background-color: rgba(255,255,255,0.05); padding: 5px; border-radius: 5px; text-align: center; border: 1px dashed {cor_alerta};">
+                    <small style="color: {cor_alerta}; font-weight: bold;">⚖️ BALANÇA</small><br><b style="color: #FFF; font-size: 1.1rem;">{txt_bal_card}</b>
+                </div>
             </div>
-            <div style="margin-top: 10px; color: {cor_alerta}; font-size: 14px; font-weight: bold;">
-                PRESSÃO ATUAL: {p_atual:.1f} PSI
-            </div>
+            <div style="margin-top: 10px; color: {cor_alerta}; font-size: 14px; font-weight: bold;">PRESSÃO ATUAL: {p_atual:.1f} PSI</div>
         </div>
     """, unsafe_allow_html=True)
 
     # --- 2. MEDIÇÕES DE CAMPO ---
     st.subheader("1. Medições de Campo")
-    
     st.markdown("##### 🔵 Ciclo Frigorífico")
     a1, a2, a3, a4, a5 = st.columns(5)
     p_suc = a1.number_input("SUCÇÃO (PSI)", value=p_atual, format="%.1f", key="ps_m")
@@ -277,66 +279,37 @@ def renderizar_aba_2():
     t_sat_d = f_sat_precisao(p_des, fluido) if p_des > 5 else 0.0
     sh = round(t_suc - t_sat_s, 2) if t_sat_s != 0 else 0.0
     sc = round(t_sat_d - t_liq, 2) if t_sat_d != 0 else 0.0
-    dt_ar = round(t_ret - t_ins, 2)
-    d_tensao = round(v_med - v_lin, 2)
-    d_corrente = round(i_med - rla, 2) if rla > 0 else 0.0
-    sh_util = round(sh * 0.8, 2) 
-    d_cap_f = round(cm_f - cn_f, 2)
-    d_cap_c = round(cm_c - cn_c, 2)
+    dt_ar, d_tensao, d_corrente = round(t_ret - t_ins, 2), round(v_med - v_lin, 2), round(i_med - rla, 2) if rla > 0 else 0.0
+    sh_util, d_cap_f, d_cap_c = round(sh * 0.8, 2), round(cm_f - cn_f, 2), round(cm_c - cn_c, 2)
 
     # --- 4. RESULTADOS CALCULADOS ---
     st.markdown("---")
     st.subheader("2. Resultados e Balança Virtual")
-
-    st.markdown("""
-        <style>
-        div[data-testid="stMetric"] {
-            background-color: #1A1C23; border: 1px solid #333; padding: 8px;
-            border-radius: 8px; margin-bottom: 5px; border-left: 4px solid #00CCFF;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-
+    st.markdown("""<style> div[data-testid="stMetric"] { background-color: #1A1C23; border: 1px solid #333; padding: 8px; border-radius: 8px; border-left: 4px solid #00CCFF; } </style>""", unsafe_allow_html=True)
     res = st.columns(5)
-    with res[0]:
-        st.metric("SH TOTAL", f"{sh:.1f} K")
-        st.metric("SH ÚTIL", f"{sh_util:.1f} K")
-    with res[1]:
-        st.metric("SAT. SUCÇÃO", f"{t_sat_s:.1f} °C")
-        st.metric("Δ T (AR)", f"{dt_ar:.1f} K")
+    res[0].metric("SH TOTAL", f"{sh:.1f} K"); res[0].metric("SH ÚTIL", f"{sh_util:.1f} K")
+    res[1].metric("SAT. SUCÇÃO", f"{t_sat_s:.1f} °C"); res[1].metric("SAT. DESCARGA", f"{t_sat_d:.1f} °C")
     with res[2]:
-        # BALANÇA VIRTUAL INTEGRADA
-        if abs(sugestao_massa) < 15 or carga_total_placa == 0:
-            st.metric("BALANÇA VIRTUAL", "ESTÁVEL", delta="Pressão OK")
+        if abs(sugestao_massa) < 15 or carga_total_placa == 0: st.metric("BALANÇA VIRTUAL", "ESTÁVEL", delta="Pressão OK")
         else:
             label_m = "ADICIONAR" if sugestao_massa > 0 else "RETIRAR"
             st.metric("BALANÇA VIRTUAL", f"{abs(sugestao_massa):.0f}g", delta=label_m, delta_color="inverse" if sugestao_massa > 0 else "normal")
         st.metric("SC FINAL", f"{sc:.1f} K")
-    with res[3]:
-        st.metric("Δ TENSÃO", f"{d_tensao:.1f} V")
-        st.metric("Δ CORRENTE", f"{d_corrente:.1f} A")
-    with res[4]:
-        st.metric("Δ CAP. COMP.", f"{d_cap_c:.1f} µF")
-        st.metric("Δ CAP. FAN", f"{d_cap_f:.1f} µF")
+    res[3].metric("Δ T (AR)", f"{dt_ar:.1f} K"); res[3].metric("Δ TENSÃO", f"{d_tensao:.1f} V")
+    res[4].metric("Δ CORRENTE", f"{d_corrente:.1f} A"); res[4].metric("Δ CAP. COMP.", f"{d_cap_c:.1f} µF")
     
-    # --- 5. DIAGNÓSTICO INTELIGENTE ---
     st.markdown("---")
     st.subheader("🤖 Diagnóstico Inteligente (IA)")
     alertas_ia = []
     if sh < 5 and p_suc > 0: alertas_ia.append("⚠️ **SH Baixo:** Risco de golpe de líquido.")
     if sh > 12: alertas_ia.append("⚠️ **SH Alto:** Compressor aquecendo demais / Falta de fluido.")
-    if dt_ar < 8 and t_ret > 0: alertas_ia.append("❄️ **Delta T Baixo:** Verifique filtros, serpentina ou carga.")
     if t_com > 100: alertas_ia.append("🔥 **Descarga Crítica:** Risco de carbonização do óleo.")
-    
-    texto_ia = "\n".join(alertas_ia) if alertas_ia else "✅ Sistema operando conforme lógica nominal."
-    st.info(texto_ia)
+    st.info("\n".join(alertas_ia) if alertas_ia else "✅ Sistema operando conforme lógica nominal.")
 
-    # --- 6. PARECER TÉCNICO FINAL ---
     st.markdown("---")
     st.subheader("3. Parecer Técnico Final")
     d['laudo_diag'] = st.text_area("Diagnóstico e Observações:", value=d.get('laudo_diag', "Análise: Estável."), height=150)
 
-    # SINCRONIZAÇÃO FINAL
     st.session_state.dados.update({
         'p_baixa': p_suc, 'temp_sucção': t_suc, 'p_alta': p_des, 'temp_liquido': t_liq,
         'temp_entrada_ar': t_ret, 'temp_saida_ar': t_ins, 'temp_amb_ext': t_amb,
