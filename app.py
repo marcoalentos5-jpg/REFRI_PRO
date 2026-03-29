@@ -515,8 +515,7 @@ with st.sidebar:
             
             pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(15, 8, " Comp:", border='LBT')
             pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(35, 8, f" {fmt(d.get('complemento'))}", border='RBT', ln=True)
-            )
-            
+                      
         
         except Exception as e:
             st.error(f"Erro ao gerar o relatório: {e}")
