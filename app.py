@@ -183,6 +183,8 @@ def renderizar_aba_2():
     def safe_float(key, default=0.0):
         val = d.get(key)
         try:
+            if isinstance(val, str):
+                val = val.lower().replace('kg', '').replace('g', '').replace(',', '.')
             return float(val) if val not in [None, ""] else default
         except:
             return default
@@ -197,18 +199,27 @@ def renderizar_aba_2():
     }
     ref = referencias.get(fluido, referencias['R410A'])
 
-    # Lógica de Cor para o Header Dinâmico
+    # Lógica de Cor e Balança Virtual
     p_atual = safe_float('p_baixa')
     limites = ref['p_suc'].replace(' PSI', '').split(' a ')
-    cor_alerta = "#00CCFF" # Azul padrão
+    p_alvo_centro = (float(limites[0]) + float(limites[1])) / 2
+    carga_total_placa = safe_float('carga_gas') 
+    
+    cor_alerta = "#00CCFF" 
     msg_status = ""
+    sugestao_massa = 0.0
     
     if p_atual > 0:
+        # Cálculo da Balança (Fator 0.7 para Blends)
+        if carga_total_placa > 0:
+            diff_p = p_alvo_centro - p_atual
+            sugestao_massa = (diff_p / p_alvo_centro) * carga_total_placa * 0.7
+
         if float(limites[0]) <= p_atual <= float(limites[1]):
-            cor_alerta = "#00FF7F" # Verde (Ideal)
+            cor_alerta = "#00FF7F" # Verde
             msg_status = " - ✅ DENTRO DO ALVO"
         else:
-            cor_alerta = "#FF4B4B" # Vermelho (Ajustar)
+            cor_alerta = "#FF4B4B" # Vermelho
             msg_status = " - ⚠️ FORA DO ALVO"
 
     st.markdown(f"""
@@ -221,7 +232,7 @@ def renderizar_aba_2():
                 <div style="color: #FFFFFF;"><small style="color: #888;">SC (SUB-RESFR.)</small><br><b>{ref['sc']}</b></div>
             </div>
             <div style="margin-top: 10px; color: {cor_alerta}; font-size: 14px; font-weight: bold;">
-                PRESSÃO ATUAL: {p_atual} PSI
+                PRESSÃO ATUAL: {p_atual:.1f} PSI
             </div>
         </div>
     """, unsafe_allow_html=True)
@@ -229,16 +240,14 @@ def renderizar_aba_2():
     # --- 2. MEDIÇÕES DE CAMPO ---
     st.subheader("1. Medições de Campo")
     
-    # SEÇÃO A: 🔵 CICLO FRIGORÍFICO
     st.markdown("##### 🔵 Ciclo Frigorífico")
     a1, a2, a3, a4, a5 = st.columns(5)
-    p_suc = a1.number_input("SUCÇÃO (PSI)", value=safe_float('p_baixa'), format="%.1f", key="ps_m")
+    p_suc = a1.number_input("SUCÇÃO (PSI)", value=p_atual, format="%.1f", key="ps_m")
     t_suc = a2.number_input("TUB. SUCÇÃO (°C)", value=safe_float('temp_sucção'), format="%.1f", key="ts_m")
     p_des = a3.number_input("DESCARGA (PSI)", value=safe_float('p_alta'), format="%.1f", key="pd_m")
     t_liq = a4.number_input("TUB. LÍQUIDO (°C)", value=safe_float('temp_liquido'), format="%.1f", key="tl_m")
     t_com = a5.number_input("TUB. Desc. Comp. (°C)", value=safe_float('temp_descarga'), format="%.1f", key="tc_m")
 
-    # SEÇÃO B: 🔴 AR E AMBIENTE
     st.markdown("##### 🔴 Ar e Ambiente")
     b1, b2, b3, b4, b5 = st.columns(5)
     t_ret = b1.number_input("Retorno Ar (°C)", value=safe_float('temp_entrada_ar'), format="%.1f", key="tr_m")
@@ -247,7 +256,6 @@ def renderizar_aba_2():
     u_rel = b4.number_input("Umid. Rel. DO AR (%)", value=safe_float('umidade', 50.0), format="%.1f", key="ur_m")
     p_oil = b5.number_input("Pressão Óleo (PSI)", value=safe_float('p_oleo', 0.0), format="%.1f", key="po_m")
 
-    # SEÇÃO C: ⚡ PARÂMETROS ELÉTRICOS
     st.markdown("##### ⚡ Parâmetros Elétricos")
     c1, c2, c3, c4, c5 = st.columns(5)
     v_lin = c1.number_input("Tensão Nominal (V)", value=safe_float('v_nominal', 220.0), key="vn_m")
@@ -256,7 +264,6 @@ def renderizar_aba_2():
     rla   = c4.number_input("RLA - Nominal (A)", value=safe_float('rla'), key="rla_m")
     lra   = c5.number_input("LRA - Partida (A)", value=safe_float('lra'), key="lra_m")
 
-    # SEÇÃO D: 🔋 CAPACITÂNCIA E VENTILAÇÃO
     st.markdown("##### 🔋 Capacitância e Ventilação")
     d1, d2, d3, d4, d5 = st.columns(5)
     cn_c  = d1.number_input("CAPACITÂNCIA Nom. Comp", value=safe_float('cn_c'), format="%.1f", key="cnc_m")
@@ -279,7 +286,7 @@ def renderizar_aba_2():
 
     # --- 4. RESULTADOS CALCULADOS ---
     st.markdown("---")
-    st.subheader("2. Resultados Calculados")
+    st.subheader("2. Resultados e Balança Virtual")
 
     st.markdown("""
         <style>
@@ -298,8 +305,13 @@ def renderizar_aba_2():
         st.metric("SAT. SUCÇÃO", f"{t_sat_s:.1f} °C")
         st.metric("Δ T (AR)", f"{dt_ar:.1f} K")
     with res[2]:
+        # BALANÇA VIRTUAL INTEGRADA
+        if abs(sugestao_massa) < 15 or carga_total_placa == 0:
+            st.metric("BALANÇA VIRTUAL", "ESTÁVEL", delta="Pressão OK")
+        else:
+            label_m = "ADICIONAR" if sugestao_massa > 0 else "RETIRAR"
+            st.metric("BALANÇA VIRTUAL", f"{abs(sugestao_massa):.0f}g", delta=label_m, delta_color="inverse" if sugestao_massa > 0 else "normal")
         st.metric("SC FINAL", f"{sc:.1f} K")
-        st.metric("SUCÇÃO ALVO", f"{ref['p_suc']}")
     with res[3]:
         st.metric("Δ TENSÃO", f"{d_tensao:.1f} V")
         st.metric("Δ CORRENTE", f"{d_corrente:.1f} A")
