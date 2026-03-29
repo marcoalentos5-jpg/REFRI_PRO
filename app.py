@@ -1,27 +1,13 @@
-
-# ==============================================================================
-# 0. CONFIGURAÇÕES INICIAIS E IMPORTAÇÕES (CONGELADO)
-# ==============================================================================
-import streamlit as st
-from datetime import datetime
-import requests
-import urllib.parse
-import os # Biblioteca para verificar arquivos no sistema
-import numpy as np
-import urllib.parse
-import pandas as pd
-from datetime import date
-
 import streamlit as st
 import pandas as pd
 from datetime import date
 
 # ==============================================================================
-# 1. CONFIGURAÇÕES DE PÁGINA E ESTILIZAÇÃO CSS (LINHAS 1-45)
+# 1. CONFIGURAÇÕES INICIAIS E ESTADO DO SISTEMA (LINHAS 1-40)
 # ==============================================================================
 st.set_page_config(page_title="Expert HVAC-R Diagnostic", layout="wide", page_icon="❄️")
 
-# Inicialização Robusta do Session State (Proteção contra perda de dados)
+# Inicialização Robusta do Session State (Mantendo seus padrões Dark)
 if 'dados' not in st.session_state:
     st.session_state.dados = {
         'cliente': '', 'cpf_cnpj': '', 'contato': '', 'email': '',
@@ -34,104 +20,93 @@ if 'dados' not in st.session_state:
 
 d = st.session_state.dados
 
-# CSS Personalizado para manter o Layout Profissional Dark
+# CSS Compacto Original (Sem espaçamentos extras)
 st.markdown("""
     <style>
     .main { background-color: #0E1117; }
-    div[data-testid="stMetric"] { background-color: #1A1C23; border-radius: 10px; padding: 12px; border: 1px solid #333; }
-    div[data-testid="stVerticalBlock"] > div:has(div.stMetric) { background-color: #1A1C23; border-radius: 10px; }
+    div[data-testid="stMetric"] { background-color: #1A1C23; border-radius: 10px; padding: 10px; border: 1px solid #333; }
+    div[data-testid="stVerticalBlock"] { gap: 0rem; } /* Compactação agressiva */
     </style>
     """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 2. ABA 1: CADASTRO - LÓGICA DE PERSISTÊNCIA E INTERFACE (LINHAS 46-172)
+# 2. ABA 1: CADASTRO - FUNÇÃO CORRIGIDA PARA 'renderizar_aba_1' (LINHAS 41-172)
 # ==============================================================================
-def renderizar_aba_cadastro():
+def renderizar_aba_1(): # Mantendo o nome correto para evitar o NameError
     st.header("📋 Cadastro de Cliente e Equipamento")
-    st.markdown("---")
+    # Removido st.markdown("---") que quebrava o layout compacto
 
-    # --- 2.1 DADOS DO CLIENTE (ATUALIZAÇÃO EM TEMPO REAL) ---
+    # --- 2.1 DADOS DO CLIENTE (LAYOUT COMPACTO ORIGINAL) ---
     st.subheader("1. Informações do Cliente")
     col1, col2 = st.columns(2)
-    
     with col1:
-        # Uso de value=d.get() garante que o dado não suma ao trocar de aba
-        d['cliente'] = st.text_input("Nome do Cliente ou Empresa:", value=d.get('cliente', ''), placeholder="Nome Completo / Razão Social")
-        d['cpf_cnpj'] = st.text_input("CPF ou CNPJ:", value=d.get('cpf_cnpj', ''), placeholder="Somente números ou com pontos")
-    
+        d['cliente'] = st.text_input("Nome do Cliente/Empresa:", value=d.get('cliente', ''), key="cli_persist")
+        d['cpf_cnpj'] = st.text_input("CPF ou CNPJ:", value=d.get('cpf_cnpj', ''), key="cpf_persist")
     with col2:
-        d['contato'] = st.text_input("Telefone / WhatsApp:", value=d.get('contato', ''), placeholder="(00) 00000-0000")
-        d['email'] = st.text_input("E-mail para Envio do Laudo:", value=d.get('email', ''), placeholder="contato@cliente.com")
+        d['contato'] = st.text_input("Telefone/WhatsApp:", value=d.get('contato', ''), key="cont_persist")
+        d['email'] = st.text_input("E-mail para Laudo:", value=d.get('email', ''), key="mail_persist")
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("##### 📍 Localização e Endereço")
-    
-    # CORREÇÃO DO CEP E LOGRADOURO (KEY SYNC PARA EVITAR DELAY)
+    # GRID DE LOCALIZAÇÃO (RESTAURADO ALINHAMENTO ORIGINAL [2, 5, 1])
+    # Títulos removidos para compactar, mantendo apenas labels dos inputs
     l1, l2, l3 = st.columns([2, 5, 1])
-    # O uso da KEY força o Streamlit a salvar no Session State sem precisar de Rerun
-    d['cep'] = l1.text_input("CEP:", value=str(d.get('cep', '')), key="cep_persist", help="Digite o CEP para registro")
-    d['logradouro'] = l2.text_input("Logradouro (Endereço Completo):", value=d.get('logradouro', ''), key="log_persist")
+    d['cep'] = l1.text_input("CEP:", value=str(d.get('cep', '')), key="cep_persist")
+    d['logradouro'] = l2.text_input("Logradouro (Endereço):", value=d.get('logradouro', ''), key="log_persist")
     d['numero'] = l3.text_input("Nº:", value=d.get('numero', ''), key="num_persist")
 
-    st.markdown("---")
-
-    # --- 2.2 DADOS DO EQUIPAMENTO (CATÁLOGO ATUALIZADO) ---
-    st.subheader("2. Especificações Técnicas do Equipamento")
+    # --- 2.2 DADOS DO EQUIPAMENTO (CATÁLOGO ATUALIZADO NO LAYOUT ORIGINAL) ---
+    st.subheader("2. Especificações do Equipamento")
     
-    # LISTA DE FABRICANTES: HITACHI INCLUÍDA + ORDEM ALFABÉTICA + OUTROS NO FIM
-    fabs_raw = ["Carrier", "Daikin", "Fujitsu", "Gree", "Hitachi", "LG", "Midea", "Panasonic", "Samsung", "Trane", "York", "Elgin", "Springer", "Eletrolux"]
-    lista_fabricantes = sorted(list(set(fabs_raw))) + ["OUTROS"]
+    # LISTA DE FABRICANTES (HITACHI + ORDEM A-Z + OUTROS FIM)
+    fabs_raw = sorted(["Carrier", "Daikin", "Fujitsu", "Gree", "Hitachi", "LG", "Midea", "Panasonic", "Samsung", "Trane", "York", "Elgin", "Springer"])
+    lista_fabricantes = fabs_raw + ["OUTROS"]
     
-    # LISTA DE CAPACIDADES: EXPANSÃO BTU E TR (CHILLERS/VRF)
+    # LISTA DE CAPACIDADES EXPANDIDA (BTU E TR)
     lista_capacidades = [
         "7.000 BTU", "9.000 BTU", "12.000 BTU", "18.000 BTU", "22.000 BTU", "24.000 BTU", 
-        "30.000 BTU", "31.000 BTU", "36.000 BTU", "48.000 BTU", "60.000 BTU", "80.000 BTU",
-        "5 TR", "7.5 TR", "10 TR", "15 TR", "20 TR", "30 TR", "40 TR", "50 TR", "Outra"
+        "30.000 BTU", "36.000 BTU", "48.000 BTU", "60.000 BTU", "80.000 BTU",
+        "5 TR", "10 TR", "15 TR", "20 TR", "30 TR", "40 TR", "50 TR", "Outra"
     ]
 
-    # FUNÇÃO INTERNA DE ÍNDICE (Garante que a escolha do técnico não mude sozinha)
-    def buscar_index(lista, chave):
+    # Função de Índice Dinâmico (Sincronização sem quebrar layout)
+    def find_idx(lista, chave):
         val = d.get(chave)
         return lista.index(val) if val in lista else 0
 
+    # TRÊS COLUNAS TÉCNICAS INFERIORES (RESTAURADO ALINHAMENTO ORIGINAL [1, 1, 1])
     e1, e2, e3 = st.columns(3)
     
     with e1:
-        st.markdown("##### 🏷️ Identificação")
-        d['fabricante'] = st.selectbox("Fabricante:", lista_fabricantes, index=buscar_index(lista_fabricantes, 'fabricante'))
-        d['modelo'] = st.text_input("Modelo / Tag da Unidade:", value=d.get('modelo', ''))
-        d['capacidade'] = st.selectbox("Capacidade (BTU/TR):", lista_capacidades, index=buscar_index(lista_capacidades, 'capacidade'))
+        # Removido st.markdown("##### 🏷️ Identificação")
+        d['fabricante'] = st.selectbox("Fabricante:", lista_fabricantes, index=find_idx(lista_fabricantes, 'fabricante'))
+        d['modelo'] = st.text_input("Modelo/Tag:", value=d.get('modelo', ''), key="mod_persist")
+        d['capacidade'] = st.selectbox("Capacidade (BTU/TR):", lista_capacidades, index=find_idx(lista_capacidades, 'capacidade'))
 
     with e2:
-        st.markdown("##### 🧪 Fluido e Óleo")
-        lista_fluidos = ["R410A", "R22", "R134a", "R404A", "R32", "R290", "R407C"]
-        d['fluido'] = st.selectbox("Fluido Refrigerante:", lista_fluidos, index=buscar_index(lista_fluidos, 'fluido'))
+        # Removido st.markdown("##### 🧪 Fluido e Óleo")
+        lista_fluidos = ["R410A", "R22", "R134a", "R404A", "R32", "R290"]
+        d['fluido'] = st.selectbox("Fluido:", lista_fluidos, index=find_idx(lista_fluidos, 'fluido'))
         
-        # CORREÇÃO: TIPO DE ÓLEO SEGURANDO A ESCOLHA (PERSISTENTE)
-        lista_oleos = ["POE", "PVE", "MINERAL", "AB", "PAG"]
-        d['tipo_oleo'] = st.selectbox("Tipo de Óleo Lubrificante:", lista_oleos, index=buscar_index(lista_oleos, 'tipo_oleo'))
-        d['carga_gas'] = st.text_input("Carga de Fluido (kg):", value=d.get('carga_gas', ''))
+        # TIPO DE ÓLEO PERSISTENTE
+        lista_oleos = ["POE", "PVE", "MINERAL", "AB"]
+        d['tipo_oleo'] = st.selectbox("Tipo Óleo:", lista_oleos, index=find_idx(lista_oleos, 'tipo_oleo'))
+        d['carga_gas'] = st.text_input("Carga Gás (kg):", value=d.get('carga_gas', ''), key="gas_persist")
 
     with e3:
-        st.markdown("##### ⚡ Elétrica e Operação")
-        # CORREÇÃO: TENSÃO NOMINAL SEGURANDO A ESCOLHA
+        # Removido st.markdown("##### ⚡ Elétrica e Status")
+        # TENSÃO NOMINAL PERSISTENTE
         lista_tensoes = ["110V", "220V", "380V", "440V"]
-        d['tensao_nominal'] = st.selectbox("Tensão de Alimentação:", lista_tensoes, index=buscar_index(lista_tensoes, 'tensao_nominal'))
+        d['tensao_nominal'] = st.selectbox("Tensão Nominal:", lista_tensoes, index=find_idx(lista_tensoes, 'tensao_nominal'))
         
-        # CORREÇÃO: STATUS SEGURANDO A ESCOLHA
-        lista_status = ["Operacional", "Parado (Defeito)", "Manutenção Preventiva", "Avaliação Técnica", "Instalação"]
-        d['status_eq'] = st.selectbox("Status do Equipamento:", lista_status, index=buscar_index(lista_status, 'status_eq'))
-        d['data_visita'] = st.date_input("Data da Análise:", value=date.today())
+        # STATUS PERSISTENTE
+        lista_status = ["Operacional", "Parado (Defeito)", "Manutenção Preventiva", "Avaliação Técnica"]
+        d['status_eq'] = st.selectbox("Status:", lista_status, index=find_idx(lista_status, 'status_eq'))
+        d['data_visita'] = st.date_input("Data Visita:", value=date.today())
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.info("📌 **Nota:** Certifique-se de que o Fluido selecionado corresponde à etiqueta da máquina para precisão nos cálculos da Aba 2.")
+    # Removido st.markdown("<br>") e st.info() que empurravam o layout
 
-    # SINCRONIZAÇÃO FINAL DO ESTADO (BLINDAGEM CONTRA PERDA DE DADOS)
+    # SINCRONIZAÇÃO FINAL DO ESTADO
     st.session_state.dados.update(d)
-
-# EXECUÇÃO DO BLOCO (SIMULADO)
-if __name__ == "__main__":
-    renderizar_aba_cadastro()
+# FINAL DO BLOCO 1 - LAYOUT RESTAURADO - LINHA 172
 # FINAL DO BLOCO 1 - INTEGRIDADE MANTIDA - LINHA 172
     
 
