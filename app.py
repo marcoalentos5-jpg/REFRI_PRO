@@ -508,16 +508,45 @@ with st.sidebar:
             pdf.set_font("Arial", "B", 8); pdf.cell(25, 6, " CEP:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(40, 6, f" {d.get('cep', '---')}", border=1, ln=True)
             pdf.ln(2)
 
-            # --- 3. SEÇÃO 2: ATIVO ---
+           # --- 3. SEÇÃO 2: DETALHES TÉCNICOS DO ATIVO (19 CAMPOS BLINDADOS) ---
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
             pdf.cell(190, 7, " 2. DETALHES TÉCNICOS DO ATIVO", ln=True, fill=True)
-            pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 8)
+            pdf.set_text_color(0, 0, 0)
             
-            pdf.cell(35, 6, " FABRICANTE:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('fabricante', '---')}", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " MODELO:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('modelo', '---')}", border=1, ln=True)
+            # Lista completa dos 19 campos baseada no mapeamento técnico HVAC-R
+            # Organizados em pares para preencher a folha corretamente
+            campos_ativo = [
+                (" FABRICANTE:", d.get('fabricante', '---')),           (" MODELO:", d.get('modelo', '---')),
+                (" N° SÉRIE (EVAP):", d.get('serie_evap', '---')),     (" N° SÉRIE (COND):", d.get('serie_cond', '---')),
+                (" TAG/PATRIMÔNIO:", d.get('tag_id', '---').upper()),  (" CAPACIDADE (BTU/TR):", d.get('capacidade', '---')),
+                (" TIPO DE ATIVO:", d.get('tipo_ativo', '---')),       (" POTÊNCIA (W):", d.get('potencia', '---')),
+                (" LOCAL EVAPORADORA:", d.get('local_evap', '---')),   (" LOCAL CONDENSADORA:", d.get('local_cond', '---')),
+                (" FLUIDO REFRIG.:", d.get('fluido', '---')),          (" CARGA FLUIDO (kg/g):", d.get('carga_gas', '---')),
+                (" TIPO DE ÓLEO:", d.get('tipo_oleo', '---')),         (" TENSÃO NOMINAL (V):", d.get('tensao_nom', '---')),
+                (" CORRENTE NOM.(A):", d.get('rla_nom', '---')),       (" DATA FABRICAÇÃO:", d.get('data_fab', '---')),
+                (" REGIME TRABALHO:", d.get('regime', '---')),         (" SETPOINT (°C):", d.get('setpoint', '---')),
+                (" ÚLTIMA MANUT.:", d.get('ultima_manut', '---'))
+            ]
+
+            # Loop para gerar os campos com Labels em Negrito
+            for i in range(0, len(campos_ativo)):
+                # Se for o último campo (ímpar), ele ocupa a linha toda ou metade
+                largura_campo = 35
+                largura_valor = 60
+                
+                # Aplica Negrito no Título
+                pdf.set_font("Arial", "B", 8)
+                pdf.cell(largura_campo, 6, campos_ativo[i][0], border=1)
+                
+                # Aplica Fonte Normal no Valor
+                pdf.set_font("Arial", "", 8)
+                
+                # Lógica para quebrar linha a cada 2 campos ou no último
+                if i % 2 != 0 or i == len(campos_ativo) - 1:
+                    pdf.cell(largura_valor, 6, f" {campos_ativo[i][1]}", border=1, ln=True)
+                else:
+                    pdf.cell(largura_valor, 6, f" {campos_ativo[i][1]}", border=1)
             
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " N° SÉRIE (EVAP):", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('serie_evap', '---')}", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " N° SÉRIE (COND):", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('serie_cond', '---')}", border=1, ln=True)
             pdf.ln(2)
 
             # --- 4. SEÇÃO 3: MEDIÇÕES (MAPEAMENTO DINÂMICO DE CHAVES) ---
