@@ -446,7 +446,7 @@ with st.sidebar:
 
     st.markdown("---")
 
-  # D. MOTOR DE GERAÇÃO PDF (UNIFICAÇÃO DE FONTE E CASE)
+    # D. MOTOR DE GERAÇÃO PDF
     d = st.session_state.dados
     n_val = str(d.get('nome', '')).strip()
     d_val = str(d.get('cliente_documento', d.get('cpf_cnpj', ''))).strip()
@@ -464,7 +464,6 @@ with st.sidebar:
             C_PRI = (13, 71, 161)
 
             def fmt(texto):
-                """Função para Primeira Letra Maiúscula em cada palavra"""
                 return str(texto).title() if texto not in [None, '', '---'] else '---'
 
             pdf = FPDF()
@@ -490,7 +489,7 @@ with st.sidebar:
 
             pdf.set_text_color(0, 0, 0)
             
-            # Linha 1
+            # Linha 1: Cliente e Documentos
             pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(15, 8, " Cliente:", border='LBT')
             pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(65, 8, f" {fmt(n_val)}", border='RBT')
             pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(20, 8, " Cpf/Cnpj:", border='LBT')
@@ -498,10 +497,25 @@ with st.sidebar:
             pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(15, 8, " E-Mail:", border='LBT')
             pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(45, 8, f" {d.get('email', '---').lower()}", border='RBT', ln=True)
 
-            # --- GERAÇÃO DO ARQUIVO FINAL (CORREÇÃO BYTEARRAY) ---
+            # Linha 2: Contatos
+            pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(20, 8, " Whatsapp:", border='LBT')
+            pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(45, 8, f" {d.get('whatsapp', '---')}", border='RBT')
+            pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(18, 8, " Celular:", border='LBT')
+            pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(45, 8, f" {d.get('celular', '---')}", border='RBT')
+            pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(12, 8, " Fixo:", border='LBT')
+            pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(50, 8, f" {d.get('tel_fixo', '---')}", border='RBT', ln=True)
+
+            # Linha 3: Endereço
+            pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(18, 8, " Endereço:", border='LBT')
+            pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(82, 8, f" {fmt(d.get('endereco'))}", border='RBT')
+            pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(18, 8, " Nº/Apto:", border='LBT')
+            pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(22, 8, f" {d.get('numero', '---')}", border='RBT')
+            pdf.set_font(F_CORPO, "B", T_FONTE); pdf.cell(15, 8, " Comp:", border='LBT')
+            pdf.set_font(F_CORPO, "", T_FONTE); pdf.cell(35, 8, f" {fmt(d.get('complemento'))}", border='RBT', ln=True)
+
+            # --- GERAÇÃO DO ARQUIVO FINAL (CONVERSÃO DE BYTES) ---
             pdf_output = pdf.output(dest='S')
             
-            # Converte bytearray ou string para bytes puros
             if isinstance(pdf_output, bytearray):
                 pdf_bytes = bytes(pdf_output)
             elif isinstance(pdf_output, str):
@@ -511,19 +525,21 @@ with st.sidebar:
 
             st.download_button(
                 label="📄 GERAR RELATÓRIO TÉCNICO FINAL",
-                data=pdf_bytes, # Agora os dados estão no formato correto
+                data=pdf_bytes,
                 file_name=f"Laudo_MPN_{d.get('tag_id','INS').upper()}.pdf",
                 mime="application/pdf",
-                key="btn_gerar_v2",
+                key="btn_gerar_vfinal_fix",
                 use_container_width=True
             )
         except Exception as e:
             st.error(f"Erro ao construir o PDF: {e}")
 
-# --- FIM DA SIDEBAR E INÍCIO DAS ABAS ---
+# ==============================================================================
+# 4. LÓGICA DE EXIBIÇÃO DAS ABAS (FORA DA SIDEBAR)
+# ==============================================================================
 if aba_selecionada == "Home":
-    # Aqui continua seu código da Home...
-    pass
+    # Seu código da Home aqui...
+    st.info("Página inicial carregada.")
 
 
 
