@@ -445,13 +445,16 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # --- MOTOR DE GERAÇÃO DO PDF (OS 7 AJUSTES APLICADOS) ---
+   # D. CHECKLIST DE INTEGRIDADE E MOTOR DE GERAÇÃO
     d = st.session_state.dados
     st.subheader("📊 Status do Laudo")
     
-    # Validação Robusta
-    nome_ok = len(str(d.get('nome', ''))).strip() > 3
-    doc_ok = len(str(d.get('cliente_documento', d.get('cpf_cnpj', '')))).strip() > 5
+    # 1. Validação Robusta (Correção do erro de atributo/strip)
+    nome_valor = str(d.get('nome', '')).strip()
+    doc_valor = str(d.get('cliente_documento', d.get('cpf_cnpj', ''))).strip()
+    
+    nome_ok = len(nome_valor) > 3
+    doc_ok = len(doc_valor) > 5
     
     if nome_ok and doc_ok:
         st.success("✅ Relatório Pronto")
