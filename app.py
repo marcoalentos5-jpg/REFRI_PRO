@@ -65,59 +65,61 @@ def renderizar_aba_1():
     # Inicializa o dicionário de dados se não existir
     if 'dados' not in st.session_state:
         st.session_state.dados = {}
+    
     d = st.session_state.dados
 
-    # --- BLOCO A: DADOS DO CLIENTE ---
+    # --- BLOCO A: INFORMAÇÕES DO CLIENTE ---
     with st.expander("👤 INFORMAÇÕES DO CLIENTE", expanded=True):
         c1, c2 = st.columns(2)
-        d['nome'] = c1.text_input("Nome do Cliente/Empresa:", value=d.get('nome', ''), key="cli_nome")
-        d['cpf_cnpj'] = c2.text_input("CPF ou CNPJ:", value=d.get('cpf_cnpj', ''), key="cli_doc")
+        d['nome'] = c1.text_input("Nome do Cliente/Empresa:", value=d.get('nome', ''), key="f_cli_n")
+        d['cpf_cnpj'] = c2.text_input("CPF ou CNPJ:", value=d.get('cpf_cnpj', ''), key="f_cli_d")
         
         c3, c4, c5 = st.columns([2, 1, 1])
-        d['email'] = c3.text_input("E-mail para Envio:", value=d.get('email', ''), key="cli_mail")
-        d['whatsapp'] = c4.text_input("WhatsApp:", value=d.get('whatsapp', ''), key="cli_zap")
-        d['telefone_fixo'] = c5.text_input("Telefone Fixo:", value=d.get('telefone_fixo', ''), key="cli_fixo")
+        d['email'] = c3.text_input("E-mail para Envio:", value=d.get('email', ''), key="f_cli_e")
+        d['whatsapp'] = c4.text_input("WhatsApp:", value=d.get('whatsapp', ''), key="f_cli_w")
+        d['telefone_fixo'] = c5.text_input("Telefone Fixo:", value=d.get('telefone_fixo', ''), key="f_cli_f")
 
-    # --- BLOCO B: LOCALIZAÇÃO ---
+    # --- BLOCO B: ENDEREÇO ---
     with st.expander("📍 ENDEREÇO DA INSTALAÇÃO", expanded=False):
         l1, l2 = st.columns([3, 1])
-        d['endereco'] = l1.text_input("Logradouro/Rua:", value=d.get('endereco', ''), key="end_rua")
-        d['numero'] = l2.text_input("Nº:", value=d.get('numero', ''), key="end_num")
+        d['endereco'] = l1.text_input("Logradouro/Rua:", value=d.get('endereco', ''), key="f_end_r")
+        d['numero'] = l2.text_input("Nº:", value=d.get('numero', ''), key="f_end_n")
         
         l3, l4, l5 = st.columns(3)
-        d['bairro'] = l3.text_input("Bairro:", value=d.get('bairro', ''), key="end_bairro")
-        d['cidade'] = l4.text_input("Cidade:", value=d.get('cidade', ''), key="end_cid")
-        d['cep'] = l5.text_input("CEP:", value=d.get('cep', ''), key="end_cep")
+        d['bairro'] = l3.text_input("Bairro:", value=d.get('bairro', ''), key="f_end_b")
+        d['cidade'] = l4.text_input("Cidade:", value=d.get('cidade', ''), key="f_end_c")
+        d['cep'] = l5.text_input("CEP:", value=d.get('cep', ''), key="f_end_p")
 
-    # --- BLOCO C: DADOS TÉCNICOS DO ATIVO ---
+    # --- BLOCO C: ESPECIFICAÇÕES TÉCNICAS ---
     with st.expander("❄️ ESPECIFICAÇÕES DO EQUIPAMENTO", expanded=True):
         e1, e2, e3 = st.columns(3)
-        d['fabricante'] = e1.text_input("Fabricante:", value=d.get('fabricante', ''), key="eq_fab")
-        d['modelo'] = e2.text_input("Modelo/Ref.:", value=d.get('modelo', ''), key="eq_mod")
-        d['tag_id'] = e3.text_input("TAG / Patrimônio:", value=d.get('tag_id', ''), key="eq_tag")
+        d['fabricante'] = e1.text_input("Fabricante:", value=d.get('fabricante', ''), key="f_eq_f")
+        d['modelo'] = e2.text_input("Modelo/Ref.:", value=d.get('modelo', ''), key="f_eq_m")
+        d['tag_id'] = e3.text_input("TAG / Patrimônio:", value=d.get('tag_id', ''), key="f_eq_t")
 
         e4, e5, e6 = st.columns(3)
-        d['serie_evap'] = e4.text_input("Nº Série Evaporadora:", value=d.get('serie_evap', ''), key="eq_sevap")
-        d['serie_cond'] = e5.text_input("Nº Série Condensadora:", value=d.get('serie_cond', ''), key="eq_scond")
-        d['capacidade'] = e6.text_input("Capacidade (BTUs/TR):", value=d.get('capacidade', ''), key="eq_cap")
+        d['serie_evap'] = e4.text_input("Nº Série Evaporadora:", value=d.get('serie_evap', ''), key="f_eq_se")
+        d['serie_cond'] = e5.text_input("Nº Série Condensadora:", value=d.get('serie_cond', ''), key="f_eq_sc")
+        d['capacidade'] = e6.text_input("Capacidade (BTUs/TR):", value=d.get('capacidade', ''), key="f_eq_cp")
 
         e7, e8, e9 = st.columns(3)
+        # Seleção de Fluido (Alimenta o Motor de Diagnóstico)
         lista_fluidos = ['R410A', 'R32', 'R22', 'R134a', 'R404A']
         f_atual = d.get('fluido', 'R410A')
         f_idx = lista_fluidos.index(f_atual) if f_atual in lista_fluidos else 0
-        d['fluido'] = e7.selectbox("Fluido Refrigerante:", lista_fluidos, index=f_idx, key="eq_fluido")
+        d['fluido'] = e7.selectbox("Fluido Refrigerante:", lista_fluidos, index=f_idx, key="f_eq_fl")
         
-        d['carga_gas'] = e8.text_input("Carga de Fluido (g/kg):", value=d.get('carga_gas', '0'), key="eq_carga")
-        d['tipo_oleo'] = e9.text_input("Tipo de Óleo:", value=d.get('tipo_oleo', 'POE'), key="eq_oleo")
+        d['carga_gas'] = e8.text_input("Carga de Fluido (g/kg):", value=d.get('carga_gas', '0'), key="f_eq_cg")
+        d['tipo_oleo'] = e9.text_input("Tipo de Óleo:", value=d.get('tipo_oleo', 'POE'), key="f_eq_ol")
 
         st.markdown("---")
+        # Status da Máquina
         lista_status = ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"]
         s_atual = d.get('status_maquina', "🟢 Operacional")
         s_idx = lista_status.index(s_atual) if s_atual in lista_status else 0
-        d['status_maquina'] = st.radio("Status Atual do Equipamento:", lista_status, index=s_idx, horizontal=True, key="eq_status_final")
+        d['status_maquina'] = st.radio("Status Atual:", lista_status, index=s_idx, horizontal=True, key="f_eq_st_final")
 
-    st.success("✅ Cadastro sincronizado com sucesso!")
-
+    st.success("✅ Cadastro sincronizado! Agora vá para a aba '2. Diagnósticos'.")
     
         with l4_c2:
             d['carga_gas'] = st.text_input("Carga de Fluido (kg/g):", value=d.get('carga_gas', ''), key="eq_cg")
