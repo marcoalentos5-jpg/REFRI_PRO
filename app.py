@@ -59,10 +59,6 @@ def buscar_cep(cep):
         except: pass
     return False
 
-# ==============================================================================
-# 1.2 FUNÇÃO DA ABA 1: Identificação e Equipamento (LIMPEZA DEFINITIVA)
-# ==============================================================================
-
 def renderizar_aba_1():
     st.header("📋 Cadastro de Cliente e Equipamento")
     
@@ -106,21 +102,22 @@ def renderizar_aba_1():
         d['capacidade'] = e6.text_input("Capacidade (BTUs/TR):", value=d.get('capacidade', ''))
 
         e7, e8, e9 = st.columns(3)
-        # SELEÇÃO DE FLUIDO - CRITICAL: ESSA CHAVE 'fluido' ALIMENTA O DIAGNÓSTICO
         lista_fluidos = ['R410A', 'R32', 'R22', 'R134a', 'R404A']
-        index_f = lista_fluidos.index(d.get('fluido', 'R410A')) if d.get('fluido') in lista_fluidos else 0
+        f_val = d.get('fluido', 'R410A')
+        index_f = lista_fluidos.index(f_val) if f_val in lista_fluidos else 0
         d['fluido'] = e7.selectbox("Fluido Refrigerante:", lista_fluidos, index=index_f)
         
         d['carga_gas'] = e8.text_input("Carga de Fluido (g/kg):", value=d.get('carga_gas', '0'))
         d['tipo_oleo'] = e9.text_input("Tipo de Óleo:", value=d.get('tipo_oleo', 'POE'))
 
-    st.success("✅ Dados de cadastro salvos temporariamente. Prossiga para a aba de Diagnósticos.")
-            
-            # FIX: CORREÇÃO DEFINITIVA DO STATUS (PERSISTÊNCIA)
-            lista_status = ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"]
-            s_idx = lista_status.index(d['status_maquina']) if d['status_maquina'] in lista_status else 0
-            d['status_maquina'] = st.radio("Status:", lista_status, index=s_idx, key="eq_st")
-            
+        st.markdown("---")
+        # --- FIX: STATUS INTEGRADO E INDENTADO CORRETAMENTE ---
+        lista_status = ["🟢 Operacional", "🟡 Requer Atenção", "🔴 Parado"]
+        s_val = d.get('status_maquina', "🟢 Operacional")
+        s_idx = lista_status.index(s_val) if s_val in lista_status else 0
+        d['status_maquina'] = st.radio("Status Atual do Equipamento:", lista_status, index=s_idx, horizontal=True)
+
+    st.success("✅ Dados salvos! Prossiga para a aba de Diagnósticos.")
         with l4_c2:
             d['carga_gas'] = st.text_input("Carga de Fluido (kg/g):", value=d.get('carga_gas', ''), key="eq_cg")
             lista_tensao = ["220V/1F", "220V/3F", "380V/3F", "440V/3F", "127V"]
