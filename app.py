@@ -648,7 +648,7 @@ elif aba_selecionada == "Relatórios":
 # [COLE AQUI - Logo após o fim da renderizar_aba_1]
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
-    d = st.session_state.dados # Atalho para os dados
+    d = st.session_state.dados 
     
     # Busca o fluido selecionado na Aba 1
     fluido = d.get('fluido', 'R410A')
@@ -660,33 +660,39 @@ def renderizar_aba_diagnosticos():
     
     with col1:
         st.markdown("### 🔵 Baixa")
-        p_suc = st.number_input("Pressão Sucção (PSI):", min_value=0.0, value=float(d.get('p_suc', 0.0)), key="p_suc")
-        t_suc = st.number_input("Temp. Tubulação (°C):", value=float(d.get('t_suc', 0.0)), key="t_suc")
+        # Salvando em chaves que o sistema reconhece para cálculo
+        p_suc = st.number_input("Pressão Sucção (PSI):", min_value=0.0, value=float(d.get('p_suc', 0.0)), key="p_suc_input")
+        t_suc = st.number_input("Temp. Tubulação (°C):", value=float(d.get('t_suc', 0.0)), key="t_suc_input")
+        d['p_suc'] = p_suc
+        d['t_suc'] = t_suc
 
     with col2:
         st.markdown("### 🔴 Alta")
-        p_des = st.number_input("Pressão Descarga (PSI):", min_value=0.0, value=float(d.get('p_des', 0.0)), key="p_des")
-        t_liq = st.number_input("Temp. Líquido (°C):", value=float(d.get('t_liq', 0.0)), key="t_liq")
+        p_des = st.number_input("Pressão Descarga (PSI):", min_value=0.0, value=float(d.get('p_des', 0.0)), key="p_des_input")
+        t_liq = st.number_input("Temp. Líquido (°C):", value=float(d.get('t_liq', 0.0)), key="t_liq_input")
+        d['p_des'] = p_des
+        d['t_liq'] = t_liq
 
     with col3:
         st.markdown("### 🌡️ Ambiente")
-        # PONTE: Salvando direto nas chaves que o PDF busca
+        # Estas são as chaves exatas que o seu PDF busca na Seção 3
         d['temp_insuflacao'] = st.number_input("Insuflação (°C):", value=float(d.get('temp_insuflacao', 0.0)))
         d['temp_retorno'] = st.number_input("Retorno (°C):", value=float(d.get('temp_retorno', 0.0)))
 
-    # --- BLOCO 2: PROCESSAMENTO (CÁLCULOS PT) ---
-    # Usando a função f_sat_precisao que você já tem no código
+    # --- BLOCO 2: PROCESSAMENTO (CÁLCULOS PT AUTOMÁTICOS) ---
+    # Chama a função de pressão saturada que você já tem
     t_sat_suc = f_sat_precisao(p_suc, fluido)
     t_sat_des = f_sat_precisao(p_des, fluido)
     
+    # Cálculos de SH e SC
     sh = t_suc - t_sat_suc
     sc = t_sat_des - t_liq
 
-    # Salva os cálculos para o PDF ler
+    # Envia os resultados para as gavetas do PDF (sh_total e sc_final)
     d['sh_total'] = round(sh, 1)
     d['sc_final'] = round(sc, 1)
 
-    # --- BLOCO 3: EXIBIÇÃO DE RESULTADOS ---
+    # --- BLOCO 3: EXIBIÇÃO DE RESULTADOS NA TELA ---
     st.markdown("---")
     res1, res2 = st.columns(2)
     with res1:
@@ -696,10 +702,9 @@ def renderizar_aba_diagnosticos():
 
     # --- BLOCO 4: CONCLUSÃO E LAUDO ---
     st.subheader("3. Parecer Técnico Final")
-    # PONTE: O PDF busca 'diagnostico_texto'
+    # O PDF busca 'diagnostico_texto' para preencher a Seção 4
     d['diagnostico_texto'] = st.text_area(
-        "Descreva o diagnóstico:",
-        value=d.get('diagnostico_texto', ''),
-        placeholder="Ex: Sistema operando com pressões estáveis...",
-        key="area_diag"
+        "Descreva o diagnóstico ou recomendações:",
+        value=d.get('diagnostico_texto', 'Nenhuma observação registrada.'),
+        key="area_diagnostico"
     )
