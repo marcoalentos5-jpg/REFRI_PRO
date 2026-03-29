@@ -465,10 +465,11 @@ with st.sidebar:
             pdf.add_page()
             C_PRI = (13, 71, 161) # Azul MPN Profissional
             
-           # --- 1. CABEÇALHO ---
-            try: 
-                pdf.image('logo.png', x=10, y=10, w=45)
-            except: 
+          # --- 1. CABEÇALHO (LOGO AMPLIADA E AJUSTE DE TÍTULO) ---
+            try:
+                # Aumentada para 60mm para garantir destaque da marca MPN
+                pdf.image('logo.png', x=10, y=8, w=60)
+            except:
                 pass
             
             pdf.set_xy(10, 32)
@@ -477,32 +478,37 @@ with st.sidebar:
             pdf.cell(190, 10, "LAUDO TÉCNICO DE INSPEÇÃO HVAC-R", ln=True, align='C')
             pdf.ln(2)
 
-            # --- 2. SEÇÃO 1: IDENTIFICAÇÃO (SINCRONIA TOTAL COM ABA 1) ---
+            # --- 2. SEÇÃO 1: IDENTIFICAÇÃO (BLINDAGEM CONTRA CAMPOS VAZIOS) ---
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
             data_v = datetime.now().strftime('%d/%m/%Y')
             pdf.cell(130, 7, " 1. IDENTIFICAÇÃO DO CLIENTE E ENDEREÇO", fill=True)
             pdf.cell(60, 7, f"DATA DA VISITA: {data_v} ", fill=True, ln=True, align='R')
 
             pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 8)
-            pdf.cell(30, 6, " CLIENTE:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(160, 6, f" {d.get('nome', '').upper()}", border=1, ln=True)
-            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " CPF/CNPJ:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(65, 6, f" {d.get('cpf_cnpj', '---')}", border=1)
+            pdf.cell(30, 6, " CLIENTE:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(160, 6, f" {n_val.upper()}", border=1, ln=True)
+            
+            # Tratamento de Cidade/UF para evitar a barra "/" solitária observada no print
+            cid_f = str(d.get('cidade', '')).strip()
+            uf_f = str(d.get('uf', '')).strip()
+            loc_final = f"{cid_f} / {uf_f}" if (cid_f or uf_f) else "---"
+
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " CPF/CNPJ:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(65, 6, f" {d_val}", border=1)
             pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " E-MAIL:", border=1); pdf.set_font("Arial", "", 7); pdf.cell(65, 6, f" {d.get('email', '---').lower()}", border=1, ln=True)
 
-            # CONTATOS SINCRONIZADOS
+            # Contatos (Busca redundante para garantir preenchimento)
             pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " WHATSAPP*:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(35, 6, f" {d.get('whatsapp', '---')}", border=1)
             pdf.cell(30, 6, " CELULAR:", border=1); pdf.cell(35, 6, f" {d.get('celular', '---')}", border=1)
-            pdf.cell(30, 6, " FIXO:", border=1); pdf.cell(30, 6, f" {d.get('tel_fixo', '---')}", border=1, ln=True)
+            pdf.cell(30, 6, " FIXO:", border=1); pdf.cell(30, 6, f" {d.get('tel_fixo', d.get('fixo', '---'))}", border=1, ln=True)
 
-            # ENDEREÇO SINCRONIZADO
+            # Endereço e CEP
             pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " ENDEREÇO:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(110, 6, f" {d.get('endereco', '---')}", border=1)
             pdf.set_font("Arial", "B", 8); pdf.cell(20, 6, " Nº:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(30, 6, f" {d.get('numero', '---')}", border=1, ln=True)
-            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " COMPL.:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(65, 6, f" {d.get('complemento', '---')}", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " BAIRRO:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(65, 6, f" {d.get('bairro', '---')}", border=1, ln=True)
-            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " CIDADE/UF:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(95, 6, f" {d.get('cidade', '---')}/{d.get('uf', '---')}", border=1)
+            
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " CIDADE/UF:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(95, 6, f" {loc_final}", border=1)
             pdf.set_font("Arial", "B", 8); pdf.cell(25, 6, " CEP:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(40, 6, f" {d.get('cep', '---')}", border=1, ln=True)
             pdf.ln(2)
 
-            # --- 3. SEÇÃO 2: DETALHES TÉCNICOS DO ATIVO (CHAVES CORRIGIDAS) ---
+            # --- 3. SEÇÃO 2: ATIVO ---
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
             pdf.cell(190, 7, " 2. DETALHES TÉCNICOS DO ATIVO", ln=True, fill=True)
             pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 8)
@@ -512,108 +518,93 @@ with st.sidebar:
             
             pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " N° SÉRIE (EVAP):", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('serie_evap', '---')}", border=1)
             pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " N° SÉRIE (COND):", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('serie_cond', '---')}", border=1, ln=True)
-            
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " POTÊNCIA (W):", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('potencia', '---')}", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " LOCAL EVAP.:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('local_evap', '---')}", border=1, ln=True)
-            
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " LOCAL COND.:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('local_cond', '---')}", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " FLUIDO REF.:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('fluido', '---')}", border=1, ln=True)
-            
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " CARGA FLUIDO:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('carga_gas', '---')}", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " TIPO DE ÓLEO:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('tipo_oleo', '---')}", border=1, ln=True)
-
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " CAPACIDADE:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('capacidade', '---')}", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " TAG/PATRIMÔNIO:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('tag_id', '---').upper()}", border=1, ln=True)
             pdf.ln(2)
 
-          # --- 4. SEÇÃO 3: MEDIÇÕES DE CAMPO (NOMES POR EXTENSO E FONTES AJUSTADAS) ---
+            # --- 4. SEÇÃO 3: MEDIÇÕES (MAPEAMENTO DINÂMICO DE CHAVES) ---
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 8.5)
             pdf.cell(190, 7, " 3. MEDIÇÕES DE CAMPO E PERFORMANCE", ln=True, fill=True)
             
             blocos_med = [
                 ["CICLO FRIGOR.", "SUCÇÃO (PSI)", "TUB. SUCÇÃO", "DESCARGA (PSI)", "TUB. DESCAR.", "T. DESC. COMP"],
-                ["AR E AMBIENTE", "RETORNO (°C)", "INSUFLAÇÃO", "AMBIENTE EXTERNO", "UMID. RELAT. DO AR (%)", "PRESSÃO DO ÓLEO"],
+                ["AR E AMBIENTE", "RETORNO (°C)", "INSUFLAÇÃO", "AMBIENTE EXTERNO", "UMID. RELAT. (%)", "PRESSÃO ÓLEO"],
                 ["ELÉTRICA", "TENSÃO NOM.", "TENSÃO MED.", "CORRENTE MED.", "RLA (A)", "LRA (A)"],
-                ["CAPACITÂNCIA", "NOMINAL COMPRESSOR", "MEDIDA no COMPRESSOR", "NOMINAL FAN", "MEDIDA no FAN", "CORRENTE FAN"]
+                ["CAPACITÂNCIA", "NOMINAL COMP.", "MEDIDA COMP.", "NOMINAL FAN", "MEDIDA FAN", "CORRENTE FAN"]
             ]
             
-            chaves_med = [
-                ['p_baixa', 'temp_suc_tubo', 'p_alta', 'temp_desc_tubo', 'temp_desc_comp'],
-                ['temp_retorno', 'temp_insuflacao', 'temp_amb_ext', 'umidade_rel', 'pressao_oleo'],
-                ['tensao_nom', 'tensao_med', 'corrente_med', 'rla_nom', 'lra_partida'],
-                ['cap_nom_comp', 'cap_lido_comp', 'cap_nom_fan', 'cap_lido_fan', 'corrente_fan']
+            # Lógica de Captura Blindada: tenta o nome longo, depois o curto, depois o genérico
+            val_blocos = [
+                [d.get('p_baixa'), d.get('temp_suc_tubo'), d.get('p_alta'), d.get('temp_desc_tubo'), d.get('temp_desc_comp')],
+                [d.get('temp_retorno'), d.get('temp_insuflacao'), d.get('temp_amb_ext'), d.get('umidade_rel'), d.get('pressao_oleo')],
+                [d.get('tensao_nom'), d.get('tensao_med'), d.get('corrente_med'), d.get('rla_nom', d.get('rla')), d.get('lra_partida', d.get('lra'))],
+                [d.get('cap_nom_comp'), d.get('cap_lido_comp'), d.get('cap_nom_fan'), d.get('cap_lido_fan'), d.get('corrente_fan')]
             ]
 
             for i in range(4):
                 pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 5.8); pdf.set_fill_color(235, 245, 255)
                 pdf.cell(30, 5, blocos_med[i][0], border=1, fill=True) 
-                for tit in blocos_med[i][1:]: 
-                    pdf.cell(32, 5, tit, border=1, align='C', fill=True)
+                for tit in blocos_med[i][1:]: pdf.cell(32, 5, tit, border=1, align='C', fill=True)
                 pdf.ln()
-                
                 pdf.set_font("Arial", "", 8)
                 pdf.cell(30, 6, "VALOR:", border=1, align='C')
-                for val in chaves_med[i]: 
-                    pdf.cell(32, 6, f" {d.get(val, '---')}", border=1, align='C')
+                for v in val_blocos[i]:
+                    pdf.cell(32, 6, f" {v if v not in [None, ''] else '---'}", border=1, align='C')
                 pdf.ln()
             pdf.ln(2)
 
-            # --- 5. SEÇÃO 4: DIAGNÓSTICO (SUBSTITUIÇÃO DE "D." POR "DELTA") ---
+            # --- 5. SEÇÃO 4: DIAGNÓSTICO (ESTÉTICA DELTA) ---
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 8.5)
             pdf.cell(190, 7, " 4. DIAGNÓSTICO DE PERFORMANCE E INTEGRIDADE", ln=True, fill=True)
             
-            titulos_diag = [
-                ['SH TOTAL', 'SH ÚTIL', 'SAT. SUCÇÃO', 'SAT. DESCAR.', 'DELTA T (AR)', 'SC FINAL'],
-                ['DELTA CORRENTE', 'DELTA TENSÃO', 'RAZÃO COMPR.', 'COP ESTIM.', 'DELTA CAP. COMP.', 'DELTA CAP. FAN.']
-            ]
+            tit_diag = [['SH TOTAL', 'SH ÚTIL', 'SAT. SUCÇÃO', 'SAT. DESCAR.', 'DELTA T (AR)', 'SC FINAL'],
+                        ['DELTA CORRENTE', 'DELTA TENSÃO', 'RAZÃO COMPR.', 'COP ESTIM.', 'DELTA CAP. COMP.', 'DELTA CAP. FAN.']]
             
-            chaves_diag = [
-                ['sh_total', 'sh_util', 't_sat_baixa', 't_sat_alta', 'delta_t_ar', 'sc_total'],
-                ['dif_corrente', 'dif_tensao', 'razao_compressao', 'cop_estimado', 'dif_cap_comp', 'dif_cap_fan']
-            ]
+            val_diag = [[d.get('sh_total'), d.get('sh_util'), d.get('t_sat_baixa'), d.get('t_sat_alta'), d.get('delta_t_ar'), d.get('sc_total')],
+                        [d.get('dif_corrente'), d.get('dif_tensao'), d.get('razao_compressao'), d.get('cop_estimado'), d.get('dif_cap_comp'), d.get('dif_cap_fan')]]
 
             for i in range(2):
-                pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 6); pdf.set_fill_color(245, 245, 245)
-                for tit in titulos_diag[i]:
-                    pdf.cell(31.6, 5, tit, border=1, align='C', fill=True)
+                pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 6.2); pdf.set_fill_color(245, 245, 245)
+                for t in tit_diag[i]: pdf.cell(31.6, 5, t, border=1, align='C', fill=True)
                 pdf.ln()
-                
                 pdf.set_font("Arial", "", 8)
-                for val in chaves_diag[i]:
-                    res = d.get(val, '---')
-                    if isinstance(res, (int, float)): res = f"{res:.1f}"
+                for v in val_diag[i]:
+                    try:
+                        res = f"{float(v):.1f}" if v is not None and str(v).replace('.','',1).isdigit() else "---"
+                    except: res = "---"
                     pdf.cell(31.6, 6, f" {res}", border=1, align='C')
                 pdf.ln()
             pdf.ln(2)
 
-            # --- 6. SEÇÃO 5: PARECER TÉCNICO FINAL (LINKADO COM ABA 3) ---
+            # --- 6. SEÇÃO 5: PARECER TÉCNICO (CAPTURA MULTI-ABA) ---
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 8.5)
             pdf.cell(190, 7, " 5. PARECER TÉCNICO FINAL", ln=True, fill=True)
             
-            pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "", 8)
-            texto_parecer = d.get('parecer_final', 'Nenhuma observação técnica registrada.')
-            pdf.multi_cell(190, 5, f" {texto_parecer}", border=1, align='L')
-            pdf.ln(4)
-
-            # --- 7. ASSINATURAS E BOTÃO DE DOWNLOAD ---
+            pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "", 8.5)
+            # Tenta capturar de qualquer chave possível onde o parecer possa estar
+            txt_parecer = str(d.get('parecer_final', d.get('parecer_tecnico', d.get('parecer', '')))).strip()
+            if not txt_parecer or txt_parecer == "None":
+                txt_parecer = "Nenhuma observação técnica registrada."
+            
+            pdf.multi_cell(190, 5, f" {txt_parecer}", border=1, align='L')
             pdf.ln(10)
+
+            # --- 7. ASSINATURAS (SINCRONIA COM IDENTIFICAÇÃO DO TÉCNICO) ---
             y_sig = pdf.get_y()
             if y_sig > 250: pdf.add_page(); y_sig = 20
             
-            pdf.line(20, y_sig, 90, y_sig); pdf.line(110, y_sig, 180, y_sig)
-            
-            # Responsável Técnico
-            pdf.set_xy(20, y_sig + 1); pdf.set_font("Arial", "B", 8)
+            # Linha Técnico
+            pdf.line(20, y_sig + 10, 90, y_sig + 10)
+            pdf.set_xy(20, y_sig + 11); pdf.set_font("Arial", "B", 8)
             pdf.cell(70, 4, d.get('tecnico_nome', '').upper(), ln=True, align='C')
-            id_tec = f"CFT/REG: {d.get('tecnico_registro', '')}" if d.get('tecnico_registro') else f"DOC: {d.get('tecnico_documento', '')}"
-            pdf.set_x(20); pdf.set_font("Arial", "", 7); pdf.cell(70, 4, id_tec, align='C')
+            reg_tec = d.get('tecnico_registro', d.get('tecnico_documento', '---'))
+            pdf.set_x(20); pdf.set_font("Arial", "", 7); pdf.cell(70, 4, f"REGISTRO: {reg_tec}", align='C')
 
-            # Cliente
-            pdf.set_xy(110, y_sig + 1); pdf.set_font("Arial", "B", 8)
+            # Linha Cliente
+            pdf.line(110, y_sig + 10, 180, y_sig + 10)
+            pdf.set_xy(110, y_sig + 11); pdf.set_font("Arial", "B", 8)
             pdf.cell(70, 4, n_val.upper(), ln=True, align='C')
             pdf.set_x(110); pdf.set_font("Arial", "", 7); pdf.cell(70, 4, f"CPF/CNPJ: {d_val}", align='C')
 
-            # GERAR OUTPUT
+            # --- GERAÇÃO DO ARQUIVO FINAL ---
             pdf_bytes = pdf.output(dest='S')
             st.download_button(
                 label="📄 GERAR RELATÓRIO TÉCNICO FINAL",
