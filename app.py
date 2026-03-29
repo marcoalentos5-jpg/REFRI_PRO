@@ -173,19 +173,19 @@ def f_sat_precisao(p, g):
 
 
 # ==============================================================================
-# 2. RENDERIZAÇÃO DA ABA DE DIAGNÓSTICOS (LINHAS 178 - 384)
+# 2. RENDERIZAÇÃO DA ABA DE DIAGNÓSTICOS (LINHAS 175 - 289)
 # ==============================================================================
 def renderizar_aba_diagnosticos():
     st.header("🔍 Central de Diagnóstico Técnico")
     
-    # Referência ao estado global para performance e redução de chamadas
+    # 2.1 REFERÊNCIA DE ESTADO E FLUIDO
     d = st.session_state.dados
     fluido_selecionado = d.get('fluido', 'R410A')
     
     st.info(f"❄️ Fluido Refrigerante em Análise: **{fluido_selecionado}**")
     st.markdown("---")
 
-    # --- 2.1 PAINEL DE METAS DE REFERÊNCIA (DINÂMICO) ---
+    # 2.2 PAINEL DE METAS DE REFERÊNCIA
     alvos_tecnicos = {
         "R410A": {"psuc": "110-130", "pdes": "350-450", "sh": "5-7K", "sc": "4-7K"},
         "R22":   {"psuc": "60-75",   "pdes": "250-300", "sh": "5-7K", "sc": "4-7K"},
@@ -202,91 +202,71 @@ def renderizar_aba_diagnosticos():
     """, unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # --- 2.2 ENTRADA DE DADOS: CICLO FRIGORÍFICO ---
+    # 2.3 MEDIÇÕES DO CICLO FRIGORÍFICO
     st.subheader("1. Medições do Ciclo")
     col_suc, col_des = st.columns(2)
 
     with col_suc:
         st.markdown("#### 🔵 Lado de Baixa")
-        d['p_suc'] = st.number_input("Pressão de Sucção (PSI):", value=float(d.get('p_suc', 0.0)), step=1.0, key="psuc_input")
-        d['t_suc'] = st.number_input("Temp. Tubo Sucção (°C):", value=float(d.get('t_suc', 0.0)), step=0.1, key="tsuc_input")
+        d['p_suc'] = st.number_input("Pressão de Sucção (PSI):", value=float(d.get('p_suc', 0.0)), step=1.0, key="psuc_diag")
+        d['t_suc'] = st.number_input("Temp. Tubo Sucção (°C):", value=float(d.get('t_suc', 0.0)), step=0.1, key="tsuc_diag")
 
     with col_des:
         st.markdown("#### 🔴 Lado de Alta")
-        d['p_des'] = st.number_input("Pressão de Descarga (PSI):", value=float(d.get('p_des', 0.0)), step=1.0, key="pdes_input")
-        d['t_liq'] = st.number_input("Temp. Tubo Líquido (°C):", value=float(d.get('t_liq', 0.0)), step=0.1, key="tliq_input")
+        d['p_des'] = st.number_input("Pressão de Descarga (PSI):", value=float(d.get('p_des', 0.0)), step=1.0, key="pdes_diag")
+        d['t_liq'] = st.number_input("Temp. Tubo Líquido (°C):", value=float(d.get('t_liq', 0.0)), step=0.1, key="tliq_diag")
 
-    # --- 2.3 ENTRADA DE DADOS: AMBIENTE E ELÉTRICA ---
+    # 2.4 AMBIENTE E ELÉTRICA (CORREÇÃO DA LINHA 230 INTEGRADA)
     st.markdown("---")
     st.subheader("2. Ambiente e Elétrica")
     col_amb, col_ele = st.columns(2)
 
     with col_amb:
-        d['t_ar_ent'] = st.number_input("Temp. Ar Entrada Evap. (°C):", value=float(d.get('t_ar_ent', 0.0)))
-        d['t_ar_sai'] = st.number_input("Temp. Ar Saída Evap. (°C):", value=float(d.get('t_ar_sai', 0.0)))
+        d['t_ar_ent'] = st.number_input("Temp. Ar Entrada Evap. (°C):", value=float(d.get('t_ar_ent', 0.0)), key="tar_ent")
+        d['t_ar_sai'] = st.number_input("Temp. Ar Saída Evap. (°C):", value=float(d.get('t_ar_sai', 0.0)), key="tar_sai")
 
     with col_ele:
-        d['corrente'] = st.number_input("Corrente (A):", value=float(d.get('corrente', 0.0)))
-        d['tensao'] = st.number_input("Tensão (V):", value=float(d.get('tensao', 220.0)))
+        # Sanitização para evitar TypeError/ValueError na conversão
+        def fix_val(val, default):
+            try: return float(val) if val not in [None, ""] else default
+            except: return default
 
-    # --- 2.4 MOTOR DE CÁLCULO TERMODINÂMICO (SIMULAÇÃO TABELA PT) ---
-    def calcular_t_sat(pressao, fluido):
-        if pressao <= 0: return 0.0
-        # Coeficientes simulados via regressão para precisão de campo
-        if fluido == "R410A": return (pressao * 0.209) - 18.2
-        if fluido == "R22":   return (pressao * 0.381) - 25.4
-        if fluido == "R134a": return (pressao * 0.522) - 32.1
-        return (pressao * 0.2) - 15.0
+        d['corrente'] = st.number_input("Corrente (A):", value=fix_val(d.get('corrente'), 0.0), step=0.1, key="curr_diag")
+        # LINHA 230: Blindagem contra valores nulos/vazios
+        d['tensao'] = st.number_input("Tensão (V):", value=fix_val(d.get('tensao'), 220.0), step=1.0, key="tens_diag")
 
-    t_sat_suc = calcular_t_sat(d['p_suc'], fluido_selecionado)
-    t_sat_des = calcular_t_sat(d['p_des'], fluido_selecionado)
-    
-    # Cálculos de SH e SC com travas de segurança
-    sh = d['t_suc'] - t_sat_suc
-    sc = t_sat_des - d['t_liq']
-    delta_t_ar = d['t_ar_ent'] - d['t_ar_sai']
+    # 2.5 CÁLCULOS TERMODINÂMICOS
+    def get_t_sat(p, f):
+        if p <= 0: return 0.0
+        coefs = {"R410A": (0.209, -18.2), "R22": (0.381, -25.4), "R134a": (0.522, -32.1)}
+        c1, c2 = coefs.get(f, (0.2, -15.0))
+        return (p * c1) + c2
 
-    # --- 2.5 EXIBIÇÃO DE RESULTADOS E MÉTRICAS ---
+    tsat_s = get_t_sat(d['p_suc'], fluido_selecionado)
+    tsat_d = get_t_sat(d['p_des'], fluido_selecionado)
+    sh_calc = d['t_suc'] - tsat_s
+    sc_calc = tsat_d - d['t_liq']
+
+    # 2.6 RESULTADOS E MÉTRICAS VISUAIS
     st.markdown("---")
-    st.subheader("3. Resultados do Diagnóstico")
     m1, m2, m3, m4 = st.columns(4)
+    m1.metric("T. Sat. Sucção", f"{tsat_s:.1f}°C")
+    m2.metric("T. Sat. Descarga", f"{tsat_d:.1f}°C")
+    m3.metric("SH (Superaq.)", f"{sh_calc:.1f} K", delta_color="normal" if 5<=sh_calc<=8 else "inverse")
+    m4.metric("SC (Subresf.)", f"{sc_calc:.1f} K", delta_color="normal" if 4<=sc_calc<=9 else "inverse")
 
-    with m1: st.metric("T. Sat. Sucção", f"{t_sat_suc:.1f}°C")
-    with m2: st.metric("T. Sat. Descarga", f"{t_sat_des:.1f}°C")
-    with m3: 
-        status_sh = "normal" if 5 <= sh <= 8 else "inverse"
-        st.metric("SH (Superaq.)", f"{sh:.1f} K", delta_color=status_sh)
-    with m4: 
-        status_sc = "normal" if 4 <= sc <= 9 else "inverse"
-        st.metric("SC (Subresf.)", f"{sc:.1f} K", delta_color=status_sc)
-
-    # --- 2.6 ALERTAS DE SEGURANÇA E PARECER ---
-    if sh < 2:
-        st.error("🚨 PERIGO: Superaquecimento muito baixo! Risco iminente de retorno de líquido ao compressor.")
-    elif sh > 12:
-        st.warning("⚠️ ALERTA: Superaquecimento alto. Possível falta de fluido ou restrição no dispositivo de expansão.")
-
+    # 2.7 PARECER E SINCRONIZAÇÃO (LINHA 289 / ANTIGA 379)
     st.markdown("---")
-    st.subheader("4. Parecer Técnico Final")
-    d['laudo_diag'] = st.text_area(
-        "Observações detalhadas para o Laudo:", 
-        value=d.get('laudo_diag', ''), 
-        placeholder="Ex: Sistema operando dentro dos parâmetros após carga de fluido...",
-        height=120
-    )
+    d['laudo_diag'] = st.text_area("Parecer Técnico:", value=d.get('laudo_diag', ''), height=100)
 
-    # --- 2.7 SINCRONIZAÇÃO E BLINDAGEM DE DADOS (CORREÇÃO LINHA 379) ---
-    # Esta seção garante que as chaves existam e o session_state seja atualizado sem erro de escopo
+    # Sincronização Final Protegida
     st.session_state.dados.update({
-        'cm_c': d.get('cm_c', 0.0),
-        'cm_f': d.get('cm_f', 0.0),
-        'lra': d.get('lra', 0.0),
-        'rla': d.get('rla', 0.0),
-        'temp_descarga': d.get('temp_descarga', 0.0),
-        'sh_calculado': round(sh, 2),
-        'sc_calculado': round(sc, 2),
-        'delta_ar': round(delta_t_ar, 2)
+        'sh_calculado': round(sh_calc, 2),
+        'sc_calculado': round(sc_calc, 2),
+        'delta_ar': round(d['t_ar_ent'] - d['t_ar_sai'], 2),
+        'status_operacional': "Normal" if 5<=sh_calc<=8 else "Revisão Necessária"
     })
+# FIM DO BLOCO 2 (LINHA 289)
 # FINAL DO BLOCO 2 (LINHA 384)   
 
 
