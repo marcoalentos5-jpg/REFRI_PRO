@@ -833,4 +833,23 @@ if aba_selecionada == "📊 Performance (Mollier)":
     renderizar_aba_graficos()
 
 elif aba_selecionada == "Home":
-    # ... resto do código ...
+    # --- ABA HOME ---
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Centralização da Logo
+    col1, col2, col3 = st.columns([1, 2, 1]) 
+    with col2: 
+        if os.path.exists("logo.png"):
+            st.image("logo.png", use_container_width=True) 
+        else:
+            st.subheader("MPN SOLUÇÕES")
+
+    # Texto de Boas-vindas
+    st.markdown("""
+        <div style="text-align: center;">
+            <h1 style="color: #0d47a1;">MPN Soluções</h1>
+            <p style="color: #1976d2; font-size: 1.2em;">Gestão Inteligente HVAC-R</p>
+            <hr>
+            <p>Selecione uma opção no menu lateral para iniciar.</p>
+        </div>
+    """, unsafe_allow_html=True)
