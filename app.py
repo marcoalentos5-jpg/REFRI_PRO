@@ -6,8 +6,8 @@ import urllib.parse
 import os # Biblioteca para verificar arquivos no sistema
 import numpy as np
 import urllib.parse
-from datetime import datetime
-
+import pandas as pd
+import matplotlib.pyplot as plt  # <--- ADICIONE ESTE
 
 # 1. CONFIGURAÇÃO INICIAL (DIRETRIZ: LAYOUT CONGELADO)
 st.set_page_config(page_title="HVAC Pro - MPN Soluções", layout="wide", page_icon="⚙️")
@@ -749,3 +749,88 @@ def renderizar_aba_diagnosticos():
         placeholder="Ex: Sistema operando com pressões estáveis, superaquecimento normal...",
         key="laudo_area_diag"
     )
+
+
+# ... fim da função renderizar_aba_diagnosticos ...
+    st.session_state.dados['laudo_diag'] = st.text_area(...)
+
+# --- FUNÇÃO DOS GRÁFICOS (COLE AQUI) ---
+def renderizar_aba_graficos():
+    st.header("📈 Análise Termodinâmica (Mollier)")
+    
+    d = st.session_state.dados
+    fluido = d.get('fluido', 'R410A')
+    
+    # Busca as pressões reais digitadas na Aba 2 (ou usa padrão se estiver vazio)
+    p_baixa_psi = d.get('p_suc_diag', 118.0)
+    p_alta_psi = d.get('p_des_diag', 380.0)
+    
+    # Converte PSI para BAR para o gráfico
+    p_baixa = p_baixa_psi * 0.0689476 
+    p_alta = p_alta_psi * 0.0689476
+    
+    st.subheader(f"Diagrama P-h Estimado: {fluido}")
+    
+    fig, ax = plt.subplots(figsize=(8, 6))
+    
+    # Simulação da Curva de Saturação
+    h_liq = np.linspace(150, 250, 100)
+    p_sat = 10 * np.exp(0.02 * (h_liq - 150))
+    h_vap = np.linspace(250, 450, 100)
+    p_sat_v = 10 * np.exp(-0.015 * (h_vap - 250))
+    
+    ax.plot(h_liq, p_sat, color='blue', label='Líquido Saturado')
+    ax.plot(h_vap, p_sat_v, color='red', label='Vapor Saturado')
+    
+    # Pontos Dinâmicos baseados no seu preenchimento
+    ax.scatter([400], [p_baixa], color='darkblue', s=100, label=f'1. Sucção ({p_baixa_psi} PSI)')
+    ax.scatter([450], [p_alta], color='darkred', s=100, label=f'2. Descarga ({p_alta_psi} PSI)')
+    
+    ax.set_yscale('log')
+    ax.set_xlabel("Entalpia (kJ/kg)")
+    ax.set_ylabel("Pressão (bar)")
+    ax.grid(True, which="both", ls="-", alpha=0.5)
+    ax.legend()
+    
+    st.pyplot(fig)
+    st.info("💡 Este diagrama é uma representação técnica do ciclo de compressão do seu ativo.")
+
+# --- INÍCIO DA LÓGICA DE EXIBIÇÃO ---
+if aba_selecionada == "📊 Performance (Mollier)":
+    renderizar_aba_graficos()
+
+elif aba_selecionada == "Home":
+    # --- ABA HOME ---
+    st.markdown("<br>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 2, 1]) 
+    with col2: 
+        if os.path.exists("logo.png"):
+            st.image("logo.png", use_container_width=True) 
+        else:
+            st.subheader("MPN SOLUÇÕES")
+
+    st.markdown("""
+        <div style="text-align: center;">
+            <h1 style="color: #0d47a1;">MPN Soluções</h1>
+            <p style="color: #1976d2; font-size: 1.2em;">Gestão Inteligente HVAC-R</p>
+        </div>
+    """, unsafe_allow_html=True)
+
+elif aba_selecionada == "1. Cadastro de Equipamentos":
+    renderizar_aba_1()
+
+elif aba_selecionada == "2. Diagnósticos":
+    renderizar_aba_diagnosticos()
+
+elif aba_selecionada == "Relatórios":
+    st.header("📋 Central de Relatórios")
+    st.write("O relatório técnico final pode ser gerado no botão azul na barra lateral.")
+
+# ==============================================================================
+# 4. LÓGICA DE EXIBIÇÃO DAS ABAS (Onde o app decide o que mostrar)
+# ==============================================================================
+if aba_selecionada == "📊 Performance (Mollier)":
+    renderizar_aba_graficos()
+
+elif aba_selecionada == "Home":
+    # ... resto do código ...
