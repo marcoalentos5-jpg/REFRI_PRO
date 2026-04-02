@@ -526,57 +526,50 @@ with st.sidebar:
             pdf.cell(30, 6, f" {d.get('uf', '---')}", border=1, ln=True)
             pdf.ln(2)
             
-       # 4. SEÇÃO 2: DETALHES TÉCNICOS DO ATIVO (3 COLUNAS - 11 CAMPOS)
-            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
+      # 4. SEÇÃO 2: DETALHES TÉCNICOS DO ATIVO (7 COLUNAS X 2 LINHAS)
+            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 8)
             pdf.cell(190, 7, " 2. DETALHES TÉCNICOS DO ATIVO", ln=True, fill=True)
-            pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 7)
+            pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 6)
             
-            # Linha 1: Fabricante, Modelo e Série Evap
-            pdf.cell(25, 6, " FABRICANTE:", border="LTB"); pdf.set_font("Arial", "", 7)
-            pdf.cell(38, 6, f" {d.get('fabricante', '---')}", border="RTB")
-            
-            pdf.set_font("Arial", "B", 7); pdf.cell(25, 6, " MODELO:", border="LTB"); pdf.set_font("Arial", "", 7)
-            pdf.cell(38, 6, f" {d.get('modelo', '---')}", border="RTB")
-            
-            pdf.set_font("Arial", "B", 7); pdf.cell(25, 6, " SÉRIE EVAP:", border="LTB"); pdf.set_font("Arial", "", 7)
-            pdf.cell(39, 6, f" {d.get('n_serie_evap', '---')}", border="RTB", ln=True)
-            
-            # Linha 2: Série Cond, Local Evap e Local Cond
-            pdf.set_font("Arial", "B", 7); pdf.cell(25, 6, " SÉRIE COND:", border="LTB"); pdf.set_font("Arial", "", 7)
-            pdf.cell(38, 6, f" {d.get('n_serie_cond', '---')}", border="RTB")
-            
-            pdf.set_font("Arial", "B", 7); pdf.cell(25, 6, " LOCAL EVAP:", border="LTB"); pdf.set_font("Arial", "", 7)
-            pdf.cell(38, 6, f" {d.get('local_evaporadora', '---')}", border="RTB")
-            
-            pdf.set_font("Arial", "B", 7); pdf.cell(25, 6, " LOCAL COND:", border="LTB"); pdf.set_font("Arial", "", 7)
-            pdf.cell(39, 6, f" {d.get('local_condensadora', '---')}", border="RTB", ln=True)
-            
-            # Linha 3: Capacidade, Potência e Fluido
-            pdf.set_font("Arial", "B", 7); pdf.cell(25, 6, " CAPACIDADE:", border="LTB"); pdf.set_font("Arial", "", 7)
-            pdf.cell(38, 6, f" {d.get('capacidade_btus', '---')}", border="RTB")
-            
-            pdf.set_font("Arial", "B", 7); pdf.cell(25, 6, " POTÊNCIA (W):", border="LTB"); pdf.set_font("Arial", "", 7)
-            pdf.cell(38, 6, f" {d.get('potencia_nominal', '---')}", border="RTB")
-            
-            pdf.set_font("Arial", "B", 7); pdf.cell(25, 6, " FLUIDO REF.:", border="LTB"); pdf.set_font("Arial", "", 7)
-            pdf.cell(39, 6, f" {d.get('fluido_refrigerante', '---')}", border="RTB", ln=True)
+            # Ajuste de largura para 7 colunas (aprox 27mm por coluna)
+            w_col = 27.14 
 
-            # Linha 4: Carga, Óleo e Tensão
-            pdf.set_font("Arial", "B", 7); pdf.cell(25, 6, " CARGA (kg/g):", border="LTB"); pdf.set_font("Arial", "", 7)
-            pdf.cell(38, 6, f" {d.get('carga_fluido', '---')}", border="RTB")
-            
-            pdf.set_font("Arial", "B", 7); pdf.cell(25, 6, " TIPO ÓLEO:", border="LTB"); pdf.set_font("Arial", "", 7)
-            pdf.cell(38, 6, f" {d.get('tipo_oleo', '---')}", border="RTB")
-            
-            pdf.set_font("Arial", "B", 7); pdf.cell(25, 6, " TENSÃO NOM.:", border="LTB"); pdf.set_font("Arial", "", 7)
-            pdf.cell(39, 6, f" {d.get('tensao_nominal_v', '---')}", border="RTB", ln=True)
+            # --- LINHA 1 ---
+            pdf.cell(w_col, 5, " FABRICANTE", border=1, align='C')
+            pdf.cell(w_col, 5, " MODELO", border=1, align='C')
+            pdf.cell(w_col, 5, " SÉRIE EVAP", border=1, align='C')
+            pdf.cell(w_col, 5, " SÉRIE COND", border=1, align='C')
+            pdf.cell(w_col, 5, " LOCAL EVAP", border=1, align='C')
+            pdf.cell(w_col, 5, " LOCAL COND", border=1, align='C')
+            pdf.cell(w_col, 5, " CAPACIDADE", border=1, align='C', ln=True)
 
-            # Linha 5: Última Manutenção e TAG (Campos Finais)
-            pdf.set_font("Arial", "B", 7); pdf.cell(25, 6, " ULT. MANUT:", border="LTB"); pdf.set_font("Arial", "", 7)
-            pdf.cell(38, 6, f" {d.get('data_ultima_manut', '---')}", border="RTB")
-            
-            pdf.set_font("Arial", "B", 7); pdf.cell(25, 6, " TAG/ID:", border="LTB"); pdf.set_font("Arial", "", 7)
-            pdf.cell(102, 6, f" {d.get('tag_patrimonio', '---')}", border="RTB", ln=True)
+            pdf.set_font("Arial", "", 6)
+            pdf.cell(w_col, 6, f" {d.get('fabricante', '---')}", border=1, align='C')
+            pdf.cell(w_col, 6, f" {d.get('modelo', '---')}", border=1, align='C')
+            pdf.cell(w_col, 6, f" {d.get('n_serie_evap', '---')}", border=1, align='C')
+            pdf.cell(w_col, 6, f" {d.get('n_serie_cond', '---')}", border=1, align='C')
+            pdf.cell(w_col, 6, f" {d.get('local_evaporadora', '---')}", border=1, align='C')
+            pdf.cell(w_col, 6, f" {d.get('local_condensadora', '---')}", border=1, align='C')
+            pdf.cell(w_col, 6, f" {d.get('capacidade_btus', '---')}", border=1, align='C', ln=True)
+
+            # --- LINHA 2 ---
+            pdf.set_font("Arial", "B", 6)
+            pdf.cell(w_col, 5, " POTÊNCIA (W)", border=1, align='C')
+            pdf.cell(w_col, 5, " FLUIDO REF.", border=1, align='C')
+            pdf.cell(w_col, 5, " CARGA (kg/g)", border=1, align='C')
+            pdf.cell(w_col, 5, " TIPO ÓLEO", border=1, align='C')
+            pdf.cell(w_col, 5, " TENSÃO NOM.", border=1, align='C')
+            pdf.cell(w_col, 5, " TAG/ID", border=1, align='C')
+            pdf.cell(w_col, 5, " ULT. MANUT", border=1, align='C', ln=True)
+
+            pdf.set_font("Arial", "", 6)
+            pdf.cell(w_col, 6, f" {d.get('potencia_nominal', '---')}", border=1, align='C')
+            pdf.cell(w_col, 6, f" {d.get('fluido_refrigerante', '---')}", border=1, align='C')
+            pdf.cell(w_col, 6, f" {d.get('carga_fluido', '---')}", border=1, align='C')
+            pdf.cell(w_col, 6, f" {d.get('tipo_oleo', '---')}", border=1, align='C')
+            pdf.cell(w_col, 6, f" {d.get('tensao_nominal_v', '---')}", border=1, align='C')
+            pdf.cell(w_col, 6, f" {d.get('tag_patrimonio', '---')}", border=1, align='C')
+            pdf.cell(w_col, 6, f" {d.get('data_ultima_manut', '---')}", border=1, align='C', ln=True)
             
             pdf.ln(2)
 
