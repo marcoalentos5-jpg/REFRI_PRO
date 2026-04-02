@@ -531,10 +531,9 @@ with st.sidebar:
             pdf.cell(190, 7, " 2. DETALHES TÉCNICOS DO ATIVO", ln=True, fill=True)
             pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 6)
             
-            # Ajuste de largura para 7 colunas (aprox 27mm por coluna)
             w_col = 27.14 
 
-            # --- LINHA 1 ---
+            # --- LINHA 1 (CABEÇALHOS) ---
             pdf.cell(w_col, 5, " FABRICANTE", border=1, align='C')
             pdf.cell(w_col, 5, " MODELO", border=1, align='C')
             pdf.cell(w_col, 5, " SÉRIE EVAP", border=1, align='C')
@@ -543,7 +542,9 @@ with st.sidebar:
             pdf.cell(w_col, 5, " LOCAL COND", border=1, align='C')
             pdf.cell(w_col, 5, " CAPACIDADE", border=1, align='C', ln=True)
 
+            # --- LINHA 1 (DADOS) ---
             pdf.set_font("Arial", "", 6)
+            # Usei d.get com as chaves prováveis do seu st.session_state
             pdf.cell(w_col, 6, f" {d.get('fabricante', '---')}", border=1, align='C')
             pdf.cell(w_col, 6, f" {d.get('modelo', '---')}", border=1, align='C')
             pdf.cell(w_col, 6, f" {d.get('n_serie_evap', '---')}", border=1, align='C')
@@ -552,7 +553,7 @@ with st.sidebar:
             pdf.cell(w_col, 6, f" {d.get('local_condensadora', '---')}", border=1, align='C')
             pdf.cell(w_col, 6, f" {d.get('capacidade_btus', '---')}", border=1, align='C', ln=True)
 
-            # --- LINHA 2 ---
+            # --- LINHA 2 (CABEÇALHOS) ---
             pdf.set_font("Arial", "B", 6)
             pdf.cell(w_col, 5, " POTÊNCIA (W)", border=1, align='C')
             pdf.cell(w_col, 5, " FLUIDO REF.", border=1, align='C')
@@ -562,6 +563,7 @@ with st.sidebar:
             pdf.cell(w_col, 5, " TAG/ID", border=1, align='C')
             pdf.cell(w_col, 5, " ULT. MANUT", border=1, align='C', ln=True)
 
+            # --- LINHA 2 (DADOS) ---
             pdf.set_font("Arial", "", 6)
             pdf.cell(w_col, 6, f" {d.get('potencia_nominal', '---')}", border=1, align='C')
             pdf.cell(w_col, 6, f" {d.get('fluido_refrigerante', '---')}", border=1, align='C')
