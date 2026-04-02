@@ -492,7 +492,7 @@ def renderizar_aba_2():
 
       # --- 3. GERAÇÃO DO BINÁRIO E DOWNLOAD ---
         # Note que tudo abaixo deve ter o mesmo recuo (8 espaços ou 2 tabs)
-        pdf_final = gerar_pdf_final(st.session_state.dados)
+            pdf_final = gerar_pdf_final(st.session_state.dados)
         
         st.success("✅ Relatório MPN Soluções pronto para download!")
         st.download_button(
