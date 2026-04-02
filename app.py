@@ -830,34 +830,42 @@ with st.sidebar:
             else:
                 pdf_final = pdf_bytes
 
-          # --- 1. ATUALIZA O DICIONÁRIO (BUSCANDO DA MEMÓRIA PARA NÃO DAR ERRO) ---
-            st.session_state.dados.update({
-                'sh_calculado': st.session_state.get('sh_calc', 0.0),
-                'sh_util': st.session_state.get('sh_util_calc', 0.0),
-                'sc_calculado': st.session_state.get('sc_calc', 0.0),
-                'dt_ar': st.session_state.get('dt_ar_calc', 0.0),
-                'razao_compressao': st.session_state.get('razao_compr', 0.0),
-                'cop_estimado': st.session_state.get('cop_estimado', 0.0),
-                'sat_suc': st.session_state.get('t_sat_suc', 0.0),
-                'sat_desc': st.session_state.get('t_sat_des', 0.0),
-                'delta_corrente': st.session_state.get('delta_i', 0.0),
-                'delta_tensao': st.session_state.get('delta_v', 0.0),
-                'delta_cap_c': st.session_state.get('delta_cap_comp', 0.0),
-                'delta_cap_f': st.session_state.get('delta_cap_fan', 0.0)
-            })
+   # 1. O BOTÃO QUE INICIA TUDO
+if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
+    try:  # <--- O 'TRY' FICA AQUI (4 espaços de recuo)
+        
+        # --- 1. ATUALIZA O DICIONÁRIO (8 espaços de recuo) ---
+        st.session_state.dados.update({
+            'sh_calculado': st.session_state.get('sh_calc', 0.0),
+            'sh_total': st.session_state.get('sh_calc', 0.0),
+            'sh_util': st.session_state.get('sh_util_calc', 0.0),
+            'sc_calculado': st.session_state.get('sc_calc', 0.0),
+            'dt_ar': st.session_state.get('dt_ar_calc', 0.0),
+            'razao_compressao': st.session_state.get('razao_compr', 0.0),
+            'cop_estimado': st.session_state.get('cop_estimado', 0.0),
+            'sat_suc': st.session_state.get('t_sat_suc', 0.0),
+            'sat_desc': st.session_state.get('t_sat_des', 0.0),
+            'delta_corrente': st.session_state.get('delta_i', 0.0),
+            'delta_tensao': st.session_state.get('delta_v', 0.0),
+            'delta_cap_c': st.session_state.get('delta_cap_comp', 0.0),
+            'delta_cap_f': st.session_state.get('delta_cap_fan', 0.0)
+        })
 
-           # --- 2. GERA O PDF COM OS DADOS ATUALIZADOS ---
-# Mudei de 'gerar_relatorio_pdf' para 'gerar_pdf_final' para bater com o seu 'def'
-            pdf_final = gerar_pdf_final(st.session_state.dados) 
+        # --- 2. GERA O PDF (8 espaços de recuo) ---
+        pdf_final = gerar_pdf_final(st.session_state.dados) 
 
-# --- 3. BOTÃO DE DOWNLOAD ---
-    st.download_button(
-    label="📄 GERAR RELATÓRIO TÉCNICO FINAL",
-    data=pdf_final,
-    file_name=f"Laudo_MPN_{st.session_state.dados.get('tag_id','INS').upper()}.pdf",
-    mime="application/pdf",
-    use_container_width=True
-)
+        # --- 3. BOTÃO DE DOWNLOAD (8 espaços de recuo) ---
+        st.success("✅ Relatório MPN Soluções pronto!")
+        st.download_button(
+            label="📄 BAIXAR RELATÓRIO AGORA",
+            data=pdf_final,
+            file_name=f"Laudo_MPN_{st.session_state.dados.get('tag_id','INS').upper()}.pdf",
+            mime="application/pdf",
+            use_container_width=True
+        )
+
+    except Exception as e: # <--- O 'EXCEPT' FECHA O 'TRY' (Alinhado com o Try)
+        st.error(f"❌ Erro na geração: {e}")
 
 # <--- O BLOCO DO PDF TERMINA AQUI (BEM NA MARGEM ESQUERDA)
 
