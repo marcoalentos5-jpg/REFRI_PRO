@@ -460,9 +460,7 @@ with st.sidebar:
             from fpdf import FPDF
             from datetime import datetime
 
-           # GERAÇÃO E DOWNLOAD
-            pdf_bytes = pdf.output(dest='S') # <--- PARE AQUI (MANTENHA ESTA LINHA)
-
+           
             # GERAÇÃO E DOWNLOAD
             pdf_bytes = pdf.output(dest='S')
             st.download_button(
