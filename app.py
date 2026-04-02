@@ -829,6 +829,8 @@ with st.sidebar:
                 pdf_final = pdf_bytes.encode('latin1')
             else:
                 pdf_final = pdf_bytes
+        except Exception as e:
+            st.error(f"Erro ao processar dados do PDF: {e}")
 
    # 1. O BOTÃO QUE INICIA TUDO
 if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
