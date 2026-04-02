@@ -526,7 +526,7 @@ with st.sidebar:
             pdf.cell(30, 6, f" {d.get('uf', '---')}", border=1, ln=True)
             pdf.ln(2)
             
-     # 4. SEÇÃO 2: DETALHES TÉCNICOS DO ATIVO (7 COLUNAS X 2 LINHAS)
+   # 4. SEÇÃO 2: DETALHES TÉCNICOS DO ATIVO (7 COLUNAS X 2 LINHAS)
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 8)
             pdf.cell(190, 7, " 2. DETALHES TÉCNICOS DO ATIVO", ln=True, fill=True)
             pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 6)
