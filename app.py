@@ -386,44 +386,40 @@ def renderizar_aba_2():
     d['laudo_diag'] = st.text_area("Diagnóstico e Observações Detalhadas:", value=d.get('laudo_diag', "Análise: Sistema estável."), height=150)
 
 
-# --- INÍCIO DO BLOCO DE GERAÇÃO DE RELATÓRIO REVISADO ---
-if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
-    try:
-        # 1. ATUALIZAÇÃO DO DICIONÁRIO (NOMES PADRONIZADOS SEM ACENTOS PARA O PDF)
+# 1. ATUALIZAÇÃO DO DICIONÁRIO (BUSCANDO DO SESSION_STATE PARA EVITAR 'NOT DEFINED')
         st.session_state.dados.update({
-            'p_baixa': p_suc_val,
-            'temp_suc': t_suc_val, # Removido acento para segurança do FPDF
-            'p_alta': p_des_val,
-            'temp_liquido': t_liq_val,
-            'temp_entrada_ar': t_ret_val,
-            'temp_saida_ar': t_ins_val,
-            'temp_amb_ext': t_amb_val,
-            'umidade': u_rel_val,
-            'p_oleo': p_oil_val,
-            'v_nominal': v_lin_val,
-            'v_medida': v_med_val,
-            'i_medida': i_med_val,
-            'cn_c': cn_c_val,
-            'cm_c': cm_c_val,
-            'cn_f': cn_f_val,
-            'cm_f': cm_f_val, 
-            'i_fan': i_fan_val,
-            'lra': lra_val,
-            'rla': rla_val,
-            'temp_descarga': t_com_val,
-            'sh_calculado': sh_calc,
-            'sc_calculado': sc_calc,
-            'sh_util': sh_util_calc,
-            'dt_ar': dt_ar_calc,
-            'razao_compressao': razao_compr,
-            'cop_estimado': cop_estimado,
-            'sat_suc': t_sat_suc,
-            'sat_desc': t_sat_des,
-            # Deltas calculados com proteção contra None/Vazio
-            'delta_corrente': (i_med_val or 0) - (rla_val or 0),
-            'delta_tensao': (v_med_val or 0) - (v_lin_val or 0),
-            'delta_cap_c': (cm_c_val or 0) - (cn_c_val or 0),
-            'delta_cap_f': (cm_f_val or 0) - (cn_f_val or 0)
+            'p_baixa': st.session_state.get('p_suc_val', 0.0),
+            'temp_suc': st.session_state.get('t_suc_val', 0.0),
+            'p_alta': st.session_state.get('p_des_val', 0.0),
+            'temp_liquido': st.session_state.get('t_liq_val', 0.0),
+            'temp_entrada_ar': st.session_state.get('t_ret_val', 0.0),
+            'temp_saida_ar': st.session_state.get('t_ins_val', 0.0),
+            'temp_amb_ext': st.session_state.get('t_amb_val', 0.0),
+            'umidade': st.session_state.get('u_rel_val', 0.0),
+            'p_oleo': st.session_state.get('p_oil_val', 0.0),
+            'v_nominal': st.session_state.get('v_lin_val', 0.0),
+            'v_medida': st.session_state.get('v_med_val', 0.0),
+            'i_medida': st.session_state.get('i_med_val', 0.0),
+            'cn_c': st.session_state.get('cn_c_val', 0.0),
+            'cm_c': st.session_state.get('cm_c_val', 0.0),
+            'cn_f': st.session_state.get('cn_f_val', 0.0),
+            'cm_f': st.session_state.get('cm_f_val', 0.0), 
+            'i_fan': st.session_state.get('i_fan_val', 0.0),
+            'lra': st.session_state.get('lra_val', 0.0),
+            'rla': st.session_state.get('rla_val', 0.0),
+            'temp_descarga': st.session_state.get('t_com_val', 0.0),
+            'sh_calculado': st.session_state.get('sh_calc', 0.0),
+            'sc_calculado': st.session_state.get('sc_calc', 0.0),
+            'sh_util': st.session_state.get('sh_util_calc', 0.0),
+            'dt_ar': st.session_state.get('dt_ar_calc', 0.0),
+            'razao_compressao': st.session_state.get('razao_compr', 0.0),
+            'cop_estimado': st.session_state.get('cop_estimado', 0.0),
+            'sat_suc': st.session_state.get('t_sat_suc', 0.0),
+            'sat_desc': st.session_state.get('t_sat_des', 0.0),
+            'delta_corrente': st.session_state.get('delta_i', 0.0),
+            'delta_tensao': st.session_state.get('delta_v', 0.0),
+            'delta_cap_c': st.session_state.get('delta_cap_comp', 0.0),
+            'delta_cap_f': st.session_state.get('delta_cap_fan', 0.0)
         })
 
         def gerar_pdf_final(d):
