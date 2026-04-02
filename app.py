@@ -174,111 +174,101 @@ from fpdf import FPDF
 
 def gerar_pdf_final(d):
     try:
-        # 1. Configuração Inicial e Limpeza de Caracteres Proibidos
+        # 1. Inicialização e Limpeza de Segurança
         pdf = FPDF()
         pdf.add_page()
         
         def safe_str(val):
-            """Remove emojis e símbolos que travam o FPDF padrão"""
+            """Remove caracteres que travam o FPDF (emojis e símbolos)"""
             s = str(val)
             for char in ["🟢", "🟡", "🔴", "°", "º", "ª", "✓", "x"]:
                 s = s.replace(char, "")
             return s.strip()
 
-        # 2. Logomarca e Cabeçalho Azul MPN
-        # Tenta carregar a logo se o arquivo existir no diretório
-        if os.path.exists("logo.png"):
-            pdf.image("logo.png", 10, 8, 30)
+        # 2. Inserção da Logomarca (Ajuste o nome do arquivo aqui)
+        # Posicionada no canto superior esquerdo, sobre a barra azul
+        try:
+            if os.path.exists("logo_mpn.png"):
+                pdf.image("logo_mpn.png", 10, 5, 25) # x, y, largura
+        except:
+            pass
             
-        pdf.set_fill_color(0, 51, 102) # Azul Escuro MPN
+        # 3. Cabeçalho Estilizado MPN Soluções
+        pdf.set_fill_color(0, 51, 102) # Azul Marinho
         pdf.rect(0, 0, 210, 35, 'F')
         pdf.set_text_color(255, 255, 255)
         pdf.set_font("Arial", "B", 16)
-        pdf.cell(0, 15, "LAUDO TÉCNICO DE MANUTENÇÃO ESPECIALIZADA", ln=True, align='C')
+        pdf.cell(0, 15, "LAUDO TÉCNICO DE MANUTENÇÃO", ln=True, align='C')
         pdf.set_font("Arial", "I", 9)
         pdf.cell(0, 5, "MPN SOLUÇÕES - CLIMATIZAÇÃO E REFRIGERAÇÃO", ln=True, align='C')
         pdf.ln(15)
         pdf.set_text_color(0, 0, 0)
 
-        # --- SEÇÃO 1: IDENTIFICAÇÃO DO CLIENTE (INTEGRAL) ---
+        # --- SEÇÃO 1: IDENTIFICAÇÃO (ABA 1) ---
         pdf.set_fill_color(230, 230, 230)
         pdf.set_font("Arial", "B", 10)
-        pdf.cell(190, 7, " 1. IDENTIFICAÇÃO DO CLIENTE E SERVIÇO", ln=True, fill=True)
+        pdf.cell(190, 7, " 1. IDENTIFICAÇÃO DO CLIENTE", ln=True, fill=True)
         pdf.set_font("Arial", "", 9)
         pdf.cell(120, 7, f" Cliente: {safe_str(d.get('nome', 'N/A')).upper()}", border=1)
         pdf.cell(70, 7, f" CPF/CNPJ: {safe_str(d.get('cpf_cnpj', ''))}", border=1, ln=True)
         pdf.cell(190, 7, f" Endereço: {safe_str(d.get('endereco', ''))}, {safe_str(d.get('numero', ''))} - {safe_str(d.get('bairro', ''))}", border=1, ln=True)
-        pdf.cell(95, 7, f" Cidade: {safe_str(d.get('cidade', ''))}/{safe_str(d.get('uf', ''))}", border=1)
+        pdf.cell(95, 7, f" Cidade/UF: {safe_str(d.get('cidade', ''))}/{safe_str(d.get('uf', ''))}", border=1)
         pdf.cell(95, 7, f" Contato: {safe_str(d.get('whatsapp', ''))}", border=1, ln=True)
         pdf.ln(2)
 
-        # --- SEÇÃO 2: DADOS DO EQUIPAMENTO (VARREDURA TOTAL) ---
+        # --- SEÇÃO 2: DADOS DO EQUIPAMENTO (ABA 2) ---
         pdf.set_font("Arial", "B", 10)
-        pdf.cell(190, 7, " 2. ESPECIFICAÇÕES TÉCNICAS DO EQUIPAMENTO", ln=True, fill=True)
+        pdf.cell(190, 7, " 2. ESPECIFICAÇÕES DO EQUIPAMENTO", ln=True, fill=True)
         pdf.set_font("Arial", "", 9)
         pdf.cell(63, 7, f" Fabricante: {safe_str(d.get('fabricante', ''))}", border=1)
         pdf.cell(63, 7, f" Modelo: {safe_str(d.get('modelo', ''))}", border=1)
         pdf.cell(64, 7, f" Capacidade: {safe_str(d.get('capacidade', ''))}", border=1, ln=True)
-        
         pdf.cell(63, 7, f" Série Evap: {safe_str(d.get('serie_evap', ''))}", border=1)
         pdf.cell(63, 7, f" Série Cond: {safe_str(d.get('serie_cond', ''))}", border=1)
         pdf.cell(64, 7, f" TAG/ID: {safe_str(d.get('tag_id', ''))}", border=1, ln=True)
-        
-        pdf.cell(63, 7, f" Fluido: {safe_str(d.get('fluido', ''))}", border=1)
-        pdf.cell(63, 7, f" Tensão Nom: {safe_str(d.get('tensao', ''))}", border=1)
-        pdf.cell(64, 7, f" Status: {safe_str(d.get('status_maquina', ''))}", border=1, ln=True)
-        
-        pdf.cell(95, 7, f" Local Evap: {safe_str(d.get('local_evap', ''))}", border=1)
-        pdf.cell(95, 7, f" Local Cond: {safe_str(d.get('local_cond', ''))}", border=1, ln=True)
+        pdf.cell(95, 7, f" Fluido: {safe_str(d.get('fluido', ''))}", border=1)
+        pdf.cell(95, 7, f" Status: {safe_str(d.get('status_maquina', ''))}", border=1, ln=True)
         pdf.ln(2)
 
-        # --- SEÇÃO 3: TERMODINÂMICA E PERFORMANCE ---
+        # --- SEÇÃO 3: TERMODINÂMICA E PERFORMANCE (ABA 3) ---
         pdf.set_font("Arial", "B", 10)
-        pdf.cell(190, 7, " 3. ANÁLISE DE CICLO E PERFORMANCE", ln=True, fill=True)
+        pdf.cell(190, 7, " 3. ANÁLISE DE PERFORMANCE E CICLO", ln=True, fill=True)
         pdf.set_font("Arial", "", 9)
-        
-        # Linha 1: Superheat e Subcooling
+        # Linha 1: SH e SC
         pdf.cell(47, 7, f" SH Total: {d.get('sh_calculado', '0.0')} K", border=1)
-        pdf.cell(47, 7, f" SH Útil: {d.get('sh_util', '0.0')} K", border=1)
+        pdf.cell(47, 7, f" SH Util: {d.get('sh_util', '0.0')} K", border=1)
         pdf.cell(48, 7, f" SC Total: {d.get('sc_calculado', '0.0')} K", border=1)
-        pdf.cell(48, 7, f" Delta T (Ar): {d.get('dt_ar', '0.0')} K", border=1, ln=True)
-        
+        pdf.cell(48, 7, f" Delta Ar: {d.get('dt_ar', '0.0')} K", border=1, ln=True)
         # Linha 2: Pressões e Saturação
-        pdf.cell(47, 7, f" P. Sucção: {d.get('pressao_succao', '0.0')} PSI", border=1)
-        pdf.cell(47, 7, f" P. Descarga: {d.get('pressao_descarga', '0.0')} PSI", border=1)
+        pdf.cell(47, 7, f" P. Suc: {d.get('pressao_succao', '0.0')} PSI", border=1)
+        pdf.cell(47, 7, f" P. Desc: {d.get('pressao_descarga', '0.0')} PSI", border=1)
         pdf.cell(48, 7, f" T. Sat Suc: {d.get('sat_suc', '0.0')} C", border=1)
         pdf.cell(48, 7, f" T. Sat Desc: {d.get('sat_desc', '0.0')} C", border=1, ln=True)
-        
-        # Linha 3: Eficiência
-        pdf.cell(95, 7, f" Razão Compressão: {d.get('razao_compressao', '0.0')}", border=1)
-        pdf.cell(95, 7, f" COP Estimado: {d.get('cop_estimado', '0.0')}", border=1, ln=True)
+        # Eficiência
+        pdf.cell(95, 7, f" Razao Compr: {d.get('razao_compressao', '0.0')}", border=1)
+        pdf.cell(95, 7, f" COP Est: {d.get('cop_estimado', '0.0')}", border=1, ln=True)
         pdf.ln(2)
 
-        # --- SEÇÃO 4: PARÂMETROS ELÉTRICOS ---
+        # --- SEÇÃO 4: PARÂMETROS ELÉTRICOS (ABA 4) ---
         pdf.set_font("Arial", "B", 10)
-        pdf.cell(190, 7, " 4. GRANDEZAS ELÉTRICAS E COMPONENTES", ln=True, fill=True)
+        pdf.cell(190, 7, " 4. GRANDEZAS ELÉTRICAS", ln=True, fill=True)
         pdf.set_font("Arial", "", 9)
         pdf.cell(63, 7, f" Delta Corrente: {d.get('delta_corrente', '0.0')} A", border=1)
-        pdf.cell(63, 7, f" Delta Tensão: {d.get('delta_tensao', '0.0')} V", border=1)
-        pdf.cell(64, 7, f" Desequilíbrio: {d.get('desequilibrio_v', '0.0')} %", border=1, ln=True)
-        
+        pdf.cell(63, 7, f" Delta Tensao: {d.get('delta_tensao', '0.0')} V", border=1)
+        pdf.cell(64, 7, f" Desequilibrio: {d.get('desequilibrio_v', '0.0')} %", border=1, ln=True)
         pdf.cell(95, 7, f" Cap. Compressor: {d.get('delta_cap_c', '0.0')} uF", border=1)
         pdf.cell(95, 7, f" Cap. Ventilador: {d.get('delta_cap_f', '0.0')} uF", border=1, ln=True)
 
-        # --- RODAPÉ E ASSINATURA ---
-        pdf.set_y(-35)
+        # --- RODAPÉ ---
+        pdf.set_y(-30)
         pdf.set_font("Arial", "I", 8)
-        pdf.cell(0, 5, f"Laudo Gerado em: {d.get('data', '')}", ln=True, align='C')
-        pdf.set_font("Arial", "B", 10)
-        pdf.cell(0, 10, "________________________________________________", ln=True, align='C')
-        pdf.cell(0, 5, f"Técnico Responsável: {safe_str(d.get('tecnico_nome', 'MARCOS ALEXANDRE'))}", align='C', ln=True)
+        pdf.cell(0, 10, f"Laudo gerado em: {d.get('data', '')} | Tecnico: {safe_str(d.get('tecnico_nome', 'MARCOS ALEXANDRE'))}", align='C', ln=True)
 
-        # Retorno do binário para o Streamlit
         pdf_bytes = pdf.output(dest='S')
         return bytes(pdf_bytes) if isinstance(pdf_bytes, bytearray) else pdf_bytes
 
     except Exception as e:
-        st.error(f"Erro Crítico na Geração do PDF: {e}")
+        st.error(f"Erro na geração do PDF: {e}")
         return None
 
 if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO", key="btn_finalizar_mpn_vFinal"):
