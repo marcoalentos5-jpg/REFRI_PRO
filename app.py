@@ -503,7 +503,7 @@ def renderizar_aba_2():
             use_container_width=True
         )
 
-        except Exception as e:
+            except Exception as e:
         # O except fica alinhado com o 'try' lá de cima (4 espaços ou 1 tab)
         st.error(f"❌ Erro na geração: Detalhe: {e}")
 
