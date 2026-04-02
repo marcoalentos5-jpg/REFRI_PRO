@@ -390,6 +390,7 @@ def renderizar_aba_2():
 if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
     try:
     
+      # 1. ATUALIZAÇÃO DO DICIONÁRIO (8 espaços de recuo)
         st.session_state.dados.update({
             'p_baixa': st.session_state.get('p_suc_val', 0.0),
             'temp_suc': st.session_state.get('t_suc_val', 0.0),
@@ -411,7 +412,7 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
             'lra': st.session_state.get('lra_val', 0.0),
             'rla': st.session_state.get('rla_val', 0.0),
             'temp_descarga': st.session_state.get('t_com_val', 0.0),
-            'sh_total': st.session_state.get('sh_calc', 0.0),
+            'sh_total': st.session_state.get('sh_calc', 0.0),       # ADICIONADO PARA MATAR O ERRO
             'sh_calculado': st.session_state.get('sh_calc', 0.0),
             'sh_util': st.session_state.get('sh_util_calc', 0.0),
             'dt_ar': st.session_state.get('dt_ar_calc', 0.0),
@@ -425,11 +426,13 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
             'delta_cap_f': st.session_state.get('delta_cap_fan', 0.0)
         })
 
+        # 2. FUNÇÃO DO PDF (8 espaços de recuo)
         def gerar_pdf_final(d):
             from fpdf import FPDF
             pdf = FPDF()
             pdf.add_page()
-            C_PRI = [0, 51, 153] 
+            # ... restante do seu código do PDF ...
+            return pdf.output(dest='S').encode('latin-1')
             
             # --- SEÇÃO 3: MEDIÇÕES DE CAMPO ---
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 8)
