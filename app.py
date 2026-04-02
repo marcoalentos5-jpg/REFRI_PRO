@@ -453,7 +453,7 @@ with st.sidebar:
     n_val = str(d.get('nome', '')).strip()
     d_val = str(d.get('cliente_documento', d.get('cpf_cnpj', ''))).strip()
     
-  if len(n_val) > 3 and len(d_val) > 5:
+    if len(n_val) > 3 and len(d_val) > 5:
         st.success("✅ Relatório Pronto")
         
         try:
