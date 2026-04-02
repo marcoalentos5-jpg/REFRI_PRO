@@ -576,76 +576,74 @@ with st.sidebar:
             pdf.ln(2)
             
 
-           # ==========================================================================
-            # 3. MEDIÇÕES DE CAMPO (LAYOUT FIEL AO APP: 5 COLUNAS X 4 LINHAS)
-            # ==========================================================================
-            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 8)
-            pdf.cell(190, 7, " 3. MEDIÇÕES DE CAMPO", ln=True, fill=True)
-            pdf.set_text_color(0, 0, 0)
-            
-            w_col = 38.0  # Divisão exata de 190mm por 5 colunas
+           # --- 3. MEDIÇÕES DE CAMPO (NOMES SINCRONIZADOS COM SEU DICIONÁRIO) ---
+pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 8)
+pdf.cell(190, 7, " 3. MEDIÇÕES DE CAMPO", ln=True, fill=True)
+pdf.set_text_color(0, 0, 0)
 
-            # --- LINHA 1: 🔵 Ciclo Frigorífico ---
-            pdf.set_fill_color(245, 245, 245); pdf.set_font("Arial", "B", 6)
-            pdf.cell(w_col, 5, " SUCÇÃO (PSI)", border=1, align='C', fill=True)
-            pdf.cell(w_col, 5, " TUB. SUCÇÃO (°C)", border=1, align='C', fill=True)
-            pdf.cell(w_col, 5, " DESCARGA (PSI)", border=1, align='C', fill=True)
-            pdf.cell(w_col, 5, " TUB. LÍQUIDO (°C)", border=1, align='C', fill=True)
-            pdf.cell(w_col, 5, " TUB. DESC. COMP (°C)", border=1, align='C', fill=True, ln=True)
-            
-            pdf.set_font("Arial", "", 8)
-            pdf.cell(w_col, 7, f" {d.get('succao_psi', '---')}", border=1, align='C')
-            pdf.cell(w_col, 7, f" {d.get('tub_succao_c', '---')}", border=1, align='C')
-            pdf.cell(w_col, 7, f" {d.get('descarga_psi', '---')}", border=1, align='C')
-            pdf.cell(w_col, 7, f" {d.get('tub_liquido_c', '---')}", border=1, align='C')
-            pdf.cell(w_col, 7, f" {d.get('tub_desc_comp_c', '---')}", border=1, align='C', ln=True)
+w_col = 38.0 # Largura para 5 colunas iguais
 
-            # --- LINHA 2: 🔴 Ar e Ambiente ---
-            pdf.set_fill_color(245, 245, 245); pdf.set_font("Arial", "B", 6)
-            pdf.cell(w_col, 5, " RETORNO AR (°C)", border=1, align='C', fill=True)
-            pdf.cell(w_col, 5, " INSUFLAÇÃO (°C)", border=1, align='C', fill=True)
-            pdf.cell(w_col, 5, " TEMP. AMB. EXT. (°C)", border=1, align='C', fill=True)
-            pdf.cell(w_col, 5, " UMID. REL. DO AR (%)", border=1, align='C', fill=True)
-            pdf.cell(w_col, 5, " PRESSÃO ÓLEO (PSI)", border=1, align='C', fill=True, ln=True)
-            
-            pdf.set_font("Arial", "", 8)
-            pdf.cell(w_col, 7, f" {d.get('retorno_ar_c', '---')}", border=1, align='C')
-            pdf.cell(w_col, 7, f" {d.get('insuflacao_c', '---')}", border=1, align='C')
-            pdf.cell(w_col, 7, f" {d.get('temp_amb_ext_c', '---')}", border=1, align='C')
-            pdf.cell(w_col, 7, f" {d.get('umid_rel_ar_p', '---')}", border=1, align='C')
-            pdf.cell(w_col, 7, f" {d.get('pressao_oleo_psi', '---')}", border=1, align='C', ln=True)
+# --- LINHA 1: 🔵 Ciclo Frigorífico ---
+pdf.set_fill_color(245, 245, 245); pdf.set_font("Arial", "B", 6)
+pdf.cell(w_col, 5, " SUCÇÃO (PSI)", border=1, align='C', fill=True)
+pdf.cell(w_col, 5, " TUB. SUCÇÃO (°C)", border=1, align='C', fill=True)
+pdf.cell(w_col, 5, " DESCARGA (PSI)", border=1, align='C', fill=True)
+pdf.cell(w_col, 5, " TUB. LÍQUIDO (°C)", border=1, align='C', fill=True)
+pdf.cell(w_col, 5, " TUB. DESC. COMP (°C)", border=1, align='C', fill=True, ln=True)
 
-            # --- LINHA 3: ⚡ Parâmetros Elétricos ---
-            pdf.set_fill_color(245, 245, 245); pdf.set_font("Arial", "B", 6)
-            pdf.cell(w_col, 5, " TENSÃO NOMINAL (V)", border=1, align='C', fill=True)
-            pdf.cell(w_col, 5, " TENSÃO MEDIDA (V)", border=1, align='C', fill=True)
-            pdf.cell(w_col, 5, " CORRENTE MEDIDA (A)", border=1, align='C', fill=True)
-            pdf.cell(w_col, 5, " RLA - NOMINAL (A)", border=1, align='C', fill=True)
-            pdf.cell(w_col, 5, " LRA - PARTIDA (A)", border=1, align='C', fill=True, ln=True)
-            
-            pdf.set_font("Arial", "", 8)
-            pdf.cell(w_col, 7, f" {d.get('tensao_nominal_v', '---')}", border=1, align='C')
-            pdf.cell(w_col, 7, f" {d.get('tensao_medida_v', '---')}", border=1, align='C')
-            pdf.cell(w_col, 7, f" {d.get('corrente_medida_a', '---')}", border=1, align='C')
-            pdf.cell(w_col, 7, f" {d.get('rla_nominal_a', '---')}", border=1, align='C')
-            pdf.cell(w_col, 7, f" {d.get('lra_partida_a', '---')}", border=1, align='C', ln=True)
+pdf.set_font("Arial", "", 8)
+pdf.cell(w_col, 7, f" {d.get('p_baixa', '---')}", border=1, align='C')
+pdf.cell(w_col, 7, f" {d.get('temp_sucção', '---')}", border=1, align='C')
+pdf.cell(w_col, 7, f" {d.get('p_alta', '---')}", border=1, align='C')
+pdf.cell(w_col, 7, f" {d.get('temp_liquido', '---')}", border=1, align='C')
+pdf.cell(w_col, 7, f" {d.get('temp_descarga', '---')}", border=1, align='C', ln=True)
 
-            # --- LINHA 4: 🔋 Capacitância e Ventilação ---
-            pdf.set_fill_color(245, 245, 245); pdf.set_font("Arial", "B", 6)
-            pdf.cell(w_col, 5, " CAP. NOM. COMP (µF)", border=1, align='C', fill=True)
-            pdf.cell(w_col, 5, " CAP. LIDO COMP (µF)", border=1, align='C', fill=True)
-            pdf.cell(w_col, 5, " CAP. NOM. FAN (µF)", border=1, align='C', fill=True)
-            pdf.cell(w_col, 5, " CAP. LIDO FAN (µF)", border=1, align='C', fill=True)
-            pdf.cell(w_col, 5, " CORRENTE FAN (A)", border=1, align='C', fill=True, ln=True)
-            
-            pdf.set_font("Arial", "", 8)
-            pdf.cell(w_col, 7, f" {d.get('cap_nom_comp', '---')}", border=1, align='C')
-            pdf.cell(w_col, 7, f" {d.get('cap_lido_comp', '---')}", border=1, align='C')
-            pdf.cell(w_col, 7, f" {d.get('cap_nom_fan', '---')}", border=1, align='C')
-            pdf.cell(w_col, 7, f" {d.get('cap_lido_fan', '---')}", border=1, align='C')
-            pdf.cell(w_col, 7, f" {d.get('corrente_fan_a', '---')}", border=1, align='C', ln=True)
+# --- LINHA 2: 🔴 Ar e Ambiente ---
+pdf.set_fill_color(245, 245, 245); pdf.set_font("Arial", "B", 6)
+pdf.cell(w_col, 5, " RETORNO AR (°C)", border=1, align='C', fill=True)
+pdf.cell(w_col, 5, " INSUFLAÇÃO (°C)", border=1, align='C', fill=True)
+pdf.cell(w_col, 5, " TEMP. AMB. EXT. (°C)", border=1, align='C', fill=True)
+pdf.cell(w_col, 5, " UMID. REL. DO AR (%)", border=1, align='C', fill=True)
+pdf.cell(w_col, 5, " PRESSÃO ÓLEO (PSI)", border=1, align='C', fill=True, ln=True)
 
-            pdf.ln(4)
+pdf.set_font("Arial", "", 8)
+pdf.cell(w_col, 7, f" {d.get('temp_entrada_ar', '---')}", border=1, align='C')
+pdf.cell(w_col, 7, f" {d.get('temp_saida_ar', '---')}", border=1, align='C')
+pdf.cell(w_col, 7, f" {d.get('temp_amb_ext', '---')}", border=1, align='C')
+pdf.cell(w_col, 7, f" {d.get('umidade', '---')}", border=1, align='C')
+pdf.cell(w_col, 7, f" {d.get('p_oleo', '---')}", border=1, align='C', ln=True)
+
+# --- LINHA 3: ⚡ Parâmetros Elétricos ---
+pdf.set_fill_color(245, 245, 245); pdf.set_font("Arial", "B", 6)
+pdf.cell(w_col, 5, " TENSÃO NOMINAL (V)", border=1, align='C', fill=True)
+pdf.cell(w_col, 5, " TENSÃO MEDIDA (V)", border=1, align='C', fill=True)
+pdf.cell(w_col, 5, " CORRENTE MEDIDA (A)", border=1, align='C', fill=True)
+pdf.cell(w_col, 5, " RLA - NOMINAL (A)", border=1, align='C', fill=True)
+pdf.cell(w_col, 5, " LRA - PARTIDA (A)", border=1, align='C', fill=True, ln=True)
+
+pdf.set_font("Arial", "", 8)
+pdf.cell(w_col, 7, f" {d.get('v_nominal', '---')}", border=1, align='C')
+pdf.cell(w_col, 7, f" {d.get('v_medida', '---')}", border=1, align='C')
+pdf.cell(w_col, 7, f" {d.get('i_medida', '---')}", border=1, align='C')
+pdf.cell(w_col, 7, f" {d.get('rla', '---')}", border=1, align='C')
+pdf.cell(w_col, 7, f" {d.get('lra', '---')}", border=1, align='C', ln=True)
+
+# --- LINHA 4: 🔋 Capacitância e Ventilação ---
+pdf.set_fill_color(245, 245, 245); pdf.set_font("Arial", "B", 6)
+pdf.cell(w_col, 5, " CAP. NOM. COMP (µF)", border=1, align='C', fill=True)
+pdf.cell(w_col, 5, " CAP. LIDO COMP (µF)", border=1, align='C', fill=True)
+pdf.cell(w_col, 5, " CAP. NOM. FAN (µF)", border=1, align='C', fill=True)
+pdf.cell(w_col, 5, " CAP. LIDO FAN (µF)", border=1, align='C', fill=True)
+pdf.cell(w_col, 5, " CORRENTE FAN (A)", border=1, align='C', fill=True, ln=True)
+
+pdf.set_font("Arial", "", 8)
+pdf.cell(w_col, 7, f" {d.get('cn_c', '---')}", border=1, align='C')
+pdf.cell(w_col, 7, f" {d.get('cm_c', '---')}", border=1, align='C')
+pdf.cell(w_col, 7, f" {d.get('cn_f', '---')}", border=1, align='C')
+pdf.cell(w_col, 7, f" {d.get('cm_f', '---')}", border=1, align='C')
+pdf.cell(w_col, 7, f" {d.get('i_fan', '---')}", border=1, align='C', ln=True)
+
+pdf.ln(4) # Espaçamento final antes da Seção 4
 
             # 6. SEÇÃO 4: DIAGNÓSTICO DE PERFORMANCE
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
