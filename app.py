@@ -556,16 +556,28 @@ with st.sidebar:
             else:
                 final_pdf = pdf_bytes
 
+            # 8. FINALIZAÇÃO E BOTÃO DE DOWNLOAD
+            # Geramos o PDF na memória
+            pdf_bytes = pdf.output(dest='S')
+            
+            # --- O PULO DO GATO ESTÁ AQUI ---
+            # Se for bytearray (que deu o erro no seu print), convertemos para bytes
+            if isinstance(pdf_bytes, bytearray):
+                pdf_final = bytes(pdf_bytes)
+            # Se for string (versões antigas do FPDF), codificamos e convertemos
+            elif isinstance(pdf_bytes, str):
+                pdf_final = pdf_bytes.encode('latin1')
+            else:
+                pdf_final = pdf_bytes
+
+            # Agora passamos o 'pdf_final' para o botão
             st.download_button(
                 label="📄 GERAR RELATÓRIO TÉCNICO FINAL",
-                data=final_pdf,
+                data=pdf_final,
                 file_name=f"Laudo_MPN_{d.get('tag_id','INS').upper()}.pdf",
                 mime="application/pdf",
                 use_container_width=True
             )
-
-        except Exception as e:
-            st.error(f"Erro ao gerar PDF: {e}")
 
 
 # ==============================================================================
