@@ -576,12 +576,16 @@ with st.sidebar:
             pdf.ln(2)
             
 
-           # --- 3. MEDIÇÕES DE CAMPO (NOMES SINCRONIZADOS COM SEU DICIONÁRIO) ---
-pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 8)
+# ==========================================================================
+# 3. MEDIÇÕES DE CAMPO (NOMES SINCRONIZADOS COM SEU DICIONÁRIO)
+# ==========================================================================
+pdf.set_fill_color(*C_PRI)
+pdf.set_text_color(255, 255, 255)
+pdf.set_font("Arial", "B", 8)
 pdf.cell(190, 7, " 3. MEDIÇÕES DE CAMPO", ln=True, fill=True)
 pdf.set_text_color(0, 0, 0)
 
-w_col = 38.0 # Largura para 5 colunas iguais
+w_col = 38.0  # Largura para 5 colunas iguais (190 / 5)
 
 # --- LINHA 1: 🔵 Ciclo Frigorífico ---
 pdf.set_fill_color(245, 245, 245); pdf.set_font("Arial", "B", 6)
@@ -643,7 +647,7 @@ pdf.cell(w_col, 7, f" {d.get('cn_f', '---')}", border=1, align='C')
 pdf.cell(w_col, 7, f" {d.get('cm_f', '---')}", border=1, align='C')
 pdf.cell(w_col, 7, f" {d.get('i_fan', '---')}", border=1, align='C', ln=True)
 
-pdf.ln(4) # Espaçamento final antes da Seção 4
+pdf.ln(4)
 
             # 6. SEÇÃO 4: DIAGNÓSTICO DE PERFORMANCE
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
