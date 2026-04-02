@@ -494,8 +494,8 @@ def renderizar_aba_2():
         # Note que tudo abaixo deve ter o mesmo recuo (8 espaços ou 2 tabs)
             pdf_final = gerar_pdf_final(st.session_state.dados)
         
-        st.success("✅ Relatório MPN Soluções pronto para download!")
-        st.download_button(
+    st.success("✅ Relatório MPN Soluções pronto para download!")
+    st.download_button(
             label="📄 BAIXAR RELATÓRIO AGORA",
             data=pdf_final,
             file_name=f"Laudo_MPN_{st.session_state.dados.get('tag_id','INS').upper()}.pdf",
