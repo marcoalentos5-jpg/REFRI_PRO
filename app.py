@@ -547,12 +547,18 @@ with st.sidebar:
 
             # 8. FINALIZAÇÃO E BOTÃO DE DOWNLOAD
             pdf_bytes = pdf.output(dest='S')
-            if isinstance(pdf_bytes, str):
-                pdf_bytes = pdf_bytes.encode('latin1')
-                
+            
+            # Converte o formato do FPDF para o que o Streamlit aceita (Bytes)
+            if isinstance(pdf_bytes, (bytearray, str)):
+                if isinstance(pdf_bytes, str):
+                    pdf_bytes = pdf_bytes.encode('latin1')
+                final_pdf = bytes(pdf_bytes) # AQUI ESTÁ A MÁGICA
+            else:
+                final_pdf = pdf_bytes
+
             st.download_button(
                 label="📄 GERAR RELATÓRIO TÉCNICO FINAL",
-                data=pdf_bytes,
+                data=final_pdf,
                 file_name=f"Laudo_MPN_{d.get('tag_id','INS').upper()}.pdf",
                 mime="application/pdf",
                 use_container_width=True
