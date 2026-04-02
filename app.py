@@ -526,11 +526,12 @@ with st.sidebar:
             pdf.cell(30, 6, f" {d.get('uf', '---')}", border=1, ln=True)
             pdf.ln(2)
             
-    # 4. SEÇÃO 2: DETALHES TÉCNICOS DO ATIVO (SINCRONIZAÇÃO TOTAL)
+      # 4. SEÇÃO 2: DETALHES TÉCNICOS DO ATIVO (7 COLUNAS X 2 LINHAS)
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 8)
             pdf.cell(190, 7, " 2. DETALHES TÉCNICOS DO ATIVO", ln=True, fill=True)
             pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 6)
             
+            # Ajuste de largura para 7 colunas (aprox 27mm por coluna)
             w_col = 27.14 
 
             # --- LINHA 1 ---
@@ -543,7 +544,6 @@ with st.sidebar:
             pdf.cell(w_col, 5, " CAPACIDADE", border=1, align='C', ln=True)
 
             pdf.set_font("Arial", "", 6)
-            # Mapeamento direto baseado nos campos visíveis na sua interface
             pdf.cell(w_col, 6, f" {d.get('fabricante', '---')}", border=1, align='C')
             pdf.cell(w_col, 6, f" {d.get('modelo', '---')}", border=1, align='C')
             pdf.cell(w_col, 6, f" {d.get('n_serie_evap', '---')}", border=1, align='C')
@@ -566,13 +566,13 @@ with st.sidebar:
             pdf.cell(w_col, 6, f" {d.get('potencia_nominal', '---')}", border=1, align='C')
             pdf.cell(w_col, 6, f" {d.get('fluido_refrigerante', '---')}", border=1, align='C')
             pdf.cell(w_col, 6, f" {d.get('carga_fluido', '---')}", border=1, align='C')
-            pdf.cell(w_col, 6, f" {d.get('tipo_oleo', '---')}", border=1, align='C') # Este já funciona!
+            pdf.cell(w_col, 6, f" {d.get('tipo_oleo', '---')}", border=1, align='C')
             pdf.cell(w_col, 6, f" {d.get('tensao_nominal_v', '---')}", border=1, align='C')
             pdf.cell(w_col, 6, f" {d.get('tag_patrimonio', '---')}", border=1, align='C')
             pdf.cell(w_col, 6, f" {d.get('data_ultima_manut', '---')}", border=1, align='C', ln=True)
             
             pdf.ln(2)
-            
+
             # 5. SEÇÃO 3: MEDIÇÕES DE CAMPO (Sincronizado com sua lista azul)
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
             pdf.cell(190, 7, " 3. MEDIÇÕES DE CAMPO E PERFORMANCE", ln=True, fill=True)
