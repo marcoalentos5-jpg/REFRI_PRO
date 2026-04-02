@@ -453,35 +453,30 @@ with st.sidebar:
     n_val = str(d.get('nome', '')).strip()
     d_val = str(d.get('cliente_documento', d.get('cpf_cnpj', ''))).strip()
     
-    if len(n_val) > 3 and len(d_val) > 5:
+  if len(n_val) > 3 and len(d_val) > 5:
         st.success("✅ Relatório Pronto")
         
-      
         try:
             from fpdf import FPDF
             from datetime import datetime
             
-            # Aqui começa a criação do seu PDF...
-            pdf = FPDF()
-            pdf.add_page()
-            # ... (resto do seu código de montar o PDF) ...
-
-        except Exception as e:
-            st.error(f"Erro ao gerar PDF: {e}")
-
             # 1. CRIA O OBJETO PDF (O MOTOR)
             pdf = FPDF()
             pdf.set_auto_page_break(auto=True, margin=15)
             pdf.add_page()
             C_PRI = (13, 71, 161) # Azul MPN
-
+            
             # 2. CABEÇALHO
-            try: pdf.image('logo.png', x=10, y=10, w=45)
-            except: pass
+            try: 
+                pdf.image('logo.png', x=10, y=10, w=45)
+            except: 
+                pass
+                
             pdf.set_xy(10, 32)
             pdf.set_font("Arial", "B", 16)
             pdf.set_text_color(*C_PRI)
             pdf.cell(190, 10, "LAUDO TÉCNICO DE INSPEÇÃO HVAC-R", ln=True, align='C')
+            pdf.ln(2)
 
             # 3. SEÇÃO 1: IDENTIFICAÇÃO DO CLIENTE
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
@@ -506,12 +501,11 @@ with st.sidebar:
             pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " CAPACIDADE:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('capacidade', '---')}", border=1, ln=True)
             pdf.ln(2)
 
-           # 5. SEÇÃO 3: MEDIÇÕES DE CAMPO
+            # 5. SEÇÃO 3: MEDIÇÕES DE CAMPO (Sincronizado com sua lista azul)
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
             pdf.cell(190, 7, " 3. MEDIÇÕES DE CAMPO E PERFORMANCE", ln=True, fill=True)
             pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 7); pdf.set_fill_color(235, 245, 255)
             
-            # Cabeçalho da Tabela
             pdf.cell(31, 5, "SUCCAO (PSI)", border=1, align='C', fill=True)
             pdf.cell(31, 5, "TUB. SUCCAO", border=1, align='C', fill=True)
             pdf.cell(31, 5, "DESCARGA (PSI)", border=1, align='C', fill=True)
@@ -519,7 +513,6 @@ with st.sidebar:
             pdf.cell(31, 5, "CORRENTE (A)", border=1, align='C', fill=True)
             pdf.cell(35, 5, "TENSAO (V)", border=1, align='C', fill=True, ln=True)
             
-            # Dados (Sincronizados com sua lista azul)
             pdf.set_font("Arial", "", 8)
             pdf.cell(31, 6, f" {d.get('p_baixa', '---')}", border=1, align='C')
             pdf.cell(31, 6, f" {d.get('temp_sucção', '---')} C", border=1, align='C')
@@ -534,11 +527,8 @@ with st.sidebar:
             pdf.cell(190, 7, " 4. DIAGNÓSTICO DE PERFORMANCE", ln=True, fill=True)
             pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 8)
             
-            # Linha 1: SH TOTAL E SH ÚTIL
             pdf.cell(47.5, 6, " SH TOTAL:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(47.5, 6, f" {d.get('sh_calculado', '---')} K", border=1)
             pdf.set_font("Arial", "B", 8); pdf.cell(47.5, 6, " SH ÚTIL:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(47.5, 6, f" {d.get('sh_util', '---')} K", border=1, ln=True)
-            
-            # Linha 2: SC FINAL E RAZÃO DE COMPRESSÃO
             pdf.set_font("Arial", "B", 8); pdf.cell(47.5, 6, " SC FINAL:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(47.5, 6, f" {d.get('sc_calculado', '---')} K", border=1)
             pdf.set_font("Arial", "B", 8); pdf.cell(47.5, 6, " RAZÃO COMPR.:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(47.5, 6, f" {d.get('razao_compressao', '---')}", border=1, ln=True)
             pdf.ln(2)
@@ -549,15 +539,20 @@ with st.sidebar:
             pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "", 8)
             pdf.multi_cell(190, 5, d.get('laudo_diag', 'Sem observacoes.'), border=1)
             pdf.ln(10)
-            pdf.line(20, pdf.get_y(), 90, pdf.get_y()); pdf.line(110, pdf.get_y(), 180, pdf.get_y())
-            pdf.set_xy(20, pdf.get_y()+1); pdf.cell(70, 4, d.get('tecnico_nome', '').upper(), align='C')
-            pdf.set_xy(110, pdf.get_y()); pdf.cell(70, 4, "ASSINATURA CLIENTE", align='C')
+            
+            y_assinatura = pdf.get_y()
+            pdf.line(20, y_assinatura, 90, y_assinatura); pdf.line(110, y_assinatura, 180, y_assinatura)
+            pdf.set_xy(20, y_assinatura + 1); pdf.cell(70, 4, str(d.get('tecnico_nome', '')).upper(), align='C')
+            pdf.set_xy(110, y_assinatura + 1); pdf.cell(70, 4, "ASSINATURA CLIENTE", align='C')
 
             # 8. FINALIZAÇÃO E BOTÃO DE DOWNLOAD
             pdf_bytes = pdf.output(dest='S')
+            if isinstance(pdf_bytes, str):
+                pdf_bytes = pdf_bytes.encode('latin1')
+                
             st.download_button(
                 label="📄 GERAR RELATÓRIO TÉCNICO FINAL",
-                data=bytes(pdf_bytes),
+                data=pdf_bytes,
                 file_name=f"Laudo_MPN_{d.get('tag_id','INS').upper()}.pdf",
                 mime="application/pdf",
                 use_container_width=True
