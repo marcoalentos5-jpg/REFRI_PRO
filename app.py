@@ -834,7 +834,7 @@ with st.sidebar:
 
    # 1. O BOTÃO QUE INICIA TUDO
         if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
-            try:  # <--- O 'TRY' FICA AQUI (4 espaços de recuo)
+    try:  # <--- O 'TRY' FICA AQUI (4 espaços de recuo)
         
         # --- 1. ATUALIZA O DICIONÁRIO (8 espaços de recuo) ---
         st.session_state.dados.update({
