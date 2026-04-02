@@ -460,8 +460,81 @@ with st.sidebar:
             from fpdf import FPDF
             from datetime import datetime
 
-           
-            # GERAÇÃO E DOWNLOAD
+            # 1. CRIA O OBJETO PDF (O MOTOR)
+            pdf = FPDF()
+            pdf.set_auto_page_break(auto=True, margin=15)
+            pdf.add_page()
+            C_PRI = (13, 71, 161) # Azul MPN
+
+            # 2. CABEÇALHO
+            try: pdf.image('logo.png', x=10, y=10, w=45)
+            except: pass
+            pdf.set_xy(10, 32)
+            pdf.set_font("Arial", "B", 16)
+            pdf.set_text_color(*C_PRI)
+            pdf.cell(190, 10, "LAUDO TÉCNICO DE INSPEÇÃO HVAC-R", ln=True, align='C')
+
+            # 3. SEÇÃO 1: IDENTIFICAÇÃO DO CLIENTE
+            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
+            pdf.cell(130, 7, " 1. IDENTIFICAÇÃO DO CLIENTE", fill=True)
+            pdf.cell(60, 7, f"DATA: {d.get('data', '')} ", fill=True, ln=True, align='R')
+
+            pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 8)
+            pdf.cell(30, 6, " CLIENTE:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(160, 6, f" {str(d.get('nome', '')).upper()}", border=1, ln=True)
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " CPF/CNPJ:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(65, 6, f" {d.get('cpf_cnpj', '---')}", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " WHATSAPP:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(65, 6, f" {d.get('whatsapp', '---')}", border=1, ln=True)
+            pdf.cell(30, 6, " ENDEREÇO:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(110, 6, f" {d.get('endereco', '---')}, {d.get('numero', '---')}", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(20, 6, " UF:", border=1); pdf.cell(30, 6, f" {d.get('uf', '---')}", border=1, ln=True)
+            pdf.ln(2)
+
+            # 4. SEÇÃO 2: DETALHES TÉCNICOS
+            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
+            pdf.cell(190, 7, " 2. DETALHES TÉCNICOS DO ATIVO", ln=True, fill=True)
+            pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 8)
+            pdf.cell(35, 6, " FABRICANTE:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('fabricante', '---')}", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " MODELO:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('modelo', '---')}", border=1, ln=True)
+            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " SÉRIE EVAP:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('serie_evap', '---')}", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " CAPACIDADE:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('capacidade', '---')}", border=1, ln=True)
+            pdf.ln(2)
+
+            # 5. SEÇÃO 3: MEDIÇÕES DE CAMPO
+            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
+            pdf.cell(190, 7, " 3. MEDIÇÕES DE CAMPO E PERFORMANCE", ln=True, fill=True)
+            pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 7); pdf.set_fill_color(235, 245, 255)
+            pdf.cell(31, 5, "SUCCAO (PSI)", border=1, align='C', fill=True)
+            pdf.cell(31, 5, "TUB. SUCCAO", border=1, align='C', fill=True)
+            pdf.cell(31, 5, "DESCARGA (PSI)", border=1, align='C', fill=True)
+            pdf.cell(31, 5, "TUB. LIQUIDO", border=1, align='C', fill=True)
+            pdf.cell(31, 5, "CORRENTE (A)", border=1, align='C', fill=True)
+            pdf.cell(35, 5, "TENSAO (V)", border=1, align='C', fill=True, ln=True)
+            pdf.set_font("Arial", "", 8)
+            pdf.cell(31, 6, f" {d.get('p_baixa', '---')}", border=1, align='C')
+            pdf.cell(31, 6, f" {d.get('temp_sucção', '---')} C", border=1, align='C')
+            pdf.cell(31, 6, f" {d.get('p_alta', '---')}", border=1, align='C')
+            pdf.cell(31, 6, f" {d.get('temp_liquido', '---')} C", border=1, align='C')
+            pdf.cell(31, 6, f" {d.get('i_medida', '---')}", border=1, align='C')
+            pdf.cell(35, 6, f" {d.get('v_medida', '---')}", border=1, align='C', ln=True)
+            pdf.ln(2)
+
+            # 6. SEÇÃO 4: DIAGNÓSTICO
+            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
+            pdf.cell(190, 7, " 4. DIAGNÓSTICO DE PERFORMANCE", ln=True, fill=True)
+            pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 8)
+            pdf.cell(47.5, 6, " SH TOTAL:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(47.5, 6, f" {d.get('sh_calculado', '---')} K", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(47.5, 6, " SC FINAL:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(47.5, 6, f" {d.get('sc_calculado', '---')} K", border=1, ln=True)
+            pdf.ln(2)
+
+            # 7. PARECER E ASSINATURAS
+            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
+            pdf.cell(190, 7, " 5. PARECER TÉCNICO FINAL", ln=True, fill=True)
+            pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "", 8)
+            pdf.multi_cell(190, 5, d.get('laudo_diag', 'Sem observacoes.'), border=1)
+            pdf.ln(10)
+            pdf.line(20, pdf.get_y(), 90, pdf.get_y()); pdf.line(110, pdf.get_y(), 180, pdf.get_y())
+            pdf.set_xy(20, pdf.get_y()+1); pdf.cell(70, 4, d.get('tecnico_nome', '').upper(), align='C')
+            pdf.set_xy(110, pdf.get_y()); pdf.cell(70, 4, "ASSINATURA CLIENTE", align='C')
+
+            # 8. FINALIZAÇÃO E BOTÃO DE DOWNLOAD
             pdf_bytes = pdf.output(dest='S')
             st.download_button(
                 label="📄 GERAR RELATÓRIO TÉCNICO FINAL",
@@ -473,20 +546,7 @@ with st.sidebar:
 
         except Exception as e:
             st.error(f"Erro ao gerar PDF: {e}")
-    else:
-        st.error("❌ Dados do Cliente Ausentes")
-        st.caption("Preencha Nome e CPF/CNPJ na Aba 1 para liberar o relatório.")
 
-    st.markdown("---")
-    if st.button("🗑️ Nova Inspeção (Limpar)", use_container_width=True):
-        preservar = ['tecnico_nome', 'tecnico_documento', 'tecnico_registro']
-        for k in list(st.session_state.dados.keys()):
-            if k not in preservar: st.session_state.dados[k] = ""
-        st.rerun()
-
-# ==============================================================================
-# FIM DO BLOCO 3 MESCLADO
-# ==============================================================================
 
 # ==============================================================================
 # 4. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
