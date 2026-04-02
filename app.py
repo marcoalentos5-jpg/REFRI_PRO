@@ -478,30 +478,50 @@ with st.sidebar:
             pdf.cell(190, 10, "LAUDO TÉCNICO DE INSPEÇÃO HVAC-R", ln=True, align='C')
             pdf.ln(2)
 
-          # 3. SEÇÃO 1: IDENTIFICAÇÃO DO CLIENTE
+          # 3. SEÇÃO 1: IDENTIFICAÇÃO DO CLIENTE (REFORMULADA PARA 13 CAMPOS)
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
             pdf.cell(130, 7, " 1. IDENTIFICAÇÃO DO CLIENTE", fill=True)
-            # Tenta pegar a data de 'data' ou 'data_atendimento'
-            pdf.cell(60, 7, f"DATA: {d.get('data', d.get('data_atendimento', ''))} ", fill=True, ln=True, align='R')
+            pdf.cell(60, 7, f"DATA: {d.get('data_atendimento', d.get('data', ''))} ", fill=True, ln=True, align='R')
 
             pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 8)
-            # Cliente
+            
+            # Linha 1: Nome Completo
             pdf.cell(30, 6, " CLIENTE:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(160, 6, f" {str(d.get('nome', d.get('cliente_nome', '---'))).upper()}", border=1, ln=True)
+            pdf.cell(160, 6, f" {str(d.get('nome', '---')).upper()}", border=1, ln=True)
             
-            # Documento (Tenta cpf_cnpj ou cliente_documento)
+            # Linha 2: CPF/CNPJ e WhatsApp
             pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " CPF/CNPJ:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(65, 6, f" {d.get('cpf_cnpj', d.get('cliente_documento', '---'))}", border=1)
-            
-            # WhatsApp
+            pdf.cell(65, 6, f" {d.get('cpf_cnpj', '---')}", border=1)
             pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " WHATSAPP:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(65, 6, f" {d.get('whatsapp', d.get('cliente_telefone', '---'))}", border=1, ln=True)
+            pdf.cell(65, 6, f" {d.get('whatsapp', '---')}", border=1, ln=True)
             
-            # Endereço
+            # Linha 3: Celular e Fixo
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " CELULAR:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(65, 6, f" {d.get('celular', '---')}", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " FIXO:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(65, 6, f" {d.get('fixo', '---')}", border=1, ln=True)
+            
+            # Linha 4: E-mail
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " E-MAIL:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(160, 6, f" {d.get('email', '---')}", border=1, ln=True)
+            
+            # Linha 5: CEP e Logradouro (Endereço)
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " CEP:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(35, 6, f" {d.get('cep', '---')}", border=1)
             pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " ENDEREÇO:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(110, 6, f" {d.get('endereco', '---')}, {d.get('numero', '')}", border=1)
+            pdf.cell(95, 6, f" {d.get('endereco', d.get('logradouro', '---'))}", border=1, ln=True)
             
-            # UF
+            # Linha 6: Nº, Complemento e Bairro
+            pdf.set_font("Arial", "B", 8); pdf.cell(20, 6, " Nº:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(20, 6, f" {d.get('numero', '---')}", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " COMPL.:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(50, 6, f" {d.get('complemento', '---')}", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(20, 6, " BAIRRO:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(50, 6, f" {d.get('bairro', '---')}", border=1, ln=True)
+            
+            # Linha 7: Cidade e UF
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " CIDADE:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(110, 6, f" {d.get('cidade', '---')}", border=1)
             pdf.set_font("Arial", "B", 8); pdf.cell(20, 6, " UF:", border=1); pdf.set_font("Arial", "", 8)
             pdf.cell(30, 6, f" {d.get('uf', '---')}", border=1, ln=True)
             pdf.ln(2)
