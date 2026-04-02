@@ -851,7 +851,7 @@ with st.sidebar:
             pdf_final = gerar_pdf_final(st.session_state.dados) 
 
 # --- 3. BOTÃO DE DOWNLOAD ---
-st.download_button(
+    st.download_button(
     label="📄 GERAR RELATÓRIO TÉCNICO FINAL",
     data=pdf_final,
     file_name=f"Laudo_MPN_{st.session_state.dados.get('tag_id','INS').upper()}.pdf",
