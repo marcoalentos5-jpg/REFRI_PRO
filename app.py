@@ -456,9 +456,7 @@ with st.sidebar:
     if len(n_val) > 3 and len(d_val) > 5:
         st.success("✅ Relatório Pronto")
         
-        # Mostra os nomes dos campos para a gente descobrir quais são
-        st.info(f"Campos salvos: {list(st.session_state.get('dados', {}).keys())}")
-
+      
         try:
             from fpdf import FPDF
             from datetime import datetime
