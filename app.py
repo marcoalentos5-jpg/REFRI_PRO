@@ -470,7 +470,7 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
             pdf.cell(w_diag, 5, " RAZAO COMPR.", 1, 0, 'C', True)
             pdf.cell(w_diag, 5, " D. CAP. COMP.", 1, 1, 'C', True)
             pdf.set_font("Arial", "", 8)
-           pdf.cell(w_diag, 7, f" {d.get('sh_total', '---')} K", 1, 0, 'C')
+            pdf.cell(w_diag, 7, f" {d.get('sh_total', '---')} K", 1, 0, 'C')
             pdf.cell(w_diag, 7, f" {d.get('sat_suc', '---')} C", 1, 0, 'C')
             pdf.cell(w_diag, 7, f" {d.get('dt_ar', '---')} K", 1, 0, 'C')
             pdf.cell(w_diag, 7, f" {d.get('delta_corrente', '---')} A", 1, 0, 'C')
