@@ -526,26 +526,47 @@ with st.sidebar:
             pdf.cell(30, 6, f" {d.get('uf', '---')}", border=1, ln=True)
             pdf.ln(2)
             
-            # 4. SEÇÃO 2: DETALHES TÉCNICOS DO ATIVO
+         # 4. SEÇÃO 2: DETALHES TÉCNICOS DO ATIVO (SINCRONIZADO)
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
             pdf.cell(190, 7, " 2. DETALHES TÉCNICOS DO ATIVO", ln=True, fill=True)
             pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 8)
             
-            # Fabricante (Tenta 'fabricante' ou 'marca')
+            # Linha 1: Fabricante e Modelo
             pdf.cell(35, 6, " FABRICANTE:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(60, 6, f" {d.get('fabricante', d.get('marca', '---'))}", border=1)
-            
-            # Modelo (Tenta 'modelo' ou 'modelo_equip')
+            pdf.cell(60, 6, f" {d.get('fabricante', '---')}", border=1)
             pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " MODELO:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(60, 6, f" {d.get('modelo', d.get('modelo_equip', '---'))}", border=1, ln=True)
+            pdf.cell(60, 6, f" {d.get('modelo', '---')}", border=1, ln=True)
             
-            # Série (Tenta 'serie_evap' ou 'n_serie')
+            # Linha 2: Série Evap e Série Cond (Note as chaves exatas do seu print)
             pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " SÉRIE EVAP:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(60, 6, f" {d.get('serie_evap', d.get('n_serie', '---'))}", border=1)
+            pdf.cell(60, 6, f" {d.get('n_serie_evap', '---')}", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " SÉRIE COND:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(60, 6, f" {d.get('n_serie_cond', '---')}", border=1, ln=True)
             
-            # Capacidade (Tenta 'capacidade' ou 'btus')
+            # Linha 3: Local Evaporadora e Local Condensadora
+            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " LOCAL EVAP:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(60, 6, f" {d.get('local_evaporadora', '---')}", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " LOCAL COND:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(60, 6, f" {d.get('local_condensadora', '---')}", border=1, ln=True)
+            
+            # Linha 4: Fluido e Carga
+            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " FLUIDO REF.:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(60, 6, f" {d.get('fluido_refrigerante', '---')}", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " CARGA (kg/g):", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(60, 6, f" {d.get('carga_fluido', '---')}", border=1, ln=True)
+            
+            # Linha 5: Tipo de Óleo e Tensão
+            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " TIPO ÓLEO:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(60, 6, f" {d.get('tipo_oleo', '---')}", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " TENSÃO NOM.:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(60, 6, f" {d.get('tensao_nominal_v', '---')}", border=1, ln=True)
+
+            # Linha 6: TAG e Capacidade
+            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " TAG/ID:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(60, 6, f" {d.get('tag_patrimonio', '---')}", border=1)
             pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " CAPACIDADE:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(60, 6, f" {d.get('capacidade', d.get('btus', '---'))}", border=1, ln=True)
+            pdf.cell(60, 6, f" {d.get('capacidade_btus', '---')}", border=1, ln=True)
+            
             pdf.ln(2)
 
             # 5. SEÇÃO 3: MEDIÇÕES DE CAMPO (Sincronizado com sua lista azul)
