@@ -174,30 +174,29 @@ from fpdf import FPDF
 
 def gerar_pdf_final(d):
     try:
-        # 1. Configuração de Página e Limpeza de Segurança
+        # 1. Configuração e Limpeza de Segurança
         pdf = FPDF()
         pdf.add_page()
         
         def safe_str(val):
-            """Remove emojis e símbolos (como °) que travam o FPDF padrão"""
+            """Limpa emojis e símbolos (como °) que travam o FPDF padrão"""
             s = str(val)
             for char in ["🟢", "🟡", "🔴", "°", "º", "ª", "✓", "x"]:
                 s = s.replace(char, "")
             return s.strip()
 
-        # 2. INSERÇÃO DA LOGOMARCA (Substitui o antigo retângulo azul)
-        # Posiciona a imagem centralizada no topo
+        # 2. INSERÇÃO DA LOGOMARCA (Substitui o bloco azul anterior)
+        # Centralizada no topo do documento
         if os.path.exists("logo_mpn.png"):
-            # Ajuste 'w=60' para aumentar ou diminuir o tamanho da logo
-            pdf.image("logo_mpn.png", x=75, y=10, w=60)
-            pdf.ln(35) # Espaço para o texto começar após a imagem
+            pdf.image("logo_mpn.png", x=75, y=10, w=60) # Centraliza a logo
+            pdf.ln(35) # Espaço para o conteúdo não sobrepor a imagem
         else:
-            # Título de contingência caso o arquivo da logo não seja encontrado
+            # Título simples caso a imagem não seja encontrada
             pdf.set_font("Arial", "B", 16)
-            pdf.cell(0, 10, "LAUDO TÉCNICO DE MANUTENÇÃO", ln=True, align='C')
+            pdf.cell(0, 10, "LAUDO TÉCNICO DE MANUTENÇÃO - MPN SOLUÇÕES", ln=True, align='C')
             pdf.ln(10)
 
-        # --- SEÇÃO 1: IDENTIFICAÇÃO (DADOS DA ABA 1) ---
+        # --- SEÇÃO 1: IDENTIFICAÇÃO (ABA 1) ---
         pdf.set_fill_color(230, 230, 230)
         pdf.set_font("Arial", "B", 10)
         pdf.cell(190, 7, " 1. IDENTIFICAÇÃO DO CLIENTE", ln=True, fill=True)
@@ -209,9 +208,9 @@ def gerar_pdf_final(d):
         pdf.cell(95, 7, f" Contato: {safe_str(d.get('whatsapp', ''))}", border=1, ln=True)
         pdf.ln(2)
 
-        # --- SEÇÃO 2: ESPECIFICAÇÕES DO EQUIPAMENTO (DADOS DA ABA 2) ---
+        # --- SEÇÃO 2: DADOS DO EQUIPAMENTO (ABA 2) ---
         pdf.set_font("Arial", "B", 10)
-        pdf.cell(190, 7, " 2. DETALHAMENTO DO ATIVO", ln=True, fill=True)
+        pdf.cell(190, 7, " 2. ESPECIFICAÇÕES DO EQUIPAMENTO", ln=True, fill=True)
         pdf.set_font("Arial", "", 9)
         pdf.cell(63, 7, f" Fabricante: {safe_str(d.get('fabricante', ''))}", border=1)
         pdf.cell(63, 7, f" Modelo: {safe_str(d.get('modelo', ''))}", border=1)
@@ -223,29 +222,29 @@ def gerar_pdf_final(d):
         pdf.cell(95, 7, f" Status: {safe_str(d.get('status_maquina', ''))}", border=1, ln=True)
         pdf.ln(2)
 
-        # --- SEÇÃO 3: PERFORMANCE E TERMODINÂMICA (DADOS DA ABA 3) ---
+        # --- SEÇÃO 3: PERFORMANCE E TERMODINÂMICA (ABA 3) ---
         pdf.set_font("Arial", "B", 10)
         pdf.cell(190, 7, " 3. ANÁLISE DE PERFORMANCE TÉCNICA", ln=True, fill=True)
         pdf.set_font("Arial", "", 9)
-        # SH e SC integrais
+        # Medições de SH, SC e Delta T
         pdf.cell(47, 7, f" SH Total: {d.get('sh_calculado', '0.0')} K", border=1)
         pdf.cell(47, 7, f" SH Util: {d.get('sh_util', '0.0')} K", border=1)
         pdf.cell(48, 7, f" SC Total: {d.get('sc_calculado', '0.0')} K", border=1)
-        pdf.cell(48, 7, f" Delta T Ar: {d.get('dt_ar', '0.0')} K", border=1, ln=True)
-        # Pressões e Eficiência
-        pdf.cell(47, 7, f" P. Sucção: {d.get('pressao_succao', '0.0')} PSI", border=1)
-        pdf.cell(47, 7, f" P. Descarga: {d.get('pressao_descarga', '0.0')} PSI", border=1)
-        pdf.cell(48, 7, f" Razão Compr: {d.get('razao_compressao', '0.0')}", border=1)
+        pdf.cell(48, 7, f" Delta Ar: {d.get('dt_ar', '0.0')} K", border=1, ln=True)
+        # Eficiência e Pressões
+        pdf.cell(47, 7, f" P. Suc: {d.get('pressao_succao', '0.0')} PSI", border=1)
+        pdf.cell(47, 7, f" P. Desc: {d.get('pressao_descarga', '0.0')} PSI", border=1)
+        pdf.cell(48, 7, f" Razao Compr: {d.get('razao_compressao', '0.0')}", border=1)
         pdf.cell(48, 7, f" COP Est: {d.get('cop_estimado', '0.0')}", border=1, ln=True)
         pdf.ln(2)
 
-        # --- SEÇÃO 4: GRANDEZAS ELÉTRICAS (DADOS DA ABA 4) ---
+        # --- SEÇÃO 4: PARÂMETROS ELÉTRICOS (ABA 4) ---
         pdf.set_font("Arial", "B", 10)
-        pdf.cell(190, 7, " 4. PARÂMETROS ELÉTRICOS", ln=True, fill=True)
+        pdf.cell(190, 7, " 4. GRANDEZAS ELÉTRICAS", ln=True, fill=True)
         pdf.set_font("Arial", "", 9)
         pdf.cell(63, 7, f" Delta Corrente: {d.get('delta_corrente', '0.0')} A", border=1)
-        pdf.cell(63, 7, f" Delta Tensão: {d.get('delta_tensao', '0.0')} V", border=1)
-        pdf.cell(64, 7, f" Desequilíbrio: {d.get('desequilibrio_v', '0.0')} %", border=1, ln=True)
+        pdf.cell(63, 7, f" Delta Tensao: {d.get('delta_tensao', '0.0')} V", border=1)
+        pdf.cell(64, 7, f" Desequilibrio: {d.get('desequilibrio_v', '0.0')} %", border=1, ln=True)
         pdf.cell(95, 7, f" Cap. Compressor: {d.get('delta_cap_c', '0.0')} uF", border=1)
         pdf.cell(95, 7, f" Cap. Ventilador: {d.get('delta_cap_f', '0.0')} uF", border=1, ln=True)
 
@@ -254,14 +253,13 @@ def gerar_pdf_final(d):
         pdf.set_font("Arial", "I", 8)
         pdf.cell(0, 10, f"Gerado em: {d.get('data', '')} | Técnico: {safe_str(d.get('tecnico_nome', 'MARCOS ALEXANDRE'))}", align='C', ln=True)
 
-        # Geração do binário
         pdf_bytes = pdf.output(dest='S')
         return bytes(pdf_bytes) if isinstance(pdf_bytes, bytearray) else pdf_bytes
 
     except Exception as e:
         st.error(f"Erro na geração do PDF: {e}")
         return None
-
+        
 if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO", key="btn_finalizar_mpn_vFinal"):
     try:
         # 1. SINCRONIZAÇÃO FINAL DOS DADOS
