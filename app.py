@@ -501,7 +501,7 @@ def renderizar_aba_2():
             use_container_width=True
         )
 
-except Exception as e:
+        except Exception as e:
         st.error(f"❌ Erro na geração: Verifique se todos os campos foram preenchidos. Detalhe: {e}")
 
 
