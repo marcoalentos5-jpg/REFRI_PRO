@@ -526,14 +526,14 @@ with st.sidebar:
             pdf.cell(30, 6, f" {d.get('uf', '---')}", border=1, ln=True)
             pdf.ln(2)
             
-# 4. SEÇÃO 2: DETALHES TÉCNICOS DO ATIVO (SINCRONIA TOTAL COM INTERFACE)
+    # 4. SEÇÃO 2: DETALHES TÉCNICOS DO ATIVO (SINCRONIZAÇÃO TOTAL)
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 8)
             pdf.cell(190, 7, " 2. DETALHES TÉCNICOS DO ATIVO", ln=True, fill=True)
             pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 6)
             
             w_col = 27.14 
 
-            # --- LINHA 1 (CABEÇALHOS) ---
+            # --- LINHA 1 ---
             pdf.cell(w_col, 5, " FABRICANTE", border=1, align='C')
             pdf.cell(w_col, 5, " MODELO", border=1, align='C')
             pdf.cell(w_col, 5, " SÉRIE EVAP", border=1, align='C')
@@ -542,8 +542,8 @@ with st.sidebar:
             pdf.cell(w_col, 5, " LOCAL COND", border=1, align='C')
             pdf.cell(w_col, 5, " CAPACIDADE", border=1, align='C', ln=True)
 
-            # --- LINHA 1 (DADOS - MAPEADOS DO SEU SISTEMA) ---
             pdf.set_font("Arial", "", 6)
+            # Mapeamento direto baseado nos campos visíveis na sua interface
             pdf.cell(w_col, 6, f" {d.get('fabricante', '---')}", border=1, align='C')
             pdf.cell(w_col, 6, f" {d.get('modelo', '---')}", border=1, align='C')
             pdf.cell(w_col, 6, f" {d.get('n_serie_evap', '---')}", border=1, align='C')
@@ -552,7 +552,7 @@ with st.sidebar:
             pdf.cell(w_col, 6, f" {d.get('local_condensadora', '---')}", border=1, align='C')
             pdf.cell(w_col, 6, f" {d.get('capacidade_btus', '---')}", border=1, align='C', ln=True)
 
-            # --- LINHA 2 (CABEÇALHOS) ---
+            # --- LINHA 2 ---
             pdf.set_font("Arial", "B", 6)
             pdf.cell(w_col, 5, " POTÊNCIA (W)", border=1, align='C')
             pdf.cell(w_col, 5, " FLUIDO REF.", border=1, align='C')
@@ -562,12 +562,11 @@ with st.sidebar:
             pdf.cell(w_col, 5, " TAG/ID", border=1, align='C')
             pdf.cell(w_col, 5, " ULT. MANUT", border=1, align='C', ln=True)
 
-            # --- LINHA 2 (DADOS) ---
             pdf.set_font("Arial", "", 6)
             pdf.cell(w_col, 6, f" {d.get('potencia_nominal', '---')}", border=1, align='C')
             pdf.cell(w_col, 6, f" {d.get('fluido_refrigerante', '---')}", border=1, align='C')
             pdf.cell(w_col, 6, f" {d.get('carga_fluido', '---')}", border=1, align='C')
-            pdf.cell(w_col, 6, f" {d.get('tipo_oleo', '---')}", border=1, align='C')
+            pdf.cell(w_col, 6, f" {d.get('tipo_oleo', '---')}", border=1, align='C') # Este já funciona!
             pdf.cell(w_col, 6, f" {d.get('tensao_nominal_v', '---')}", border=1, align='C')
             pdf.cell(w_col, 6, f" {d.get('tag_patrimonio', '---')}", border=1, align='C')
             pdf.cell(w_col, 6, f" {d.get('data_ultima_manut', '---')}", border=1, align='C', ln=True)
