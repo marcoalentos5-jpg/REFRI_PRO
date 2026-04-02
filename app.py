@@ -387,7 +387,7 @@ def renderizar_aba_2():
 
 
 # 1. ATUALIZAÇÃO DO DICIONÁRIO (BUSCANDO DO SESSION_STATE PARA EVITAR 'NOT DEFINED')
-        st.session_state.dados.update({
+    st.session_state.dados.update({
             'p_baixa': st.session_state.get('p_suc_val', 0.0),
             'temp_suc': st.session_state.get('t_suc_val', 0.0),
             'p_alta': st.session_state.get('p_des_val', 0.0),
