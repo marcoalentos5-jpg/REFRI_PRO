@@ -455,16 +455,21 @@ with st.sidebar:
     
     if len(n_val) > 3 and len(d_val) > 5:
         st.success("✅ Relatório Pronto")
-# COLE ESTA LINHA AQUI PARA DESCOBRIR OS NOMES:
-        st.info(f"Campos salvos no sistema: {list(st.session_state.dados.keys())}")
+        
+        # Mostra os nomes dos campos para a gente descobrir quais são
+        st.info(f"Campos salvos: {list(st.session_state.get('dados', {}).keys())}")
 
         try:
             from fpdf import FPDF
-            # ... resto do seu código ...
-        
-        try:
-            from fpdf import FPDF
             from datetime import datetime
+            
+            # Aqui começa a criação do seu PDF...
+            pdf = FPDF()
+            pdf.add_page()
+            # ... (resto do seu código de montar o PDF) ...
+
+        except Exception as e:
+            st.error(f"Erro ao gerar PDF: {e}")
 
             # 1. CRIA O OBJETO PDF (O MOTOR)
             pdf = FPDF()
