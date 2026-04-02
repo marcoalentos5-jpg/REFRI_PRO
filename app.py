@@ -833,7 +833,7 @@ with st.sidebar:
             st.error(f"Erro ao processar dados do PDF: {e}")
 
    # 1. O BOTÃO QUE INICIA TUDO
-        if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
+if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
     try:  # <--- O 'TRY' FICA AQUI (4 espaços de recuo)
         
         # --- 1. ATUALIZA O DICIONÁRIO (8 espaços de recuo) ---
