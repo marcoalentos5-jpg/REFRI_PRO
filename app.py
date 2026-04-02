@@ -177,6 +177,9 @@ def gerar_pdf_final(d):
         pdf = FPDF()
         pdf.add_page()
         
+        # --- LIMPEZA DE EMOJIS (PARA NÃO DAR ERRO DE FONTE) ---
+        status_limpo = d.get('status_maquina', '').replace("🟢 ", "").replace("🟡 ", "").replace("🔴 ", "")
+        
         # --- CABEÇALHO MASTER MPN ---
         pdf.set_fill_color(0, 51, 102) 
         pdf.rect(0, 0, 210, 40, 'F')
@@ -188,7 +191,7 @@ def gerar_pdf_final(d):
         pdf.ln(20)
         pdf.set_text_color(0, 0, 0)
 
-        # --- 1. DADOS DO CLIENTE E LOCALIZAÇÃO ---
+        # --- 1. DADOS DO CLIENTE ---
         pdf.set_fill_color(230, 230, 230)
         pdf.set_font("Arial", "B", 10)
         pdf.cell(190, 7, " 1. IDENTIFICAÇÃO DO CLIENTE E SERVIÇO", ln=True, fill=True)
@@ -196,11 +199,9 @@ def gerar_pdf_final(d):
         pdf.cell(120, 7, f" Cliente: {d.get('nome', 'N/A').upper()}", border=1)
         pdf.cell(70, 7, f" CPF/CNPJ: {d.get('cpf_cnpj', '')}", border=1, ln=True)
         pdf.cell(190, 7, f" Endereço: {d.get('endereco', '')}, {d.get('numero', '')} - {d.get('bairro', '')} | {d.get('cidade', '')}/{d.get('uf', '')}", border=1, ln=True)
-        pdf.cell(95, 7, f" WhatsApp: {d.get('whatsapp', '')}", border=1)
-        pdf.cell(95, 7, f" E-mail: {d.get('email', '')}", border=1, ln=True)
         pdf.ln(2)
 
-        # --- 2. ESPECIFICAÇÕES DO EQUIPAMENTO (O ATIVO) ---
+        # --- 2. ESPECIFICAÇÕES DO EQUIPAMENTO ---
         pdf.set_font("Arial", "B", 10)
         pdf.cell(190, 7, " 2. DETALHAMENTO DO ATIVO / EQUIPAMENTO", ln=True, fill=True)
         pdf.set_font("Arial", "", 9)
@@ -210,32 +211,30 @@ def gerar_pdf_final(d):
         pdf.cell(63, 7, f" Série Evap: {d.get('serie_evap', '')}", border=1)
         pdf.cell(63, 7, f" Série Cond: {d.get('serie_cond', '')}", border=1)
         pdf.cell(64, 7, f" Fluido: {d.get('fluido', '')}", border=1, ln=True)
-        pdf.cell(95, 7, f" Local Evap: {d.get('local_evap', '')}", border=1)
-        pdf.cell(95, 7, f" Local Cond: {d.get('local_cond', '')}", border=1, ln=True)
-        pdf.cell(63, 7, f" TAG/Patrimônio: {d.get('tag_id', '')}", border=1)
+        
+        # AQUI USAMOS O STATUS LIMPO SEM EMOJI
+        pdf.cell(63, 7, f" TAG: {d.get('tag_id', '')}", border=1)
         pdf.cell(63, 7, f" Tensão: {d.get('tensao', '')}", border=1)
-        pdf.cell(64, 7, f" Status: {d.get('status_maquina', '')}", border=1, ln=True)
+        pdf.cell(64, 7, f" Status: {status_limpo}", border=1, ln=True)
         pdf.ln(2)
 
-        # --- 3. PARÂMETROS TÉCNICOS E FLUIDODINÂMICA ---
+        # --- 3. PARÂMETROS TÉCNICOS ---
         pdf.set_font("Arial", "B", 10)
         pdf.cell(190, 7, " 3. ANÁLISE DE PERFORMANCE (MEDIÇÕES)", ln=True, fill=True)
-        pdf.set_font("Arial", "B", 8)
-        pdf.cell(190, 5, " CICLO DE REFRIGERAÇÃO", ln=True, align='L')
         pdf.set_font("Arial", "", 9)
         pdf.cell(47, 7, f" S.A. Total: {d.get('sh_calculado', '0.0')} K", border=1)
         pdf.cell(47, 7, f" S.A. Útil: {d.get('sh_util', '0.0')} K", border=1)
         pdf.cell(48, 7, f" S.R. Total: {d.get('sc_calculado', '0.0')} K", border=1)
         pdf.cell(48, 7, f" Delta T (Ar): {d.get('dt_ar', '0.0')} K", border=1, ln=True)
         
-        pdf.cell(47, 7, f" T. Sat Suc: {d.get('sat_suc', '0.0')} °C", border=1)
-        pdf.cell(47, 7, f" T. Sat Desc: {d.get('sat_desc', '0.0')} °C", border=1)
-        pdf.cell(48, 7, f" Razão Compr: {d.get('razao_compressao', '0.0')}", border=1)
+        pdf.cell(47, 7, f" T. Sat Suc: {d.get('sat_suc', '0.0')} C", border=1) # Removido o símbolo de grau
+        pdf.cell(47, 7, f" T. Sat Desc: {d.get('sat_desc', '0.0')} C", border=1)
+        pdf.cell(48, 7, f" Razao Compr: {d.get('razao_compressao', '0.0')}", border=1)
         pdf.cell(48, 7, f" COP Est: {d.get('cop_estimado', '0.0')}", border=1, ln=True)
         
-        pdf.ln(1)
+        pdf.ln(5)
         pdf.set_font("Arial", "B", 8)
-        pdf.cell(190, 5, " PARÂMETROS ELÉTRICOS", ln=True, align='L')
+        pdf.cell(190, 5, " PARÂMETROS ELÉTRICOS", ln=True)
         pdf.set_font("Arial", "", 9)
         pdf.cell(63, 7, f" Delta Corrente: {d.get('delta_corrente', '0.0')} A", border=1)
         pdf.cell(63, 7, f" Delta Tensão: {d.get('delta_tensao', '0.0')} V", border=1)
@@ -244,8 +243,8 @@ def gerar_pdf_final(d):
         # --- RODAPÉ ---
         pdf.set_y(-30)
         pdf.set_font("Arial", "I", 8)
-        pdf.cell(0, 5, f"Laudo gerado em: {d.get('data', '')} | Técnico Responsável: {d.get('tecnico_nome', 'Marcos Alexandre')}", align='C', ln=True)
-        pdf.cell(0, 5, "MPN SOLUÇÕES - Compromisso com a Eficiência Energética", align='C')
+        data_relatorio = d.get('data', '')
+        pdf.cell(0, 10, f"Gerado em: {data_relatorio} | Técnico: Marcos Alexandre", align='C', ln=True)
 
         pdf_bytes = pdf.output(dest='S')
         return bytes(pdf_bytes) if isinstance(pdf_bytes, bytearray) else pdf_bytes
