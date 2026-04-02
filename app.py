@@ -490,20 +490,21 @@ def renderizar_aba_2():
             pdf.ln(4)
             return pdf.output(dest='S').encode('latin-1')
 
-      # --- 3. GERAÇÃO DO BINÁRIO E DOWNLOAD ---
-        # Note que tudo abaixo deve ter o mesmo recuo (8 espaços ou 2 tabs)
-            pdf_final = gerar_pdf_final(st.session_state.dados)
+     # --- 3. GERAÇÃO DO BINÁRIO E DOWNLOAD ---
+        # Tudo aqui dentro tem 8 espaços de recuo
+        pdf_final = gerar_pdf_final(st.session_state.dados)
         
-    st.success("✅ Relatório MPN Soluções pronto para download!")
-    st.download_button(
+        st.success("✅ Relatório MPN Soluções pronto para download!")
+        st.download_button(
             label="📄 BAIXAR RELATÓRIO AGORA",
             data=pdf_final,
             file_name=f"Laudo_MPN_{st.session_state.dados.get('tag_id','INS').upper()}.pdf",
             mime="application/pdf",
             use_container_width=True
         )
-        except Exception as e:
-        # O except fica alinhado com o 'try' lá de cima (4 espaços ou 1 tab)
+
+    except Exception as e:
+        # Este 'except' deve ter exatamente 4 espaços (alinhado com o 'try')
         st.error(f"❌ Erro na geração: Detalhe: {e}")
 
 
