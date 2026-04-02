@@ -470,7 +470,7 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
             pdf.cell(w_diag, 5, " RAZAO COMPR.", 1, 0, 'C', True)
             pdf.cell(w_diag, 5, " D. CAP. COMP.", 1, 1, 'C', True)
             pdf.set_font("Arial", "", 8)
-            pdf.cell(w_diag, 7, f" {d.get('sh_calculado', '---')} K", 1, 0, 'C')
+           pdf.cell(w_diag, 7, f" {d.get('sh_total', '---')} K", 1, 0, 'C')
             pdf.cell(w_diag, 7, f" {d.get('sat_suc', '---')} C", 1, 0, 'C')
             pdf.cell(w_diag, 7, f" {d.get('dt_ar', '---')} K", 1, 0, 'C')
             pdf.cell(w_diag, 7, f" {d.get('delta_corrente', '---')} A", 1, 0, 'C')
@@ -829,20 +829,20 @@ with st.sidebar:
             else:
                 pdf_final = pdf_bytes
 
-           # --- 1. ATUALIZA O DICIONÁRIO COM OS CÁLCULOS (PARA NÃO SAIR VAZIO) ---
+          # --- 1. ATUALIZA O DICIONÁRIO (BUSCANDO DA MEMÓRIA PARA NÃO DAR ERRO) ---
             st.session_state.dados.update({
-                'sh_calculado': sh_total,
-                'sh_util': sh_util,
-                'sc_calculado': sc_total,
-                'dt_ar': delta_t_ar,
-                'razao_compressao': r_compr,
-                'cop_estimado': cop_est,
-                'sat_suc': t_sat_suc,
-                'sat_desc': t_sat_liq,
-                'delta_corrente': delta_i,
-                'delta_tensao': delta_v,
-                'delta_cap_c': delta_cap_comp,
-                'delta_cap_f': delta_cap_fan
+                'sh_calculado': st.session_state.get('sh_calc', 0.0),
+                'sh_util': st.session_state.get('sh_util_calc', 0.0),
+                'sc_calculado': st.session_state.get('sc_calc', 0.0),
+                'dt_ar': st.session_state.get('dt_ar_calc', 0.0),
+                'razao_compressao': st.session_state.get('razao_compr', 0.0),
+                'cop_estimado': st.session_state.get('cop_estimado', 0.0),
+                'sat_suc': st.session_state.get('t_sat_suc', 0.0),
+                'sat_desc': st.session_state.get('t_sat_des', 0.0),
+                'delta_corrente': st.session_state.get('delta_i', 0.0),
+                'delta_tensao': st.session_state.get('delta_v', 0.0),
+                'delta_cap_c': st.session_state.get('delta_cap_comp', 0.0),
+                'delta_cap_f': st.session_state.get('delta_cap_fan', 0.0)
             })
 
             # --- 2. GERA O PDF COM OS DADOS ATUALIZADOS ---
