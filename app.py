@@ -176,39 +176,93 @@ def gerar_pdf_final(d):
     try:
         pdf = FPDF()
         pdf.add_page()
+        
+        # --- CABEÇALHO COM BARRA AZUL (MPN SOLUÇÕES) ---
+        pdf.set_fill_color(0, 51, 102) 
+        pdf.rect(0, 0, 210, 35, 'F')
+        pdf.set_text_color(255, 255, 255)
         pdf.set_font("Arial", "B", 16)
-        
-        # CABEÇALHO
-        pdf.cell(190, 10, "LAUDO TÉCNICO DE MANUTENÇÃO - MPN SOLUÇÕES", ln=True, align='C')
-        pdf.ln(5)
-        
-        # DADOS DO CLIENTE
-        pdf.set_font("Arial", "B", 12)
-        pdf.cell(190, 8, f"CLIENTE: {d.get('nome', 'N/A').upper()}", ln=True)
-        pdf.set_font("Arial", "", 10)
-        pdf.cell(190, 6, f"ENDEREÇO: {d.get('endereco', '')}, {d.get('numero', '')} - {d.get('cidade', '')}/{d.get('uf', '')}", ln=True)
-        pdf.ln(5)
+        pdf.cell(0, 15, "LAUDO TÉCNICO DE MANUTENÇÃO", ln=True, align='C')
+        pdf.set_font("Arial", "B", 10)
+        pdf.cell(0, 5, "MPN SOLUÇÕES - CLIMATIZAÇÃO E REFRIGERAÇÃO", ln=True, align='C')
+        pdf.ln(15)
+        pdf.set_text_color(0, 0, 0) # Volta para preto
 
-        # DADOS DO EQUIPAMENTO
-        pdf.set_font("Arial", "B", 12)
-        pdf.cell(190, 8, "ESPECIFICAÇÕES DO EQUIPAMENTO", ln=True, fill=False)
-        pdf.set_font("Arial", "", 10)
-        pdf.cell(95, 6, f"FABRICANTE: {d.get('fabricante', '')}", border=1)
-        pdf.cell(95, 6, f"MODELO: {d.get('modelo', '')}", border=1, ln=True)
-        pdf.cell(95, 6, f"SÉRIE EVAP: {d.get('serie_evap', '')}", border=1)
-        pdf.cell(95, 6, f"TAG/ID: {d.get('tag_id', '')}", border=1, ln=True)
+        # --- 1. DADOS DO CLIENTE ---
+        pdf.set_fill_color(230, 230, 230)
+        pdf.set_font("Arial", "B", 10)
+        pdf.cell(190, 7, " 1. IDENTIFICAÇÃO DO CLIENTE", ln=True, fill=True)
+        pdf.set_font("Arial", "", 9)
+        pdf.cell(190, 7, f" Cliente: {d.get('nome', 'N/A').upper()}", border=1, ln=True)
+        pdf.cell(190, 7, f" Endereço: {d.get('endereco', '')}, {d.get('numero', '')} - {d.get('cidade', '')}/{d.get('uf', '')}", border=1, ln=True)
+        pdf.ln(3)
+
+        # --- 2. DADOS DO EQUIPAMENTO ---
+        pdf.set_font("Arial", "B", 10)
+        pdf.cell(190, 7, " 2. ESPECIFICAÇÕES DO ATIVO", ln=True, fill=True)
+        pdf.set_font("Arial", "", 9)
+        pdf.cell(95, 7, f" Fabricante: {d.get('fabricante', '')}", border=1)
+        pdf.cell(95, 7, f" Modelo: {d.get('modelo', '')}", border=1, ln=True)
+        pdf.cell(95, 7, f" Série Evap: {d.get('serie_evap', '')}", border=1)
+        pdf.cell(95, 7, f" TAG/ID: {d.get('tag_id', '')}", border=1, ln=True)
+        pdf.ln(3)
+
+        # --- 3. MEDIÇÕES TÉCNICAS (TODOS OS CAMPOS QUE VOCÊ ATUALIZOU) ---
+        pdf.set_font("Arial", "B", 10)
+        pdf.cell(190, 7, " 3. PARÂMETROS TÉCNICOS E PERFORMANCE", ln=True, fill=True)
+        pdf.set_font("Arial", "", 9)
         
-        # --- O PULO DO GATO PARA O STREAMLIT ---
+        # Linha 1: Fluídos e Temperaturas
+        pdf.cell(63, 7, f" S.A. Total: {d.get('sh_calculado', '0.0')} K", border=1)
+        pdf.cell(63, 7, f" S.R. Total: {d.get('sc_calculado', '0.0')} K", border=1)
+        pdf.cell(64, 7, f" Fluido: {d.get('fluido', '')}", border=1, ln=True)
+
+        # Linha 2: Elétrica e Eficiência
+        pdf.cell(63, 7, f" Delta Corrente: {d.get('delta_corrente', '0.0')} A", border=1)
+        pdf.cell(63, 7, f" Delta Tensão: {d.get('delta_tensao', '0.0')} V", border=1)
+        pdf.cell(64, 7, f" COP Est: {d.get('cop_estimado', '0.0')}", border=1, ln=True)
+        
+        pdf.ln(10)
+        pdf.set_font("Arial", "I", 8)
+        pdf.cell(0, 5, f"Relatório gerado em: {d.get('data', '')} | Técnico: {d.get('tecnico_nome', 'Marcos Alexandre')}", align='C')
+
+        # --- CONVERSÃO PARA STREAMLIT ---
         pdf_bytes = pdf.output(dest='S')
-        if isinstance(pdf_bytes, bytearray):
-            return bytes(pdf_bytes)
-        return pdf_bytes
+        return bytes(pdf_bytes) if isinstance(pdf_bytes, bytearray) else pdf_bytes
 
     except Exception as e:
-        st.error(f"Erro interno na construção do PDF: {e}")
+        st.error(f"Erro no desenho do PDF: {e}")
         return None
-    
 
+if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO", key="btn_finalizar_mpn_vFinal"):
+    try:
+        # 1. SINCRONIZAÇÃO FINAL DOS DADOS
+        # Aqui garantimos que o dicionário tenha os valores calculados nas abas
+        st.session_state.dados.update({
+            'sh_calculado': st.session_state.get('sh_calc', 0.0),
+            'sc_calculado': st.session_state.get('sc_calc', 0.0),
+            'cop_estimado': st.session_state.get('cop_estimado', 0.0),
+            'delta_corrente': st.session_state.get('delta_i', 0.0),
+            'delta_tensao': st.session_state.get('delta_v', 0.0),
+            'data': datetime.now().strftime("%d/%m/%Y %H:%M")
+        })
+
+        # 2. GERAÇÃO DOS BYTES DO PDF
+        pdf_final = gerar_pdf_final(st.session_state.dados)
+
+        # 3. INTERFACE DE DOWNLOAD
+        if pdf_final:
+            st.success("✅ Laudo MPN Soluções gerado com sucesso!")
+            st.download_button(
+                label="📥 BAIXAR LAUDO TÉCNICO (PDF)",
+                data=pdf_final,
+                file_name=f"Laudo_MPN_{st.session_state.dados.get('tag_id', 'GERAL')}.pdf",
+                mime="application/pdf",
+                use_container_width=True
+            )
+            
+    except Exception as e:
+        st.error(f"❌ Erro crítico na finalização: {e}")
 
 ## ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO MASTER CONSOLIDADA - 160+ LINHAS)
