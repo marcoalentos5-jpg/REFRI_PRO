@@ -526,7 +526,7 @@ with st.sidebar:
             pdf.cell(30, 6, f" {d.get('uf', '---')}", border=1, ln=True)
             pdf.ln(2)
             
-      # 4. SEÇÃO 2: DETALHES TÉCNICOS DO ATIVO (7 COLUNAS X 2 LINHAS)
+     # 4. SEÇÃO 2: DETALHES TÉCNICOS DO ATIVO (7 COLUNAS X 2 LINHAS)
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 8)
             pdf.cell(190, 7, " 2. DETALHES TÉCNICOS DO ATIVO", ln=True, fill=True)
             pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 6)
@@ -544,9 +544,9 @@ with st.sidebar:
 
             # --- LINHA 1 (DADOS) ---
             pdf.set_font("Arial", "", 6)
-            # Usei d.get com as chaves prováveis do seu st.session_state
             pdf.cell(w_col, 6, f" {d.get('fabricante', '---')}", border=1, align='C')
             pdf.cell(w_col, 6, f" {d.get('modelo', '---')}", border=1, align='C')
+            # Verifique se no formulário a key não está como 'n_serie_evap' (com n minúsculo)
             pdf.cell(w_col, 6, f" {d.get('n_serie_evap', '---')}", border=1, align='C')
             pdf.cell(w_col, 6, f" {d.get('n_serie_cond', '---')}", border=1, align='C')
             pdf.cell(w_col, 6, f" {d.get('local_evaporadora', '---')}", border=1, align='C')
