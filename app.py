@@ -422,7 +422,7 @@ def renderizar_aba_2():
             'delta_cap_f': st.session_state.get('delta_cap_fan', 0.0)
         })
 
-        def gerar_pdf_final(d):
+            def gerar_pdf_final(d):
             from fpdf import FPDF
             pdf = FPDF()
             pdf.add_page()
