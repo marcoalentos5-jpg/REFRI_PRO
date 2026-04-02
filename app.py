@@ -571,6 +571,7 @@ with st.sidebar:
                 pdf_final = pdf_bytes
 
             # Agora passamos o 'pdf_final' para o botão
+            # --- FINAL DO BLOCO DO BOTÃO ---
             st.download_button(
                 label="📄 GERAR RELATÓRIO TÉCNICO FINAL",
                 data=pdf_final,
@@ -578,6 +579,11 @@ with st.sidebar:
                 mime="application/pdf",
                 use_container_width=True
             )
+
+        except Exception as e:
+            st.error(f"Erro ao gerar PDF: {e}")
+
+# <--- O BLOCO DO PDF TERMINA AQUI (BEM NA MARGEM ESQUERDA)
 
 
 # ==============================================================================
