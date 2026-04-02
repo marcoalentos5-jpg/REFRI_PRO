@@ -579,11 +579,11 @@ with st.sidebar:
 # ==========================================================================
 # 3. MEDIÇÕES DE CAMPO (NOMES SINCRONIZADOS COM SEU DICIONÁRIO)
 # ==========================================================================
-pdf.set_fill_color(*C_PRI)
-pdf.set_text_color(255, 255, 255)
-pdf.set_font("Arial", "B", 8)
-pdf.cell(190, 7, " 3. MEDIÇÕES DE CAMPO", ln=True, fill=True)
-pdf.set_text_color(0, 0, 0)
+            pdf.set_fill_color(*C_PRI)
+            pdf.set_text_color(255, 255, 255)
+            pdf.set_font("Arial", "B", 8)
+            pdf.cell(190, 7, " 3. MEDIÇÕES DE CAMPO", ln=True, fill=True)
+            pdf.set_text_color(0, 0, 0)
 
 w_col = 38.0  # Largura para 5 colunas iguais (190 / 5)
 
