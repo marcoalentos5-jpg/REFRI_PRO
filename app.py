@@ -499,7 +499,7 @@ with st.sidebar:
             pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " CELULAR:", border=1); pdf.set_font("Arial", "", 8)
             pdf.cell(65, 6, f" {d.get('celular', '---')}", border=1)
             pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " FIXO:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(65, 6, f" {d.get('fixo', '---')}", border=1, ln=True)
+            pdf.cell(65, 6, f" {d.get('fixo', d.get('telefone_fixo', d.get('tel_fixo', '---')))}", border=1, ln=True)
             
             # Linha 4: E-mail
             pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " E-MAIL:", border=1); pdf.set_font("Arial", "", 8)
