@@ -848,7 +848,7 @@ with st.sidebar:
 
            # --- 2. GERA O PDF COM OS DADOS ATUALIZADOS ---
 # Mudei de 'gerar_relatorio_pdf' para 'gerar_pdf_final' para bater com o seu 'def'
-pdf_final = gerar_pdf_final(st.session_state.dados) 
+            pdf_final = gerar_pdf_final(st.session_state.dados) 
 
 # --- 3. BOTÃO DE DOWNLOAD ---
 st.download_button(
