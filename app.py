@@ -491,9 +491,9 @@ def renderizar_aba_2():
             return pdf.output(dest='S').encode('latin-1')
 
         # 3. GERAÇÃO DO BINÁRIO E DOWNLOAD
-        pdf_final = gerar_pdf_final(st.session_state.dados)
-        st.success("✅ Relatório MPN Soluções pronto para download!")
-        st.download_button(
+            pdf_final = gerar_pdf_final(st.session_state.dados)
+    st.success("✅ Relatório MPN Soluções pronto para download!")
+    st.download_button(
             label="📄 BAIXAR RELATÓRIO AGORA",
             data=pdf_final,
             file_name=f"Laudo_MPN_{st.session_state.dados.get('tag_id','INS').upper()}.pdf",
