@@ -478,27 +478,54 @@ with st.sidebar:
             pdf.cell(190, 10, "LAUDO TÉCNICO DE INSPEÇÃO HVAC-R", ln=True, align='C')
             pdf.ln(2)
 
-            # 3. SEÇÃO 1: IDENTIFICAÇÃO DO CLIENTE
+          # 3. SEÇÃO 1: IDENTIFICAÇÃO DO CLIENTE
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
             pdf.cell(130, 7, " 1. IDENTIFICAÇÃO DO CLIENTE", fill=True)
-            pdf.cell(60, 7, f"DATA: {d.get('data', '')} ", fill=True, ln=True, align='R')
+            # Tenta pegar a data de 'data' ou 'data_atendimento'
+            pdf.cell(60, 7, f"DATA: {d.get('data', d.get('data_atendimento', ''))} ", fill=True, ln=True, align='R')
 
             pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 8)
-            pdf.cell(30, 6, " CLIENTE:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(160, 6, f" {str(d.get('nome', '')).upper()}", border=1, ln=True)
-            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " CPF/CNPJ:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(65, 6, f" {d.get('cpf_cnpj', '---')}", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " WHATSAPP:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(65, 6, f" {d.get('whatsapp', '---')}", border=1, ln=True)
-            pdf.cell(30, 6, " ENDEREÇO:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(110, 6, f" {d.get('endereco', '---')}, {d.get('numero', '---')}", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(20, 6, " UF:", border=1); pdf.cell(30, 6, f" {d.get('uf', '---')}", border=1, ln=True)
+            # Cliente
+            pdf.cell(30, 6, " CLIENTE:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(160, 6, f" {str(d.get('nome', d.get('cliente_nome', '---'))).upper()}", border=1, ln=True)
+            
+            # Documento (Tenta cpf_cnpj ou cliente_documento)
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " CPF/CNPJ:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(65, 6, f" {d.get('cpf_cnpj', d.get('cliente_documento', '---'))}", border=1)
+            
+            # WhatsApp
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " WHATSAPP:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(65, 6, f" {d.get('whatsapp', d.get('cliente_telefone', '---'))}", border=1, ln=True)
+            
+            # Endereço
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " ENDEREÇO:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(110, 6, f" {d.get('endereco', '---')}, {d.get('numero', '')}", border=1)
+            
+            # UF
+            pdf.set_font("Arial", "B", 8); pdf.cell(20, 6, " UF:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(30, 6, f" {d.get('uf', '---')}", border=1, ln=True)
             pdf.ln(2)
-
-            # 4. SEÇÃO 2: DETALHES TÉCNICOS
+            
+            # 4. SEÇÃO 2: DETALHES TÉCNICOS DO ATIVO
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
             pdf.cell(190, 7, " 2. DETALHES TÉCNICOS DO ATIVO", ln=True, fill=True)
             pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 8)
-            pdf.cell(35, 6, " FABRICANTE:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('fabricante', '---')}", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " MODELO:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('modelo', '---')}", border=1, ln=True)
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " SÉRIE EVAP:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('serie_evap', '---')}", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " CAPACIDADE:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('capacidade', '---')}", border=1, ln=True)
+            
+            # Fabricante (Tenta 'fabricante' ou 'marca')
+            pdf.cell(35, 6, " FABRICANTE:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(60, 6, f" {d.get('fabricante', d.get('marca', '---'))}", border=1)
+            
+            # Modelo (Tenta 'modelo' ou 'modelo_equip')
+            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " MODELO:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(60, 6, f" {d.get('modelo', d.get('modelo_equip', '---'))}", border=1, ln=True)
+            
+            # Série (Tenta 'serie_evap' ou 'n_serie')
+            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " SÉRIE EVAP:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(60, 6, f" {d.get('serie_evap', d.get('n_serie', '---'))}", border=1)
+            
+            # Capacidade (Tenta 'capacidade' ou 'btus')
+            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " CAPACIDADE:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(60, 6, f" {d.get('capacidade', d.get('btus', '---'))}", border=1, ln=True)
             pdf.ln(2)
 
             # 5. SEÇÃO 3: MEDIÇÕES DE CAMPO (Sincronizado com sua lista azul)
@@ -513,13 +540,16 @@ with st.sidebar:
             pdf.cell(31, 5, "CORRENTE (A)", border=1, align='C', fill=True)
             pdf.cell(35, 5, "TENSAO (V)", border=1, align='C', fill=True, ln=True)
             
+           # Dados (Sincronizados e com quebra de linha no final)
             pdf.set_font("Arial", "", 8)
-            pdf.cell(31, 6, f" {d.get('p_baixa', '---')}", border=1, align='C')
-            pdf.cell(31, 6, f" {d.get('temp_sucção', '---')} C", border=1, align='C')
-            pdf.cell(31, 6, f" {d.get('p_alta', '---')}", border=1, align='C')
-            pdf.cell(31, 6, f" {d.get('temp_liquido', '---')} C", border=1, align='C')
-            pdf.cell(31, 6, f" {d.get('i_medida', '---')}", border=1, align='C')
-            pdf.cell(35, 6, f" {d.get('v_medida', '---')}", border=1, align='C', ln=True)
+            pdf.cell(31, 6, f" {d.get('p_baixa', '---')}", border=1, align='C') 
+            pdf.cell(31, 6, f" {d.get('temp_sucção', '---')}", border=1, align='C') 
+            pdf.cell(31, 6, f" {d.get('p_alta', '---')}", border=1, align='C') 
+            pdf.cell(31, 6, f" {d.get('temp_liquido', '---')}", border=1, align='C') 
+            pdf.cell(31, 6, f" {d.get('i_medida', '---')}", border=1, align='C') 
+            
+            # ATENÇÃO: Adicionei o align='C' e o ln=True aqui na Tensão
+            pdf.cell(35, 6, f" {d.get('v_medida', '---')}", border=1, align='C', ln=True) 
             pdf.ln(2)
 
             # 6. SEÇÃO 4: DIAGNÓSTICO DE PERFORMANCE
