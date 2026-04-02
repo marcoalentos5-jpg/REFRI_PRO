@@ -167,7 +167,46 @@ def f_sat_precisao(p, g):
     if g not in tabelas: return 0.0
     return float(np.interp(p, tabelas[g]["xp"], tabelas[g]["fp"]))
 
-# FINAL DO BLOCO 1 - INTEGRIDADE MANTIDA - LINHA 172
+# ==============================================================================
+# 2. MOTOR DE GERAÇÃO DE PDF (A RECEITA DO BOLO)
+# ==============================================================================
+from fpdf import FPDF
+
+def gerar_pdf_final(d):
+    try:
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", "B", 16)
+        
+        # CABEÇALHO
+        pdf.cell(190, 10, "LAUDO TÉCNICO DE MANUTENÇÃO - MPN SOLUÇÕES", ln=True, align='C')
+        pdf.ln(5)
+        
+        # DADOS DO CLIENTE
+        pdf.set_font("Arial", "B", 12)
+        pdf.cell(190, 8, f"CLIENTE: {d.get('nome', 'N/A').upper()}", ln=True)
+        pdf.set_font("Arial", "", 10)
+        pdf.cell(190, 6, f"ENDEREÇO: {d.get('endereco', '')}, {d.get('numero', '')} - {d.get('cidade', '')}/{d.get('uf', '')}", ln=True)
+        pdf.ln(5)
+
+        # DADOS DO EQUIPAMENTO
+        pdf.set_font("Arial", "B", 12)
+        pdf.cell(190, 8, "ESPECIFICAÇÕES DO EQUIPAMENTO", ln=True, fill=False)
+        pdf.set_font("Arial", "", 10)
+        pdf.cell(95, 6, f"FABRICANTE: {d.get('fabricante', '')}", border=1)
+        pdf.cell(95, 6, f"MODELO: {d.get('modelo', '')}", border=1, ln=True)
+        pdf.cell(95, 6, f"SÉRIE EVAP: {d.get('serie_evap', '')}", border=1)
+        pdf.cell(95, 6, f"TAG/ID: {d.get('tag_id', '')}", border=1, ln=True)
+        
+        # --- O PULO DO GATO PARA O STREAMLIT ---
+        pdf_bytes = pdf.output(dest='S')
+        if isinstance(pdf_bytes, bytearray):
+            return bytes(pdf_bytes)
+        return pdf_bytes
+
+    except Exception as e:
+        st.error(f"Erro interno na construção do PDF: {e}")
+        return None
     
 
 
