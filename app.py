@@ -508,16 +508,20 @@ with st.sidebar:
             pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " CAPACIDADE:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(60, 6, f" {d.get('capacidade', '---')}", border=1, ln=True)
             pdf.ln(2)
 
-            # 5. SEÇÃO 3: MEDIÇÕES DE CAMPO
+           # 5. SEÇÃO 3: MEDIÇÕES DE CAMPO
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
             pdf.cell(190, 7, " 3. MEDIÇÕES DE CAMPO E PERFORMANCE", ln=True, fill=True)
             pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 7); pdf.set_fill_color(235, 245, 255)
+            
+            # Cabeçalho da Tabela
             pdf.cell(31, 5, "SUCCAO (PSI)", border=1, align='C', fill=True)
             pdf.cell(31, 5, "TUB. SUCCAO", border=1, align='C', fill=True)
             pdf.cell(31, 5, "DESCARGA (PSI)", border=1, align='C', fill=True)
             pdf.cell(31, 5, "TUB. LIQUIDO", border=1, align='C', fill=True)
             pdf.cell(31, 5, "CORRENTE (A)", border=1, align='C', fill=True)
             pdf.cell(35, 5, "TENSAO (V)", border=1, align='C', fill=True, ln=True)
+            
+            # Dados (Sincronizados com sua lista azul)
             pdf.set_font("Arial", "", 8)
             pdf.cell(31, 6, f" {d.get('p_baixa', '---')}", border=1, align='C')
             pdf.cell(31, 6, f" {d.get('temp_sucção', '---')} C", border=1, align='C')
@@ -527,16 +531,16 @@ with st.sidebar:
             pdf.cell(35, 6, f" {d.get('v_medida', '---')}", border=1, align='C', ln=True)
             pdf.ln(2)
 
-           # 6. SEÇÃO 4: DIAGNÓSTICO DE PERFORMANCE
+            # 6. SEÇÃO 4: DIAGNÓSTICO DE PERFORMANCE
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
             pdf.cell(190, 7, " 4. DIAGNÓSTICO DE PERFORMANCE", ln=True, fill=True)
             pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 8)
             
-            # LINHA 1: SH TOTAL E SH ÚTIL
+            # Linha 1: SH TOTAL E SH ÚTIL
             pdf.cell(47.5, 6, " SH TOTAL:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(47.5, 6, f" {d.get('sh_calculado', '---')} K", border=1)
             pdf.set_font("Arial", "B", 8); pdf.cell(47.5, 6, " SH ÚTIL:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(47.5, 6, f" {d.get('sh_util', '---')} K", border=1, ln=True)
             
-            # LINHA 2: SC FINAL E RAZÃO DE COMPRESSÃO
+            # Linha 2: SC FINAL E RAZÃO DE COMPRESSÃO
             pdf.set_font("Arial", "B", 8); pdf.cell(47.5, 6, " SC FINAL:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(47.5, 6, f" {d.get('sc_calculado', '---')} K", border=1)
             pdf.set_font("Arial", "B", 8); pdf.cell(47.5, 6, " RAZÃO COMPR.:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(47.5, 6, f" {d.get('razao_compressao', '---')}", border=1, ln=True)
             pdf.ln(2)
