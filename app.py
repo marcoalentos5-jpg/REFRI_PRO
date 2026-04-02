@@ -385,37 +385,128 @@ def renderizar_aba_2():
     st.subheader("3. Parecer Técnico Final")
     d['laudo_diag'] = st.text_area("Diagnóstico e Observações Detalhadas:", value=d.get('laudo_diag', "Análise: Sistema estável."), height=150)
 
-    # ATUALIZAÇÃO DO DICIONÁRIO DE DADOS (GARANTINDO PERSISTÊNCIA DE TODAS AS CHAVES)
-    st.session_state.dados.update({
-        'p_baixa': p_suc_val,
-        'temp_sucção': t_suc_val,
-        'p_alta': p_des_val,
-        'temp_liquido': t_liq_val,
-        'temp_entrada_ar': t_ret_val,
-        'temp_saida_ar': t_ins_val,
-        'temp_amb_ext': t_amb_val,
-        'umidade': u_rel_val,
-        'p_oleo': p_oil_val,
-        'v_nominal': v_lin_val,
-        'v_medida': v_med_val,
-        'i_medida': i_med_val,
-        'cn_c': cn_c_val,
-        'cm_c': cm_c_val,
-        'cn_f': cn_f_val,
-        'cm_f': cm_f_val, 
-        'i_fan': i_fan_val,
-        'lra': lra_val,
-        'rla': rla_val,
-        'temp_descarga': t_com_val,
-        'sh_calculado': sh_calc,
-        'sc_calculado': sc_calc,
-        'sh_util': sh_util_calc,
-        'dt_ar': dt_ar_calc,
-        'razao_compressao': razao_compr,
-        'cop_estimado': cop_estimado,
-        'balanca_sugestao': sugestao_massa
-    })
-# FINAL DO BLOCO 2 (LINHA 384)   
+
+# --- INÍCIO DO BLOCO DE GERAÇÃO DE RELATÓRIO REVISADO ---
+if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
+    try:
+        # 1. ATUALIZAÇÃO DO DICIONÁRIO (NOMES PADRONIZADOS SEM ACENTOS PARA O PDF)
+        st.session_state.dados.update({
+            'p_baixa': p_suc_val,
+            'temp_suc': t_suc_val, # Removido acento para segurança do FPDF
+            'p_alta': p_des_val,
+            'temp_liquido': t_liq_val,
+            'temp_entrada_ar': t_ret_val,
+            'temp_saida_ar': t_ins_val,
+            'temp_amb_ext': t_amb_val,
+            'umidade': u_rel_val,
+            'p_oleo': p_oil_val,
+            'v_nominal': v_lin_val,
+            'v_medida': v_med_val,
+            'i_medida': i_med_val,
+            'cn_c': cn_c_val,
+            'cm_c': cm_c_val,
+            'cn_f': cn_f_val,
+            'cm_f': cm_f_val, 
+            'i_fan': i_fan_val,
+            'lra': lra_val,
+            'rla': rla_val,
+            'temp_descarga': t_com_val,
+            'sh_calculado': sh_calc,
+            'sc_calculado': sc_calc,
+            'sh_util': sh_util_calc,
+            'dt_ar': dt_ar_calc,
+            'razao_compressao': razao_compr,
+            'cop_estimado': cop_estimado,
+            'sat_suc': t_sat_suc,
+            'sat_desc': t_sat_des,
+            # Deltas calculados com proteção contra None/Vazio
+            'delta_corrente': (i_med_val or 0) - (rla_val or 0),
+            'delta_tensao': (v_med_val or 0) - (v_lin_val or 0),
+            'delta_cap_c': (cm_c_val or 0) - (cn_c_val or 0),
+            'delta_cap_f': (cm_f_val or 0) - (cn_f_val or 0)
+        })
+
+        def gerar_pdf_final(d):
+            from fpdf import FPDF
+            pdf = FPDF()
+            pdf.add_page()
+            C_PRI = [0, 51, 153] 
+            
+            # --- SEÇÃO 3: MEDIÇÕES DE CAMPO ---
+            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 8)
+            pdf.cell(190, 7, " 3. MEDICOES DE CAMPO", ln=True, fill=True)
+            pdf.set_text_color(0, 0, 0)
+            w_col = 38.0
+
+            pdf.set_fill_color(245, 245, 245); pdf.set_font("Arial", "B", 6)
+            pdf.cell(w_col, 5, " SUCCAO (PSI)", 1, 0, 'C', True)
+            pdf.cell(w_col, 5, " TUB. SUCCAO (C)", 1, 0, 'C', True)
+            pdf.cell(w_col, 5, " DESCARGA (PSI)", 1, 0, 'C', True)
+            pdf.cell(w_col, 5, " TUB. LIQUIDO (C)", 1, 0, 'C', True)
+            pdf.cell(w_col, 5, " TUB. DESC. COMP (C)", 1, 1, 'C', True)
+            
+            pdf.set_font("Arial", "", 8)
+            pdf.cell(w_col, 7, f" {d.get('p_baixa', '---')}", 1, 0, 'C')
+            pdf.cell(w_col, 7, f" {d.get('temp_suc', '---')}", 1, 0, 'C') # Nome corrigido aqui
+            pdf.cell(w_col, 7, f" {d.get('p_alta', '---')}", 1, 0, 'C')
+            pdf.cell(w_col, 7, f" {d.get('temp_liquido', '---')}", 1, 0, 'C')
+            pdf.cell(w_col, 7, f" {d.get('temp_descarga', '---')}", 1, 1, 'C')
+
+            # --- SEÇÃO 4: DIAGNÓSTICO (12 CAMPOS COMPLETOS) ---
+            pdf.ln(2)
+            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 8)
+            pdf.cell(190, 7, " 4. DIAGNOSTICO DE PERFORMANCE E INTEGRIDADE", ln=True, fill=True)
+            pdf.set_text_color(0, 0, 0)
+            w_diag = 31.66
+
+            # Linha 1
+            pdf.set_fill_color(240, 240, 240); pdf.set_font("Arial", "B", 6)
+            pdf.cell(w_diag, 5, " SH TOTAL", 1, 0, 'C', True)
+            pdf.cell(w_diag, 5, " SAT. SUCCAO", 1, 0, 'C', True)
+            pdf.cell(w_diag, 5, " D. T (AR)", 1, 0, 'C', True)
+            pdf.cell(w_diag, 5, " D. CORRENTE", 1, 0, 'C', True)
+            pdf.cell(w_diag, 5, " RAZAO COMPR.", 1, 0, 'C', True)
+            pdf.cell(w_diag, 5, " D. CAP. COMP.", 1, 1, 'C', True)
+            pdf.set_font("Arial", "", 8)
+            pdf.cell(w_diag, 7, f" {d.get('sh_calculado', '---')} K", 1, 0, 'C')
+            pdf.cell(w_diag, 7, f" {d.get('sat_suc', '---')} C", 1, 0, 'C')
+            pdf.cell(w_diag, 7, f" {d.get('dt_ar', '---')} K", 1, 0, 'C')
+            pdf.cell(w_diag, 7, f" {d.get('delta_corrente', '---')} A", 1, 0, 'C')
+            pdf.cell(w_diag, 7, f" {d.get('razao_compressao', '---')}", 1, 0, 'C')
+            pdf.cell(w_diag, 7, f" {d.get('delta_cap_c', '---')} uF", 1, 1, 'C')
+
+            # Linha 2
+            pdf.set_fill_color(240, 240, 240); pdf.set_font("Arial", "B", 6)
+            pdf.cell(w_diag, 5, " SH UTIL", 1, 0, 'C', True)
+            pdf.cell(w_diag, 5, " SAT. DESCARGA", 1, 0, 'C', True)
+            pdf.cell(w_diag, 5, " SC FINAL", 1, 0, 'C', True)
+            pdf.cell(w_diag, 5, " D. TENSAO", 1, 0, 'C', True)
+            pdf.cell(w_diag, 5, " COP ESTIMADO", 1, 0, 'C', True)
+            pdf.cell(w_diag, 5, " D. CAP. FAN", 1, 1, 'C', True)
+            pdf.set_font("Arial", "", 8)
+            pdf.cell(w_diag, 7, f" {d.get('sh_util', '---')} K", 1, 0, 'C')
+            pdf.cell(w_diag, 7, f" {d.get('sat_desc', '---')} C", 1, 0, 'C')
+            pdf.cell(w_diag, 7, f" {d.get('sc_calculado', '---')} K", 1, 0, 'C')
+            pdf.cell(w_diag, 7, f" {d.get('delta_tensao', '---')} V", 1, 0, 'C')
+            pdf.cell(w_diag, 7, f" {d.get('cop_estimado', '---')}", 1, 0, 'C')
+            pdf.cell(w_diag, 7, f" {d.get('delta_cap_f', '---')} uF", 1, 1, 'C')
+
+            pdf.ln(4)
+            return pdf.output(dest='S').encode('latin-1')
+
+        # 3. GERAÇÃO DO BINÁRIO E DOWNLOAD
+        pdf_final = gerar_pdf_final(st.session_state.dados)
+        st.success("✅ Relatório MPN Soluções pronto para download!")
+        st.download_button(
+            label="📄 BAIXAR RELATÓRIO AGORA",
+            data=pdf_final,
+            file_name=f"Laudo_MPN_{st.session_state.dados.get('tag_id','INS').upper()}.pdf",
+            mime="application/pdf",
+            use_container_width=True
+        )
+
+    except Exception as e:
+        st.error(f"❌ Erro na geração: Verifique se todos os campos foram preenchidos. Detalhe: {e}")
 
 
 # ==============================================================================
