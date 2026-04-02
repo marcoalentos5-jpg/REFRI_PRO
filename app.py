@@ -846,21 +846,18 @@ with st.sidebar:
                 'delta_cap_f': st.session_state.get('delta_cap_fan', 0.0)
             })
 
-            # --- 2. GERA O PDF COM OS DADOS ATUALIZADOS ---
-            # Certifique-se que sua função de gerar PDF usa 'st.session_state.dados'
-            pdf_final = gerar_relatorio_pdf(st.session_state.dados) 
+           # --- 2. GERA O PDF COM OS DADOS ATUALIZADOS ---
+# Mudei de 'gerar_relatorio_pdf' para 'gerar_pdf_final' para bater com o seu 'def'
+pdf_final = gerar_pdf_final(st.session_state.dados) 
 
-            # --- 3. BOTÃO DE DOWNLOAD (O QUE VOCÊ JÁ TINHA) ---
-            st.download_button(
-                label="📄 GERAR RELATÓRIO TÉCNICO FINAL",
-                data=pdf_final,
-                file_name=f"Laudo_MPN_{st.session_state.dados.get('tag_id','INS').upper()}.pdf",
-                mime="application/pdf",
-                use_container_width=True
-            )
-
-        except Exception as e:
-            st.error(f"Erro ao gerar PDF: {e}")
+# --- 3. BOTÃO DE DOWNLOAD ---
+st.download_button(
+    label="📄 GERAR RELATÓRIO TÉCNICO FINAL",
+    data=pdf_final,
+    file_name=f"Laudo_MPN_{st.session_state.dados.get('tag_id','INS').upper()}.pdf",
+    mime="application/pdf",
+    use_container_width=True
+)
 
 # <--- O BLOCO DO PDF TERMINA AQUI (BEM NA MARGEM ESQUERDA)
 
