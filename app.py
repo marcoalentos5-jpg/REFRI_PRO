@@ -650,15 +650,52 @@ with st.sidebar:
 
             pdf.ln(4)
 
-            # 6. SEÇÃO 4: DIAGNÓSTICO DE PERFORMANCE
-            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
-            pdf.cell(190, 7, " 4. DIAGNÓSTICO DE PERFORMANCE", ln=True, fill=True)
-            pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 8)
+           # ==========================================================================
+            # 4. DIAGNÓSTICO DE PERFORMANCE E INTEGRIDADE (12 CAMPOS - IGUAL AO APP)
+            # ==========================================================================
+            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 8)
+            pdf.cell(190, 7, " 4. DIAGNÓSTICO DE PERFORMANCE E INTEGRIDADE", ln=True, fill=True)
+            pdf.set_text_color(0, 0, 0)
             
-            pdf.cell(47.5, 6, " SH TOTAL:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(47.5, 6, f" {d.get('sh_calculado', '---')} K", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(47.5, 6, " SH ÚTIL:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(47.5, 6, f" {d.get('sh_util', '---')} K", border=1, ln=True)
-            pdf.set_font("Arial", "B", 8); pdf.cell(47.5, 6, " SC FINAL:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(47.5, 6, f" {d.get('sc_calculado', '---')} K", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(47.5, 6, " RAZÃO COMPR.:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(47.5, 6, f" {d.get('razao_compressao', '---')}", border=1, ln=True)
+            # Largura para cada uma das 6 colunas (190mm / 6 = 31.66mm)
+            w_col = 31.66 
+
+            # --- LINHA 1: TÍTULOS (ESTILO CABEÇALHO) ---
+            pdf.set_fill_color(240, 240, 240); pdf.set_font("Arial", "B", 6)
+            pdf.cell(w_col, 5, " SH TOTAL", border=1, align='C', fill=True)
+            pdf.cell(w_col, 5, " SAT. SUCÇÃO", border=1, align='C', fill=True)
+            pdf.cell(w_col, 5, " Δ T (AR)", border=1, align='C', fill=True)
+            pdf.cell(w_col, 5, " Δ CORRENTE", border=1, align='C', fill=True)
+            pdf.cell(w_col, 5, " RAZÃO COMPR.", border=1, align='C', fill=True)
+            pdf.cell(w_col, 5, " Δ CAP. COMP.", border=1, align='C', fill=True, ln=True)
+
+            # --- LINHA 1: VALORES DO APP (ESTILO DADO) ---
+            pdf.set_font("Arial", "", 8)
+            pdf.cell(w_col, 7, f" {d.get('sh_calculado', '---')} K", border=1, align='C')
+            pdf.cell(w_col, 7, f" {d.get('sat_suc', '---')} °C", border=1, align='C')
+            pdf.cell(w_col, 7, f" {d.get('dt_ar', '---')} K", border=1, align='C')
+            pdf.cell(w_col, 7, f" {d.get('delta_corrente', '---')} A", border=1, align='C')
+            pdf.cell(w_col, 7, f" {d.get('razao_compressao', '---')}", border=1, align='C')
+            pdf.cell(w_col, 7, f" {d.get('delta_cap_c', '---')} µF", border=1, align='C', ln=True)
+
+            # --- LINHA 2: TÍTULOS (ESTILO CABEÇALHO) ---
+            pdf.set_fill_color(240, 240, 240); pdf.set_font("Arial", "B", 6)
+            pdf.cell(w_col, 5, " SH ÚTIL", border=1, align='C', fill=True)
+            pdf.cell(w_col, 5, " SAT. DESCARGA", border=1, align='C', fill=True)
+            pdf.cell(w_col, 5, " SC FINAL", border=1, align='C', fill=True)
+            pdf.cell(w_col, 5, " Δ TENSÃO", border=1, align='C', fill=True)
+            pdf.cell(w_col, 5, " COP ESTIMADO", border=1, align='C', fill=True)
+            pdf.cell(w_col, 5, " Δ CAP. FAN", border=1, align='C', fill=True, ln=True)
+
+            # --- LINHA 2: VALORES DO APP (ESTILO DADO) ---
+            pdf.set_font("Arial", "", 8)
+            pdf.cell(w_col, 7, f" {d.get('sh_util', '---')} K", border=1, align='C')
+            pdf.cell(w_col, 7, f" {d.get('sat_desc', '---')} °C", border=1, align='C')
+            pdf.cell(w_col, 7, f" {d.get('sc_calculado', '---')} K", border=1, align='C')
+            pdf.cell(w_col, 7, f" {d.get('delta_tensao', '---')} V", border=1, align='C')
+            pdf.cell(w_col, 7, f" {d.get('cop_estimado', '---')}", border=1, align='C')
+            pdf.cell(w_col, 7, f" {d.get('delta_cap_f', '---')} µF", border=1, align='C', ln=True)
+            
             pdf.ln(2)
 
             # 7. PARECER E ASSINATURAS
