@@ -455,6 +455,12 @@ with st.sidebar:
     
     if len(n_val) > 3 and len(d_val) > 5:
         st.success("✅ Relatório Pronto")
+# COLE ESTA LINHA AQUI PARA DESCOBRIR OS NOMES:
+        st.info(f"Campos salvos no sistema: {list(st.session_state.dados.keys())}")
+
+        try:
+            from fpdf import FPDF
+            # ... resto do seu código ...
         
         try:
             from fpdf import FPDF
@@ -516,12 +522,18 @@ with st.sidebar:
             pdf.cell(35, 6, f" {d.get('v_medida', '---')}", border=1, align='C', ln=True)
             pdf.ln(2)
 
-            # 6. SEÇÃO 4: DIAGNÓSTICO
+           # 6. SEÇÃO 4: DIAGNÓSTICO DE PERFORMANCE
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
             pdf.cell(190, 7, " 4. DIAGNÓSTICO DE PERFORMANCE", ln=True, fill=True)
             pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 8)
+            
+            # LINHA 1: SH TOTAL E SH ÚTIL
             pdf.cell(47.5, 6, " SH TOTAL:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(47.5, 6, f" {d.get('sh_calculado', '---')} K", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(47.5, 6, " SC FINAL:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(47.5, 6, f" {d.get('sc_calculado', '---')} K", border=1, ln=True)
+            pdf.set_font("Arial", "B", 8); pdf.cell(47.5, 6, " SH ÚTIL:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(47.5, 6, f" {d.get('sh_util', '---')} K", border=1, ln=True)
+            
+            # LINHA 2: SC FINAL E RAZÃO DE COMPRESSÃO
+            pdf.set_font("Arial", "B", 8); pdf.cell(47.5, 6, " SC FINAL:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(47.5, 6, f" {d.get('sc_calculado', '---')} K", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(47.5, 6, " RAZÃO COMPR.:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(47.5, 6, f" {d.get('razao_compressao', '---')}", border=1, ln=True)
             pdf.ln(2)
 
             # 7. PARECER E ASSINATURAS
