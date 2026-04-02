@@ -426,13 +426,12 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
             'delta_cap_f': st.session_state.get('delta_cap_fan', 0.0)
         })
 
-        # 2. FUNÇÃO DO PDF (8 espaços de recuo)
+       # 2. FUNÇÃO DO PDF (8 espaços de recuo)
         def gerar_pdf_final(d):
             from fpdf import FPDF
             pdf = FPDF()
             pdf.add_page()
-            # ... restante do seu código do PDF ...
-            return pdf.output(dest='S').encode('latin-1')
+            C_PRI = [0, 51, 153] 
             
             # --- SEÇÃO 3: MEDIÇÕES DE CAMPO ---
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 8)
@@ -449,12 +448,12 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
             
             pdf.set_font("Arial", "", 8)
             pdf.cell(w_col, 7, f" {d.get('p_baixa', '---')}", 1, 0, 'C')
-            pdf.cell(w_col, 7, f" {d.get('temp_suc', '---')}", 1, 0, 'C') # Nome corrigido aqui
+            pdf.cell(w_col, 7, f" {d.get('temp_suc', '---')}", 1, 0, 'C') 
             pdf.cell(w_col, 7, f" {d.get('p_alta', '---')}", 1, 0, 'C')
             pdf.cell(w_col, 7, f" {d.get('temp_liquido', '---')}", 1, 0, 'C')
             pdf.cell(w_col, 7, f" {d.get('temp_descarga', '---')}", 1, 1, 'C')
 
-            # --- SEÇÃO 4: DIAGNÓSTICO (12 CAMPOS COMPLETOS) ---
+            # --- SEÇÃO 4: DIAGNÓSTICO ---
             pdf.ln(2)
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 8)
             pdf.cell(190, 7, " 4. DIAGNOSTICO DE PERFORMANCE E INTEGRIDADE", ln=True, fill=True)
@@ -469,6 +468,7 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
             pdf.cell(w_diag, 5, " D. CORRENTE", 1, 0, 'C', True)
             pdf.cell(w_diag, 5, " RAZAO COMPR.", 1, 0, 'C', True)
             pdf.cell(w_diag, 5, " D. CAP. COMP.", 1, 1, 'C', True)
+            
             pdf.set_font("Arial", "", 8)
             pdf.cell(w_diag, 7, f" {d.get('sh_total', '---')} K", 1, 0, 'C')
             pdf.cell(w_diag, 7, f" {d.get('sat_suc', '---')} C", 1, 0, 'C')
@@ -485,6 +485,7 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
             pdf.cell(w_diag, 5, " D. TENSAO", 1, 0, 'C', True)
             pdf.cell(w_diag, 5, " COP ESTIMADO", 1, 0, 'C', True)
             pdf.cell(w_diag, 5, " D. CAP. FAN", 1, 1, 'C', True)
+            
             pdf.set_font("Arial", "", 8)
             pdf.cell(w_diag, 7, f" {d.get('sh_util', '---')} K", 1, 0, 'C')
             pdf.cell(w_diag, 7, f" {d.get('sat_desc', '---')} C", 1, 0, 'C')
@@ -494,13 +495,14 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
             pdf.cell(w_diag, 7, f" {d.get('delta_cap_f', '---')} uF", 1, 1, 'C')
 
             pdf.ln(4)
+            # O RETURN DEVE SER A ÚLTIMA LINHA DA FUNÇÃO
             return pdf.output(dest='S').encode('latin-1')
 
-    # --- 3. GERAÇÃO DO BINÁRIO E DOWNLOAD (8 espaços de recuo) ---
-            pdf_final = gerar_pdf_final(st.session_state.dados)
+        # --- 3. GERAÇÃO E DOWNLOAD ---
+        pdf_final = gerar_pdf_final(st.session_state.dados)
         
-            st.success("✅ Relatório MPN Soluções pronto para download!")
-            st.download_button(
+        st.success("✅ Relatório MPN Soluções pronto para download!")
+        st.download_button(
             label="📄 BAIXAR RELATÓRIO AGORA",
             data=pdf_final,
             file_name=f"Laudo_MPN_{st.session_state.dados.get('tag_id','INS').upper()}.pdf",
@@ -509,7 +511,6 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
         )
 
     except Exception as e:
-        # IMPORTANTE: O comando abaixo precisa de 8 espaços (2 tabs) para funcionar dentro do except
         st.error(f"❌ Erro na geração: Detalhe: {e}")
 
 
