@@ -734,12 +734,31 @@ with st.sidebar:
             else:
                 pdf_final = pdf_bytes
 
-            # Agora passamos o 'pdf_final' para o botão
-            # --- FINAL DO BLOCO DO BOTÃO ---
+           # --- 1. ATUALIZA O DICIONÁRIO COM OS CÁLCULOS (PARA NÃO SAIR VAZIO) ---
+            st.session_state.dados.update({
+                'sh_calculado': sh_total,
+                'sh_util': sh_util,
+                'sc_calculado': sc_total,
+                'dt_ar': delta_t_ar,
+                'razao_compressao': r_compr,
+                'cop_estimado': cop_est,
+                'sat_suc': t_sat_suc,
+                'sat_desc': t_sat_liq,
+                'delta_corrente': delta_i,
+                'delta_tensao': delta_v,
+                'delta_cap_c': delta_cap_comp,
+                'delta_cap_f': delta_cap_fan
+            })
+
+            # --- 2. GERA O PDF COM OS DADOS ATUALIZADOS ---
+            # Certifique-se que sua função de gerar PDF usa 'st.session_state.dados'
+            pdf_final = gerar_relatorio_pdf(st.session_state.dados) 
+
+            # --- 3. BOTÃO DE DOWNLOAD (O QUE VOCÊ JÁ TINHA) ---
             st.download_button(
                 label="📄 GERAR RELATÓRIO TÉCNICO FINAL",
                 data=pdf_final,
-                file_name=f"Laudo_MPN_{d.get('tag_id','INS').upper()}.pdf",
+                file_name=f"Laudo_MPN_{st.session_state.dados.get('tag_id','INS').upper()}.pdf",
                 mime="application/pdf",
                 use_container_width=True
             )
