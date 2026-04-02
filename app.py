@@ -526,54 +526,57 @@ with st.sidebar:
             pdf.cell(30, 6, f" {d.get('uf', '---')}", border=1, ln=True)
             pdf.ln(2)
             
-        # 4. SEÇÃO 2: DETALHES TÉCNICOS DO ATIVO (12 CAMPOS SINCRONIZADOS)
+       # 4. SEÇÃO 2: DETALHES TÉCNICOS DO ATIVO (3 COLUNAS - 11 CAMPOS)
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
             pdf.cell(190, 7, " 2. DETALHES TÉCNICOS DO ATIVO", ln=True, fill=True)
-            pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 8)
+            pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 7)
             
-            # Linha 1: Fabricante e Modelo
-            pdf.cell(35, 6, " FABRICANTE:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(60, 6, f" {d.get('fabricante', '---')}", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " MODELO:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(60, 6, f" {d.get('modelo', '---')}", border=1, ln=True)
+            # Linha 1: Fabricante, Modelo e Série Evap
+            pdf.cell(25, 6, " FABRICANTE:", border="LTB"); pdf.set_font("Arial", "", 7)
+            pdf.cell(38, 6, f" {d.get('fabricante', '---')}", border="RTB")
             
-            # Linha 2: Séries (Evap e Cond)
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " SÉRIE (EVAP):", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(60, 6, f" {d.get('n_serie_evap', '---')}", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " SÉRIE (COND):", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(60, 6, f" {d.get('n_serie_cond', '---')}", border=1, ln=True)
+            pdf.set_font("Arial", "B", 7); pdf.cell(25, 6, " MODELO:", border="LTB"); pdf.set_font("Arial", "", 7)
+            pdf.cell(38, 6, f" {d.get('modelo', '---')}", border="RTB")
             
-            # Linha 3: Locais
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " LOCAL EVAP:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(60, 6, f" {d.get('local_evaporadora', '---')}", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " LOCAL COND:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(60, 6, f" {d.get('local_condensadora', '---')}", border=1, ln=True)
+            pdf.set_font("Arial", "B", 7); pdf.cell(25, 6, " SÉRIE EVAP:", border="LTB"); pdf.set_font("Arial", "", 7)
+            pdf.cell(39, 6, f" {d.get('n_serie_evap', '---')}", border="RTB", ln=True)
             
-            # Linha 4: Capacidade e Potência
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " CAPACIDADE:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(60, 6, f" {d.get('capacidade_btus', '---')}", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " POTÊNCIA (W):", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(60, 6, f" {d.get('potencia_nominal', '---')}", border=1, ln=True)
+            # Linha 2: Série Cond, Local Evap e Local Cond
+            pdf.set_font("Arial", "B", 7); pdf.cell(25, 6, " SÉRIE COND:", border="LTB"); pdf.set_font("Arial", "", 7)
+            pdf.cell(38, 6, f" {d.get('n_serie_cond', '---')}", border="RTB")
+            
+            pdf.set_font("Arial", "B", 7); pdf.cell(25, 6, " LOCAL EVAP:", border="LTB"); pdf.set_font("Arial", "", 7)
+            pdf.cell(38, 6, f" {d.get('local_evaporadora', '---')}", border="RTB")
+            
+            pdf.set_font("Arial", "B", 7); pdf.cell(25, 6, " LOCAL COND:", border="LTB"); pdf.set_font("Arial", "", 7)
+            pdf.cell(39, 6, f" {d.get('local_condensadora', '---')}", border="RTB", ln=True)
+            
+            # Linha 3: Capacidade, Potência e Fluido
+            pdf.set_font("Arial", "B", 7); pdf.cell(25, 6, " CAPACIDADE:", border="LTB"); pdf.set_font("Arial", "", 7)
+            pdf.cell(38, 6, f" {d.get('capacidade_btus', '---')}", border="RTB")
+            
+            pdf.set_font("Arial", "B", 7); pdf.cell(25, 6, " POTÊNCIA (W):", border="LTB"); pdf.set_font("Arial", "", 7)
+            pdf.cell(38, 6, f" {d.get('potencia_nominal', '---')}", border="RTB")
+            
+            pdf.set_font("Arial", "B", 7); pdf.cell(25, 6, " FLUIDO REF.:", border="LTB"); pdf.set_font("Arial", "", 7)
+            pdf.cell(39, 6, f" {d.get('fluido_refrigerante', '---')}", border="RTB", ln=True)
 
-            # Linha 5: Fluido e Carga
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " FLUIDO REF.:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(60, 6, f" {d.get('fluido_refrigerante', '---')}", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " CARGA (kg/g):", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(60, 6, f" {d.get('carga_fluido', '---')}", border=1, ln=True)
+            # Linha 4: Carga, Óleo e Tensão
+            pdf.set_font("Arial", "B", 7); pdf.cell(25, 6, " CARGA (kg/g):", border="LTB"); pdf.set_font("Arial", "", 7)
+            pdf.cell(38, 6, f" {d.get('carga_fluido', '---')}", border="RTB")
+            
+            pdf.set_font("Arial", "B", 7); pdf.cell(25, 6, " TIPO ÓLEO:", border="LTB"); pdf.set_font("Arial", "", 7)
+            pdf.cell(38, 6, f" {d.get('tipo_oleo', '---')}", border="RTB")
+            
+            pdf.set_font("Arial", "B", 7); pdf.cell(25, 6, " TENSÃO NOM.:", border="LTB"); pdf.set_font("Arial", "", 7)
+            pdf.cell(39, 6, f" {d.get('tensao_nominal_v', '---')}", border="RTB", ln=True)
 
-            # Linha 6: Óleo e Tensão
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " TIPO ÓLEO:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(60, 6, f" {d.get('tipo_oleo', '---')}", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(35, 6, " TENSÃO NOM.:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(60, 6, f" {d.get('tensao_nominal_v', '---')}", border=1, ln=True)
-
-            # Linha 7: Última Manutenção, TAG e Status (Para fechar os 12)
-            pdf.set_font("Arial", "B", 8); pdf.cell(25, 6, " ULT. MANUT:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(35, 6, f" {d.get('data_ultima_manut', '---')}", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(20, 6, " TAG:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(40, 6, f" {d.get('tag_patrimonio', '---')}", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(25, 6, " STATUS:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(45, 6, f" {d.get('status_equipamento', '---')}", border=1, ln=True)
+            # Linha 5: Última Manutenção e TAG (Campos Finais)
+            pdf.set_font("Arial", "B", 7); pdf.cell(25, 6, " ULT. MANUT:", border="LTB"); pdf.set_font("Arial", "", 7)
+            pdf.cell(38, 6, f" {d.get('data_ultima_manut', '---')}", border="RTB")
+            
+            pdf.set_font("Arial", "B", 7); pdf.cell(25, 6, " TAG/ID:", border="LTB"); pdf.set_font("Arial", "", 7)
+            pdf.cell(102, 6, f" {d.get('tag_patrimonio', '---')}", border="RTB", ln=True)
             
             pdf.ln(2)
 
