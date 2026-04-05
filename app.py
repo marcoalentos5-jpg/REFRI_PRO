@@ -573,9 +573,9 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
             # O RETURN DEVE SER A ÚLTIMA LINHA DA FUNÇÃO
             return pdf.output(dest='S').encode('latin-1')
 
-    # --- 3. GERAÇÃO E DOWNLOAD ---
-        try:  # Linha 577
-            # Tudo aqui dentro tem o mesmo recuo (4 espaços à frente do try)
+  # --- 3. GERAÇÃO E DOWNLOAD (LINHA 577) ---
+        try:
+            # TUDO O QUE ESTÁ DENTRO DO TRY PRECISA DE 4 ESPAÇOS DE RECUO
             pdf_final = gerar_pdf_final(st.session_state.dados)
             
             if pdf_final:
@@ -586,28 +586,26 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
                     file_name=f"Laudo_MPN_{st.session_state.dados.get('tag_id','INS').upper()}.pdf",
                     mime="application/pdf",
                     use_container_width=True,
-                    key="btn_baixar_final_mpn"
+                    key="btn_baixar_final_sidebar_v20"
                 )
             else:
-                st.error("❌ A geração do PDF retornou vazio.")
+                st.error("❌ O PDF não retornou dados. Verifique o cadastro.")
 
-        except Exception as e:
-            # O st.error PRECISA deste recuo de 4 espaços!
-                st.error(f"❌ Erro no processamento anterior: {e}")
+        except Exception as e: # <--- ESTA LINHA PRECISA ESTAR ALINHADA COM O 'try' DA 577
+            # Se der qualquer erro no motor do PDF, ele cai aqui
+            st.error(f"❌ Erro crítico no motor de PDF: {e}")
 
 # ==============================================================================
-# 3. SIDEBAR - MOTOR DE RELATÓRIO TÉCNICO MASTER (VERSÃO FINAL BLINDADA)
+# 3. SIDEBAR - MOTOR DE RELATÓRIO TÉCNICO MASTER (LINHA 601)
 # ==============================================================================
 with st.sidebar: 
     # A. LOGO
     col_l1, col_l2, col_l3 = st.columns([0.5, 9, 0.5])
     with col_l2:
         try: 
-                st.image("logo.png", use_container_width=True)
+            st.image("logo.png", use_container_width=True)
         except: 
-                st.subheader("MPN SOLUÇÕES")
-    
-                st.markdown("---")
+            st.subheader("MPN SOLUÇÕES")
     
     # B. NAVEGAÇÃO
     opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
