@@ -614,6 +614,29 @@ with st.sidebar:
     aba_selecionada = st.radio("Navegar para:", opcoes_abas, key="nav_master_vfinal")
     
     st.markdown("---")
+
+    # --- 3. GERAÇÃO E DOWNLOAD (AGORA DENTRO DA SIDEBAR CORRETAMENTE) ---
+    try:  # <--- Início do bloco protegido
+        # Só tentamos gerar se estivermos na aba de Relatórios ou se o botão for clicado
+        if st.button("🚀 GERAR RELATÓRIO PDF", key="btn_gerar_final_sidebar"):
+            pdf_final = gerar_pdf_final(st.session_state.dados)
+            
+            if pdf_final:
+                st.success("✅ Relatório pronto!")
+                st.download_button(
+                    label="📄 BAIXAR AGORA",
+                    data=pdf_final,
+                    file_name=f"Laudo_MPN_{st.session_state.dados.get('tag_id','INS').upper()}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )
+            else:
+                st.error("❌ O PDF retornou vazio.")
+
+    except Exception as e: # <--- O EXCEPT FECHA O TRY AQUI MESMO
+        st.error(f"❌ Erro na geração: {e}")
+
+    st.markdown("---")
     
     # C. IDENTIFICAÇÃO DO TÉCNICO
     st.subheader("👨‍🔧 Identificação do Técnico")
