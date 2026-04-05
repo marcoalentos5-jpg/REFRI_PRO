@@ -591,7 +591,7 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
             else:
               st.error("❌ A geração do PDF retornou vazio. Verifique os dados inseridos.")
 
-            except Exception as e:  # <--- ESTA LINHA FECHA O BLOCO E CORRIGE O ERRO
+              except Exception as e:  # <--- ESTA LINHA FECHA O BLOCO E CORRIGE O ERRO
               st.error(f"❌ Erro na geração: Detalhe: {e}")
 
 
