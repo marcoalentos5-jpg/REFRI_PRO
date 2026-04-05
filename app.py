@@ -598,7 +598,7 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
 # ==============================================================================
 # 3. SIDEBAR - MOTOR DE RELATÓRIO TÉCNICO MASTER (LINHA 601)
 # ==============================================================================
-with st.sidebar: 
+    with st.sidebar: 
     # A. LOGO
     col_l1, col_l2, col_l3 = st.columns([0.5, 9, 0.5])
     with col_l2:
