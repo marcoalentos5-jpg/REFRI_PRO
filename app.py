@@ -599,7 +599,7 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
 # 3. SIDEBAR - MOTOR DE RELATÓRIO TÉCNICO MASTER (VERSÃO FINAL BLINDADA)
 # ==============================================================================
 with st.sidebar: # Este é o nível 0 da Sidebar
-    # A. LOGO
+    st.image("logo.png") # A. LOGO
     col_l1, col_l2, col_l3 = st.columns([0.5, 9, 0.5])
     with col_l2:
         try: 
