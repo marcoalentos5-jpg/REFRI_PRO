@@ -574,7 +574,7 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
             return pdf.output(dest='S').encode('latin-1')
 
        # --- 3. GERAÇÃO E DOWNLOAD ---
-try:
+    try:
     # Chama a função que já criamos com a blindagem de caracteres
     pdf_final = gerar_pdf_final(st.session_state.dados)
     
@@ -593,7 +593,7 @@ try:
     else:
         st.error("❌ A geração do PDF retornou vazio. Verifique os dados.")
 
-except Exception as e:
+    except Exception as e:
     # Se o erro do 'bytearray' persistir, é porque em algum lugar 
     # do código ainda existe um '.encode()' sobrando.
     st.error(f"❌ Erro na geração: Detalhe: {e}")
