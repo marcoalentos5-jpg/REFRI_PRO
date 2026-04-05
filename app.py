@@ -573,9 +573,11 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
             # O RETURN DEVE SER A ÚLTIMA LINHA DA FUNÇÃO
             return pdf.output(dest='S').encode('latin-1')
 
- # --- 3. GERAÇÃO E DOWNLOAD (FORA DA SIDEBAR OU NO BLOCO ANTERIOR) ---
-try: # Linha 577
-    # O conteúdo do try deve ter 4 espaços de recuo
+# ==============================================================================
+# 3. PROCESSAMENTO E GERAÇÃO DE PDF (BLOCO PROTEGIDO)
+# ==============================================================================
+try:
+    # TUDO DENTRO DO TRY TEM EXATAMENTE 4 ESPAÇOS DE RECUO
     pdf_final = gerar_pdf_final(st.session_state.dados)
     
     if pdf_final:
@@ -591,30 +593,33 @@ try: # Linha 577
     else:
         st.error("❌ O PDF não retornou dados. Verifique o cadastro.")
 
-except Exception as e: # Alinhado exatamente com o 'try'
-        st.error(f"❌ Erro crítico no motor de PDF: {e}")
+except Exception as e:
+    # O EXCEPT ESTÁ NA MESMA COLUNA DO TRY (FECHA O BLOCO CORRETAMENTE)
+    st.error(f"❌ Erro crítico no motor de PDF: {e}")
 
 # ==============================================================================
-# 3. SIDEBAR - MOTOR DE RELATÓRIO TÉCNICO MASTER (LINHA 601)
+# 4. SIDEBAR - MOTOR DE RELATÓRIO TÉCNICO MASTER (LINHA 601)
 # ==============================================================================
-with st.sidebar: # <--- ENCOSTADO NA MARGEM ESQUERDA (SEM ESPAÇOS ANTES)
-    # A. LOGO (4 espaços de recuo em relação ao 'with')
-    st.image("logo.png") 
-    
-    col_l1, col_l2, col_l3 = st.columns([0.5, 9, 0.5])
-    with col_l2:
-        try: 
-            st.image("logo.png", use_container_width=True)
-        except: 
-            st.subheader("MPN SOLUÇÕES")
+with st.sidebar:
+    # TUDO DENTRO DA SIDEBAR TEM 4 ESPAÇOS DE RECUO
+    # A. LOGO
+    try:
+        st.image("logo.png", use_container_width=True)
+    except:
+        st.subheader("MPN SOLUÇÕES")
     
     st.markdown("---")
     
-    # B. NAVEGAÇÃO (4 espaços de recuo em relação ao 'with')
+    # B. NAVEGAÇÃO OPERACIONAL
     opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
-    aba_selecionada = st.radio("Navegar para:", opcoes_abas, key="nav_master_vfinal")
+    aba_selecionada = st.radio(
+        "Navegar para:", 
+        opcoes_abas, 
+        key="nav_master_vfinal"
+    )
     
     st.markdown("---")
+    st.info("Sistema de Climatização MPN")
 
     # --- C. MOTOR DE GERAÇÃO E DOWNLOAD (PROTEGIDO) ---
     # Este bloco deve estar RECUADO para dentro da Sidebar
