@@ -573,20 +573,30 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
             # O RETURN DEVE SER A ÚLTIMA LINHA DA FUNÇÃO
             return pdf.output(dest='S').encode('latin-1')
 
-        # --- 3. GERAÇÃO E DOWNLOAD ---
-        pdf_final = gerar_pdf_final(st.session_state.dados)
-        
-        st.success("✅ Relatório MPN Soluções pronto para download!")
+       # --- 3. GERAÇÃO E DOWNLOAD ---
+try:
+    # Chama a função que já criamos com a blindagem de caracteres
+    pdf_final = gerar_pdf_final(st.session_state.dados)
+    
+    if pdf_final:
+        # IMPORTANTE: O st.download_button aceita o 'pdf_final' direto 
+        # porque nossa função já entrega ele no formato correto (bytes/bytearray).
+        st.success("✅ Relatório MPN Soluções pronto!")
         st.download_button(
             label="📄 BAIXAR RELATÓRIO AGORA",
             data=pdf_final,
             file_name=f"Laudo_MPN_{st.session_state.dados.get('tag_id','INS').upper()}.pdf",
             mime="application/pdf",
-            use_container_width=True
+            use_container_width=True,
+            key="btn_baixar_final_mpn" # Chave única para evitar conflitos
         )
+    else:
+        st.error("❌ A geração do PDF retornou vazio. Verifique os dados.")
 
-    except Exception as e:
-        st.error(f"❌ Erro na geração: Detalhe: {e}")
+except Exception as e:
+    # Se o erro do 'bytearray' persistir, é porque em algum lugar 
+    # do código ainda existe um '.encode()' sobrando.
+    st.error(f"❌ Erro na geração: Detalhe: {e}")
 
 
 # ==============================================================================
