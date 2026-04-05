@@ -578,7 +578,7 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
         # Chama a função que criamos para processar os dados da MPN Soluções
             pdf_final = gerar_pdf_final(st.session_state.dados)
         
-    if pdf_final:
+            if pdf_final:
     st.success("✅ Relatório MPN Soluções pronto!")
     st.download_button(
                 label="📄 BAIXAR RELATÓRIO AGORA",
