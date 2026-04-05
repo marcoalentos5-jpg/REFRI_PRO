@@ -574,13 +574,13 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
             return pdf.output(dest='S').encode('latin-1')
 
      # --- 3. GERAÇÃO E DOWNLOAD ---
-    try:  # <--- Linha 577 (Início do bloco)
+        try:  # <--- Linha 577 (Início do bloco)
         # Chama a função que criamos para processar os dados da MPN Soluções
-        pdf_final = gerar_pdf_final(st.session_state.dados)
+            pdf_final = gerar_pdf_final(st.session_state.dados)
         
-        if pdf_final:
-            st.success("✅ Relatório MPN Soluções pronto!")
-            st.download_button(
+    if pdf_final:
+    st.success("✅ Relatório MPN Soluções pronto!")
+    st.download_button(
                 label="📄 BAIXAR RELATÓRIO AGORA",
                 data=pdf_final,
                 file_name=f"Laudo_MPN_{st.session_state.dados.get('tag_id','INS').upper()}.pdf",
@@ -591,8 +591,8 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
         else:
             st.error("❌ A geração do PDF retornou vazio. Verifique os dados inseridos.")
 
-    except Exception as e:  # <--- ESTA LINHA FECHA O BLOCO E CORRIGE O ERRO
-        st.error(f"❌ Erro na geração: Detalhe: {e}")
+        except Exception as e:  # <--- ESTA LINHA FECHA O BLOCO E CORRIGE O ERRO
+            st.error(f"❌ Erro na geração: Detalhe: {e}")
 
 
 # ==============================================================================
