@@ -598,8 +598,8 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
 # ==============================================================================
 # 3. SIDEBAR - MOTOR DE RELATÓRIO TÉCNICO MASTER (VERSÃO FINAL BLINDADA)
 # ==============================================================================
-with st.sidebar:
-    # A. LOGO AMPLIADA NA SIDEBAR
+with st.sidebar: # Este é o nível 0 da Sidebar
+    # A. LOGO
     col_l1, col_l2, col_l3 = st.columns([0.5, 9, 0.5])
     with col_l2:
         try: 
@@ -609,32 +609,37 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # B. NAVEGAÇÃO OPERACIONAL
+    # B. NAVEGAÇÃO
     opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
     aba_selecionada = st.radio("Navegar para:", opcoes_abas, key="nav_master_vfinal")
     
     st.markdown("---")
 
-    # --- 3. GERAÇÃO E DOWNLOAD (AGORA DENTRO DA SIDEBAR CORRETAMENTE) ---
-    try:  # <--- Início do bloco protegido
-        # Só tentamos gerar se estivermos na aba de Relatórios ou se o botão for clicado
-        if st.button("🚀 GERAR RELATÓRIO PDF", key="btn_gerar_final_sidebar"):
-            pdf_final = gerar_pdf_final(st.session_state.dados)
+    # --- C. MOTOR DE GERAÇÃO E DOWNLOAD (PROTEGIDO) ---
+    # Este bloco deve estar RECUADO para dentro da Sidebar
+    try: 
+        # Só tentamos gerar se os dados mínimos existirem (Nome e Documento)
+        d = st.session_state.dados
+        if len(str(d.get('nome', ''))) > 3:
+            st.info("📋 Relatório disponível para geração")
+            
+            # Chamada da função que remove emojis e caracteres especiais
+            pdf_final = gerar_pdf_final(d)
             
             if pdf_final:
-                st.success("✅ Relatório pronto!")
                 st.download_button(
-                    label="📄 BAIXAR AGORA",
+                    label="📄 BAIXAR LAUDO PDF",
                     data=pdf_final,
-                    file_name=f"Laudo_MPN_{st.session_state.dados.get('tag_id','INS').upper()}.pdf",
+                    file_name=f"Laudo_MPN_{d.get('tag_id','INS').upper()}.pdf",
                     mime="application/pdf",
-                    use_container_width=True
+                    use_container_width=True,
+                    key="btn_sidebar_final"
                 )
-            else:
-                st.error("❌ O PDF retornou vazio.")
+        else:
+            st.warning("⚠️ Complete o Cadastro para liberar o PDF")
 
-    except Exception as e: # <--- O EXCEPT FECHA O TRY AQUI MESMO
-        st.error(f"❌ Erro na geração: {e}")
+    except Exception as e: # <--- O 'except' fecha o 'try' AQUI, antes de qualquer outra coisa
+        st.error(f"❌ Erro no motor de PDF: {e}")
 
     st.markdown("---")
     
