@@ -650,7 +650,7 @@ with st.sidebar:
             # 2. CABEÇALHO
             try: 
                 pdf.image('logo.png', x=10, y=10, w=45)
-            except: 
+        except: 
                 pass
                 
             pdf.set_xy(10, 32)
