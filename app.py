@@ -593,7 +593,7 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
 
         except Exception as e:
             # O st.error PRECISA deste recuo de 4 espaços!
-            st.error(f"❌ Erro no processamento anterior: {e}")
+                st.error(f"❌ Erro no processamento anterior: {e}")
 
 # ==============================================================================
 # 3. SIDEBAR - MOTOR DE RELATÓRIO TÉCNICO MASTER (VERSÃO FINAL BLINDADA)
@@ -603,11 +603,11 @@ with st.sidebar:
     col_l1, col_l2, col_l3 = st.columns([0.5, 9, 0.5])
     with col_l2:
         try: 
-            st.image("logo.png", use_container_width=True)
+                st.image("logo.png", use_container_width=True)
         except: 
-            st.subheader("MPN SOLUÇÕES")
+                st.subheader("MPN SOLUÇÕES")
     
-    st.markdown("---")
+                st.markdown("---")
     
     # B. NAVEGAÇÃO
     opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
