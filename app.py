@@ -592,7 +592,7 @@ try: # Linha 577
         st.error("❌ O PDF não retornou dados. Verifique o cadastro.")
 
 except Exception as e: # Alinhado exatamente com o 'try'
-    st.error(f"❌ Erro crítico no motor de PDF: {e}")
+        st.error(f"❌ Erro crítico no motor de PDF: {e}")
 
 # ==============================================================================
 # 3. SIDEBAR - MOTOR DE RELATÓRIO TÉCNICO MASTER (LINHA 601)
