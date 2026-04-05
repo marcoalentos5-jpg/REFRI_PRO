@@ -579,8 +579,8 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
             pdf_final = gerar_pdf_final(st.session_state.dados)
         
             if pdf_final:
-    st.success("✅ Relatório MPN Soluções pronto!")
-    st.download_button(
+              st.success("✅ Relatório MPN Soluções pronto!")
+              st.download_button(
                 label="📄 BAIXAR RELATÓRIO AGORA",
                 data=pdf_final,
                 file_name=f"Laudo_MPN_{st.session_state.dados.get('tag_id','INS').upper()}.pdf",
