@@ -573,33 +573,33 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
             # O RETURN DEVE SER A ÚLTIMA LINHA DA FUNÇÃO
             return pdf.output(dest='S').encode('latin-1')
 
-     # --- 3. GERAÇÃO E DOWNLOAD ---
-        try:  # <--- Linha 577 (Início do bloco)
-        # Chama a função que criamos para processar os dados da MPN Soluções
+    # --- 3. GERAÇÃO E DOWNLOAD ---
+        try:  # Linha 577
+            # Tudo aqui dentro tem o mesmo recuo (4 espaços à frente do try)
             pdf_final = gerar_pdf_final(st.session_state.dados)
-        
+            
             if pdf_final:
-              st.success("✅ Relatório MPN Soluções pronto!")
-              st.download_button(
-                label="📄 BAIXAR RELATÓRIO AGORA",
-                data=pdf_final,
-                file_name=f"Laudo_MPN_{st.session_state.dados.get('tag_id','INS').upper()}.pdf",
-                mime="application/pdf",
-                use_container_width=True,
-                key="btn_baixar_final_mpn"
-            )
+                st.success("✅ Relatório MPN Soluções pronto!")
+                st.download_button(
+                    label="📄 BAIXAR RELATÓRIO AGORA",
+                    data=pdf_final,
+                    file_name=f"Laudo_MPN_{st.session_state.dados.get('tag_id','INS').upper()}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True,
+                    key="btn_baixar_final_mpn"
+                )
             else:
-              st.error("❌ A geração do PDF retornou vazio. Verifique os dados inseridos.")
+                st.error("❌ A geração do PDF retornou vazio.")
 
-        except Exception as e:  # <--- ESTA LINHA FECHA O BLOCO E CORRIGE O ERRO
-              st.error(f"❌ Erro na geração: Detalhe: {e}")
-
+        except Exception as e:
+            # O st.error PRECISA deste recuo de 4 espaços!
+            st.error(f"❌ Erro no processamento anterior: {e}")
 
 # ==============================================================================
 # 3. SIDEBAR - MOTOR DE RELATÓRIO TÉCNICO MASTER (VERSÃO FINAL BLINDADA)
 # ==============================================================================
-with st.sidebar: # Este é o nível 0 da Sidebar
-    st.image("logo.png") # A. LOGO
+with st.sidebar: 
+    # A. LOGO
     col_l1, col_l2, col_l3 = st.columns([0.5, 9, 0.5])
     with col_l2:
         try: 
