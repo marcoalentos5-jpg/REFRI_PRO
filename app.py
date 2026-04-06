@@ -66,29 +66,24 @@ def renderizar_aba_1():
     st.subheader("📋 Cadastro de Cliente e Ativo")
     d = st.session_state.dados
 
-  # --- SEÇÃO ENDEREÇO (SIMULAÇÃO DE AUTOMAÇÃO COMPLETA) ---
+ # --- SEÇÃO ENDEREÇO (ALINHAMENTO RIGOROSO - LINHA 70) ---
         st.markdown("---")
         ce1, ce2, ce3 = st.columns([1, 2, 1])
         
-        # O 'value' aqui é o que permite o preenchimento automático visual
-        cep_input = ce1.text_input("CEP *", value=st.session_state.dados.get('cep', ''), key="cli_cep")
-        
-        # Limpeza para simulação de 8 dígitos
+        # Captura do CEP e lógica de busca automática
+        cep_input = ce1.text_input("CEP *", value=d.get('cep', ''), key="cli_cep")
         cep_limpo = "".join(filter(str.isdigit, cep_input))
         
-        # DISPARO AUTOMÁTICO: Só roda se o CEP for novo e tiver 8 números
-        if len(cep_limpo) == 8 and cep_limpo != st.session_state.get('last_cep_sucesso', ''):
-            with st.spinner('Buscando endereço...'):
-                if buscar_cep(cep_limpo):
-                    st.session_state.dados['cep'] = cep_limpo
-                    st.session_state['last_cep_sucesso'] = cep_limpo
-                    st.rerun() # O SEGREDO DA AUTOMAÇÃO ESTÁ AQUI
+        if len(cep_limpo) == 8 and cep_limpo != st.session_state.get('last_cep_ok', ''):
+            if buscar_cep(cep_limpo):
+                st.session_state['last_cep_ok'] = cep_limpo
+                st.rerun()
 
-        # Estes campos 'bebem' da fonte atualizada pelo st.rerun()
+        # Campos de Logradouro e Número
         d['endereco'] = ce2.text_input("Logradouro:", value=d.get('endereco', ''), key="cli_end")
         d['numero'] = ce3.text_input("Nº/Apto:", value=d.get('numero', ''), key="cli_num")
 
-        # Segunda linha do endereço (Layout Congelado [1.2, 1.2, 1.2, 0.4])
+        # Segunda linha do endereço (Layout [1.2, 1.2, 1.2, 0.4])
         ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.4])
         d['complemento'] = ce4.text_input("Complemento:", value=d.get('complemento', ''), key="cli_cm")
         d['bairro'] = ce5.text_input("Bairro:", value=d.get('bairro', ''), key="cli_ba")
