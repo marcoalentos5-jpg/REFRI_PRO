@@ -80,29 +80,32 @@ def renderizar_aba_1():
         d['tel_fixo'] = cx2.text_input("Fixo:", value=d.get('tel_fixo', ''), key="cli_f")
         d['email'] = cx3.text_input("E-mail:", value=d.get('email', ''), key="cli_e")
 
-     # --- SEÇÃO ENDEREÇO (LAYOUT CONGELADO [1, 2, 1]) ---
+# --- SEÇÃO ENDEREÇO (DENTRO DA FUNÇÃO renderizar_aba_1) ---
+st.markdown("---")
+
+# 1. DEFINE AS COLUNAS PRIMEIRO (LAYOUT [1, 2, 1])
 ce1, ce2, ce3 = st.columns([1, 2, 1])
 
-# 1. O usuário digita o CEP
+# 2. CHAMA O INPUT USANDO A COLUNA ce1
 cep_input = ce1.text_input("CEP *", value=d.get('cep', ''), key="cli_cep")
 
-# 2. GATILHO DE ATUALIZAÇÃO (A CHAVE DO SUCESSO)
+# 3. GATILHO DE BUSCA INSTANTÂNEA
 cep_limpo = "".join(filter(str.isdigit, cep_input))
-if len(cep_limpo) == 8 and cep_limpo != st.session_state.get('ultimo_cep_sucesso', ''):
-    if buscar_cep(cep_limpo): # Chama sua função que você postou acima
-        st.session_state['ultimo_cep_sucesso'] = cep_limpo
-        st.rerun() # <--- ISSO faz o endereço aparecer NA HORA sem trocar de aba
+if len(cep_limpo) == 8 and cep_limpo != st.session_state.get('last_cep_ok', ''):
+    if buscar_cep(cep_limpo):
+        st.session_state['last_cep_ok'] = cep_limpo
+        st.rerun()
 
-# 3. CAMPOS DE ENDEREÇO (O valor 'd' agora já terá os dados do st.session_state)
-        d['endereco'] = ce2.text_input("Logradouro:", value=d.get('endereco', ''), key="cli_end")
-        d['numero'] = ce3.text_input("Nº/Apto:", value=d.get('numero', ''), key="cli_num")
+# 4. DEMAIS CAMPOS (Sincronizados com o Layout Congelado)
+d['endereco'] = ce2.text_input("Logradouro:", value=d.get('endereco', ''), key="cli_end")
+d['numero'] = ce3.text_input("Nº/Apto:", value=d.get('numero', ''), key="cli_num")
 
-        # Layout Congelado [1.2, 1.2, 1.2, 0.4] - ALINHAMENTO CORRIGIDO
-        ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.4])
-        d['complemento'] = ce4.text_input("Complemento:", value=d.get('complemento', ''), key="cli_cm")
-        d['bairro'] = ce5.text_input("Bairro:", value=d.get('bairro', ''), key="cli_ba")
-        d['cidade'] = ce6.text_input("Cidade:", value=d.get('cidade', ''), key="cli_ci")
-        d['uf'] = ce7.text_input("UF:", value=d.get('uf', ''), key="cli_uf")
+# Proporção [1.2, 1.2, 1.2, 0.4]
+ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.4])
+d['complemento'] = ce4.text_input("Complemento:", value=d.get('complemento', ''), key="cli_cm")
+d['bairro'] = ce5.text_input("Bairro:", value=d.get('bairro', ''), key="cli_ba")
+d['cidade'] = ce6.text_input("Cidade:", value=d.get('cidade', ''), key="cli_ci")
+d['uf'] = ce7.text_input("UF:", value=d.get('uf', ''), key="cli_uf")
 
     # --- SEÇÃO EQUIPAMENTO ---
     st.markdown("### ⚙️ Especificações do Equipamento")
