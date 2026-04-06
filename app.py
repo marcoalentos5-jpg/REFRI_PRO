@@ -62,11 +62,16 @@ def buscar_cep(cep):
 # ==============================================================================
 # 1.2 FUNÇÃO DA ABA 1: Identificação e Equipamento (LIMPEZA DEFINITIVA)
 # ==============================================================================
+
 def renderizar_aba_1():
     st.subheader("📋 Cadastro de Cliente e Ativo")
+    # Referência direta ao dicionário de dados
+    if 'dados' not in st.session_state:
+        return
+    
     d = st.session_state.dados
 
-    # --- SEÇÃO CLIENTE E ENDEREÇO (ALINHAMENTO 4 ESPAÇOS) ---
+    # --- SEÇÃO CLIENTE E ENDEREÇO ---
     with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
         c1, c2, c3 = st.columns([2, 1, 1])
         d['nome'] = c1.text_input("Nome / Razão Social *", value=d.get('nome', ''), key="cli_n")
@@ -80,16 +85,24 @@ def renderizar_aba_1():
 
         st.markdown("---")
         
-        # Bloco de CEP com Automação Instantânea
+        # --- BLOCO CEP (ALINHAMENTO E LÓGICA DE PERSISTÊNCIA) ---
         ce1, ce2, ce3 = st.columns([1, 2, 1])
-        cep_input = ce1.text_input("CEP *", value=d.get('cep', ''), key="cli_cep")
         
-        cep_limpo = "".join(filter(str.isdigit, cep_input))
+        # 1. Capturamos o CEP. O 'value' aponta para o estado persistente.
+        cep_digitado = ce1.text_input("CEP *", value=d.get('cep', ''), key="cli_cep_input")
+        
+        # 2. Higienização
+        cep_limpo = "".join(filter(str.isdigit, cep_digitado))
+        
+        # 3. Gatilho de Busca: Só dispara se for um CEP completo e DIFERENTE do último sucesso
         if len(cep_limpo) == 8 and cep_limpo != st.session_state.get('last_cep_ok', ''):
             if buscar_cep(cep_limpo):
+                # SALVAMOS TUDO NO ESTADO ANTES DO RERUN
+                st.session_state.dados['cep'] = cep_limpo
                 st.session_state['last_cep_ok'] = cep_limpo
-                st.rerun()
+                st.rerun() # Reinicia para projetar os novos valores nos campos abaixo
 
+        # 4. Campos que recebem a carga do ViaCEP
         d['endereco'] = ce2.text_input("Logradouro:", value=d.get('endereco', ''), key="cli_end")
         d['numero'] = ce3.text_input("Nº/Apto:", value=d.get('numero', ''), key="cli_num")
 
@@ -100,7 +113,7 @@ def renderizar_aba_1():
         d['cidade'] = ce6.text_input("Cidade:", value=d.get('cidade', ''), key="cli_ci")
         d['uf'] = ce7.text_input("UF:", value=d.get('uf', ''), key="cli_uf")
 
-    # --- SEÇÃO EQUIPAMENTO (LINHA 94 - CORRIGIDA) ---
+    # --- SEÇÃO EQUIPAMENTO (ALINHAMENTO CORRIGIDO NA LINHA 94) ---
     st.markdown("### ⚙️ Especificações do Equipamento")
     with st.expander("Detalhes Técnicos do Ativo", expanded=True):
         l1_c1, l1_c2, l1_c3 = st.columns(3)
@@ -114,6 +127,7 @@ def renderizar_aba_1():
             btus_list = ["7.000 BTU", "9.000 BTU", "12.000 BTU", "18.000 BTU", "22.000 BTU", "24.000 BTU", "30.000 BTU", "36.000 BTU", "48.000 BTU", "60.000 BTU", "80.000 BTU", "Outra"]
             c_idx = btus_list.index(d['capacidade']) if d['capacidade'] in btus_list else 2
             d['capacidade'] = st.selectbox("Capacidade (BTU's):", btus_list, index=c_idx, key="eq_ca")
+
 
         l2_c1, l2_c2, l2_c3 = st.columns(3)
         with l2_c1:
