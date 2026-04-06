@@ -379,7 +379,7 @@ def renderizar_aba_2():
     d['laudo_diag'] = st.text_area("Diagnóstico Final:", value=d.get('laudo_diag', "Sistema estável."), height=150)
 
     # PERSISTÊNCIA TOTAL DAS CHAVES (DO CAMPO AO CÁLCULO)
-   st.session_state.dados.update({
+    st.session_state.dados.update({
     # --- MEDIÇÕES ---
     'p_baixa': p_suc_val,
     'temp_sucção': t_suc_val,
