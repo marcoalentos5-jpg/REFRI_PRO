@@ -376,13 +376,13 @@ def renderizar_aba_2():
     pdf.ln(2)
 
 # 6. SEÇÃO EXTRA: TODOS OS DADOS REGISTRADOS
-pdf.set_fill_color(*C_PRI)
-pdf.set_text_color(255, 255, 255)
-pdf.set_font("Arial", "B", 9)
-pdf.cell(190, 7, " 5. DADOS COMPLETOS DO SISTEMA", ln=True, fill=True)
+    pdf.set_fill_color(*C_PRI)
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_font("Arial", "B", 9)
+    pdf.cell(190, 7, " 5. DADOS COMPLETOS DO SISTEMA", ln=True, fill=True)
 
-pdf.set_text_color(0, 0, 0)
-pdf.set_font("Arial", "", 7)
+    pdf.set_text_color(0, 0, 0)
+    pdf.set_font("Arial", "", 7)
 
 # CAMPOS QUE JÁ FORAM MOSTRADOS (para evitar repetição)
 campos_ignorados = {
