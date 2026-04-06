@@ -92,7 +92,7 @@ def renderizar_aba_1():
 
 # --- SEÇÃO EQUIPAMENTO ---
     st.markdown("### ⚙️ Especificações do Equipamento")
-    with st.expander("Detalhes Técnicos do Ativo", expanded=True):
+        with st.expander("Detalhes Técnicos do Ativo", expanded=True):
         l1_c1, l1_c2, l1_c3 = st.columns(3)
         with l1_c1:
             fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea", "Hitachi"]) + ["Outro"]
