@@ -373,6 +373,40 @@ def renderizar_aba_2():
         for a in alertas: st.error(a)
     else: st.success("✅ Sistema operando dentro da normalidade.")
 
+pdf.ln(2)
+
+# 6. SEÇÃO EXTRA: TODOS OS DADOS REGISTRADOS
+pdf.set_fill_color(*C_PRI)
+pdf.set_text_color(255, 255, 255)
+pdf.set_font("Arial", "B", 9)
+pdf.cell(190, 7, " 5. DADOS COMPLETOS DO SISTEMA", ln=True, fill=True)
+
+pdf.set_text_color(0, 0, 0)
+pdf.set_font("Arial", "", 7)
+
+# CAMPOS QUE JÁ FORAM MOSTRADOS (para evitar repetição)
+campos_ignorados = {
+    'nome','cpf_cnpj','whatsapp','celular','fixo','telefone_fixo','tel_fixo',
+    'email','cep','endereco','logradouro','numero','complemento','bairro',
+    'cidade','uf','fabricante','modelo','n_serie_evap','n_serie_cond',
+    'local_evaporadora','local_condensadora','capacidade_btus',
+    'potencia_nominal','fluido_refrigerante','carga_fluido','tipo_oleo',
+    'tensao_nominal_v','tag_patrimonio','data_ultima_manut',
+    'p_baixa','temp_sucção','p_alta','temp_liquido',
+    'i_medida','v_medida','sh_calculado','sh_util',
+    'sc_calculado','razao_compressao','laudo_diag'
+}
+
+for chave, valor in d.items():
+    if chave in campos_ignorados:
+        continue
+    
+    texto_chave = str(chave).replace("_", " ").upper()
+    texto_valor = str(valor) if valor not in [None, ""] else "---"
+    
+    pdf.multi_cell(190, 5, f"{texto_chave}: {texto_valor}", border=1)
+    
+
     # --- 6. PARECER TÉCNICO E PERSISTÊNCIA ---
     st.markdown("---")
     st.subheader("3. Parecer Técnico Final")
