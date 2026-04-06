@@ -171,25 +171,26 @@ def renderizar_aba_1():
             d['ultima_maint'] = st.date_input("Última Manutenção:", value=dt, format="DD/MM/YYYY", key="eq_dt").strftime("%d/%m/%Y")
             d['tag_id'] = st.text_input("TAG/Patrimônio:", value=d.get('tag_id', ''), key="eq_ta")
 
-# --- MOTOR DE CÁLCULO PT ---
+# ==============================================================================
+# 1. MOTOR DE CÁLCULO TERMODINÂMICO (PRECISÃO PT)
+# ==============================================================================
 def f_sat_precisao(p, g):
+    """Calcula a temperatura de saturação com base na pressão e no gás."""
     if p <= 5: return -50.0
     tabelas = {
         "R410A": {"xp": [5, 50, 90, 122, 150, 350, 550], "fp": [-50, -18, -3.5, 5.5, 11.5, 41.5, 64.5]},
-        "R32": {"xp": [5, 50, 90, 140, 200, 480, 580], "fp": [-50, -19.5, -3.6, 8.5, 19.8, 56.5, 66.8]},
-        "R22": {"xp": [5, 30, 60, 100, 200, 320], "fp": [-50, -15.2, 1.5, 16.5, 38.5, 58.5]},
+        "R32":   {"xp": [5, 50, 90, 140, 200, 480, 580], "fp": [-50, -19.5, -3.6, 8.5, 19.8, 56.5, 66.8]},
+        "R22":   {"xp": [5, 30, 60, 100, 200, 320], "fp": [-50, -15.2, 1.5, 16.5, 38.5, 58.5]},
         "R134a": {"xp": [5, 15, 30, 70, 150, 250], "fp": [-50, -15.5, 1.5, 27.5, 53, 76.2]},
-        "R290": {"xp": [5, 20, 65, 100, 150, 250], "fp": [-50, -25.5, 3.5, 17.5, 32.5, 55.2]}
+        "R290":  {"xp": [5, 20, 65, 100, 150, 250], "fp": [-50, -25.5, 3.5, 17.5, 32.5, 55.2]}
     }
     if g not in tabelas: return 0.0
     return float(np.interp(p, tabelas[g]["xp"], tabelas[g]["fp"]))
 
-# FINAL DO BLOCO 1 - INTEGRIDADE MANTIDA - LINHA 172
-    
+# FINAL DO BLOCO 1
 
-
-## ==============================================================================
-# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO MASTER CONSOLIDADA - 160+ LINHAS)
+# ==============================================================================
+# 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO MASTER CONSOLIDADA)
 # ==============================================================================
 def renderizar_aba_2():
     """
@@ -307,34 +308,27 @@ def renderizar_aba_2():
     i_fan_val = d5.number_input("CORRENTE Fan (A)", value=safe_float('i_fan'), format="%.2f", key="if_m_aba2")
 
     # --- 3. PROCESSAMENTO TÉCNICO E CÁLCULOS TERMODINÂMICOS ---
-    # Cálculo de Saturação utilizando a função externa f_sat_precisao
     t_sat_s = f_sat_precisao(p_suc_val, fluido) if p_suc_val > 5 else 0.0
     t_sat_d = f_sat_precisao(p_des_val, fluido) if p_des_val > 5 else 0.0
     
-    # Superaquecimento (SH) e Sub-resfriamento (SC)
     sh_calc = round(t_suc_val - t_sat_s, 2) if t_sat_s != 0 else 0.0
     sc_calc = round(t_sat_d - t_liq_val, 2) if t_sat_d != 0 else 0.0
     
-    # Diferenciais Térmicos e Elétricos
     dt_ar_calc = round(t_ret_val - t_ins_val, 2)
     d_tensao_calc = round(v_med_val - v_lin_val, 2)
     d_corrente_calc = round(i_med_val - rla_val, 2) if rla_val > 0 else 0.0
     
-    # SH Útil e Desvios de Capacitância
     sh_util_calc = round(sh_calc * 0.8, 2)
     d_cap_f_calc = round(cm_f_val - cn_f_val, 2)
     d_cap_c_calc = round(cm_c_val - cn_c_val, 2)
     
-    # Razão de Compressão (P. Absoluta Descarga / P. Absoluta Sucção)
     razao_compr = round((p_des_val + 14.7) / (p_suc_val + 14.7), 2) if p_suc_val > 0 else 0.0
-    # COP Estimado baseado na entalpia do ar simplificada
     cop_estimado = round((abs(dt_ar_calc) * 1.2 * 1000) / (v_med_val * i_med_val + 0.1), 2) if i_med_val > 0 else 0.0
 
     # --- 4. EXIBIÇÃO DE RESULTADOS (GRID DE PERFORMANCE - 6 COLUNAS) ---
     st.markdown("---")
     st.subheader("2. Diagnóstico de Performance e Integridade")
     
-    # CSS para os Cards de Métricas (Mantendo identidade visual)
     st.markdown("""
         <style> 
             div[data-testid="stMetric"] { 
@@ -347,92 +341,55 @@ def renderizar_aba_2():
         </style>
     """, unsafe_allow_html=True)
     
-    # Renderização do Grid Master de 6 Colunas
     res_cols = st.columns(6)
-    
     with res_cols[0]:
         st.metric("SH TOTAL", f"{sh_calc:.1f} K")
         st.metric("SH ÚTIL", f"{sh_util_calc:.1f} K")
-        
     with res_cols[1]:
         st.metric("SAT. SUCÇÃO", f"{t_sat_s:.1f} °C")
         st.metric("SAT. DESCARGA", f"{t_sat_d:.1f} °C")
-        
     with res_cols[2]:
         st.metric("Δ T (AR)", f"{dt_ar_calc:.1f} K")
         st.metric("SC FINAL", f"{sc_calc:.1f} K")
-        
     with res_cols[3]:
         st.metric("Δ CORRENTE", f"{d_corrente_calc:.1f} A")
         st.metric("Δ TENSÃO", f"{d_tensao_calc:.1f} V")
-        
     with res_cols[4]:
-        # SUBSTITUIÇÃO REALIZADA: Linha 1 = Razão de Compressão | Linha 2 = COP
         st.metric("Razão Compr.", f"{razao_compr}", "⚠️ Crítico" if razao_compr > 4.5 else None)
         st.metric("COP ESTIMADO", f"{cop_estimado:.2f}")
-        
     with res_cols[5]:
         st.metric("Δ CAP. COMP.", f"{d_cap_c_calc:.1f} µF")
         st.metric("Δ CAP. FAN.", f"{d_cap_f_calc:.1f} µF")
-    
-    # --- 5. DIAGNÓSTICO INTELIGENTE (MOTOR DE REGRAS IA) ---
-    st.markdown("---")
-    st.subheader("🤖 Diagnóstico Inteligente (Motor de Regras)")
-    
-    alertas_lista = []
-    if sh_calc < 5 and p_suc_val > 0:
-        alertas_lista.append("⚠️ **Superaquecimento Baixo:** Risco de retorno de líquido ao compressor.")
-    if sh_calc > 12:
-        alertas_lista.append("⚠️ **Superaquecimento Alto:** Possível falta de fluido ou restrição na expansão.")
-    if t_com_val > 105:
-        alertas_lista.append("🔥 **Descarga Crítica:** Temperatura acima do limite de segurança do óleo.")
-    if sc_calc < 3 and p_des_val > 0:
-        alertas_lista.append("📉 **Sub-resfriamento Baixo:** Ineficiência na condensação ou carga incompleta.")
-    if abs(d_tensao_calc) > (v_lin_val * 0.1):
-        alertas_lista.append("⚡ **Alerta Elétrico:** Tensão fora da margem de 10% de tolerância.")
 
-    if alertas_lista:
-        for alerta in alertas_lista:
-            st.error(alerta)
-    else:
-        st.success("✅ Sistema operando dentro dos parâmetros de estabilidade termodinâmica.")
+    # --- 5. MOTOR DE REGRAS IA ---
+    st.markdown("---")
+    st.subheader("🤖 Diagnóstico Inteligente")
+    alertas = []
+    if sh_calc < 5 and p_suc_val > 0: alertas.append("⚠️ **SH Baixo:** Risco de golpe de líquido.")
+    if sh_calc > 12: alertas.append("⚠️ **SH Alto:** Pouco fluido ou má expansão.")
+    if t_com_val > 105: alertas.append("🔥 **Descarga Crítica:** Risco de carbonização do óleo.")
+    
+    if alertas:
+        for a in alertas: st.error(a)
+    else: st.success("✅ Sistema operando dentro da normalidade.")
 
     # --- 6. PARECER TÉCNICO E PERSISTÊNCIA ---
     st.markdown("---")
     st.subheader("3. Parecer Técnico Final")
-    d['laudo_diag'] = st.text_area("Diagnóstico e Observações Detalhadas:", value=d.get('laudo_diag', "Análise: Sistema estável."), height=150)
+    d['laudo_diag'] = st.text_area("Diagnóstico Final:", value=d.get('laudo_diag', "Sistema estável."), height=150)
 
-    # ATUALIZAÇÃO DO DICIONÁRIO DE DADOS (GARANTINDO PERSISTÊNCIA DE TODAS AS CHAVES)
+    # PERSISTÊNCIA TOTAL DAS CHAVES (DO CAMPO AO CÁLCULO)
     st.session_state.dados.update({
-        'p_baixa': p_suc_val,
-        'temp_sucção': t_suc_val,
-        'p_alta': p_des_val,
-        'temp_liquido': t_liq_val,
-        'temp_entrada_ar': t_ret_val,
-        'temp_saida_ar': t_ins_val,
-        'temp_amb_ext': t_amb_val,
-        'umidade': u_rel_val,
-        'p_oleo': p_oil_val,
-        'v_nominal': v_lin_val,
-        'v_medida': v_med_val,
-        'i_medida': i_med_val,
-        'cn_c': cn_c_val,
-        'cm_c': cm_c_val,
-        'cn_f': cn_f_val,
-        'cm_f': cm_f_val, 
-        'i_fan': i_fan_val,
-        'lra': lra_val,
-        'rla': rla_val,
-        'temp_descarga': t_com_val,
-        'sh_calculado': sh_calc,
-        'sc_calculado': sc_calc,
-        'sh_util': sh_util_calc,
-        'dt_ar': dt_ar_calc,
-        'razao_compressao': razao_compr,
-        'cop_estimado': cop_estimado,
-        'balanca_sugestao': sugestao_massa
+        'p_baixa': p_suc_val, 'temp_sucção': t_suc_val, 'p_alta': p_des_val, 'temp_liquido': t_liq_val,
+        'temp_entrada_ar': t_ret_val, 'temp_saida_ar': t_ins_val, 'temp_amb_ext': t_amb_val,
+        'umidade': u_rel_val, 'p_oleo': p_oil_val, 'v_nominal': v_lin_val, 'v_medida': v_med_val,
+        'i_medida': i_med_val, 'cn_c': cn_c_val, 'cm_c': cm_c_val, 'cn_f': cn_f_val,
+        'cm_f': cm_f_val, 'i_fan': i_fan_val, 'lra': lra_val, 'rla': rla_val,
+        'temp_descarga': t_com_val, 'sh_calculado': sh_calc, 'sc_calculado': sc_calc,
+        'sh_util': sh_util_calc, 'dt_ar': dt_ar_calc, 'razao_compressao': razao_compr,
+        'cop_estimado': cop_estimado, 'balanca_sugestao': sugestao_massa
     })
-# FINAL DO BLOCO 2 (LINHA 384)   
+# FINAL DO BLOCO  - 392  
 
 
 # ==============================================================================
