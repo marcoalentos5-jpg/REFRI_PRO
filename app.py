@@ -379,16 +379,68 @@ def renderizar_aba_2():
     d['laudo_diag'] = st.text_area("Diagnóstico Final:", value=d.get('laudo_diag', "Sistema estável."), height=150)
 
     # PERSISTÊNCIA TOTAL DAS CHAVES (DO CAMPO AO CÁLCULO)
-    st.session_state.dados.update({
-        'p_baixa': p_suc_val, 'temp_sucção': t_suc_val, 'p_alta': p_des_val, 'temp_liquido': t_liq_val,
-        'temp_entrada_ar': t_ret_val, 'temp_saida_ar': t_ins_val, 'temp_amb_ext': t_amb_val,
-        'umidade': u_rel_val, 'p_oleo': p_oil_val, 'v_nominal': v_lin_val, 'v_medida': v_med_val,
-        'i_medida': i_med_val, 'cn_c': cn_c_val, 'cm_c': cm_c_val, 'cn_f': cn_f_val,
-        'cm_f': cm_f_val, 'i_fan': i_fan_val, 'lra': lra_val, 'rla': rla_val,
-        'temp_descarga': t_com_val, 'sh_calculado': sh_calc, 'sc_calculado': sc_calc,
-        'sh_util': sh_util_calc, 'dt_ar': dt_ar_calc, 'razao_compressao': razao_compr,
-        'cop_estimado': cop_estimado, 'balanca_sugestao': sugestao_massa
-    })
+   st.session_state.dados.update({
+    # --- MEDIÇÕES ---
+    'p_baixa': p_suc_val,
+    'temp_sucção': t_suc_val,
+    'p_alta': p_des_val,
+    'temp_liquido': t_liq_val,
+    'temp_descarga': t_com_val,
+
+    'temp_entrada_ar': t_ret_val,
+    'temp_saida_ar': t_ins_val,
+    'temp_amb_ext': t_amb_val,
+    'umidade': u_rel_val,
+    'p_oleo': p_oil_val,
+
+    'v_nominal': v_lin_val,
+    'v_medida': v_med_val,
+    'i_medida': i_med_val,
+    'rla': rla_val,
+    'lra': lra_val,
+
+    'cn_c': cn_c_val,
+    'cm_c': cm_c_val,
+    'cn_f': cn_f_val,
+    'cm_f': cm_f_val,
+    'i_fan': i_fan_val,
+
+    # --- TERMODINÂMICA ---
+    't_sat_suc': t_sat_s,
+    't_sat_desc': t_sat_d,
+    'sh_calculado': sh_calc,
+    'sc_calculado': sc_calc,
+    'sh_util': sh_util_calc,
+
+    # --- PERFORMANCE ---
+    'dt_ar': dt_ar_calc,
+    'd_tensao': d_tensao_calc,
+    'd_corrente': d_corrente_calc,
+    'd_cap_comp': d_cap_c_calc,
+    'd_cap_fan': d_cap_f_calc,
+
+    # --- SISTEMA ---
+    'razao_compressao': razao_compr,
+    'cop_estimado': cop_estimado,
+
+    # --- BALANÇA ---
+    'balanca_sugestao': sugestao_massa,
+    'balanca_status': txt_bal_card,
+    'pressao_suc_atual': p_atual,
+    'pressao_suc_alvo': ref['p_suc'],
+
+    # --- REFERÊNCIAS ---
+    'ref_p_suc': ref['p_suc'],
+    'ref_t_sat': ref['t_sat'],
+    'ref_sh': ref['sh'],
+    'ref_sc': ref['sc'],
+
+    # --- IA ---
+    'alertas': alertas,
+
+    # --- LAUDO ---
+    'laudo_diag': d.get('laudo_diag', "")
+})
 
 
 # ==============================================================================
