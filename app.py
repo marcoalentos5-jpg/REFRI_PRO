@@ -573,30 +573,7 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
             # O RETURN DEVE SER A ÚLTIMA LINHA DA FUNÇÃO
             return pdf.output(dest='S').encode('latin-1')
 
-# ==============================================================================
-# 3. PROCESSAMENTO E GERAÇÃO DE PDF (BLOCO PROTEGIDO)
-# ==============================================================================
-try:
-    # TUDO DENTRO DO TRY TEM EXATAMENTE 4 ESPAÇOS DE RECUO
-    pdf_final = gerar_pdf_final(st.session_state.dados)
 
-    if pdf_final:
-        st.success("✅ Relatório MPN Soluções pronto!")
-        st.download_button(
-            label="📄 BAIXAR RELATÓRIO AGORA",
-            data=pdf_final,
-            file_name=f"Laudo_MPN_{st.session_state.dados.get('tag_id','INS').upper()}.pdf",
-            mime="application/pdf",
-            use_container_width=True,
-            key="btn_baixar_final_sidebar_v20"
-        )
-    else:
-        # Trata o caso do PDF retornar None ou Vazio
-        st.error("❌ O PDF não retornou dados. Verifique o cadastro.")
-
-except Exception as e:
-    # Captura qualquer erro na função gerar_pdf_final
-    st.error(f"❌ Erro crítico no motor de PDF: {e}")
 
 
 # ==============================================================================
