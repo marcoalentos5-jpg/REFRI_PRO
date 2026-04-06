@@ -389,7 +389,6 @@ def renderizar_aba_2():
         'sh_util': sh_util_calc, 'dt_ar': dt_ar_calc, 'razao_compressao': razao_compr,
         'cop_estimado': cop_estimado, 'balanca_sugestao': sugestao_massa
     })
-# FINAL DO BLOCO  - 392  
 
 
 # ==============================================================================
