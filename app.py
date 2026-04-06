@@ -373,7 +373,7 @@ def renderizar_aba_2():
         for a in alertas: st.error(a)
     else: st.success("✅ Sistema operando dentro da normalidade.")
 
-pdf.ln(2)
+    pdf.ln(2)
 
 # 6. SEÇÃO EXTRA: TODOS OS DADOS REGISTRADOS
 pdf.set_fill_color(*C_PRI)
