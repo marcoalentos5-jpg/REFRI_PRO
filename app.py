@@ -576,27 +576,27 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
 # ==============================================================================
 # 3. PROCESSAMENTO E GERAÇÃO DE PDF (BLOCO PROTEGIDO)
 # ==============================================================================
-        try:
+try:
     # TUDO DENTRO DO TRY TEM EXATAMENTE 4 ESPAÇOS DE RECUO
-            pdf_final = gerar_pdf_final(st.session_state.dados)
-    
-            if pdf_final:
-                st.success("✅ Relatório MPN Soluções pronto!")
-                st.download_button(
-                label="📄 BAIXAR RELATÓRIO AGORA",
-                data=pdf_final,
-                file_name=f"Laudo_MPN_{st.session_state.dados.get('tag_id','INS').upper()}.pdf",
-                mime="application/pdf",
-                use_container_width=True,
-                key="btn_baixar_final_sidebar_v20"
-        )
-        except Exception as e:
-        else:
-                st.error("❌ O PDF não retornou dados. Verifique o cadastro.")
-        
-    # O EXCEPT ESTÁ NA MESMA COLUNA DO TRY (FECHA O BLOCO CORRETAMENTE)
-                st.error(f"❌ Erro crítico no motor de PDF: {e}")
+    pdf_final = gerar_pdf_final(st.session_state.dados)
 
+    if pdf_final:
+        st.success("✅ Relatório MPN Soluções pronto!")
+        st.download_button(
+            label="📄 BAIXAR RELATÓRIO AGORA",
+            data=pdf_final,
+            file_name=f"Laudo_MPN_{st.session_state.dados.get('tag_id','INS').upper()}.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+            key="btn_baixar_final_sidebar_v20"
+        )
+    else:
+        # Este else pertence ao 'if pdf_final', tratando caso o PDF venha vazio
+        st.error("❌ O PDF não retornou dados. Verifique o cadastro.")
+
+except Exception as e:
+    # O EXCEPT ESTÁ NA MESMA COLUNA DO TRY (FECHA O BLOCO CORRETAMENTE)
+    st.error(f"❌ Erro crítico no motor de PDF: {e}")
 # ==============================================================================
 # 4. SIDEBAR - MOTOR DE RELATÓRIO TÉCNICO MASTER (LINHA 601)
 # ==============================================================================
