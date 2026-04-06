@@ -51,12 +51,14 @@ def buscar_cep(cep):
             if r.status_code == 200:
                 d_api = r.json()
                 if "erro" not in d_api:
+                    # Sincronização direta com o dicionário mestre
                     st.session_state.dados['endereco'] = d_api.get('logradouro', '')
                     st.session_state.dados['bairro'] = d_api.get('bairro', '')
                     st.session_state.dados['cidade'] = d_api.get('localidade', '')
                     st.session_state.dados['uf'] = d_api.get('uf', '')
                     return True
-        except: pass
+        except Exception as e:
+            st.error(f"Erro na conexão ViaCEP: {e}")
     return False
 
 # ==============================================================================
@@ -78,16 +80,22 @@ def renderizar_aba_1():
         d['tel_fixo'] = cx2.text_input("Fixo:", value=d.get('tel_fixo', ''), key="cli_f")
         d['email'] = cx3.text_input("E-mail:", value=d.get('email', ''), key="cli_e")
 
+       # --- SEÇÃO ENDEREÇO (LAYOUT CONGELADO) ---
         st.markdown("---")
         ce1, ce2, ce3 = st.columns([1, 2, 1])
+        
+        # Input de CEP com gatilho de mudança
         cep_input = ce1.text_input("CEP *", value=d.get('cep', ''), key="cli_cep")
         
-        if len("".join(filter(str.isdigit, cep_input))) == 8 and cep_input != d.get('last_cep', ''):
-            if buscar_cep(cep_input):
-                d['cep'] = cep_input
-                d['last_cep'] = cep_input
-                st.rerun()
+        # Lógica de verificação automática
+        cep_filtrado = "".join(filter(str.isdigit, cep_input))
+        if len(cep_filtrado) == 8 and cep_filtrado != st.session_state.get('last_cep_validado', ''):
+            if buscar_cep(cep_filtrado):
+                st.session_state.dados['cep'] = cep_filtrado
+                st.session_state['last_cep_validado'] = cep_filtrado
+                st.rerun() # Força o Streamlit a redesenhar os campos com os dados da API
 
+        # Campos de endereço (Preenchidos automaticamente ou manualmente)
         d['endereco'] = ce2.text_input("Logradouro:", value=d.get('endereco', ''), key="cli_end")
         d['numero'] = ce3.text_input("Nº/Apto:", value=d.get('numero', ''), key="cli_num")
 
