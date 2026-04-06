@@ -63,36 +63,46 @@ def buscar_cep(cep):
 # 1.2 FUNÇÃO DA ABA 1: Identificação e Equipamento (LIMPEZA DEFINITIVA)
 # ==============================================================================
 def renderizar_aba_1():
-        st.subheader("📋 Cadastro de Cliente e Ativo")
-        d = st.session_state.dados
+    st.subheader("📋 Cadastro de Cliente e Ativo")
+    d = st.session_state.dados
 
- # --- SEÇÃO ENDEREÇO (ALINHAMENTO RIGOROSO - LINHA 70) ---
+    # --- SEÇÃO CLIENTE E ENDEREÇO (ALINHAMENTO 4 ESPAÇOS) ---
+    with st.expander("👤 Dados do Cliente e Endereço", expanded=True):
+        c1, c2, c3 = st.columns([2, 1, 1])
+        d['nome'] = c1.text_input("Nome / Razão Social *", value=d.get('nome', ''), key="cli_n")
+        d['cpf_cnpj'] = c2.text_input("CPF/CNPJ", value=d.get('cpf_cnpj', ''), key="cli_d")
+        d['whatsapp'] = c3.text_input("WhatsApp *", value=d.get('whatsapp', ''), key="cli_w")
+
+        cx1, cx2, cx3 = st.columns([1, 1, 2])
+        d['celular'] = cx1.text_input("Celular:", value=d.get('celular', ''), key="cli_c")
+        d['tel_fixo'] = cx2.text_input("Fixo:", value=d.get('tel_fixo', ''), key="cli_f")
+        d['email'] = cx3.text_input("E-mail:", value=d.get('email', ''), key="cli_e")
+
         st.markdown("---")
+        
+        # Bloco de CEP com Automação Instantânea
         ce1, ce2, ce3 = st.columns([1, 2, 1])
-        
-        # Captura do CEP e lógica de busca automática
         cep_input = ce1.text_input("CEP *", value=d.get('cep', ''), key="cli_cep")
-        cep_limpo = "".join(filter(str.isdigit, cep_input))
         
+        cep_limpo = "".join(filter(str.isdigit, cep_input))
         if len(cep_limpo) == 8 and cep_limpo != st.session_state.get('last_cep_ok', ''):
             if buscar_cep(cep_limpo):
                 st.session_state['last_cep_ok'] = cep_limpo
                 st.rerun()
 
-        # Campos de Logradouro e Número
         d['endereco'] = ce2.text_input("Logradouro:", value=d.get('endereco', ''), key="cli_end")
         d['numero'] = ce3.text_input("Nº/Apto:", value=d.get('numero', ''), key="cli_num")
 
-        # Segunda linha do endereço (Layout [1.2, 1.2, 1.2, 0.4])
+        # Layout Congelado [1.2, 1.2, 1.2, 0.4]
         ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.4])
         d['complemento'] = ce4.text_input("Complemento:", value=d.get('complemento', ''), key="cli_cm")
         d['bairro'] = ce5.text_input("Bairro:", value=d.get('bairro', ''), key="cli_ba")
         d['cidade'] = ce6.text_input("Cidade:", value=d.get('cidade', ''), key="cli_ci")
         d['uf'] = ce7.text_input("UF:", value=d.get('uf', ''), key="cli_uf")
 
-# --- SEÇÃO EQUIPAMENTO ---
+    # --- SEÇÃO EQUIPAMENTO (LINHA 94 - CORRIGIDA) ---
     st.markdown("### ⚙️ Especificações do Equipamento")
-        with st.expander("Detalhes Técnicos do Ativo", expanded=True):
+    with st.expander("Detalhes Técnicos do Ativo", expanded=True):
         l1_c1, l1_c2, l1_c3 = st.columns(3)
         with l1_c1:
             fab_list = sorted(["Carrier", "Daikin", "Fujitsu", "LG", "Samsung", "Trane", "York", "Elgin", "Gree", "Midea", "Hitachi"]) + ["Outro"]
