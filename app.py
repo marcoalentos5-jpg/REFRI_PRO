@@ -94,10 +94,10 @@ if len(cep_limpo) == 8 and cep_limpo != st.session_state.get('ultimo_cep_sucesso
         st.rerun() # <--- ISSO faz o endereço aparecer NA HORA sem trocar de aba
 
 # 3. CAMPOS DE ENDEREÇO (O valor 'd' agora já terá os dados do st.session_state)
-d['endereco'] = ce2.text_input("Logradouro:", value=d.get('endereco', ''), key="cli_end")
-d['numero'] = ce3.text_input("Nº/Apto:", value=d.get('numero', ''), key="cli_num")
+        d['endereco'] = ce2.text_input("Logradouro:", value=d.get('endereco', ''), key="cli_end")
+        d['numero'] = ce3.text_input("Nº/Apto:", value=d.get('numero', ''), key="cli_num")
 
-        # Layout Congelado [1.2, 1.2, 1.2, 0.4]
+        # Layout Congelado [1.2, 1.2, 1.2, 0.4] - ALINHAMENTO CORRIGIDO
         ce4, ce5, ce6, ce7 = st.columns([1.2, 1.2, 1.2, 0.4])
         d['complemento'] = ce4.text_input("Complemento:", value=d.get('complemento', ''), key="cli_cm")
         d['bairro'] = ce5.text_input("Bairro:", value=d.get('bairro', ''), key="cli_ba")
