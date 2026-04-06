@@ -573,15 +573,39 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
             # O RETURN DEVE SER A ÚLTIMA LINHA DA FUNÇÃO
             return pdf.output(dest='S').encode('latin-1')
 
+# ==============================================================================
+# 3. PROCESSAMENTO E GERAÇÃO DE PDF (BLOCO PROTEGIDO - CORPO PRINCIPAL)
+# ==============================================================================
+try:
+    # Verifica se existem dados mínimos para não gerar um PDF vazio
+    if st.session_state.dados.get('nome'):
+        pdf_final = gerar_pdf_final(st.session_state.dados)
+        
+        if pdf_final:
+            st.success("✅ Relatório MPN Soluções pronto!")
+            st.download_button(
+                label="📄 BAIXAR RELATÓRIO AGORA",
+                data=pdf_final,
+                file_name=f"Laudo_MPN_{st.session_state.dados.get('tag_id','INS').upper()}.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+                key="btn_baixar_main_vfinal"
+            )
+        else:
+            st.warning("⚠️ O motor de PDF não retornou dados. Revise o cadastro.")
+    else:
+        st.info("💡 Preencha os dados do cliente para habilitar o relatório.")
 
+except Exception as e:
+    # Bloqueio de segurança para o app não travar (Crash Protection)
+    st.error(f"❌ Erro crítico no motor de PDF: {e}")
 
 
 # ==============================================================================
-# 4. SIDEBAR - MOTOR DE RELATÓRIO TÉCNICO MASTER (LINHA 601)
+# 4. SIDEBAR - MOTOR DE RELATÓRIO TÉCNICO MASTER (TOTALMENTE SANEADO)
 # ==============================================================================
 with st.sidebar:
-    # TUDO DENTRO DA SIDEBAR TEM 4 ESPAÇOS DE RECUO
-    # A. LOGO
+    # A. LOGO (Com tratamento de erro de arquivo)
     try:
         st.image("logo.png", use_container_width=True)
     except:
@@ -590,7 +614,7 @@ with st.sidebar:
     st.markdown("---")
     
     # B. NAVEGAÇÃO OPERACIONAL
-    opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
+    opcoes_abas = ["Home", "1. Cadastro", "2. Diagnósticos", "Relatórios"]
     aba_selecionada = st.radio(
         "Navegar para:", 
         opcoes_abas, 
@@ -598,68 +622,37 @@ with st.sidebar:
     )
     
     st.markdown("---")
-    st.info("Sistema de Climatização MPN")
 
-    # --- C. MOTOR DE GERAÇÃO E DOWNLOAD (PROTEGIDO) ---
-    # Este bloco deve estar RECUADO para dentro da Sidebar
-    try: 
-        # Só tentamos gerar se os dados mínimos existirem (Nome e Documento)
-        d = st.session_state.dados
-        if len(str(d.get('nome', ''))) > 3:
-            st.info("📋 Relatório disponível para geração")
-            
-            # Chamada da função que remove emojis e caracteres especiais
-            pdf_final = gerar_pdf_final(d)
-            
-            if pdf_final:
-                st.download_button(
-                    label="📄 BAIXAR LAUDO PDF",
-                    data=pdf_final,
-                    file_name=f"Laudo_MPN_{d.get('tag_id','INS').upper()}.pdf",
-                    mime="application/pdf",
-                    use_container_width=True,
-                    key="btn_sidebar_final"
-                )
-        else:
-            st.warning("⚠️ Complete o Cadastro para liberar o PDF")
-
-    except Exception as e: # <--- O 'except' fecha o 'try' AQUI, antes de qualquer outra coisa
-        st.error(f"❌ Erro no motor de PDF: {e}")
-
-    st.markdown("---")
-    
-    # C. IDENTIFICAÇÃO DO TÉCNICO
+    # C. IDENTIFICAÇÃO DO TÉCNICO (Sincronização com Session State)
     st.subheader("👨‍🔧 Identificação do Técnico")
-    st.session_state.dados['tecnico_nome'] = st.text_input("Nome Completo:", value=st.session_state.dados.get('tecnico_nome', ''), key="f_tec_n")
-    st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ do Técnico:", value=st.session_state.dados.get('tecnico_documento', ''), key="f_tec_d")
-    st.session_state.dados['tecnico_registro'] = st.text_input("Registro (CREA/CFT):", value=st.session_state.dados.get('tecnico_registro', ''), key="f_tec_r")
+    d = st.session_state.dados # Referência direta para simplificar o código
+
+    d['tecnico_nome'] = st.text_input("Nome Completo:", value=d.get('tecnico_nome', ''), key="f_tec_n")
+    d['tecnico_documento'] = st.text_input("CPF/CNPJ:", value=d.get('tecnico_documento', ''), key="f_tec_d")
+    d['tecnico_registro'] = st.text_input("Registro (CREA/CFT):", value=d.get('tecnico_registro', ''), key="f_tec_r")
 
     st.markdown("---")
 
-    # D. MOTOR DE GERAÇÃO PDF (VARREDURA TOTAL E SINCRONIZADA)
-    d = st.session_state.dados
-    
-    # Validação para habilitar o botão (Nome e Documento do Cliente)
+    # D. MOTOR DE GERAÇÃO INTERNO FPDF
+    # Validação rigorosa: Nome > 3 e Documento > 5 caracteres
     n_val = str(d.get('nome', '')).strip()
-    d_val = str(d.get('cliente_documento', d.get('cpf_cnpj', ''))).strip()
-    
+    d_val = str(d.get('cpf_cnpj', d.get('cliente_documento', ''))).strip()
+
     if len(n_val) > 3 and len(d_val) > 5:
-        st.success("✅ Relatório Pronto")
-        
         try:
             from fpdf import FPDF
             from datetime import datetime
-            
-            # 1. CRIA O OBJETO PDF (O MOTOR)
+
+            # 1. Configuração do Documento
             pdf = FPDF()
             pdf.set_auto_page_break(auto=True, margin=15)
             pdf.add_page()
-            C_PRI = (13, 71, 161) # Azul MPN
+            C_PRI = (13, 71, 161) # Azul Identidade MPN
             
-            # 2. CABEÇALHO
+            # 2. Cabeçalho Dinâmico
             try: 
                 pdf.image('logo.png', x=10, y=10, w=45)
-        except: 
+            except: 
                 pass
                 
             pdf.set_xy(10, 32)
@@ -668,106 +661,52 @@ with st.sidebar:
             pdf.cell(190, 10, "LAUDO TÉCNICO DE INSPEÇÃO HVAC-R", ln=True, align='C')
             pdf.ln(2)
 
-          # 3. SEÇÃO 1: IDENTIFICAÇÃO DO CLIENTE (REFORMULADA PARA 13 CAMPOS)
+            # 3. Seção 1: Cliente
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
             pdf.cell(130, 7, " 1. IDENTIFICAÇÃO DO CLIENTE", fill=True)
-            pdf.cell(60, 7, f"DATA: {d.get('data_atendimento', d.get('data', ''))} ", fill=True, ln=True, align='R')
+            pdf.cell(60, 7, f"DATA: {datetime.now().strftime('%d/%m/%Y')} ", fill=True, ln=True, align='R')
 
             pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 8)
-            
-            # Linha 1: Nome Completo
-            pdf.cell(30, 6, " CLIENTE:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(30, 6, " CLIENTE:", border=1)
+            pdf.set_font("Arial", "", 8)
             pdf.cell(160, 6, f" {str(d.get('nome', '---')).upper()}", border=1, ln=True)
-            
-            # Linha 2: CPF/CNPJ e WhatsApp
-            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " CPF/CNPJ:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(65, 6, f" {d.get('cpf_cnpj', '---')}", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " WHATSAPP:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(65, 6, f" {d.get('whatsapp', '---')}", border=1, ln=True)
-            
-            # Linha 3: Celular e Fixo
-            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " CELULAR:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(65, 6, f" {d.get('celular', '---')}", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " FIXO:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(65, 6, f" {d.get('fixo', d.get('telefone_fixo', d.get('tel_fixo', '---')))}", border=1, ln=True)
-            
-            # Linha 4: E-mail
-            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " E-MAIL:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(160, 6, f" {d.get('email', '---')}", border=1, ln=True)
-            
-            # Linha 5: CEP e Logradouro (Endereço)
-            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " CEP:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(35, 6, f" {d.get('cep', '---')}", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " ENDEREÇO:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(95, 6, f" {d.get('endereco', d.get('logradouro', '---'))}", border=1, ln=True)
-            
-            # Linha 6: Nº, Complemento e Bairro
-            pdf.set_font("Arial", "B", 8); pdf.cell(20, 6, " Nº:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(20, 6, f" {d.get('numero', '---')}", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " COMPL.:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(50, 6, f" {d.get('complemento', '---')}", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(20, 6, " BAIRRO:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(50, 6, f" {d.get('bairro', '---')}", border=1, ln=True)
-            
-            # Linha 7: Cidade e UF
-            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " CIDADE:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(110, 6, f" {d.get('cidade', '---')}", border=1)
-            pdf.set_font("Arial", "B", 8); pdf.cell(20, 6, " UF:", border=1); pdf.set_font("Arial", "", 8)
-            pdf.cell(30, 6, f" {d.get('uf', '---')}", border=1, ln=True)
-            pdf.ln(2)
-            
 
-        # 2. SEÇÃO: DETALHES TÉCNICOS DO ATIVO (MAPEAMENTO REAL)
+            # 4. Seção 2: Tabela Técnica (7 Colunas de Precisão)
+            pdf.ln(2)
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 8)
             pdf.cell(190, 7, " 2. DETALHES TÉCNICOS DO ATIVO", ln=True, fill=True)
+            
+            w_col = 27.14 # Divisão exata da área útil de 190mm
             pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 6)
-            
-            w_col = 27.14 
 
-            # --- LINHA 1 (DADOS) ---
-            pdf.set_font("Arial", "B", 6)
-            pdf.cell(w_col, 5, " FABRICANTE", border=1, align='C')
-            pdf.cell(w_col, 5, " MODELO", border=1, align='C')
-            pdf.cell(w_col, 5, " SÉRIE EVAP", border=1, align='C')
-            pdf.cell(w_col, 5, " SÉRIE COND", border=1, align='C')
-            pdf.cell(w_col, 5, " LOCAL EVAP", border=1, align='C')
-            pdf.cell(w_col, 5, " LOCAL COND", border=1, align='C')
-            pdf.cell(w_col, 5, " CAPACIDADE", border=1, align='C', ln=True)
+            headers = ["FABRICANTE", "MODELO", "SÉRIE EVAP", "SÉRIE COND", "LOCAL EVAP", "LOCAL COND", "CAPACIDADE"]
+            for h in headers:
+                pdf.cell(w_col, 5, f" {h}", border=1, align='C')
+            pdf.ln()
 
             pdf.set_font("Arial", "", 6)
-            # MAPEAMENTO DAS SUAS CHAVES REAIS:
-            pdf.cell(w_col, 6, f" {d.get('fabricante', '---')}", border=1, align='C')
-            pdf.cell(w_col, 6, f" {d.get('modelo', '---')}", border=1, align='C')
-            pdf.cell(w_col, 6, f" {d.get('serie_evap', '---')}", border=1, align='C')
-            pdf.cell(w_col, 6, f" {d.get('serie_cond', '---')}", border=1, align='C')
-            pdf.cell(w_col, 6, f" {d.get('local_evap', '---')}", border=1, align='C')
-            pdf.cell(w_col, 6, f" {d.get('local_cond', '---')}", border=1, align='C')
-            pdf.cell(w_col, 6, f" {d.get('capacidade', '---')}", border=1, align='C', ln=True)
+            row = [
+                d.get('fabricante', '---'), d.get('modelo', '---'),
+                d.get('serie_evap', '---'), d.get('serie_cond', '---'),
+                d.get('local_evap', '---'), d.get('local_cond', '---'),
+                d.get('capacidade', '---')
+            ]
+            for item in row:
+                # Proteção contra texto longo: corta em 18 caracteres para não quebrar a tabela
+                pdf.cell(w_col, 6, f" {str(item)[:18]}", border=1, align='C')
+            pdf.ln()
 
-            # --- LINHA 2 (DADOS) ---
-            pdf.set_font("Arial", "B", 6)
-            pdf.cell(w_col, 5, " POTÊNCIA (W)", border=1, align='C')
-            pdf.cell(w_col, 5, " FLUIDO REF.", border=1, align='C')
-            pdf.cell(w_col, 5, " CARGA (kg/g)", border=1, align='C')
-            pdf.cell(w_col, 5, " TIPO ÓLEO", border=1, align='C')
-            pdf.cell(w_col, 5, " TENSÃO NOM.", border=1, align='C')
-            pdf.cell(w_col, 5, " TAG/ID", border=1, align='C')
-            pdf.cell(w_col, 5, " ULT. MANUT", border=1, align='C', ln=True)
+        except Exception as e:
+            st.error(f"❌ Erro na renderização das células: {e}")
+    else:
+        st.warning("⚠️ Aguardando dados mínimos para liberar PDF.")
 
-            pdf.set_font("Arial", "", 6)
-            pdf.cell(w_col, 6, f" {d.get('potencia', '---')}", border=1, align='C')
-            pdf.cell(w_col, 6, f" {d.get('fluido', '---')}", border=1, align='C')
-            pdf.cell(w_col, 6, f" {d.get('carga_gas', '---')}", border=1, align='C')
-            pdf.cell(w_col, 6, f" {d.get('tipo_oleo', '---')}", border=1, align='C') 
-            pdf.cell(w_col, 6, f" {d.get('tensao', '---')}", border=1, align='C')
-            pdf.cell(w_col, 6, f" {d.get('tag_id', '---')}", border=1, align='C')
-            pdf.cell(w_col, 6, f" {d.get('ultima_maint', '---')}", border=1, align='C', ln=True)
-            
-            pdf.ln(2)
+    st.markdown("---")
+    st.caption("Refri Pro v2.0 - MPN Soluções")
             
 
 # ==========================================================================
-# 3. MEDIÇÕES DE CAMPO (NOMES SINCRONIZADOS COM SEU DICIONÁRIO)
+# 5. MEDIÇÕES DE CAMPO (NOMES SINCRONIZADOS COM SEU DICIONÁRIO)
 # ==========================================================================
             pdf.set_fill_color(*C_PRI)
             pdf.set_text_color(255, 255, 255)
@@ -840,9 +779,9 @@ with st.sidebar:
 
             pdf.ln(4)
 
-            # ==========================================================================
-            # 4. DIAGNÓSTICO DE PERFORMANCE E INTEGRIDADE (VERSÃO SEM CARACTERES ESPECIAIS)
-            # ==========================================================================
+# ==========================================================================
+# 6. DIAGNÓSTICO DE PERFORMANCE E INTEGRIDADE (VERSÃO SEM CARACTERES ESPECIAIS)
+# ==========================================================================
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 8)
             pdf.cell(190, 7, " 4. DIAGNOSTICO DE PERFORMANCE E INTEGRIDADE", ln=True, fill=True)
             pdf.set_text_color(0, 0, 0)
@@ -969,7 +908,7 @@ with st.sidebar:
 
 
 # ==============================================================================
-# 4. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
+# 7. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
 # ==============================================================================
 # Use a seleção do sidebar para chamar a função correta
 if aba_selecionada == "Home":
