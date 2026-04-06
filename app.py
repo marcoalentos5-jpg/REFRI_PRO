@@ -63,8 +63,8 @@ def buscar_cep(cep):
 # 1.2 FUNÇÃO DA ABA 1: Identificação e Equipamento (LIMPEZA DEFINITIVA)
 # ==============================================================================
 def renderizar_aba_1():
-    st.subheader("📋 Cadastro de Cliente e Ativo")
-    d = st.session_state.dados
+        st.subheader("📋 Cadastro de Cliente e Ativo")
+        d = st.session_state.dados
 
  # --- SEÇÃO ENDEREÇO (ALINHAMENTO RIGOROSO - LINHA 70) ---
         st.markdown("---")
