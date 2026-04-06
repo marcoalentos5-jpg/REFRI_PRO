@@ -590,11 +590,12 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
                 use_container_width=True,
                 key="btn_baixar_final_sidebar_v20"
         )
-    else:
-                st.error("❌ O PDF não retornou dados. Verifique o cadastro.")
         except Exception as e:
+        else:
+                st.error("❌ O PDF não retornou dados. Verifique o cadastro.")
+        
     # O EXCEPT ESTÁ NA MESMA COLUNA DO TRY (FECHA O BLOCO CORRETAMENTE)
-    st.error(f"❌ Erro crítico no motor de PDF: {e}")
+                st.error(f"❌ Erro crítico no motor de PDF: {e}")
 
 # ==============================================================================
 # 4. SIDEBAR - MOTOR DE RELATÓRIO TÉCNICO MASTER (LINHA 601)
