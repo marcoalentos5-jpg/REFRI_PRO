@@ -576,7 +576,7 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
 # ==============================================================================
 # 3. PROCESSAMENTO E GERAÇÃO DE PDF (BLOCO PROTEGIDO)
 # ==============================================================================
-try:
+    try:
     # TUDO DENTRO DO TRY TEM EXATAMENTE 4 ESPAÇOS DE RECUO
     pdf_final = gerar_pdf_final(st.session_state.dados)
     
