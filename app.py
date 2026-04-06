@@ -167,84 +167,9 @@ def f_sat_precisao(p, g):
     if g not in tabelas: return 0.0
     return float(np.interp(p, tabelas[g]["xp"], tabelas[g]["fp"]))
 
-# ==============================================================================
-# 1.5. MOTOR DE GERAÇÃO DE PDF (A RECEITA DO BOLO)
-# ==============================================================================
+# FINAL DO BLOCO 1 - INTEGRIDADE MANTIDA - LINHA 172
+    
 
-import os
-from fpdf import FPDF
-
-def gerar_pdf_final(d):
-    try:
-        # 1. Configuração e Limpeza de Segurança
-        pdf = FPDF()
-        pdf.add_page()
-        
-        def safe(val):
-            """Limpa emojis e símbolos que travam o FPDF"""
-            s = str(val)
-            for char in ["🟢", "🟡", "🔴", "°", "º", "ª", "✓", "x"]:
-                s = s.replace(char, "")
-            return s.strip()
-
-        # 2. CABEÇALHO COM LOGOMARCA (Conforme solicitado)
-        if os.path.exists("logo_mpn.png"):
-            pdf.image("logo_mpn.png", x=10, y=8, w=45)
-            pdf.set_font("Arial", "B", 14)
-            pdf.cell(0, 10, "LAUDO TÉCNICO DE MANUTENÇÃO", ln=True, align='R')
-            pdf.set_font("Arial", "I", 9)
-            pdf.cell(0, 5, "MPN SOLUÇÕES - CLIMATIZAÇÃO E REFRIGERAÇÃO", ln=True, align='R')
-            pdf.ln(15)
-        else:
-            pdf.set_font("Arial", "B", 16)
-            pdf.cell(0, 10, "LAUDO TÉCNICO DE MANUTENÇÃO", ln=True, align='C')
-            pdf.ln(10)
-
-        # --- 1. IDENTIFICAÇÃO DO CLIENTE ---
-        pdf.set_fill_color(240, 240, 240)
-        pdf.set_font("Arial", "B", 10)
-        pdf.cell(190, 8, " 1. IDENTIFICAÇÃO DO CLIENTE", ln=True, fill=True)
-        pdf.set_font("Arial", "", 9)
-        pdf.cell(120, 7, f" Cliente: {safe(d.get('nome', 'N/A')).upper()}", border=1)
-        pdf.cell(70, 7, f" CPF/CNPJ: {safe(d.get('cpf_cnpj', ''))}", border=1, ln=True)
-        pdf.cell(190, 7, f" Endereço: {safe(d.get('endereco', ''))}, {safe(d.get('numero', ''))} - {safe(d.get('bairro', ''))}", border=1, ln=True)
-        pdf.ln(3)
-
-        # --- 2. ESPECIFICAÇÕES DO ATIVO (VARREDURA COMPLETA) ---
-        pdf.set_font("Arial", "B", 10)
-        pdf.cell(190, 8, " 2. ESPECIFICAÇÕES DO ATIVO", ln=True, fill=True)
-        pdf.set_font("Arial", "", 9)
-        pdf.cell(95, 7, f" Fabricante: {safe(d.get('fabricante', ''))}", border=1)
-        pdf.cell(95, 7, f" Modelo: {safe(d.get('modelo', ''))}", border=1, ln=True)
-        pdf.cell(95, 7, f" Série Evap: {safe(d.get('serie_evap', ''))}", border=1)
-        pdf.cell(95, 7, f" TAG/ID: {safe(d.get('tag_id', ''))}", border=1, ln=True)
-        pdf.cell(95, 7, f" Fluido: {safe(d.get('fluido', ''))}", border=1)
-        pdf.cell(95, 7, f" Status: {safe(d.get('status_maquina', ''))}", border=1, ln=True)
-        pdf.ln(3)
-
-        # --- 3. PARÂMETROS TÉCNICOS E PERFORMANCE ---
-        pdf.set_font("Arial", "B", 10)
-        pdf.cell(190, 8, " 3. PARÂMETROS TÉCNICOS E PERFORMANCE", ln=True, fill=True)
-        pdf.set_font("Arial", "", 9)
-        pdf.cell(63, 7, f" S.A. Total: {d.get('sh_calculado', '0.0')} K", border=1)
-        pdf.cell(63, 7, f" S.A. Útil: {d.get('sh_util', '0.0')} K", border=1)
-        pdf.cell(64, 7, f" S.R. Total: {d.get('sc_calculado', '0.0')} K", border=1, ln=True)
-        pdf.cell(63, 7, f" Delta Corrente: {d.get('delta_corrente', '0.0')} A", border=1)
-        pdf.cell(63, 7, f" Delta Tensão: {d.get('delta_tensao', '0.0')} V", border=1)
-        pdf.cell(64, 7, f" COP Est: {d.get('cop_estimado', '0.0')}", border=1, ln=True)
-        pdf.ln(3)
-
-        # --- RODAPÉ ---
-        pdf.set_y(-30)
-        pdf.set_font("Arial", "I", 8)
-        pdf.cell(0, 10, f"Relatório gerado em: {d.get('data', '')} | Técnico: {safe(d.get('tecnico_nome', 'Marcos Alexandre'))}", align='C', ln=True)
-
-        pdf_bytes = pdf.output(dest='S')
-        return bytes(pdf_bytes) if isinstance(pdf_bytes, bytearray) else pdf_bytes
-
-    except Exception as e:
-        print(f"Erro no PDF: {e}")
-        return None
 
 ## ==============================================================================
 # 2. FUNÇÃO DA ABA DE DIAGNÓSTICOS (VERSÃO MASTER CONSOLIDADA - 160+ LINHAS)
@@ -460,274 +385,227 @@ def renderizar_aba_2():
     st.subheader("3. Parecer Técnico Final")
     d['laudo_diag'] = st.text_area("Diagnóstico e Observações Detalhadas:", value=d.get('laudo_diag', "Análise: Sistema estável."), height=150)
 
+    # ATUALIZAÇÃO DO DICIONÁRIO DE DADOS (GARANTINDO PERSISTÊNCIA DE TODAS AS CHAVES)
+    st.session_state.dados.update({
+        'p_baixa': p_suc_val,
+        'temp_sucção': t_suc_val,
+        'p_alta': p_des_val,
+        'temp_liquido': t_liq_val,
+        'temp_entrada_ar': t_ret_val,
+        'temp_saida_ar': t_ins_val,
+        'temp_amb_ext': t_amb_val,
+        'umidade': u_rel_val,
+        'p_oleo': p_oil_val,
+        'v_nominal': v_lin_val,
+        'v_medida': v_med_val,
+        'i_medida': i_med_val,
+        'cn_c': cn_c_val,
+        'cm_c': cm_c_val,
+        'cn_f': cn_f_val,
+        'cm_f': cm_f_val, 
+        'i_fan': i_fan_val,
+        'lra': lra_val,
+        'rla': rla_val,
+        'temp_descarga': t_com_val,
+        'sh_calculado': sh_calc,
+        'sc_calculado': sc_calc,
+        'sh_util': sh_util_calc,
+        'dt_ar': dt_ar_calc,
+        'razao_compressao': razao_compr,
+        'cop_estimado': cop_estimado,
+        'balanca_sugestao': sugestao_massa
+    })
+# FINAL DO BLOCO 2 (LINHA 384)   
 
-# 1. ATUALIZAÇÃO DO DICIONÁRIO (BUSCANDO DO SESSION_STATE PARA EVITAR 'NOT DEFINED')
-if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
-    try:
-    
-      # 1. ATUALIZAÇÃO DO DICIONÁRIO (8 espaços de recuo)
-        st.session_state.dados.update({
-            'p_baixa': st.session_state.get('p_suc_val', 0.0),
-            'temp_suc': st.session_state.get('t_suc_val', 0.0),
-            'p_alta': st.session_state.get('p_des_val', 0.0),
-            'temp_liquido': st.session_state.get('t_liq_val', 0.0),
-            'temp_entrada_ar': st.session_state.get('t_ret_val', 0.0),
-            'temp_saida_ar': st.session_state.get('t_ins_val', 0.0),
-            'temp_amb_ext': st.session_state.get('t_amb_val', 0.0),
-            'umidade': st.session_state.get('u_rel_val', 0.0),
-            'p_oleo': st.session_state.get('p_oil_val', 0.0),
-            'v_nominal': st.session_state.get('v_lin_val', 0.0),
-            'v_medida': st.session_state.get('v_med_val', 0.0),
-            'i_medida': st.session_state.get('i_med_val', 0.0),
-            'cn_c': st.session_state.get('cn_c_val', 0.0),
-            'cm_c': st.session_state.get('cm_c_val', 0.0),
-            'cn_f': st.session_state.get('cn_f_val', 0.0),
-            'cm_f': st.session_state.get('cm_f_val', 0.0), 
-            'i_fan': st.session_state.get('i_fan_val', 0.0),
-            'lra': st.session_state.get('lra_val', 0.0),
-            'rla': st.session_state.get('rla_val', 0.0),
-            'temp_descarga': st.session_state.get('t_com_val', 0.0),
-            'sh_total': st.session_state.get('sh_calc', 0.0),       # ADICIONADO PARA MATAR O ERRO
-            'sh_calculado': st.session_state.get('sh_calc', 0.0),
-            'sh_util': st.session_state.get('sh_util_calc', 0.0),
-            'dt_ar': st.session_state.get('dt_ar_calc', 0.0),
-            'razao_compressao': st.session_state.get('razao_compr', 0.0),
-            'cop_estimado': st.session_state.get('cop_estimado', 0.0),
-            'sat_suc': st.session_state.get('t_sat_suc', 0.0),
-            'sat_desc': st.session_state.get('t_sat_des', 0.0),
-            'delta_corrente': st.session_state.get('delta_i', 0.0),
-            'delta_tensao': st.session_state.get('delta_v', 0.0),
-            'delta_cap_c': st.session_state.get('delta_cap_comp', 0.0),
-            'delta_cap_f': st.session_state.get('delta_cap_fan', 0.0)
-        })
-
-       # 2. FUNÇÃO DO PDF (8 espaços de recuo)
-        def gerar_pdf_final(d):
-            from fpdf import FPDF
-            pdf = FPDF()
-            pdf.add_page()
-            C_PRI = [0, 51, 153] 
-            
-            # --- SEÇÃO 3: MEDIÇÕES DE CAMPO ---
-            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 8)
-            pdf.cell(190, 7, " 3. MEDICOES DE CAMPO", ln=True, fill=True)
-            pdf.set_text_color(0, 0, 0)
-            w_col = 38.0
-
-            pdf.set_fill_color(245, 245, 245); pdf.set_font("Arial", "B", 6)
-            pdf.cell(w_col, 5, " SUCCAO (PSI)", 1, 0, 'C', True)
-            pdf.cell(w_col, 5, " TUB. SUCCAO (C)", 1, 0, 'C', True)
-            pdf.cell(w_col, 5, " DESCARGA (PSI)", 1, 0, 'C', True)
-            pdf.cell(w_col, 5, " TUB. LIQUIDO (C)", 1, 0, 'C', True)
-            pdf.cell(w_col, 5, " TUB. DESC. COMP (C)", 1, 1, 'C', True)
-            
-            pdf.set_font("Arial", "", 8)
-            pdf.cell(w_col, 7, f" {d.get('p_baixa', '---')}", 1, 0, 'C')
-            pdf.cell(w_col, 7, f" {d.get('temp_suc', '---')}", 1, 0, 'C') 
-            pdf.cell(w_col, 7, f" {d.get('p_alta', '---')}", 1, 0, 'C')
-            pdf.cell(w_col, 7, f" {d.get('temp_liquido', '---')}", 1, 0, 'C')
-            pdf.cell(w_col, 7, f" {d.get('temp_descarga', '---')}", 1, 1, 'C')
-
-            # --- SEÇÃO 4: DIAGNÓSTICO ---
-            pdf.ln(2)
-            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 8)
-            pdf.cell(190, 7, " 4. DIAGNOSTICO DE PERFORMANCE E INTEGRIDADE", ln=True, fill=True)
-            pdf.set_text_color(0, 0, 0)
-            w_diag = 31.66
-
-            # Linha 1
-            pdf.set_fill_color(240, 240, 240); pdf.set_font("Arial", "B", 6)
-            pdf.cell(w_diag, 5, " SH TOTAL", 1, 0, 'C', True)
-            pdf.cell(w_diag, 5, " SAT. SUCCAO", 1, 0, 'C', True)
-            pdf.cell(w_diag, 5, " D. T (AR)", 1, 0, 'C', True)
-            pdf.cell(w_diag, 5, " D. CORRENTE", 1, 0, 'C', True)
-            pdf.cell(w_diag, 5, " RAZAO COMPR.", 1, 0, 'C', True)
-            pdf.cell(w_diag, 5, " D. CAP. COMP.", 1, 1, 'C', True)
-            
-            pdf.set_font("Arial", "", 8)
-            pdf.cell(w_diag, 7, f" {d.get('sh_total', '---')} K", 1, 0, 'C')
-            pdf.cell(w_diag, 7, f" {d.get('sat_suc', '---')} C", 1, 0, 'C')
-            pdf.cell(w_diag, 7, f" {d.get('dt_ar', '---')} K", 1, 0, 'C')
-            pdf.cell(w_diag, 7, f" {d.get('delta_corrente', '---')} A", 1, 0, 'C')
-            pdf.cell(w_diag, 7, f" {d.get('razao_compressao', '---')}", 1, 0, 'C')
-            pdf.cell(w_diag, 7, f" {d.get('delta_cap_c', '---')} uF", 1, 1, 'C')
-
-            # Linha 2
-            pdf.set_fill_color(240, 240, 240); pdf.set_font("Arial", "B", 6)
-            pdf.cell(w_diag, 5, " SH UTIL", 1, 0, 'C', True)
-            pdf.cell(w_diag, 5, " SAT. DESCARGA", 1, 0, 'C', True)
-            pdf.cell(w_diag, 5, " SC FINAL", 1, 0, 'C', True)
-            pdf.cell(w_diag, 5, " D. TENSAO", 1, 0, 'C', True)
-            pdf.cell(w_diag, 5, " COP ESTIMADO", 1, 0, 'C', True)
-            pdf.cell(w_diag, 5, " D. CAP. FAN", 1, 1, 'C', True)
-            
-            pdf.set_font("Arial", "", 8)
-            pdf.cell(w_diag, 7, f" {d.get('sh_util', '---')} K", 1, 0, 'C')
-            pdf.cell(w_diag, 7, f" {d.get('sat_desc', '---')} C", 1, 0, 'C')
-            pdf.cell(w_diag, 7, f" {d.get('sc_calculado', '---')} K", 1, 0, 'C')
-            pdf.cell(w_diag, 7, f" {d.get('delta_tensao', '---')} V", 1, 0, 'C')
-            pdf.cell(w_diag, 7, f" {d.get('cop_estimado', '---')}", 1, 0, 'C')
-            pdf.cell(w_diag, 7, f" {d.get('delta_cap_f', '---')} uF", 1, 1, 'C')
-
-            pdf.ln(4)
-            # O RETURN DEVE SER A ÚLTIMA LINHA DA FUNÇÃO
-            return pdf.output(dest='S').encode('latin-1')
 
 # ==============================================================================
-# 3. MOTOR DE PROCESSAMENTO (BLOCO ÚNICO PROTEGIDO)
-# ==============================================================================
-# Centralizamos a geração para evitar processamento duplicado
-pdf_output = None
-
-if st.session_state.dados.get('nome') and len(str(st.session_state.dados.get('nome'))) > 3:
-    try:
-        # Gera o PDF apenas uma vez e armazena na memória (Buffer)
-        pdf_output = gerar_pdf_final(st.session_state.dados)
-    except Exception as e:
-        st.error(f"❌ Falha no Motor de PDF: {e}")
-
-# ==============================================================================
-# 4. SIDEBAR - INTERFACE OPERACIONAL MPN
+# 3. SIDEBAR - MOTOR DE RELATÓRIO TÉCNICO MASTER (VERSÃO FINAL BLINDADA)
 # ==============================================================================
 with st.sidebar:
-    # A. IDENTIDADE VISUAL
-    try:
-        st.image("logo.png", use_container_width=True)
-    except:
-        st.subheader("MPN SOLUÇÕES")
+    # A. LOGO AMPLIADA NA SIDEBAR
+    col_l1, col_l2, col_l3 = st.columns([0.5, 9, 0.5])
+    with col_l2:
+        try: 
+            st.image("logo.png", use_container_width=True)
+        except: 
+            st.subheader("MPN SOLUÇÕES")
     
     st.markdown("---")
     
-    # B. NAVEGAÇÃO
-    opcoes_abas = ["Home", "1. Cadastro", "2. Diagnósticos", "Relatórios"]
-    aba_selecionada = st.radio("Navegar para:", opcoes_abas, key="nav_vfinal")
+    # B. NAVEGAÇÃO OPERACIONAL
+    opcoes_abas = ["Home", "1. Cadastro de Equipamentos", "2. Diagnósticos", "Relatórios"]
+    aba_selecionada = st.radio("Navegar para:", opcoes_abas, key="nav_master_vfinal")
     
     st.markdown("---")
-
-    # C. DADOS DO TÉCNICO (Sincronização Direta)
-    st.subheader("👨‍🔧 Técnico Responsável")
-    d = st.session_state.dados # Referência curta para performance
     
-    d['tecnico_nome'] = st.text_input("Nome:", value=d.get('tecnico_nome', ''), key="f_tec_n")
-    d['tecnico_registro'] = st.text_input("Registro (CFT/CREA):", value=d.get('tecnico_registro', ''), key="f_tec_r")
+    # C. IDENTIFICAÇÃO DO TÉCNICO
+    st.subheader("👨‍🔧 Identificação do Técnico")
+    st.session_state.dados['tecnico_nome'] = st.text_input("Nome Completo:", value=st.session_state.dados.get('tecnico_nome', ''), key="f_tec_n")
+    st.session_state.dados['tecnico_documento'] = st.text_input("CPF/CNPJ do Técnico:", value=st.session_state.dados.get('tecnico_documento', ''), key="f_tec_d")
+    st.session_state.dados['tecnico_registro'] = st.text_input("Registro (CREA/CFT):", value=st.session_state.dados.get('tecnico_registro', ''), key="f_tec_r")
 
     st.markdown("---")
 
-    # D. ÁREA DE DOWNLOAD (SÓ APARECE SE O PDF FOR GERADO COM SUCESSO)
-    if pdf_output:
-        st.success("✅ Relatório pronto!")
-        st.download_button(
-            label="📄 BAIXAR LAUDO TÉCNICO",
-            data=pdf_output,
-            file_name=f"Laudo_MPN_{d.get('tag_id','INS').upper()}.pdf",
-            mime="application/pdf",
-            use_container_width=True,
-            key="btn_baixar_sidebar"
-        )
-    else:
-        st.warning("⚠️ Aguardando preenchimento de dados para liberar PDF.")
+    # D. MOTOR DE GERAÇÃO PDF (VARREDURA TOTAL E SINCRONIZADA)
+    d = st.session_state.dados
+    
+    # Validação para habilitar o botão (Nome e Documento do Cliente)
+    n_val = str(d.get('nome', '')).strip()
+    d_val = str(d.get('cliente_documento', d.get('cpf_cnpj', ''))).strip()
+    
+    if len(n_val) > 3 and len(d_val) > 5:
+        st.success("✅ Relatório Pronto")
+        
+        try:
+            from fpdf import FPDF
+            from datetime import datetime
+            
+            # 1. CRIA O OBJETO PDF (O MOTOR)
+            pdf = FPDF()
+            pdf.set_auto_page_break(auto=True, margin=15)
+            pdf.add_page()
+            C_PRI = (13, 71, 161) # Azul MPN
+            
+            # 2. CABEÇALHO
+            try: 
+                pdf.image('logo.png', x=10, y=10, w=45)
+            except: 
+                pass
+                
+            pdf.set_xy(10, 32)
+            pdf.set_font("Arial", "B", 16)
+            pdf.set_text_color(*C_PRI)
+            pdf.cell(190, 10, "LAUDO TÉCNICO DE INSPEÇÃO HVAC-R", ln=True, align='C')
+            pdf.ln(2)
 
-# ==============================================================================
-# 5. LÓGICA DO FPDF (DENTRO DA FUNÇÃO gerar_pdf_final)
-# ==============================================================================
-# Nota: Esta função deve estar definida ANTES das chamadas acima
-def gerar_pdf_final(dados):
-    from fpdf import FPDF
-    from datetime import datetime
-    
-    pdf = FPDF()
-    pdf.set_auto_page_break(auto=True, margin=15)
-    pdf.add_page()
-    
-    # Definição de Cores MPN
-    C_AZUL = (13, 71, 161)
-    
-    # Título
-    pdf.set_font("Arial", "B", 16)
-    pdf.set_text_color(*C_AZUL)
-    pdf.cell(190, 15, "LAUDO TÉCNICO DE INSPEÇÃO", ln=True, align='C')
-    
-    # Seção Cliente
-    pdf.set_fill_color(*C_AZUL)
-    pdf.set_text_color(255, 255, 255)
-    pdf.set_font("Arial", "B", 10)
-    pdf.cell(190, 8, " 1. IDENTIFICAÇÃO DO CLIENTE", fill=True, ln=True)
-    
-    pdf.set_text_color(0, 0, 0)
-    pdf.set_font("Arial", "", 9)
-    pdf.cell(190, 7, f" CLIENTE: {str(dados.get('nome', '---')).upper()}", border=1, ln=True)
-    pdf.cell(190, 7, f" DOCUMENTO: {dados.get('cpf_cnpj', '---')}", border=1, ln=True)
-    
-    # Seção Técnica (Tabela)
-    pdf.ln(5)
-    pdf.set_fill_color(*C_AZUL)
-    pdf.set_text_color(255, 255, 255)
-    pdf.cell(190, 8, " 2. DADOS DO EQUIPAMENTO", fill=True, ln=True)
-    
-    pdf.set_text_color(0, 0, 0)
-    w = 190 / 4 # 4 colunas largas para leitura clara
-    
-    # Cabeçalhos
-    pdf.set_font("Arial", "B", 8)
-    pdf.cell(w, 7, " FABRICANTE", border=1, align='C')
-    pdf.cell(w, 7, " MODELO", border=1, align='C')
-    pdf.cell(w, 7, " CAPACIDADE", border=1, align='C')
-    pdf.cell(w, 7, " TAG/ID", border=1, align='C', ln=True)
-    
-    # Dados
-    pdf.set_font("Arial", "", 8)
-    pdf.cell(w, 7, f" {str(dados.get('fabricante', '---'))[:15]}", border=1, align='C')
-    pdf.cell(w, 7, f" {str(dados.get('modelo', '---'))[:15]}", border=1, align='C')
-    pdf.cell(w, 7, f" {str(dados.get('capacidade', '---'))[:15]}", border=1, align='C')
-    pdf.cell(w, 7, f" {str(dados.get('tag_id', '---'))[:15]}", border=1, align='C', ln=True)
-    
-    return pdf.output(dest='S').encode('latin-1', 'replace')
+          # 3. SEÇÃO 1: IDENTIFICAÇÃO DO CLIENTE (REFORMULADA PARA 13 CAMPOS)
+            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
+            pdf.cell(130, 7, " 1. IDENTIFICAÇÃO DO CLIENTE", fill=True)
+            pdf.cell(60, 7, f"DATA: {d.get('data_atendimento', d.get('data', ''))} ", fill=True, ln=True, align='R')
 
-# ==========================================================================
-# 6. DIAGNÓSTICO DE PERFORMANCE E INTEGRIDADE (VERSÃO SEM CARACTERES ESPECIAIS)
-# ==========================================================================
+            pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 8)
+            
+            # Linha 1: Nome Completo
+            pdf.cell(30, 6, " CLIENTE:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(160, 6, f" {str(d.get('nome', '---')).upper()}", border=1, ln=True)
+            
+            # Linha 2: CPF/CNPJ e WhatsApp
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " CPF/CNPJ:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(65, 6, f" {d.get('cpf_cnpj', '---')}", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " WHATSAPP:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(65, 6, f" {d.get('whatsapp', '---')}", border=1, ln=True)
+            
+            # Linha 3: Celular e Fixo
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " CELULAR:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(65, 6, f" {d.get('celular', '---')}", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " FIXO:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(65, 6, f" {d.get('fixo', d.get('telefone_fixo', d.get('tel_fixo', '---')))}", border=1, ln=True)
+            
+            # Linha 4: E-mail
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " E-MAIL:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(160, 6, f" {d.get('email', '---')}", border=1, ln=True)
+            
+            # Linha 5: CEP e Logradouro (Endereço)
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " CEP:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(35, 6, f" {d.get('cep', '---')}", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " ENDEREÇO:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(95, 6, f" {d.get('endereco', d.get('logradouro', '---'))}", border=1, ln=True)
+            
+            # Linha 6: Nº, Complemento e Bairro
+            pdf.set_font("Arial", "B", 8); pdf.cell(20, 6, " Nº:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(20, 6, f" {d.get('numero', '---')}", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " COMPL.:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(50, 6, f" {d.get('complemento', '---')}", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(20, 6, " BAIRRO:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(50, 6, f" {d.get('bairro', '---')}", border=1, ln=True)
+            
+            # Linha 7: Cidade e UF
+            pdf.set_font("Arial", "B", 8); pdf.cell(30, 6, " CIDADE:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(110, 6, f" {d.get('cidade', '---')}", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(20, 6, " UF:", border=1); pdf.set_font("Arial", "", 8)
+            pdf.cell(30, 6, f" {d.get('uf', '---')}", border=1, ln=True)
+            pdf.ln(2)
+            
+      # 4. SEÇÃO 2: DETALHES TÉCNICOS DO ATIVO (7 COLUNAS X 2 LINHAS)
             pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 8)
-            pdf.cell(190, 7, " 4. DIAGNOSTICO DE PERFORMANCE E INTEGRIDADE", ln=True, fill=True)
-            pdf.set_text_color(0, 0, 0)
+            pdf.cell(190, 7, " 2. DETALHES TÉCNICOS DO ATIVO", ln=True, fill=True)
+            pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 6)
             
-            w_col = 31.66 
+            # Ajuste de largura para 7 colunas (aprox 27mm por coluna)
+            w_col = 27.14 
 
-            # --- LINHA 1: TITULOS ---
-            pdf.set_fill_color(240, 240, 240); pdf.set_font("Arial", "B", 6)
-            pdf.cell(w_col, 5, " SH TOTAL", border=1, align='C', fill=True)
-            pdf.cell(w_col, 5, " SAT. SUCCAO", border=1, align='C', fill=True)
-            pdf.cell(w_col, 5, " D. T (AR)", border=1, align='C', fill=True) # "D." substitui o Delta
-            pdf.cell(w_col, 5, " D. CORRENTE", border=1, align='C', fill=True)
-            pdf.cell(w_col, 5, " RAZAO COMPR.", border=1, align='C', fill=True)
-            pdf.cell(w_col, 5, " D. CAP. COMP.", border=1, align='C', fill=True, ln=True)
+            # --- LINHA 1 ---
+            pdf.cell(w_col, 5, " FABRICANTE", border=1, align='C')
+            pdf.cell(w_col, 5, " MODELO", border=1, align='C')
+            pdf.cell(w_col, 5, " SÉRIE EVAP", border=1, align='C')
+            pdf.cell(w_col, 5, " SÉRIE COND", border=1, align='C')
+            pdf.cell(w_col, 5, " LOCAL EVAP", border=1, align='C')
+            pdf.cell(w_col, 5, " LOCAL COND", border=1, align='C')
+            pdf.cell(w_col, 5, " CAPACIDADE", border=1, align='C', ln=True)
 
-            # --- LINHA 1: VALORES ---
-            pdf.set_font("Arial", "", 8)
-            pdf.cell(w_col, 7, f" {d.get('sh_calculado', '---')} K", border=1, align='C')
-            pdf.cell(w_col, 7, f" {d.get('sat_suc', '---')} C", border=1, align='C') # Removido o símbolo de grau
-            pdf.cell(w_col, 7, f" {d.get('dt_ar', '---')} K", border=1, align='C')
-            pdf.cell(w_col, 7, f" {d.get('delta_corrente', '---')} A", border=1, align='C')
-            pdf.cell(w_col, 7, f" {d.get('razao_compressao', '---')}", border=1, align='C')
-            pdf.cell(w_col, 7, f" {d.get('delta_cap_c', '---')} uF", border=1, align='C', ln=True) # "uF" em vez de mu
+            pdf.set_font("Arial", "", 6)
+            pdf.cell(w_col, 6, f" {d.get('fabricante', '---')}", border=1, align='C')
+            pdf.cell(w_col, 6, f" {d.get('modelo', '---')}", border=1, align='C')
+            pdf.cell(w_col, 6, f" {d.get('n_serie_evap', '---')}", border=1, align='C')
+            pdf.cell(w_col, 6, f" {d.get('n_serie_cond', '---')}", border=1, align='C')
+            pdf.cell(w_col, 6, f" {d.get('local_evaporadora', '---')}", border=1, align='C')
+            pdf.cell(w_col, 6, f" {d.get('local_condensadora', '---')}", border=1, align='C')
+            pdf.cell(w_col, 6, f" {d.get('capacidade_btus', '---')}", border=1, align='C', ln=True)
 
-            # --- LINHA 2: TITULOS ---
-            pdf.set_fill_color(240, 240, 240); pdf.set_font("Arial", "B", 6)
-            pdf.cell(w_col, 5, " SH UTIL", border=1, align='C', fill=True)
-            pdf.cell(w_col, 5, " SAT. DESCARGA", border=1, align='C', fill=True)
-            pdf.cell(w_col, 5, " SC FINAL", border=1, align='C', fill=True)
-            pdf.cell(w_col, 5, " D. TENSAO", border=1, align='C', fill=True)
-            pdf.cell(w_col, 5, " COP ESTIMADO", border=1, align='C', fill=True)
-            pdf.cell(w_col, 5, " D. CAP. FAN", border=1, align='C', fill=True, ln=True)
+            # --- LINHA 2 ---
+            pdf.set_font("Arial", "B", 6)
+            pdf.cell(w_col, 5, " POTÊNCIA (W)", border=1, align='C')
+            pdf.cell(w_col, 5, " FLUIDO REF.", border=1, align='C')
+            pdf.cell(w_col, 5, " CARGA (kg/g)", border=1, align='C')
+            pdf.cell(w_col, 5, " TIPO ÓLEO", border=1, align='C')
+            pdf.cell(w_col, 5, " TENSÃO NOM.", border=1, align='C')
+            pdf.cell(w_col, 5, " TAG/ID", border=1, align='C')
+            pdf.cell(w_col, 5, " ULT. MANUT", border=1, align='C', ln=True)
 
-            # --- LINHA 2: VALORES ---
-            pdf.set_font("Arial", "", 8)
-            pdf.cell(w_col, 7, f" {d.get('sh_util', '---')} K", border=1, align='C')
-            pdf.cell(w_col, 7, f" {d.get('sat_desc', '---')} C", border=1, align='C')
-            pdf.cell(w_col, 7, f" {d.get('sc_calculado', '---')} K", border=1, align='C')
-            pdf.cell(w_col, 7, f" {d.get('delta_tensao', '---')} V", border=1, align='C')
-            pdf.cell(w_col, 7, f" {d.get('cop_estimado', '---')}", border=1, align='C')
-            pdf.cell(w_col, 7, f" {d.get('delta_cap_f', '---')} uF", border=1, align='C', ln=True)
+            pdf.set_font("Arial", "", 6)
+            pdf.cell(w_col, 6, f" {d.get('potencia_nominal', '---')}", border=1, align='C')
+            pdf.cell(w_col, 6, f" {d.get('fluido_refrigerante', '---')}", border=1, align='C')
+            pdf.cell(w_col, 6, f" {d.get('carga_fluido', '---')}", border=1, align='C')
+            pdf.cell(w_col, 6, f" {d.get('tipo_oleo', '---')}", border=1, align='C')
+            pdf.cell(w_col, 6, f" {d.get('tensao_nominal_v', '---')}", border=1, align='C')
+            pdf.cell(w_col, 6, f" {d.get('tag_patrimonio', '---')}", border=1, align='C')
+            pdf.cell(w_col, 6, f" {d.get('data_ultima_manut', '---')}", border=1, align='C', ln=True)
             
+            pdf.ln(2)
+
+            # 5. SEÇÃO 3: MEDIÇÕES DE CAMPO (Sincronizado com sua lista azul)
+            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
+            pdf.cell(190, 7, " 3. MEDIÇÕES DE CAMPO E PERFORMANCE", ln=True, fill=True)
+            pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 7); pdf.set_fill_color(235, 245, 255)
+            
+            pdf.cell(31, 5, "SUCCAO (PSI)", border=1, align='C', fill=True)
+            pdf.cell(31, 5, "TUB. SUCCAO", border=1, align='C', fill=True)
+            pdf.cell(31, 5, "DESCARGA (PSI)", border=1, align='C', fill=True)
+            pdf.cell(31, 5, "TUB. LIQUIDO", border=1, align='C', fill=True)
+            pdf.cell(31, 5, "CORRENTE (A)", border=1, align='C', fill=True)
+            pdf.cell(35, 5, "TENSAO (V)", border=1, align='C', fill=True, ln=True)
+            
+           # Dados (Sincronizados e com quebra de linha no final)
+            pdf.set_font("Arial", "", 8)
+            pdf.cell(31, 6, f" {d.get('p_baixa', '---')}", border=1, align='C') 
+            pdf.cell(31, 6, f" {d.get('temp_sucção', '---')}", border=1, align='C') 
+            pdf.cell(31, 6, f" {d.get('p_alta', '---')}", border=1, align='C') 
+            pdf.cell(31, 6, f" {d.get('temp_liquido', '---')}", border=1, align='C') 
+            pdf.cell(31, 6, f" {d.get('i_medida', '---')}", border=1, align='C') 
+            
+            # ATENÇÃO: Adicionei o align='C' e o ln=True aqui na Tensão
+            pdf.cell(35, 6, f" {d.get('v_medida', '---')}", border=1, align='C', ln=True) 
+            pdf.ln(2)
+
+            # 6. SEÇÃO 4: DIAGNÓSTICO DE PERFORMANCE
+            pdf.set_fill_color(*C_PRI); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", "B", 9)
+            pdf.cell(190, 7, " 4. DIAGNÓSTICO DE PERFORMANCE", ln=True, fill=True)
+            pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", "B", 8)
+            
+            pdf.cell(47.5, 6, " SH TOTAL:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(47.5, 6, f" {d.get('sh_calculado', '---')} K", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(47.5, 6, " SH ÚTIL:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(47.5, 6, f" {d.get('sh_util', '---')} K", border=1, ln=True)
+            pdf.set_font("Arial", "B", 8); pdf.cell(47.5, 6, " SC FINAL:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(47.5, 6, f" {d.get('sc_calculado', '---')} K", border=1)
+            pdf.set_font("Arial", "B", 8); pdf.cell(47.5, 6, " RAZÃO COMPR.:", border=1); pdf.set_font("Arial", "", 8); pdf.cell(47.5, 6, f" {d.get('razao_compressao', '---')}", border=1, ln=True)
             pdf.ln(2)
 
             # 7. PARECER E ASSINATURAS
@@ -766,53 +644,25 @@ def gerar_pdf_final(dados):
                 pdf_final = pdf_bytes.encode('latin1')
             else:
                 pdf_final = pdf_bytes
+
+            # Agora passamos o 'pdf_final' para o botão
+            # --- FINAL DO BLOCO DO BOTÃO ---
+            st.download_button(
+                label="📄 GERAR RELATÓRIO TÉCNICO FINAL",
+                data=pdf_final,
+                file_name=f"Laudo_MPN_{d.get('tag_id','INS').upper()}.pdf",
+                mime="application/pdf",
+                use_container_width=True
+            )
+
         except Exception as e:
-            st.error(f"Erro ao processar dados do PDF: {e}")
-
-  # 1. O BOTÃO QUE INICIA TUDO (Adicionamos o 'key' para evitar o erro de ID duplicado)
-    if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO", key="btn_finalizar_mpn_v3"):
-        try:  # <--- O 'TRY' (4 espaços de recuo)
-            
-            # --- 1. ATUALIZA O DICIONÁRIO (8 espaços de recuo) ---
-            st.session_state.dados.update({
-                'sh_calculado': st.session_state.get('sh_calc', 0.0),
-                'sh_total': st.session_state.get('sh_calc', 0.0),
-                'sh_util': st.session_state.get('sh_util_calc', 0.0),
-                'sc_calculado': st.session_state.get('sc_calc', 0.0),
-                'dt_ar': st.session_state.get('dt_ar_calc', 0.0),
-                'razao_compressao': st.session_state.get('razao_compr', 0.0),
-                'cop_estimado': st.session_state.get('cop_estimado', 0.0),
-                'sat_suc': st.session_state.get('t_sat_suc', 0.0),
-                'sat_desc': st.session_state.get('t_sat_des', 0.0),
-                'delta_corrente': st.session_state.get('delta_i', 0.0),
-                'delta_tensao': st.session_state.get('delta_v', 0.0),
-                'delta_cap_c': st.session_state.get('delta_cap_comp', 0.0),
-                'delta_cap_f': st.session_state.get('delta_cap_fan', 0.0)
-            })
-
-            # --- 2. GERA O PDF (8 espaços de recuo) ---
-            # Aqui chamamos a função que você criou anteriormente
-            pdf_final = gerar_pdf_final(st.session_state.dados)
-
-            # --- 3. DOWNLOAD (8 espaços de recuo) ---
-            if pdf_final:
-                st.success("✅ Relatório MPN Soluções pronto!")
-                st.download_button(
-                    label="📄 BAIXAR RELATÓRIO AGORA",
-                    data=pdf_final,
-                    file_name=f"Laudo_MPN_{st.session_state.dados.get('tag_id','INS').upper()}.pdf",
-                    mime="application/pdf",
-                    use_container_width=True
-                )
-
-        except Exception as e:  # <--- O 'EXCEPT' (Alinhado com o 'try' em 4 espaços)
-            st.error(f"❌ Erro na geração final: {e}")
+            st.error(f"Erro ao gerar PDF: {e}")
 
 # <--- O BLOCO DO PDF TERMINA AQUI (BEM NA MARGEM ESQUERDA)
 
 
 # ==============================================================================
-# 7. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
+# 4. LÓGICA DE EXIBIÇÃO DAS ABAS (ATIVADA)
 # ==============================================================================
 # Use a seleção do sidebar para chamar a função correta
 if aba_selecionada == "Home":
