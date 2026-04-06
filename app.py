@@ -591,12 +591,14 @@ try:
             key="btn_baixar_final_sidebar_v20"
         )
     else:
-        # Este else pertence ao 'if pdf_final', tratando caso o PDF venha vazio
+        # Trata o caso do PDF retornar None ou Vazio
         st.error("❌ O PDF não retornou dados. Verifique o cadastro.")
 
 except Exception as e:
-    # O EXCEPT ESTÁ NA MESMA COLUNA DO TRY (FECHA O BLOCO CORRETAMENTE)
+    # Captura qualquer erro na função gerar_pdf_final
     st.error(f"❌ Erro crítico no motor de PDF: {e}")
+
+
 # ==============================================================================
 # 4. SIDEBAR - MOTOR DE RELATÓRIO TÉCNICO MASTER (LINHA 601)
 # ==============================================================================
