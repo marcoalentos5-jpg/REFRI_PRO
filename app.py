@@ -581,17 +581,17 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
             pdf_final = gerar_pdf_final(st.session_state.dados)
     
             if pdf_final:
-            st.success("✅ Relatório MPN Soluções pronto!")
-            st.download_button(
-            label="📄 BAIXAR RELATÓRIO AGORA",
-            data=pdf_final,
-            file_name=f"Laudo_MPN_{st.session_state.dados.get('tag_id','INS').upper()}.pdf",
-            mime="application/pdf",
-            use_container_width=True,
-            key="btn_baixar_final_sidebar_v20"
+                st.success("✅ Relatório MPN Soluções pronto!")
+                st.download_button(
+                label="📄 BAIXAR RELATÓRIO AGORA",
+                data=pdf_final,
+                file_name=f"Laudo_MPN_{st.session_state.dados.get('tag_id','INS').upper()}.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+                key="btn_baixar_final_sidebar_v20"
         )
     else:
-        st.error("❌ O PDF não retornou dados. Verifique o cadastro.")
+                st.error("❌ O PDF não retornou dados. Verifique o cadastro.")
         except Exception as e:
     # O EXCEPT ESTÁ NA MESMA COLUNA DO TRY (FECHA O BLOCO CORRETAMENTE)
     st.error(f"❌ Erro crítico no motor de PDF: {e}")
