@@ -791,16 +791,49 @@ def renderizar_aba_diagnosticos():
     col_suc, col_des = st.columns(2)
     
     with col_suc:
-        st.markdown("### 🔵 Baixa Pressão")
-        pres_suc = st.number_input("Pressão de Sucção (PSI):", min_value=0.0, step=1.0, key="p_suc_diag")
-        temp_suc = st.number_input("Temp. Tubulação Sucção (°C):", step=0.1, key="t_suc_diag")
+    st.markdown("### 🔵 Baixa Pressão")
+    # Busca o valor atual ou 0.0 se estiver vazio
+    val_p_suc = float(st.session_state.dados.get('p_baixa', 0.0))
+    
+    pres_suc = st.number_input(
+        "Pressão de Sucção (PSI):", 
+        min_value=0.0, 
+        step=1.0, 
+        value=val_p_suc,
+        key="p_suc_diag",
+        on_change=lambda: st.session_state.dados.update({'p_baixa': st.session_state.p_suc_diag})
+    )
+    
+    val_t_suc = float(st.session_state.dados.get('temp_sucção', 0.0))
+    temp_suc = st.number_input(
+        "Temp. Tubulação Sucção (°C):", 
+        step=0.1, 
+        value=val_t_suc,
+        key="t_suc_diag",
+        on_change=lambda: st.session_state.dados.update({'temp_sucção': st.session_state.t_suc_diag})
+    )
 
-    with col_des:
-        st.markdown("### 🔴 Alta Pressão")
-        pres_des = st.number_input("Pressão de Descarga (PSI):", min_value=0.0, step=1.0, key="p_des_diag")
-        temp_liq = st.number_input("Temp. Tubulação Líquido (°C):", step=0.1, key="t_liq_diag")
-
-    st.markdown("---")
+with col_des:
+    st.markdown("### 🔴 Alta Pressão")
+    val_p_des = float(st.session_state.dados.get('p_alta', 0.0))
+    
+    pres_des = st.number_input(
+        "Pressão de Descarga (PSI):", 
+        min_value=0.0, 
+        step=1.0, 
+        value=val_p_des,
+        key="p_des_diag",
+        on_change=lambda: st.session_state.dados.update({'p_alta': st.session_state.p_des_diag})
+    )
+    
+    val_t_liq = float(st.session_state.dados.get('temp_liquido', 0.0))
+    temp_liq = st.number_input(
+        "Temp. Tubulação Líquido (°C):", 
+        step=0.1, 
+        value=val_t_liq,
+        key="t_liq_diag",
+        on_change=lambda: st.session_state.dados.update({'temp_liquido': st.session_state.t_liq_diag})
+    )
   
 
 # --- BLOCO 2: PROCESSAMENTO (CÁLCULOS) ---
