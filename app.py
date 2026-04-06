@@ -578,7 +578,7 @@ if st.button("🚀 FINALIZAR E PREPARAR RELATÓRIO"):
 # ==============================================================================
         try:
     # TUDO DENTRO DO TRY TEM EXATAMENTE 4 ESPAÇOS DE RECUO
-        pdf_final = gerar_pdf_final(st.session_state.dados)
+            pdf_final = gerar_pdf_final(st.session_state.dados)
     
     if pdf_final:
         st.success("✅ Relatório MPN Soluções pronto!")
