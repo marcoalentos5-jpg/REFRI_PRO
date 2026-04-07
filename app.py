@@ -790,7 +790,7 @@ def renderizar_aba_diagnosticos():
     st.subheader("1. Medições de Campo")
     col_suc, col_des = st.columns(2)
     
-    with col_suc:
+with col_suc:
     st.markdown("### 🔵 Baixa Pressão")
     # Busca o valor atual ou 0.0 se estiver vazio
     val_p_suc = float(st.session_state.dados.get('p_baixa', 0.0))
