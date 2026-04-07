@@ -397,7 +397,7 @@ campos_ignorados = {
     'sc_calculado','razao_compressao','laudo_diag'
 }
 
-    for chave, valor in d.items():
+for chave, valor in d.items():
     if chave in campos_ignorados:
         continue
     
