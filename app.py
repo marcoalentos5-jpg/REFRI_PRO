@@ -396,6 +396,7 @@ campos_ignorados = {
     'i_medida','v_medida','sh_calculado','sh_util',
     'sc_calculado','razao_compressao','laudo_diag'
 }
+d = st.session_state.get('dados', {})
 
 for chave, valor in d.items():
     if chave in campos_ignorados:
